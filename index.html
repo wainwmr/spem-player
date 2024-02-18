@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Spem</title>
+    <link rel="icon" href="https://fav.farm/🔥">
+    <link rel="stylesheet" href="./index.css">
+
+</head>
+
+<body>
+
+    <div class="wrapper">
+        <div class="mainspem">
+            <div id="spem">
+                <canvas id="spemCanvas"></canvas>
+            </div>
+        </div>
+        <div class="controls">
+            <div class="playpause" tabindex="0">
+                <button id="playpausebutton" class="button paused control"></button>
+            </div>
+            <div class="controlsection choircontrol">
+                <label for="choir">Choir</label>
+                <select name="choir" id="choir-select" class="control">
+                    <option value="0">All</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                </select>
+            </div>
+            <div class="controlsection partcontrol">
+                <label for="part">Part</label>
+                <select name="part" id="part-select" disabled="" class="control">
+                    <option value="0">All</option>
+                    <option value="1">Soprano</option>
+                    <option value="2">Alto</option>
+                    <option value="3">Tenor</option>
+                    <option value="4">Baritone</option>
+                    <option value="5">Bass</option>
+                </select>
+            </div>
+            <div class="controlsection barcontrol">
+                <label for="bar">Bar</label>
+                <input type="number" name="bar" id="bar-field" value="0" min="0" max="138" class="control" />
+            </div>
+
+            <div class="statusspacer"></div>
+
+            <div class="statusarea">
+                <span id="choir-output" class="status">All</span>
+                <span id="part-output" class="status">All</span>
+                <span id="bar-output" class="status">0</span>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+
+        const sv = false;
+
+        const defaultaudiofile = sv ?
+            '/db_uploads/Spem_in_alium-Whole_choir_17079473660428.mp3' :
+            '../audio/spem.mp3';
+
+        const jsonFilename = sv ?
+            '/db_uploads/Spem_in_alium-spem-2.json_17080194819731.json' :
+            './spem.json'
+
+        const svfiles = [
+            [
+                '/db_uploads/Spem_in_alium-Choir_1_-_Soprano_17079379676027.mp3',
+                '/db_uploads/Spem_in_alium-Choir_1_-_Alto_17079463591475.mp3',
+                '/db_uploads/Spem_in_alium-Choir_1_-_Tenor_17079464291625.mp3',
+                '/db_uploads/Spem_in_alium-Choir_1_-_Baritone_17079464558424.mp3',
+                '/db_uploads/Spem_in_alium-Choir_1_-_Bass_17079464967852.mp3'
+            ],
+            [
+                '/db_uploads/Spem_in_alium-Choir_2_-_Soprano_17079465329272.mp3',
+                '/db_uploads/Spem_in_alium-Choir_2_-_Alto_1707946557566.mp3',
+                '/db_uploads/Spem_in_alium-Choir_2_-_Tenor_17079465811394.mp3',
+                '/db_uploads/Spem_in_alium-Choir_2_-_Baritone_17079466024846.mp3',
+                '/db_uploads/Spem_in_alium-Choir_2_-_Bass_17079466248904.mp3'
+            ],
+            [
+                '/db_uploads/Spem_in_alium-Choir_3_-_Soprano_17079467897051.mp3',
+                '/db_uploads/Spem_in_alium-Choir_3_-_Alto_17079468079962.mp3',
+                '/db_uploads/Spem_in_alium-Choir_3_-_Tenor_17079468289072.mp3',
+                '/db_uploads/Spem_in_alium-Choir_3_-_Baritone_17079468478816.mp3',
+                '/db_uploads/Spem_in_alium-Choir_3_-_Bass_17079468681164.mp3'
+            ],
+            [
+                '/db_uploads/Spem_in_alium-Choir_4_-_Soprano_17079468930359.mp3',
+                '/db_uploads/Spem_in_alium-Choir_4_-_Alto_17079469103372.mp3',
+                '/db_uploads/Spem_in_alium-Choir_4_-_Tenor_17079469295052.mp3',
+                '/db_uploads/Spem_in_alium-Choir_4_-_Baritone_17079492066201.mp3',
+                '/db_uploads/Spem_in_alium-Choir_4_-_Bass_17079469457173.mp3'
+            ],
+            [
+                '/db_uploads/Spem_in_alium-Choir_5_-_Soprano_17079469713956.mp3',
+                '/db_uploads/Spem_in_alium-Choir_5_-_Alto_17079469890646.mp3',
+                '/db_uploads/Spem_in_alium-Choir_5_-_Tenor_17079470084183.mp3',
+                '/db_uploads/Spem_in_alium-Choir_5_-_Baritone_17079470332751.mp3',
+                '/db_uploads/Spem_in_alium-Choir_5_-_Bass_17079470531725.mp3'
+            ],
+            [
+                '/db_uploads/Spem_in_alium-Choir_6_-_Soprano_17079470789921.mp3',
+                '/db_uploads/Spem_in_alium-Choir_6_-_Alto_17079471031399.mp3',
+                '/db_uploads/Spem_in_alium-Choir_6_-_Tenor_1707947123417.mp3',
+                '/db_uploads/Spem_in_alium-Choir_6_-_Baritone_17079471420792.mp3',
+                '/db_uploads/Spem_in_alium-Choir_6_-_Bass_17079492502735.mp3'
+            ],
+            [
+                '/db_uploads/Spem_in_alium-Choir_7_-_Soprano_17079471702897.mp3',
+                '/db_uploads/Spem_in_alium-Choir_7_-_Alto_17079471917271.mp3',
+                '/db_uploads/Spem_in_alium-Choir_7_-_Tenor_17079472111989.mp3',
+                '/db_uploads/Spem_in_alium-Choir_7_-_Baritone_17079472290499.mp3',
+                '/db_uploads/Spem_in_alium-Choir_7_-_Bass_17079472450269.mp3'
+            ],
+            [
+                '/db_uploads/Spem_in_alium-Choir_8_-_Soprano_17079472689341.mp3',
+                '/db_uploads/Spem_in_alium-Choir_8_-_Alto_1707947288511.mp3',
+                '/db_uploads/Spem_in_alium-Choir_8_-_Tenor_17079473070395.mp3',
+                '/db_uploads/Spem_in_alium-Choir_8_-_Baritone_17079473259201.mp3',
+                '/db_uploads/Spem_in_alium-Choir_8_-_Bass_17079473467767.mp3'
+            ]
+        ]
+
+        var spemaudio = new Audio(defaultaudiofile);
+
+        // const beattime = 0.97; // seconds per beat
+        const beattime = 0.967;
+
+        let timerId = 0;
+
+        const canvas = document.getElementById("spemCanvas");
+        const choiroutput = document.getElementById('choir-output');
+        const partoutput = document.getElementById('part-output');
+        const baroutput = document.getElementById('bar-output');
+        const choirselect = document.getElementById('choir-select');
+        const partselect = document.getElementById('part-select');
+        const barinput = document.getElementById('bar-field');
+        const playpausebutton = document.getElementById('playpausebutton');
+
+        const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass'];
+
+        canvas.height = 400;
+        canvas.width = 1380;
+
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+
+        const barWidth = Math.floor(canvas.width / 138);
+        const choirHeight = Math.floor(canvas.height / 8);
+        const partHeight = Math.floor(choirHeight / 5);
+
+        // https://github.com/PimpTrizkit/PJs/wiki/12.-Shade,-Blend-and-Convert-a-Web-Color-(pSBC.js)#stackoverflow-archive-begin
+        // Version 4.0
+        const pSBC = (p, c0, c1, l) => {
+            let r, g, b, P, f, t, h, i = parseInt, m = Math.round, a = typeof (c1) == "string";
+            if (typeof (p) != "number" || p < -1 || p > 1 || typeof (c0) != "string" || (c0[0] != 'r' && c0[0] != '#') || (c1 && !a)) return null;
+            if (!this.pSBCr) this.pSBCr = (d) => {
+                let n = d.length, x = {};
+                if (n > 9) {
+                    [r, g, b, a] = d = d.split(","), n = d.length;
+                    if (n < 3 || n > 4) return null;
+                    x.r = i(r[3] == "a" ? r.slice(5) : r.slice(4)), x.g = i(g), x.b = i(b), x.a = a ? parseFloat(a) : -1
+                } else {
+                    if (n == 8 || n == 6 || n < 4) return null;
+                    if (n < 6) d = "#" + d[1] + d[1] + d[2] + d[2] + d[3] + d[3] + (n > 4 ? d[4] + d[4] : "");
+                    d = i(d.slice(1), 16);
+                    if (n == 9 || n == 5) x.r = d >> 24 & 255, x.g = d >> 16 & 255, x.b = d >> 8 & 255, x.a = m((d & 255) / 0.255) / 1000;
+                    else x.r = d >> 16, x.g = d >> 8 & 255, x.b = d & 255, x.a = -1
+                } return x
+            };
+            h = c0.length > 9, h = a ? c1.length > 9 ? true : c1 == "c" ? !h : false : h, f = this.pSBCr(c0), P = p < 0, t = c1 && c1 != "c" ? this.pSBCr(c1) : P ? { r: 0, g: 0, b: 0, a: -1 } : { r: 255, g: 255, b: 255, a: -1 }, p = P ? p * -1 : p, P = 1 - p;
+            if (!f || !t) return null;
+            if (l) r = m(P * f.r + p * t.r), g = m(P * f.g + p * t.g), b = m(P * f.b + p * t.b);
+            else r = m((P * f.r ** 2 + p * t.r ** 2) ** 0.5), g = m((P * f.g ** 2 + p * t.g ** 2) ** 0.5), b = m((P * f.b ** 2 + p * t.b ** 2) ** 0.5);
+            a = f.a, t = t.a, f = a >= 0 || t >= 0, a = f ? a < 0 ? t : t < 0 ? a : a * P + t * p : 0;
+            if (h) return "rgb" + (f ? "a(" : "(") + r + "," + g + "," + b + (f ? "," + m(a * 1000) / 1000 : "") + ")";
+            else return "#" + (4294967296 + r * 16777216 + g * 65536 + b * 256 + (f ? m(a * 255) : 0)).toString(16).slice(1, f ? undefined : -2)
+        }
+
+        const backgroundColor = "#123456";
+        const lineColor = "#FFFFFF"
+        const choirColors = [
+            "#c1121f",
+            "#ce6d8b",
+            "#FF8531",
+            "#FFA600",
+            "#72B043",
+            "#2B7654",
+            "#13788D",
+            "#003f88"
+        ];
+
+        // Parse "21.75-25.5" into two floats
+        function getRange(s) {
+            if (!s) return [999, 999];
+            return s.split("-").map(numStr => parseFloat(numStr));
+        }
+
+        let choirs = undefined;
+
+        function paintJsonToCanvas(filename) {
+            fetch(filename)
+                .then(response => response.json())
+                .then(music => {
+                    choirs = music.choirs;
+                    paintCanvas(music.choirs);
+                });
+        }
+
+        // use changed to know whether we need to redraw or not
+        var changed = true;
+
+        function setBar(b) {
+            const oldBar = barinput.value;
+            if (b != oldBar) {
+                barinput.value = b;
+                changed = true;
+            }
+        }
+
+        function setPart(p) {
+            partselect.value = p;
+            changed = true;
+        }
+
+        function setChoir(c) {
+            choirselect.value = c;
+            changed = true;
+        }
+
+
+        function paintCanvas() {
+
+            if (!changed) {
+                return;
+            }
+            changed = false;
+
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = backgroundColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw background line if this is the selected choir/part
+            if (choirselect.value != 0 && partselect.value != 0) {
+                const c = Number(choirselect.value) - 1;
+                const p = Number(partselect.value) - 1;
+                const startY = c * choirHeight + p * partHeight;
+                ctx.beginPath();
+                ctx.moveTo(10, startY + (partHeight / 2));
+                ctx.lineTo(138 * barWidth - 10, startY + (partHeight / 2));
+                ctx.lineWidth = partHeight * 1.3;
+                ctx.strokeStyle = '#f6f3a8';
+                ctx.lineCap = "round";
+                ctx.stroke();
+            }
+
+            for (let c = 0; c < 8; c++) {
+                const parts = choirs[c].parts;
+                for (let p = 0; p < 5; p++) {
+                    const startY = c * choirHeight + p * partHeight;
+
+                    const ranges = parts[p].ranges;
+                    ranges.forEach(r => {
+                        const [from, to] = getRange(r);
+                        ctx.beginPath();
+                        ctx.moveTo((from + 0.4) * barWidth, startY + (partHeight / 2));
+                        ctx.lineTo((to - 0.6) * barWidth, startY + (partHeight / 2));
+                        ctx.lineWidth = 0.9 * partHeight;
+                        ctx.strokeStyle = pSBC(0.24 - (0.08 * p), choirColors[c]);
+                        ctx.lineCap = "round";
+                        ctx.stroke();
+                        // ctx.fillStyle = pSBC(0.24 - (0.08 * p), choirColors[c]);
+                        // ctx.fillRect((from - 1) * barWidth, startY, (to - from + 1) * barWidth, partHeight);
+                    });
+                }
+            }
+
+            ctx.save();
+            let b = barinput.value;
+            ctx.beginPath();
+            ctx.moveTo(b * barWidth, 0);
+            ctx.lineTo(b * barWidth, canvas.height);
+            ctx.setLineDash([partHeight / 2, partHeight / 2]);
+            ctx.lineWidth = barWidth / 2;
+            ctx.strokeStyle = lineColor;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function getMousePos(canv, evt) {
+            const rect = canv.getBoundingClientRect();
+            const y = (evt.offsetY * 8) / rect.height;
+            return [
+                Math.floor(y + 1),
+                Math.floor(((y % 1) * 5) + 1),
+                Math.floor(((evt.offsetX * 138) / rect.width) + 1),
+            ];
+        }
+
+        function loadAudio(c, p, b) {
+            let file = defaultaudiofile;
+            if (!sv) {
+                if (c === '0' || p === '0') {
+                    file = defaultaudiofile;
+                }
+                else {
+                    file = `../audio/spem-${c}-${getPartName(p)}.mp3`;
+                }
+            }
+            else {
+                if (c === '0' || p === '0') {
+                    file = svdefaultfile;
+                }
+                else {
+                    file = svfiles[c - 1][p - 1];
+                }
+            }
+            spemaudio.src = file;
+            spemaudio.currentTime = b * 4 * beattime;
+        }
+
+        function playSpem() {
+            if (spemaudio.paused) {
+                spemaudio.play();
+                playpausebutton.classList.remove("paused");
+                clearInterval(timerId);
+                timerId = setInterval(() => {
+                    setBar(Math.floor(spemaudio.currentTime / (beattime * 4)));
+                    paintCanvas();
+                }, beattime * 100);
+            }
+        }
+
+        function pauseSpem() {
+            if (!spemaudio.paused) {
+                spemaudio.pause();
+                playpausebutton.classList.add("paused");
+                clearInterval(timerId);
+            }
+        }
+
+        function playpause() {
+            if (spemaudio.paused) {
+                playSpem();
+            }
+            else {
+                pauseSpem();
+            }
+        }
+
+        function getPartNumber(s) {
+            return allparts.indexOf(s) + 1;
+        }
+
+        function getPartName(n) {
+            return allparts[n - 1];
+        }
+
+        paintJsonToCanvas(jsonFilename);
+
+        playpausebutton.addEventListener('click', () => {
+            playpause();
+        });
+
+        canvas.addEventListener('click', function (evt) {
+            const [c, p, b] = getMousePos(canvas, evt);
+
+            setChoir(c);
+            setPart(p);
+            setBar(b);
+
+            userInputChanged();
+            playSpem();
+        });
+
+        canvas.addEventListener('mousemove', function (e) {
+            const [c, p, b] = getMousePos(canvas, e);
+
+            choiroutput.innerHTML = "Choir: " + c;
+            partoutput.innerHTML = getPartName(p);
+            baroutput.innerHTML = b;
+
+        }, false);
+
+        // Change the MP3 file if they change the choir, part or bar
+        [choirselect,
+            partselect,
+            barinput].forEach(el => el.addEventListener('change', userInputChanged));
+
+        function userInputChanged() {
+            changed = true;
+            pauseSpem();
+            // If Choir or Part is All, then set the other to All
+            if (choirselect.value === '0') {
+                setPart(0);
+                partselect.disabled = true;
+            }
+            else {
+                if (partselect.value === '0') {
+                    setPart(1);
+                }
+                partselect.disabled = false;
+            }
+            paintCanvas();
+
+            loadAudio(choirselect.value, partselect.value, barinput.value);
+        }
+
+        document.addEventListener("keydown", (event) => {
+            // don't handle keyboard events on the four control widgets
+            // cos it messes with the UI interaction
+            const classes = [...event.target.classList];
+            if (classes.includes('control')) {
+                return;
+            }
+            if (event.isComposing || event.keyCode === 229) {
+                return;
+            }
+            if (event.code == 'Space') {
+                playpause();
+                return;
+            }
+            if (event.code === 'ArrowRight') {
+                setBar(Number(barinput.value) + 1);
+            }
+            else if (event.code === 'ArrowLeft') {
+                setBar(Number(barinput.value) - 1);
+            }
+            else if (event.code === 'ArrowDown') {
+                let c = Number(choirselect.value);
+                let p = Number(partselect.value);
+                if (c === 8 && p === 5) {
+                    c = 0;
+                    p = 0;
+                }
+                else if (c === 0 && p === 0) {
+                    c = 1;
+                    p = 1;
+                }
+                else {
+                    p++;
+                    if (p > 5) {
+                        p = 1;
+                        c++;
+                    }
+                }
+                setChoir(c);
+                setPart(p);
+            }
+            else if (event.code === 'ArrowUp') {
+                let c = Number(choirselect.value);
+                let p = Number(partselect.value);
+                if (c === 1 && p === 1) {
+                    c = 0;
+                    p = 0;
+                }
+                else if (c === 0 && p === 0) {
+                    c = 8;
+                    p = 5;
+                }
+                else {
+                    p--;
+                    if (p < 1) {
+                        p = 5;
+                        c--;
+                    }
+                }
+                setChoir(c);
+                setPart(p);
+            }
+
+            userInputChanged();
+        });
+
+    </script>
+
+</body>
+
+</html>
