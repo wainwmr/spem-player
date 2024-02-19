@@ -11,6 +11,12 @@
 
 <body>
 
+    <style>
+
+
+
+    </style>
+
     <div class="wrapper">
         <div class="mainspem">
             <div id="spem">
@@ -75,10 +81,12 @@
         // Hacky section
         // I can't control the filenames when installed on southernvoices.co.uk
         // so they are hardcoded here.
-        if (window.location.hostname.includes('southernvoices')) {
-            jsonFilename = '/db_uploads/Spem_in_alium-spem-2.json_17080194819731.json';
+        const sv = window.location.hostname.includes('southernvoices');
+        let svfiles = [];
+        if (sv) {
+            jsonFilename = '/db_uploads/Spem_in_alium-spem-2.json_17083537375324.json';
             defaultaudiofile = '/db_uploads/Spem_in_alium-Whole_choir_17079473660428.mp3';
-            const svfiles = [
+            svfiles = [
                 [
                     '/db_uploads/Spem_in_alium-Choir_1_-_Soprano_17079379676027.mp3',
                     '/db_uploads/Spem_in_alium-Choir_1_-_Alto_17079463591475.mp3',
