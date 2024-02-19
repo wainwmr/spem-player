@@ -152,3 +152,21 @@ body {
         }
     }
 }
+
+#blurb {
+    color: #999;
+    text-align: right;
+    
+    a {
+        color: #123456;
+        text-decoration: none;
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    #copyright {
+        font-size: smaller;
+        padding: 0;
+    }
+}

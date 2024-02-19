@@ -133,4 +133,20 @@ body {
   .controls .statusarea {
     display: none;
   }
+}
+
+#blurb {
+  color: #999;
+  text-align: right;
+}
+#blurb a {
+  color: #123456;
+  text-decoration: none;
+}
+#blurb a:hover {
+  text-decoration: underline;
+}
+#blurb #copyright {
+  font-size: smaller;
+  padding: 0;
 }/*# sourceMappingURL=index.css.map */
