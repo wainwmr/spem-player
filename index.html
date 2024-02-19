@@ -19,7 +19,7 @@
         </div>
         <div class="controls">
             <div class="playpause" tabindex="0">
-                <button id="playpausebutton" class="button paused control"></button>
+                <span id="playpausebutton" class="button paused control"></span>
             </div>
             <div class="controlsection choircontrol">
                 <label for="choir">Choir</label>
@@ -62,80 +62,81 @@
         </div>
     </div>
     <div id="blurb">
-        <p><em>Spem in alium</em> - Thomas Tallis (1505 - 1585).  Recordings by <a href="https://www.choirsoftheearth.com">Choir of the Earth</a>.</p>
+        <p><em>Spem in alium</em> - Thomas Tallis (1505 - 1585). Recordings by <a
+                href="https://www.choirsoftheearth.com">Choir of the Earth</a>.</p>
         <p id="copyright">© 2024, Mark Wainwright</p>
     </div>
 
     <script>
 
-        const sv = false;
+        let defaultaudiofile = '../audio/spem.mp3';
+        let jsonFilename = './spem.json';
 
-        const defaultaudiofile = sv ?
-            '/db_uploads/Spem_in_alium-Whole_choir_17079473660428.mp3' :
-            '../audio/spem.mp3';
-
-        const jsonFilename = sv ?
-            '/db_uploads/Spem_in_alium-spem-2.json_17080194819731.json' :
-            './spem.json'
-
-        const svfiles = [
-            [
-                '/db_uploads/Spem_in_alium-Choir_1_-_Soprano_17079379676027.mp3',
-                '/db_uploads/Spem_in_alium-Choir_1_-_Alto_17079463591475.mp3',
-                '/db_uploads/Spem_in_alium-Choir_1_-_Tenor_17079464291625.mp3',
-                '/db_uploads/Spem_in_alium-Choir_1_-_Baritone_17079464558424.mp3',
-                '/db_uploads/Spem_in_alium-Choir_1_-_Bass_17079464967852.mp3'
-            ],
-            [
-                '/db_uploads/Spem_in_alium-Choir_2_-_Soprano_17079465329272.mp3',
-                '/db_uploads/Spem_in_alium-Choir_2_-_Alto_1707946557566.mp3',
-                '/db_uploads/Spem_in_alium-Choir_2_-_Tenor_17079465811394.mp3',
-                '/db_uploads/Spem_in_alium-Choir_2_-_Baritone_17079466024846.mp3',
-                '/db_uploads/Spem_in_alium-Choir_2_-_Bass_17079466248904.mp3'
-            ],
-            [
-                '/db_uploads/Spem_in_alium-Choir_3_-_Soprano_17079467897051.mp3',
-                '/db_uploads/Spem_in_alium-Choir_3_-_Alto_17079468079962.mp3',
-                '/db_uploads/Spem_in_alium-Choir_3_-_Tenor_17079468289072.mp3',
-                '/db_uploads/Spem_in_alium-Choir_3_-_Baritone_17079468478816.mp3',
-                '/db_uploads/Spem_in_alium-Choir_3_-_Bass_17079468681164.mp3'
-            ],
-            [
-                '/db_uploads/Spem_in_alium-Choir_4_-_Soprano_17079468930359.mp3',
-                '/db_uploads/Spem_in_alium-Choir_4_-_Alto_17079469103372.mp3',
-                '/db_uploads/Spem_in_alium-Choir_4_-_Tenor_17079469295052.mp3',
-                '/db_uploads/Spem_in_alium-Choir_4_-_Baritone_17079492066201.mp3',
-                '/db_uploads/Spem_in_alium-Choir_4_-_Bass_17079469457173.mp3'
-            ],
-            [
-                '/db_uploads/Spem_in_alium-Choir_5_-_Soprano_17079469713956.mp3',
-                '/db_uploads/Spem_in_alium-Choir_5_-_Alto_17079469890646.mp3',
-                '/db_uploads/Spem_in_alium-Choir_5_-_Tenor_17079470084183.mp3',
-                '/db_uploads/Spem_in_alium-Choir_5_-_Baritone_17079470332751.mp3',
-                '/db_uploads/Spem_in_alium-Choir_5_-_Bass_17079470531725.mp3'
-            ],
-            [
-                '/db_uploads/Spem_in_alium-Choir_6_-_Soprano_17079470789921.mp3',
-                '/db_uploads/Spem_in_alium-Choir_6_-_Alto_17079471031399.mp3',
-                '/db_uploads/Spem_in_alium-Choir_6_-_Tenor_1707947123417.mp3',
-                '/db_uploads/Spem_in_alium-Choir_6_-_Baritone_17079471420792.mp3',
-                '/db_uploads/Spem_in_alium-Choir_6_-_Bass_17079492502735.mp3'
-            ],
-            [
-                '/db_uploads/Spem_in_alium-Choir_7_-_Soprano_17079471702897.mp3',
-                '/db_uploads/Spem_in_alium-Choir_7_-_Alto_17079471917271.mp3',
-                '/db_uploads/Spem_in_alium-Choir_7_-_Tenor_17079472111989.mp3',
-                '/db_uploads/Spem_in_alium-Choir_7_-_Baritone_17079472290499.mp3',
-                '/db_uploads/Spem_in_alium-Choir_7_-_Bass_17079472450269.mp3'
-            ],
-            [
-                '/db_uploads/Spem_in_alium-Choir_8_-_Soprano_17079472689341.mp3',
-                '/db_uploads/Spem_in_alium-Choir_8_-_Alto_1707947288511.mp3',
-                '/db_uploads/Spem_in_alium-Choir_8_-_Tenor_17079473070395.mp3',
-                '/db_uploads/Spem_in_alium-Choir_8_-_Baritone_17079473259201.mp3',
-                '/db_uploads/Spem_in_alium-Choir_8_-_Bass_17079473467767.mp3'
+        // Hacky section
+        // I can't control the filenames when installed on southernvoices.co.uk
+        // so they are hardcoded here.
+        if (window.location.hostname.includes('southernvoices')) {
+            jsonFilename = '/db_uploads/Spem_in_alium-spem-2.json_17080194819731.json';
+            defaultaudiofile = '/db_uploads/Spem_in_alium-Whole_choir_17079473660428.mp3';
+            const svfiles = [
+                [
+                    '/db_uploads/Spem_in_alium-Choir_1_-_Soprano_17079379676027.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_1_-_Alto_17079463591475.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_1_-_Tenor_17079464291625.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_1_-_Baritone_17079464558424.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_1_-_Bass_17079464967852.mp3'
+                ],
+                [
+                    '/db_uploads/Spem_in_alium-Choir_2_-_Soprano_17079465329272.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_2_-_Alto_1707946557566.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_2_-_Tenor_17079465811394.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_2_-_Baritone_17079466024846.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_2_-_Bass_17079466248904.mp3'
+                ],
+                [
+                    '/db_uploads/Spem_in_alium-Choir_3_-_Soprano_17079467897051.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_3_-_Alto_17079468079962.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_3_-_Tenor_17079468289072.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_3_-_Baritone_17079468478816.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_3_-_Bass_17079468681164.mp3'
+                ],
+                [
+                    '/db_uploads/Spem_in_alium-Choir_4_-_Soprano_17079468930359.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_4_-_Alto_17079469103372.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_4_-_Tenor_17079469295052.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_4_-_Baritone_17079492066201.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_4_-_Bass_17079469457173.mp3'
+                ],
+                [
+                    '/db_uploads/Spem_in_alium-Choir_5_-_Soprano_17079469713956.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_5_-_Alto_17079469890646.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_5_-_Tenor_17079470084183.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_5_-_Baritone_17079470332751.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_5_-_Bass_17079470531725.mp3'
+                ],
+                [
+                    '/db_uploads/Spem_in_alium-Choir_6_-_Soprano_17079470789921.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_6_-_Alto_17079471031399.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_6_-_Tenor_1707947123417.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_6_-_Baritone_17079471420792.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_6_-_Bass_17079492502735.mp3'
+                ],
+                [
+                    '/db_uploads/Spem_in_alium-Choir_7_-_Soprano_17079471702897.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_7_-_Alto_17079471917271.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_7_-_Tenor_17079472111989.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_7_-_Baritone_17079472290499.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_7_-_Bass_17079472450269.mp3'
+                ],
+                [
+                    '/db_uploads/Spem_in_alium-Choir_8_-_Soprano_17079472689341.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_8_-_Alto_1707947288511.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_8_-_Tenor_17079473070395.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_8_-_Baritone_17079473259201.mp3',
+                    '/db_uploads/Spem_in_alium-Choir_8_-_Bass_17079473467767.mp3'
+                ]
             ]
-        ]
+        }
 
         var spemaudio = new Audio(defaultaudiofile);
 
