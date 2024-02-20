@@ -18,10 +18,10 @@
     </style>
 
     <div class="wrapper">
-        <div class="mainspem">
-            <div id="spem">
-                <canvas id="spemCanvas"></canvas>
-            </div>
+        <header>Spem Player
+        </header>
+        <div id="spemFrame">
+            <canvas id="spemCanvas"></canvas>
         </div>
         <div class="controls">
             <div class="playpause" tabindex="0">
@@ -154,6 +154,7 @@
         let timerId = 0;
 
         const canvas = document.getElementById("spemCanvas");
+        const container = document.getElementById("spemFrame");
         const choiroutput = document.getElementById('choir-output');
         const partoutput = document.getElementById('part-output');
         const baroutput = document.getElementById('bar-output');
@@ -164,15 +165,9 @@
 
         const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass'];
 
-        canvas.height = 400;
-        canvas.width = 1380;
-
-        canvas.style.width = '100%';
-        canvas.style.height = '100%';
-
-        const barWidth = Math.floor(canvas.width / 138);
-        const choirHeight = Math.floor(canvas.height / 8);
-        const partHeight = Math.floor(choirHeight / 5);
+        let barWidth = 0;
+        let choirHeight = 0;
+        let partHeight = 0;
 
         // https://github.com/PimpTrizkit/PJs/wiki/12.-Shade,-Blend-and-Convert-a-Web-Color-(pSBC.js)#stackoverflow-archive-begin
         // Version 4.0
@@ -324,22 +319,11 @@
 
         function loadAudio(c, p, b) {
             let file = defaultaudiofile;
-            if (!sv) {
-                if (c === '0' || p === '0') {
-                    file = defaultaudiofile;
-                }
-                else {
-                    file = `../audio/spem-${c}-${getPartName(p)}.mp3`;
-                }
+            if (c != '0' && p != '0') {
+                file = sv   ? svfiles[c - 1][p - 1] 
+                            : `../audio/spem-${c}-${getPartName(p)}.mp3`;
             }
-            else {
-                if (c === '0' || p === '0') {
-                    file = svdefaultfile;
-                }
-                else {
-                    file = svfiles[c - 1][p - 1];
-                }
-            }
+
             spemaudio.src = file;
             spemaudio.currentTime = b * 4 * beattime;
         }
@@ -496,6 +480,22 @@
 
             userInputChanged();
         });
+
+        window.onload = window.onresize = calculateCanvasSize;
+
+        function calculateCanvasSize() {
+            canvas.width = container.clientWidth * 4;
+            canvas.height = 300 * 4;
+
+            barWidth = canvas.width / 138;
+            choirHeight = canvas.height / 8;
+            partHeight = choirHeight / 5;
+
+            console.log(`calculateCanvasSize(): barWidth=${barWidth}, choirHeight=${choirHeight}, partHeight=${partHeight}`)
+            
+            changed = true;
+            paintCanvas();
+        }
 
     </script>
 
