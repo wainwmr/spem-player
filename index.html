@@ -319,22 +319,11 @@
 
         function loadAudio(c, p, b) {
             let file = defaultaudiofile;
-            if (!sv) {
-                if (c === '0' || p === '0') {
-                    file = defaultaudiofile;
-                }
-                else {
-                    file = `../audio/spem-${c}-${getPartName(p)}.mp3`;
-                }
+            if (c != '0' && p != '0') {
+                file = sv   ? svfiles[c - 1][p - 1] 
+                            : `../audio/spem-${c}-${getPartName(p)}.mp3`;
             }
-            else {
-                if (c === '0' || p === '0') {
-                    file = svdefaultfile;
-                }
-                else {
-                    file = svfiles[c - 1][p - 1];
-                }
-            }
+
             spemaudio.src = file;
             spemaudio.currentTime = b * 4 * beattime;
         }
@@ -503,8 +492,6 @@
             partHeight = choirHeight / 5;
 
             console.log(`calculateCanvasSize(): barWidth=${barWidth}, choirHeight=${choirHeight}, partHeight=${partHeight}`)
-            console.log(['container', container.clientWidth, container.clientHeight]);
-            console.log(['canvas', canvas.width, canvas.height]);
             
             changed = true;
             paintCanvas();
