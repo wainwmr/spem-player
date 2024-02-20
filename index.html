@@ -21,7 +21,9 @@
         <header>Spem Player
         </header>
         <div id="spemFrame">
-            <canvas id="spemCanvas"></canvas>
+            <canvas id="spemCanvas">
+                Your browser does not support the HTML canvas element.
+            </canvas>
         </div>
         <div class="controls">
             <div class="playpause" tabindex="0">
@@ -320,8 +322,8 @@
         function loadAudio(c, p, b) {
             let file = defaultaudiofile;
             if (c != '0' && p != '0') {
-                file = sv   ? svfiles[c - 1][p - 1] 
-                            : `../audio/spem-${c}-${getPartName(p)}.mp3`;
+                file = sv ? svfiles[c - 1][p - 1]
+                    : `../audio/spem-${c}-${getPartName(p)}.mp3`;
             }
 
             spemaudio.src = file;
@@ -492,10 +494,36 @@
             partHeight = choirHeight / 5;
 
             console.log(`calculateCanvasSize(): barWidth=${barWidth}, choirHeight=${choirHeight}, partHeight=${partHeight}`)
-            
+
             changed = true;
             paintCanvas();
         }
+
+        // Not convinced the Maths is right here...
+        function getTouchPos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            return (evt.targetTouches[0].pageX * 139 / canvas.clientWidth);
+        }
+
+        let touchBar = -1;
+        canvas.addEventListener("touchstart", (evt) => {
+            touchBar = getTouchPos(evt);
+            setBar(Number(touchBar));
+            userInputChanged();
+            evt.preventDefault();
+
+            canvas.addEventListener("touchmove", (evt) => {
+                pauseSpem();
+                touchBar = getTouchPos(evt);
+                setBar(Number(touchBar));
+                userInputChanged();
+                evt.preventDefault();
+            });
+            canvas.addEventListener("touchend", (evt) => {
+                playSpem();
+            });
+        });
+
 
     </script>
 
