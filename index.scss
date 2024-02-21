@@ -1,6 +1,7 @@
 :root {
     --main-bg-color: #123456;
-    --text-color: white;
+    --text-color: whitesmoke;
+    --status-color: #aaa;
     box-sizing: border-box;
 }
 
@@ -134,16 +135,19 @@ body {
         flex-grow: 1;
     }
 
-    .statusarea {
+    #statusarea {
         flex-basis: 5rem;
         display: flex;
         flex-direction: column;
-        .status {
-            font-size: 0.9rem;
-            color: #999;
-            text-align: left;
-            text-transform: capitalize;
+        font-size: 0.9rem;
+        text-align: left;
+        text-transform: capitalize;
+        color: var(--status-color);
+        &.hide {
+            transition: 1.5s;
+            color: var(--main-bg-color);
         }
+    
         @media screen and (max-width: 25rem) {
             display: none;
         }
