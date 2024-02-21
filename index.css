@@ -1,6 +1,7 @@
 :root {
   --main-bg-color: #123456;
-  --text-color: white;
+  --text-color: whitesmoke;
+  --status-color: #aaa;
   -webkit-box-sizing: border-box;
           box-sizing: border-box;
 }
@@ -147,7 +148,7 @@ body {
       -ms-flex-positive: 1;
           flex-grow: 1;
 }
-.controls .statusarea {
+.controls #statusarea {
   -ms-flex-preferred-size: 5rem;
       flex-basis: 5rem;
   display: -webkit-box;
@@ -157,15 +158,18 @@ body {
   -webkit-box-direction: normal;
       -ms-flex-direction: column;
           flex-direction: column;
-}
-.controls .statusarea .status {
   font-size: 0.9rem;
-  color: #999;
   text-align: left;
   text-transform: capitalize;
+  color: var(--status-color);
+}
+.controls #statusarea.hide {
+  -webkit-transition: 1.5s;
+  transition: 1.5s;
+  color: var(--main-bg-color);
 }
 @media screen and (max-width: 25rem) {
-  .controls .statusarea {
+  .controls #statusarea {
     display: none;
   }
 }
