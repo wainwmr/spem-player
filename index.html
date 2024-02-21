@@ -2,10 +2,13 @@
 <html lang="en">
 
 <head>
+    <!-- BUG: Load in ARC and it thinks this is not English!  (First word Spem??) -->
     <meta charset="UTF-8">
-    <title>Spem</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spem Player</title>
     <link rel="icon" href="https://fav.farm/🔥">
     <link rel="stylesheet" href="./index.css">
+    <!-- TODO: include main.js as separate file.  But needs to be easy to install on sv.co.uk -->
 
 </head>
 
@@ -18,17 +21,20 @@
     </style>
 
     <div class="wrapper">
+        <!-- TODO: Needs version - ideally auto-increasing somehow -->
         <header>Spem Player
         </header>
         <div id="spemFrame">
-            <canvas id="spemCanvas">
+            <canvas id="spemCanvas" autofocus>
                 Your browser does not support the HTML canvas element.
             </canvas>
         </div>
+        <!-- TODO: use id= for controls, playpause and controlsection -->
         <div class="controls">
             <div class="playpause" tabindex="0">
                 <span id="playpausebutton" class="button paused control"></span>
             </div>
+            <!-- TODO: Can we populate choir, part and bar from parameters in the URL? -->
             <div class="controlsection choircontrol">
                 <label for="choir">Choir</label>
                 <select name="choir" id="choir-select" class="control">
@@ -54,6 +60,7 @@
                     <option value="5">Bass</option>
                 </select>
             </div>
+            <!-- BUG: on mobile, bar input field is bigger than select fields -->
             <div class="controlsection barcontrol">
                 <label for="bar">Bar</label>
                 <input type="number" name="bar" id="bar-field" value="0" min="0" max="138" class="control" />
@@ -61,6 +68,7 @@
 
             <div class="statusspacer"></div>
 
+            <!-- BUG: do we really need class=status?  there's nothing else in statusarea. -->
             <div class="statusarea">
                 <span id="choir-output" class="status">All</span>
                 <span id="part-output" class="status">All</span>
@@ -77,12 +85,13 @@
 
     <script>
 
+        // TODO: Perhaps locations = { json: <String>, defaultaudio: <String>, audio: <String>[8][5] }?
         let defaultaudiofile = '../audio/spem.mp3';
         let jsonFilename = './spem.json';
 
-        // Hacky section
+        // HACK: different filenames when on southernvoices.co.uk
         // I can't control the filenames when installed on southernvoices.co.uk
-        // so they are hardcoded here.
+        // so they are hardcoded here.  Ugh.  Sorry.
         const sv = window.location.hostname.includes('southernvoices');
         let svfiles = [];
         if (sv) {
@@ -148,6 +157,7 @@
             ]
         }
 
+        // TODO: Wait for loading? Or disabled play till loaded?
         var spemaudio = new Audio(defaultaudiofile);
 
         // const beattime = 0.97; // seconds per beat
@@ -155,15 +165,15 @@
 
         let timerId = 0;
 
-        const canvas = document.getElementById("spemCanvas");
         const container = document.getElementById("spemFrame");
-        const choiroutput = document.getElementById('choir-output');
-        const partoutput = document.getElementById('part-output');
-        const baroutput = document.getElementById('bar-output');
+        const canvas = document.getElementById("spemCanvas");
+        const playpausebutton = document.getElementById('playpausebutton');
         const choirselect = document.getElementById('choir-select');
         const partselect = document.getElementById('part-select');
         const barinput = document.getElementById('bar-field');
-        const playpausebutton = document.getElementById('playpausebutton');
+        const choiroutput = document.getElementById('choir-output');
+        const partoutput = document.getElementById('part-output');
+        const baroutput = document.getElementById('bar-output');
 
         const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass'];
 
@@ -199,8 +209,11 @@
             else return "#" + (4294967296 + r * 16777216 + g * 65536 + b * 256 + (f ? m(a * 255) : 0)).toString(16).slice(1, f ? undefined : -2)
         }
 
+        // TODO: put these colours in a config object? or as
+        // SASS variables?
         const backgroundColor = "#123456";
         const lineColor = "#FFFFFF"
+        // BUG: Choir 8 blue is too dark for the background
         const choirColors = [
             "#c1121f",
             "#ce6d8b",
@@ -220,6 +233,7 @@
 
         let choirs = undefined;
 
+        // TODO: use async await to make more readable?
         function paintJsonToCanvas(filename) {
             fetch(filename)
                 .then(response => response.json())
@@ -232,6 +246,18 @@
         // use changed to know whether we need to redraw or not
         var changed = true;
 
+        // TODO: Check if choir has changed (like for bar below)
+        function setChoir(c) {
+            choirselect.value = c;
+            changed = true;
+        }
+
+        // TODO: Check if part has changed (like for bar below)
+        function setPart(p) {
+            partselect.value = p;
+            changed = true;
+        }
+
         function setBar(b) {
             const oldBar = barinput.value;
             if (b != oldBar) {
@@ -240,17 +266,9 @@
             }
         }
 
-        function setPart(p) {
-            partselect.value = p;
-            changed = true;
-        }
-
-        function setChoir(c) {
-            choirselect.value = c;
-            changed = true;
-        }
-
-
+        // TODO: Should canvas have a 'padding' so that highlight on choir/part = 1/1 and 8/5 doesn't
+        // look cut off?  And so that you don't have square line ends for the last bar?
+        // And how many bars are there exactly? 138, 139, 140?
         function paintCanvas() {
 
             if (!changed) {
@@ -281,6 +299,7 @@
                 for (let p = 0; p < 5; p++) {
                     const startY = c * choirHeight + p * partHeight;
 
+                    // BUG: right hand side of line at bar 138 is not round but square
                     const ranges = parts[p].ranges;
                     ranges.forEach(r => {
                         const [from, to] = getRange(r);
@@ -297,6 +316,8 @@
                 }
             }
 
+            // BUG: when bar === 0, line is only half drawn
+            // BUG: line should be thicker on mobile
             ctx.save();
             let b = barinput.value;
             ctx.beginPath();
@@ -319,6 +340,9 @@
             ];
         }
 
+        // TODO: define all filenames up above, so there's no need
+        // for the yucky sv variable here.  SHould just be
+        //  file = location.audio[c-1][p-1];
         function loadAudio(c, p, b) {
             let file = defaultaudiofile;
             if (c != '0' && p != '0') {
@@ -327,14 +351,19 @@
             }
 
             spemaudio.src = file;
+            // TODO: Wait for loading? Or disabled play till loaded?
+
             spemaudio.currentTime = b * 4 * beattime;
         }
 
+        // TODO: Are you sure spemaudio is loaded?
         function playSpem() {
             if (spemaudio.paused) {
                 spemaudio.play();
                 playpausebutton.classList.remove("paused");
                 clearInterval(timerId);
+                // BUG: at the end of the piece, the bar number climbs to 141 and the playpause 
+                // button never reverts to play. Does the timer ever stop??
                 timerId = setInterval(() => {
                     setBar(Math.floor(spemaudio.currentTime / (beattime * 4)));
                     paintCanvas();
@@ -359,6 +388,7 @@
             }
         }
 
+        // BUG: never used
         function getPartNumber(s) {
             return allparts.indexOf(s) + 1;
         }
@@ -367,11 +397,12 @@
             return allparts[n - 1];
         }
 
+        // TODO:  Move functions to the right places
         paintJsonToCanvas(jsonFilename);
 
-        playpausebutton.addEventListener('click', () => {
-            playpause();
-        });
+        // TODO: put all event listeners in a single block on page load?  Or json load?  or something?
+
+        playpausebutton.addEventListener('click', playpause);
 
         canvas.addEventListener('click', function (evt) {
             const [c, p, b] = getMousePos(canvas, evt);
@@ -384,12 +415,17 @@
             playSpem();
         });
 
+        // BUG: Should not display this area when mouse not possible
+        // e.g. for mobile devices
+        // TODO: Make the status section invisible except for the second or so
+        // when they have just moved the mouse. It's really just there to help people know 
+        // where they are about to click.
         canvas.addEventListener('mousemove', function (e) {
             const [c, p, b] = getMousePos(canvas, e);
 
-            choiroutput.innerHTML = "Choir: " + c;
+            choiroutput.innerHTML = "Choir " + c;
             partoutput.innerHTML = getPartName(p);
-            baroutput.innerHTML = b;
+            baroutput.innerHTML = "Bar " + b;
 
         }, false);
 
@@ -417,6 +453,8 @@
             loadAudio(choirselect.value, partselect.value, barinput.value);
         }
 
+        // TODO: Need to tell user the keyboard controls somewhere
+        // TODO: Use x to clear choir/part?
         document.addEventListener("keydown", (event) => {
             // don't handle keyboard events on the four control widgets
             // cos it messes with the UI interaction
@@ -427,17 +465,18 @@
             if (event.isComposing || event.keyCode === 229) {
                 return;
             }
-            if (event.code == 'Space') {
+            if (event.code == 'Enter') {
                 playpause();
                 return;
             }
-            if (event.code === 'ArrowRight') {
+            if (event.code === 'KeyD') {
                 setBar(Number(barinput.value) + 1);
             }
-            else if (event.code === 'ArrowLeft') {
+            else if (event.code === 'KeyA') {
                 setBar(Number(barinput.value) - 1);
             }
-            else if (event.code === 'ArrowDown') {
+            // TODO: Clumsy code.  Use mod arithmetic maybe?
+            else if (event.code === 'KeyS') {
                 let c = Number(choirselect.value);
                 let p = Number(partselect.value);
                 if (c === 8 && p === 5) {
@@ -458,7 +497,7 @@
                 setChoir(c);
                 setPart(p);
             }
-            else if (event.code === 'ArrowUp') {
+            else if (event.code === 'KeyW') {
                 let c = Number(choirselect.value);
                 let p = Number(partselect.value);
                 if (c === 1 && p === 1) {
@@ -483,6 +522,7 @@
             userInputChanged();
         });
 
+        // TODO: convert to addEventListener for consistency
         window.onload = window.onresize = calculateCanvasSize;
 
         function calculateCanvasSize() {
@@ -493,23 +533,31 @@
             choirHeight = canvas.height / 8;
             partHeight = choirHeight / 5;
 
-            console.log(`calculateCanvasSize(): barWidth=${barWidth}, choirHeight=${choirHeight}, partHeight=${partHeight}`)
+            // console.log(`calculateCanvasSize(): barWidth=${barWidth}, choirHeight=${choirHeight}, partHeight=${partHeight}`)
 
             changed = true;
             paintCanvas();
         }
 
-        // Not convinced the Maths is right here...
+        // TODO: Not convinced the Maths for getTouchPos() is right...
         function getTouchPos(evt) {
+            // TOSO: rect not used!
             const rect = canvas.getBoundingClientRect();
+            // BUG: 139?? 138? 140? 138 bars of music plus a bar at the start and at the end?  And padding?
             return (evt.targetTouches[0].pageX * 139 / canvas.clientWidth);
         }
 
+        // BUG: on mobile, touch to move bar to half-way and play
+        // and it starts from bar 0.
         let touchBar = -1;
         canvas.addEventListener("touchstart", (evt) => {
             touchBar = getTouchPos(evt);
             setBar(Number(touchBar));
             userInputChanged();
+
+            // BUG: [Violation] Added non-passive event listener to a scroll-blocking <some> event.
+            // Can we use no bubble thing instead of preventDefault()?  Don't want gestures on canvas
+            // to move the screen around when on mobile.
             evt.preventDefault();
 
             canvas.addEventListener("touchmove", (evt) => {
