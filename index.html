@@ -281,7 +281,7 @@
             ctx.save();
             ctx.font = "30px Arial";
             ctx.fillStyle = "white";
-            ctx.scale(canvas.width/canvas.height, 1);
+            ctx.scale(canvas.width / canvas.height, 1);
             ctx.fillText(`Loading...`, 0, canvas.height / 2);
             ctx.restore();
         }
@@ -359,17 +359,26 @@
             ];
         }
 
+        function getFilename(s) {
+           return s.split("/").pop();
+        }
+
         // TODO: define all filenames up above, so there's no need
         // for the yucky sv variable here.  SHould just be
         //  file = location.audio[c-1][p-1];
         function loadAudio(c, p, b) {
-            let file = defaultaudiofile;
+            let newfile = defaultaudiofile;
             if (c != '0' && p != '0') {
-                file = sv ? svfiles[c - 1][p - 1]
+                newfile = sv ? svfiles[c - 1][p - 1]
                     : `../audio/spem-${c}-${getPartName(p)}.mp3`;
             }
 
-            spemaudio.src = file;
+            // just compare the filename, not the whole URL, to see if we
+            // need to load a new MP3
+            if (getFilename(newfile) != getFilename(spemaudio.src)) {
+                console.log("Loading new file");
+                spemaudio.src = newfile;
+            }
             // TODO: Wait for loading? Or disabled play till loaded?
 
             spemaudio.currentTime = b * 4 * beattime;
@@ -444,7 +453,7 @@
         // Field events (chaning choir, part or bar)
         // -----------------------------------------------------
 
-        function userInputChanged() {
+        function userInputChanged(load = true) {
             changed = true;
             pauseSpem();
             // If Choir or Part is All, then set the other to All
@@ -460,7 +469,9 @@
             }
             paintCanvas();
 
-            loadAudio(choirselect.value, partselect.value, barinput.value);
+            if (load) {
+                loadAudio(choirselect.value, partselect.value, barinput.value);
+            }
         }
 
         // -----------------------------------------------------
@@ -534,7 +545,7 @@
 
         // TODO: Not convinced the Maths for getTouchPos() is right...
         function getTouchPos(evt) {
-            // TOSO: rect not used!
+            // TODO: rect not used!
             const rect = canvas.getBoundingClientRect();
             return (evt.targetTouches[0].pageX * 140 / canvas.clientWidth);
         }
@@ -545,7 +556,7 @@
         function touchStarted(evt) {
             touchBar = getTouchPos(evt);
             setBar(parseInt(touchBar));
-            userInputChanged();
+            userInputChanged(false);
 
             // BUG: [Violation] Added non-passive event listener to a scroll-blocking <some> event.
             // Can we use no bubble thing instead of preventDefault()?  Don't want gestures on canvas
@@ -556,10 +567,11 @@
                 pauseSpem();
                 touchBar = getTouchPos(e);
                 setBar(parseInt(touchBar));
-                userInputChanged();
+                userInputChanged(false);
                 e.preventDefault();
             });
             canvas.addEventListener("touchend", (e) => {
+                userInputChanged(true);
                 playSpem();
             });
         }
@@ -576,6 +588,7 @@
             showLoadingOnCanvas();
             const response = await fetch(jsonFilename);
             json = await response.json();
+            loadAudio(0, 0, 0);
             paintCanvas();
 
             playpausebutton.addEventListener('click', playpause);
