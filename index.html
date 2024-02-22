@@ -21,8 +21,10 @@
     </style>
 
     <div class="wrapper">
-        <!-- TODO: Needs version - ideally auto-increasing somehow -->
-        <header>Spem Player
+        <!-- TODO: Needs auto-increasing version somehow -->
+        <header>
+            <title>Spem Player</title>
+            <span class="version">v1.0.2</span>
         </header>
         <div id="spemFrame">
             <canvas id="spemCanvas" autofocus>
@@ -159,6 +161,9 @@
         // TODO: Wait for loading? Or disabled play till loaded?
         var spemaudio = new Audio(defaultaudiofile);
 
+        // storing the definition of all the voice parts
+        var json;
+
         // const beattime = 0.97; // seconds per beat
         const beattime = 0.967;
 
@@ -232,16 +237,8 @@
             return s.split("-").map(numStr => parseFloat(numStr));
         }
 
-        let choirs = undefined;
-
-        // TODO: use async await to make more readable?
-        function paintJsonToCanvas(filename) {
-            fetch(filename)
-                .then(response => response.json())
-                .then(music => {
-                    choirs = music.choirs;
-                    paintCanvas(music.choirs);
-                });
+        function getPartName(n) {
+            return allparts[n - 1];
         }
 
         // use changed to know whether we need to redraw or not
@@ -265,6 +262,29 @@
                 barinput.value = b;
                 changed = true;
             }
+        }
+
+        function calculateCanvasSize() {
+            canvas.width = container.clientWidth * 4;
+            canvas.height = 300 * 2;
+
+            barWidth = (canvas.width - (2 * canvasPadding)) / 140;
+            choirHeight = (canvas.height - (2 * canvasPadding)) / 8;
+            partHeight = choirHeight / 5;
+
+            // console.log(`calculateCanvasSize(): canvas.width= ${canvas.width}, canvas.height=${canvas.height}, barWidth=${barWidth}, choirHeight=${choirHeight}, partHeight=${partHeight}`)
+
+            changed = true;
+        }
+
+        function showLoadingOnCanvas() {
+            const ctx = canvas.getContext("2d");
+            ctx.save();
+            ctx.font = "30px Arial";
+            ctx.fillStyle = "white";
+            ctx.scale(canvas.width/canvas.height, 1);
+            ctx.fillText(`Loading...`, 0, canvas.height / 2);
+            ctx.restore();
         }
 
         function paintCanvas() {
@@ -297,7 +317,7 @@
             ctx.lineWidth = 0.9 * partHeight;
             ctx.lineCap = "round";
             for (let c = 0; c < 8; c++) {
-                const parts = choirs[c].parts;
+                const parts = json.choirs[c].parts;
                 for (let p = 0; p < 5; p++) {
                     const startY = canvasPadding + (c * choirHeight) + (p * partHeight);
 
@@ -388,24 +408,12 @@
             }
         }
 
-        // BUG: never used
-        function getPartNumber(s) {
-            return allparts.indexOf(s) + 1;
-        }
+        // -----------------------------------------------------
+        // Mouse events
+        // -----------------------------------------------------
 
-        function getPartName(n) {
-            return allparts[n - 1];
-        }
-
-        // TODO:  Move functions to the right places
-        paintJsonToCanvas(jsonFilename);
-
-        // TODO: put all event listeners in a single block on page load?  Or json load?  or something?
-
-        playpausebutton.addEventListener('click', playpause);
-
-        canvas.addEventListener('click', function (evt) {
-            const [c, p, b] = getMousePos(canvas, evt);
+        function canvasClicked(e) {
+            const [c, p, b] = getMousePos(canvas, e);
 
             setChoir(c);
             setPart(p);
@@ -413,12 +421,13 @@
 
             userInputChanged();
             playSpem();
-        });
+        }
 
+
+        let intId = 0;
         // BUG: Should not display this area when mouse not possible
         // e.g. for mobile devices
-        let intId = 0;
-        canvas.addEventListener('mousemove', function (e) {
+        function canvasMoved(e) {
             const [c, p, b] = getMousePos(canvas, e);
 
             choiroutput.innerHTML = "Choir " + c;
@@ -426,16 +435,15 @@
             baroutput.innerHTML = "Bar " + b;
             statusarea.classList.remove("hide");
             clearInterval(intId);
-            intId = setInterval(function() {
+            intId = setInterval(function () {
                 statusarea.classList.add("hide");
             }, 1500);
 
-        }, false);
+        }
 
-        // Change the MP3 file if they change the choir, part or bar
-        [choirselect,
-            partselect,
-            barinput].forEach(el => el.addEventListener('change', userInputChanged));
+        // -----------------------------------------------------
+        // Field events (chaning choir, part or bar)
+        // -----------------------------------------------------
 
         function userInputChanged() {
             changed = true;
@@ -456,12 +464,15 @@
             loadAudio(choirselect.value, partselect.value, barinput.value);
         }
 
+        // -----------------------------------------------------
+        // Keyboard events (wasd)
+        // -----------------------------------------------------
+
         // TODO: Need to tell user the keyboard controls somewhere
-        // TODO: Use x to clear choir/part?
-        document.addEventListener("keydown", (event) => {
+        function keyboardTapped(e) {
             // don't handle keyboard events on the four control widgets
             // cos it messes with the UI interaction
-            const classes = [...event.target.classList];
+            const classes = [...e.target.classList];
             if (classes.includes('control')) {
                 return;
             }
@@ -474,9 +485,11 @@
             }
             if (event.code === 'KeyD') {
                 setBar(Number(barinput.value) + 1);
+                userInputChanged();
             }
             else if (event.code === 'KeyA') {
                 setBar(Number(barinput.value) - 1);
+                userInputChanged();
             }
             else if (event.code === 'KeyS') {
                 if ((choirselect.value === '8') && (partselect.value === '5')) {
@@ -491,6 +504,7 @@
                         setChoir(c);
                     }
                 }
+                userInputChanged();
             }
             else if (event.code === 'KeyW') {
                 if ((choirselect.value === '0') && (partselect.value === '0')) {
@@ -498,35 +512,26 @@
                     setPart(5);
                 }
                 else {
-                    p = (4 + Number(partselect.value)) % 5;  
+                    p = (4 + Number(partselect.value)) % 5;
                     setPart(p);
                     if (p === 0) {
                         setPart(5);
-                        c = ((7 + Number(choirselect.value)) % 8);  
+                        c = ((7 + Number(choirselect.value)) % 8);
                         setChoir(c);
                     }
                 }
+                userInputChanged();
             }
-
-            userInputChanged();
-        });
-
-        // TODO: convert to addEventListener for consistency
-        window.onload = window.onresize = calculateCanvasSize;
-
-        function calculateCanvasSize() {
-            canvas.width = container.clientWidth * 4;
-            canvas.height = 300 * 2;
-
-            barWidth = (canvas.width - (2 * canvasPadding)) / 140;
-            choirHeight = (canvas.height - (2 * canvasPadding)) / 8;
-            partHeight = choirHeight / 5;
-
-            // console.log(`calculateCanvasSize(): canvas.width= ${canvas.width}, canvas.height=${canvas.height}, barWidth=${barWidth}, choirHeight=${choirHeight}, partHeight=${partHeight}`)
-
-            changed = true;
-            paintCanvas();
+            else if (event.code === 'KeyX') {
+                setChoir(0);
+                setPart(0);
+                userInputChanged();
+            }
         }
+
+        // -----------------------------------------------------
+        // Touch events (mobible, iPad)
+        // -----------------------------------------------------
 
         // TODO: Not convinced the Maths for getTouchPos() is right...
         function getTouchPos(evt) {
@@ -538,28 +543,55 @@
         // BUG: on mobile, touch to move bar to half-way and play
         // and it starts from bar 0.
         let touchBar = -1;
-        canvas.addEventListener("touchstart", (evt) => {
+        function touchStarted(evt) {
             touchBar = getTouchPos(evt);
-            setBar(Number(touchBar));
+            setBar(parseInt(touchBar));
             userInputChanged();
 
             // BUG: [Violation] Added non-passive event listener to a scroll-blocking <some> event.
             // Can we use no bubble thing instead of preventDefault()?  Don't want gestures on canvas
             // to move the screen around when on mobile.
-            evt.preventDefault();
+            // evt.preventDefault();
 
-            canvas.addEventListener("touchmove", (evt) => {
+            canvas.addEventListener("touchmove", (e) => {
                 pauseSpem();
-                touchBar = getTouchPos(evt);
-                setBar(Number(touchBar));
+                touchBar = getTouchPos(e);
+                setBar(parseInt(touchBar));
                 userInputChanged();
-                evt.preventDefault();
+                e.preventDefault();
             });
-            canvas.addEventListener("touchend", (evt) => {
+            canvas.addEventListener("touchend", (e) => {
                 playSpem();
             });
-        });
+        }
 
+
+        // -----------------------------------------------------
+        // Setup page
+        // -----------------------------------------------------
+
+        window.addEventListener("load", setupPage);
+
+        async function setupPage() {
+            calculateCanvasSize();
+            showLoadingOnCanvas();
+            const response = await fetch(jsonFilename);
+            json = await response.json();
+            paintCanvas();
+
+            playpausebutton.addEventListener('click', playpause);
+
+            canvas.addEventListener('click', canvasClicked);
+            canvas.addEventListener('mousemove', canvasMoved, false);
+            [choirselect,
+                partselect,
+                barinput].forEach(el => el.addEventListener('change', userInputChanged));
+            document.addEventListener("keydown", keyboardTapped);
+            canvas.addEventListener("touchstart", touchStarted, { passive: true });
+
+            // Next line not really necessary, but will make it look clearer on browser resize
+            // window.addEventListener("resize", () => {calculateCanvasSize(); paintCanvas(json); });
+        }
 
     </script>
 
