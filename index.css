@@ -20,12 +20,16 @@ body {
   background: var(--main-bg-color);
   border-radius: 1rem;
 }
-.wrapper header {
+.wrapper header title {
+  display: inline-block;
   font-size: 1.2rem;
   color: #a8c5e3;
-  padding-top: 3px;
-  padding-left: 6px;
+  padding-top: 5px;
+  padding-left: 10px;
   margin: 0;
+}
+.wrapper header .version {
+  color: #3f5e7f;
 }
 .wrapper #spemFrame {
   margin: 5px;
@@ -135,7 +139,12 @@ body {
 .controls .controlsection input,
 .controls .controlsection select,
 .controls .controlsection #bar-field {
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  border: 2px solid #5392d1;
   height: 2rem;
+  padding: 2px;
+  margin: 0;
   border-radius: 1vh;
   font-size: 1.2rem;
 }

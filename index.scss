@@ -19,12 +19,18 @@ body {
     border-radius: 1rem;
 
     header {
-        font-size: 1.2rem;
-        // BUG: make all the colours variables
-        color: #a8c5e3;
-        padding-top: 3px;
-        padding-left: 6px;
-        margin: 0;
+        title {
+            display: inline-block;
+            font-size: 1.2rem;
+            // BUG: make all the colours variables
+            color: #a8c5e3;
+            padding-top: 5px;
+            padding-left: 10px;
+            margin: 0;
+        }
+        .version {
+            color: #3f5e7f;
+        }
     }
 
     #spemFrame {
@@ -121,7 +127,11 @@ body {
         input,
         select,
         #bar-field {
+            box-sizing: border-box;
+            border: 2px solid #5392d1;
             height: 2rem;
+            padding: 2px;
+            margin: 0;
             border-radius: 1vh;
             font-size: 1.2rem;
         }
