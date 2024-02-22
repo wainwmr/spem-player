@@ -19,7 +19,7 @@ body {
     border-radius: 1rem;
 
     header {
-        title {
+        .title {
             display: inline-block;
             font-size: 1.2rem;
             // BUG: make all the colours variables
