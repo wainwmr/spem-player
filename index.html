@@ -68,11 +68,10 @@
 
             <div class="statusspacer"></div>
 
-            <!-- BUG: do we really need class=status?  there's nothing else in statusarea. -->
-            <div class="statusarea">
-                <span id="choir-output" class="status">All</span>
-                <span id="part-output" class="status">All</span>
-                <span id="bar-output" class="status">0</span>
+            <div id="statusarea" class="hide">
+                <span id="choir-output">All</span>
+                <span id="part-output">All</span>
+                <span id="bar-output">0</span>
             </div>
 
         </div>
@@ -171,6 +170,7 @@
         const choirselect = document.getElementById('choir-select');
         const partselect = document.getElementById('part-select');
         const barinput = document.getElementById('bar-field');
+        const statusarea = document.getElementById('statusarea');
         const choiroutput = document.getElementById('choir-output');
         const partoutput = document.getElementById('part-output');
         const baroutput = document.getElementById('bar-output');
@@ -417,15 +417,18 @@
 
         // BUG: Should not display this area when mouse not possible
         // e.g. for mobile devices
-        // TODO: Make the status section invisible except for the second or so
-        // when they have just moved the mouse. It's really just there to help people know 
-        // where they are about to click.
+        let intId = 0;
         canvas.addEventListener('mousemove', function (e) {
             const [c, p, b] = getMousePos(canvas, e);
 
             choiroutput.innerHTML = "Choir " + c;
             partoutput.innerHTML = getPartName(p);
             baroutput.innerHTML = "Bar " + b;
+            statusarea.classList.remove("hide");
+            clearInterval(intId);
+            intId = setInterval(function() {
+                statusarea.classList.add("hide");
+            }, 1500);
 
         }, false);
 
