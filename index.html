@@ -23,7 +23,7 @@
         <!-- TODO: Needs auto-increasing version somehow -->
         <header>
             <span class="title">Spem Player</span>
-            <span class="version">v1.0.2</span>
+            <span class="version">v1.0.3</span>
         </header>
         <div id="spemFrame">
             <canvas id="spemCanvas" autofocus>
@@ -427,7 +427,7 @@
             setPart(p);
             setBar(b);
 
-            userInputChanged();
+            pauseAndRepaint();
             playSpem();
         }
 
@@ -453,9 +453,28 @@
         // Field events (chaning choir, part or bar)
         // -----------------------------------------------------
 
-        function userInputChanged(load = true) {
-            changed = true;
+        // function userInputChanged() {
+        //     changed = true;
+        //     // If Choir or Part is All, then set the other to All
+        //     if (choirselect.value === '0') {
+        //         setPart(0);
+        //         partselect.disabled = true;
+        //     }
+        //     else {
+        //         if (partselect.value === '0') {
+        //             setPart(1); // Soprano
+        //         }
+        //         partselect.disabled = false;
+        //     }
+        //     paintCanvas();
+        // }
+
+        function pauseAndRepaint(load = true) {
             pauseSpem();
+            if (load) {
+                loadAudio(choirselect.value, partselect.value, barinput.value);
+            }
+            changed = true;
             // If Choir or Part is All, then set the other to All
             if (choirselect.value === '0') {
                 setPart(0);
@@ -468,10 +487,6 @@
                 partselect.disabled = false;
             }
             paintCanvas();
-
-            if (load) {
-                loadAudio(choirselect.value, partselect.value, barinput.value);
-            }
         }
 
         // -----------------------------------------------------
@@ -495,11 +510,11 @@
             }
             if (event.code === 'KeyD') {
                 setBar(Number(barinput.value) + 1);
-                userInputChanged();
+                pauseAndRepaint();
             }
             else if (event.code === 'KeyA') {
                 setBar(Number(barinput.value) - 1);
-                userInputChanged();
+                pauseAndRepaint();
             }
             else if (event.code === 'KeyS') {
                 if ((choirselect.value === '8') && (partselect.value === '5')) {
@@ -514,7 +529,7 @@
                         setChoir(c);
                     }
                 }
-                userInputChanged();
+                pauseAndRepaint();
             }
             else if (event.code === 'KeyW') {
                 if ((choirselect.value === '0') && (partselect.value === '0')) {
@@ -530,12 +545,12 @@
                         setChoir(c);
                     }
                 }
-                userInputChanged();
+                pauseAndRepaint();
             }
             else if (event.code === 'KeyX') {
                 setChoir(0);
                 setPart(0);
-                userInputChanged();
+                pauseAndRepaint();
             }
         }
 
@@ -552,27 +567,23 @@
 
         // BUG: on mobile, touch to move bar to half-way and play
         // and it starts from bar 0.
-        let touchBar = -1;
         function touchStarted(evt) {
-            touchBar = getTouchPos(evt);
-            setBar(parseInt(touchBar));
-            userInputChanged(false);
+            setBar(parseInt(getTouchPos(evt)));
+            pauseAndRepaint(false);
 
             // BUG: [Violation] Added non-passive event listener to a scroll-blocking <some> event.
             // Can we use no bubble thing instead of preventDefault()?  Don't want gestures on canvas
             // to move the screen around when on mobile.
-            // evt.preventDefault();
+            evt.preventDefault();
 
             canvas.addEventListener("touchmove", (e) => {
-                pauseSpem();
-                touchBar = getTouchPos(e);
-                setBar(parseInt(touchBar));
-                userInputChanged(false);
-                e.preventDefault();
+                setBar(parseInt(getTouchPos(e)));
+                pauseAndRepaint(false);
             });
             canvas.addEventListener("touchend", (e) => {
-                userInputChanged(true);
-                playSpem();
+                console.log("touchend");
+                pauseAndRepaint();
+                // playSpem();
             });
         }
 
@@ -588,8 +599,11 @@
             showLoadingOnCanvas();
             const response = await fetch(jsonFilename);
             json = await response.json();
-            loadAudio(0, 0, 0);
-            paintCanvas();
+
+            setChoir(0);
+            setPart(0);
+            setBar(0);
+            pauseAndRepaint();
 
             playpausebutton.addEventListener('click', playpause);
 
@@ -597,9 +611,9 @@
             canvas.addEventListener('mousemove', canvasMoved, false);
             [choirselect,
                 partselect,
-                barinput].forEach(el => el.addEventListener('change', userInputChanged));
+                barinput].forEach(el => el.addEventListener('change', pauseAndRepaint));
             document.addEventListener("keydown", keyboardTapped);
-            canvas.addEventListener("touchstart", touchStarted, { passive: true });
+            canvas.addEventListener("touchstart", touchStarted, { passive: false });
 
             // Next line not really necessary, but will make it look clearer on browser resize
             // window.addEventListener("resize", () => {calculateCanvasSize(); paintCanvas(json); });
