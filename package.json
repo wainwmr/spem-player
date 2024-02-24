@@ -5,6 +5,7 @@
   "main": "index.js",
   "devDependencies": {},
   "scripts": {
+    "start": "node hello.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
