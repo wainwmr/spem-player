@@ -1,0 +1,12 @@
+{
+  "name": "spem-player",
+  "version": "1.0.3",
+  "description": "Helping singers learn Spem in alium",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}
