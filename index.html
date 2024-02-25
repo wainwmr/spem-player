@@ -6,7 +6,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Spem Player</title>
-    <link rel="icon" href="https://fav.farm/🔥">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="stylesheet" href="./index.css">
     <!-- TODO: include main.js as separate file.  But needs to be easy to install on sv.co.uk -->
 </head>
@@ -360,7 +363,7 @@
         }
 
         function getFilename(s) {
-           return s.split("/").pop();
+            return s.split("/").pop();
         }
 
         // TODO: define all filenames up above, so there's no need
@@ -576,7 +579,7 @@
         // Setup page
         // -----------------------------------------------------
 
-        window.addEventListener("load", async() => {
+        window.addEventListener("load", async () => {
             calculateCanvasSize();
             showLoadingOnCanvas();
             const response = await fetch(jsonFilename);
