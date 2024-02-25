@@ -438,9 +438,9 @@
         function canvasMoved(e) {
             const [c, p, b] = getMousePos(canvas, e);
 
-            choiroutput.innerHTML = "Choir " + c;
-            partoutput.innerHTML = getPartName(p);
-            baroutput.innerHTML = "Bar " + b;
+            choiroutput.textContent = "Choir " + c;
+            partoutput.textContent = getPartName(p);
+            baroutput.textContent = "Bar " + b;
             statusarea.classList.remove("hide");
             clearInterval(intId);
             intId = setInterval(function () {
@@ -452,22 +452,6 @@
         // -----------------------------------------------------
         // Field events (chaning choir, part or bar)
         // -----------------------------------------------------
-
-        // function userInputChanged() {
-        //     changed = true;
-        //     // If Choir or Part is All, then set the other to All
-        //     if (choirselect.value === '0') {
-        //         setPart(0);
-        //         partselect.disabled = true;
-        //     }
-        //     else {
-        //         if (partselect.value === '0') {
-        //             setPart(1); // Soprano
-        //         }
-        //         partselect.disabled = false;
-        //     }
-        //     paintCanvas();
-        // }
 
         function pauseAndRepaint(load = true) {
             pauseSpem();
@@ -592,9 +576,7 @@
         // Setup page
         // -----------------------------------------------------
 
-        window.addEventListener("load", setupPage);
-
-        async function setupPage() {
+        window.addEventListener("load", async() => {
             calculateCanvasSize();
             showLoadingOnCanvas();
             const response = await fetch(jsonFilename);
@@ -617,7 +599,7 @@
 
             // Next line not really necessary, but will make it look clearer on browser resize
             // window.addEventListener("resize", () => {calculateCanvasSize(); paintCanvas(json); });
-        }
+        });
 
     </script>
 
