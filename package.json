@@ -3,7 +3,9 @@
   "version": "1.0.3",
   "description": "Helping singers learn Spem in alium",
   "main": "index.js",
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  },
   "scripts": {
     "start": "node hello.js",
     "test": "echo \"Error: no test specified\" && exit 1"

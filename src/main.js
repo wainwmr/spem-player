@@ -51,7 +51,7 @@ pSBC.pSBCr=(d)=>{
 	let n=d.length,x={};
 	if(n>9){
 		const [r, g, b, a] = (d = d.split(','));
-	        n = d.length;
+       n = d.length;
 		if(n<3||n>4)return null;
 		x.r=i(r[3]=="a"?r.slice(5):r.slice(4)),x.g=i(g),x.b=i(b),x.a=a?parseFloat(a):-1
 	}else{
@@ -81,7 +81,7 @@ const choirColors = [
 
 // Parse "21.75-25.5" into two floats
 function getRange(s) {
-  if (!s) return [999, 999];
+  if (!s) return [999, 999]; 
   return s.split("-").map(numStr => parseFloat(numStr));
 }
 
@@ -389,7 +389,6 @@ function keyboardTapped(e) {
 // TODO: Not convinced the Maths for getTouchPos() is right...
 function getTouchPos(evt) {
   // TODO: rect not used!
-  const rect = canvas.getBoundingClientRect();
   return (evt.targetTouches[0].pageX * 140 / canvas.clientWidth);
 }
 
@@ -408,7 +407,7 @@ function touchStarted(evt) {
     setBar(parseInt(getTouchPos(e)));
     pauseAndRepaint(false);
   });
-  canvas.addEventListener("touchend", (e) => {
+  canvas.addEventListener("touchend", () => {
     pauseAndRepaint();
     // playSpem();
   });
