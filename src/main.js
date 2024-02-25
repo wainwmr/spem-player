@@ -221,7 +221,6 @@ function loadAudio(c, p, b) {
   // just compare the filename, not the whole URL, to see if we
   // need to load a new MP3
   if (getFilename(newfile) != getFilename(spemaudio.src)) {
-    console.log("Loading new file");
     spemaudio.src = newfile;
   }
   // TODO: Wait for loading? Or disabled play till loaded?
@@ -351,10 +350,10 @@ function keyboardTapped(e) {
       setPart(0);
     }
     else {
-      p = (Number(partselect.value) % 5) + 1;  // zero-index, add 1, mod 5 and then one-index the parts
+      const p = (Number(partselect.value) % 5) + 1;  // zero-index, add 1, mod 5 and then one-index the parts
       setPart(p);
       if (p === 1) {
-        c = (Number(choirselect.value) % 8) + 1;  // mod 8 and one-index the choirs
+        const c = (Number(choirselect.value) % 8) + 1;  // mod 8 and one-index the choirs
         setChoir(c);
       }
     }
@@ -366,11 +365,11 @@ function keyboardTapped(e) {
       setPart(5);
     }
     else {
-      p = (4 + Number(partselect.value)) % 5;
+      const p = (4 + Number(partselect.value)) % 5;
       setPart(p);
       if (p === 0) {
         setPart(5);
-        c = ((7 + Number(choirselect.value)) % 8);
+        const c = ((7 + Number(choirselect.value)) % 8);
         setChoir(c);
       }
     }
@@ -410,7 +409,6 @@ function touchStarted(evt) {
     pauseAndRepaint(false);
   });
   canvas.addEventListener("touchend", (e) => {
-    console.log("touchend");
     pauseAndRepaint();
     // playSpem();
   });
