@@ -18,8 +18,35 @@
         <!-- TODO: Needs auto-increasing version somehow -->
         <header>
             <span class="title">Spem Player</span>
-            <span class="version">v1.0.5</span>
+            <img id="info" src="assets/info.svg" height="15" color="white" />
         </header>
+        <div id="help">
+            <p><em>Spem in alium nuquam habui</em><br />Thomas Tallis (1505 - 1585)
+            <table>
+                <tr>
+                    <th>Mouse</th>
+                    <td>Click diagram to play selected choir, part and bar.</td>
+                </tr>
+                <tr>
+                    <th>Touch</th>
+                    <td>Drag diagram to select bar.</td>
+                </tr>
+                <tr>
+                    <th>Keyboard</th>
+                    <td>
+                            <kbd>A</kbd> / <kbd>D</kbd> - select voice<br />
+                            <kbd>W</kbd> / <kbd>S</kbd> - select bar<br />
+                            <kbd>X</kbd> - toggle between selected voice and whole choir<br />
+                            <kbd>Enter</kbd> - start or stop
+                    </td>
+                </tr>
+            </table>
+            <p id="recordings">Recordings by
+                <a href="https://www.choirsoftheearth.com">Choir of the Earth</a>
+            </p>
+            <p class="version">Spem Player v1.0.6</p>
+            <p class="copyright">© 2024, Mark Wainwright</p>
+        </div>
         <div id="spemFrame">
             <canvas id="spemCanvas" autofocus>
                 Your browser does not support the HTML canvas element.
@@ -71,11 +98,6 @@
             </div>
 
         </div>
-    </div>
-    <div id="blurb">
-        <p><em>Spem in alium</em> - Thomas Tallis (1505 - 1585). Recordings by <a
-                href="https://www.choirsoftheearth.com">Choir of the Earth</a>.</p>
-        <p id="copyright">© 2024, Mark Wainwright</p>
     </div>
 
     <script type="module" src="/src/main.js"></script>

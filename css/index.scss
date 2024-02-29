@@ -17,19 +17,82 @@ body {
 .wrapper {
     background: var(--main-bg-color);
     border-radius: 1rem;
+    position: relative;
 
     header {
         .title {
             display: inline-block;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             // BUG: make all the colours variables
             color: #a8c5e3;
             padding-top: 5px;
             padding-left: 10px;
             margin: 0;
         }
+        #info {
+            cursor: pointer;
+        }
+    }
+
+    #help {
+        display: none;
+        padding: 0 5px;
+        border: 2px solid #5392d1;
+        border-radius: 10px;
+        position: absolute;
+        background: #bdd5ed;
+        max-width: 80%;
+        left: 10%;
+        z-index: 10;
+
+        em {
+            font-family: cursive;
+            font-size: large;
+        }
+
+        th {
+            vertical-align: top;
+            text-align: right;
+            padding-right: 5px;
+        }
+
+        kbd {
+            background-color: #eee;
+            border-radius: 3px;
+            border: 1px solid #b4b4b4;
+            box-shadow:
+              0 1px 1px rgba(0, 0, 0, 0.2),
+              0 2px 0 0 rgba(255, 255, 255, 0.7) inset;
+            color: #333;
+            display: inline-block;
+            font-size: 0.85em;
+            font-weight: 700;
+            line-height: 1;
+            padding: 2px 4px;
+            white-space: nowrap;
+          }
+
+        p {
+            padding: 0px;
+            margin: 5px;
+        }
+
+        a {
+            color: #123456;
+            text-decoration: none;
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        #recordings {
+            text-align: left;
+        }
+    
+        .copyright,
         .version {
-            color: #3f5e7f;
+            text-align: right;
+            font-size: smaller;
         }
     }
 
@@ -164,25 +227,3 @@ body {
     }
 }
 
-em {
-    font-size: large;
-}
-
-#blurb {
-    color: #999;
-    text-align: right;
-
-    
-    a {
-        color: #123456;
-        text-decoration: none;
-        &:hover {
-            text-decoration: underline;
-        }
-    }
-
-    #copyright {
-        font-size: smaller;
-        padding: 0;
-    }
-}

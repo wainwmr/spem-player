@@ -24,6 +24,8 @@ const statusarea = document.getElementById('statusarea');
 const choiroutput = document.getElementById('choir-output');
 const partoutput = document.getElementById('part-output');
 const baroutput = document.getElementById('bar-output');
+const info = document.getElementById('info');
+const help = document.getElementById('help');
 
 const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass'];
 
@@ -283,8 +285,6 @@ function canvasClicked(e) {
 
 
 let intId = 0;
-// BUG: Should not display this area when mouse not possible
-// e.g. for mobile devices
 function canvasMoved(e) {
   const [c, p, b] = getMousePos(canvas, e);
 
@@ -327,7 +327,8 @@ function pauseAndRepaint(load = true) {
 // Keyboard events (wasd)
 // -----------------------------------------------------
 
-// TODO: Need to tell user the keyboard controls somewhere
+let lastPart = 0;
+let lastChoir = 0;
 function keyboardTapped(e) {
   // don't handle keyboard events on the four control widgets
   // cos it messes with the UI interaction
@@ -383,8 +384,16 @@ function keyboardTapped(e) {
   }
   // Toggle between ALL choirs and selected choir
   else if (e.code === 'KeyX') {
-    setChoir(0);
-    setPart(0);
+    if (choirselect.value != 0 || partselect.value != 0) {
+      lastChoir = choirselect.value;
+      lastPart = partselect.value;
+      setChoir(0);
+      setPart(0);
+    }
+    else {
+      setChoir(lastChoir);
+      setPart(lastPart);
+    }
     pauseAndRepaint();
   }
 }
@@ -395,7 +404,6 @@ function keyboardTapped(e) {
 
 // TODO: Not convinced the Maths for getTouchPos() is right...
 function getTouchPos(evt) {
-  // TODO: rect not used!
   return (evt.targetTouches[0].pageX * 140 / canvas.clientWidth);
 }
 
@@ -445,6 +453,8 @@ window.addEventListener("load", async () => {
     barinput].forEach(el => el.addEventListener('change', pauseAndRepaint));
   document.addEventListener("keydown", keyboardTapped);
   canvas.addEventListener("touchstart", touchStarted, { passive: false });
+  info.addEventListener("mouseover", () => help.style.display = 'block');
+  info.addEventListener("mouseout", () => help.style.display = 'none');
 
   // Next line not really necessary, but will make it look clearer on browser resize
   // window.addEventListener("resize", () => {calculateCanvasSize(); paintCanvas(json); });
