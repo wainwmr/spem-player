@@ -183,6 +183,10 @@ body {
   }
 }
 
+em {
+  font-size: large;
+}
+
 #blurb {
   color: #999;
   text-align: right;

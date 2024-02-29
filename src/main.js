@@ -107,6 +107,14 @@ function setPart(p) {
 function setBar(b) {
   const oldBar = barinput.value;
   if (b != oldBar) {
+    if (b > 140) {
+      playpausebutton.classList.add("paused");
+      window.clearInterval(timerId);
+      b  = 0;
+    }
+    else if (b < 0) {
+      b = 139;
+    }
     barinput.value = b;
     changed = true;
   }
@@ -233,9 +241,7 @@ function playSpem() {
   if (spemaudio.paused) {
     spemaudio.play();
     playpausebutton.classList.remove("paused");
-    clearInterval(timerId);
-    // BUG: at the end of the piece, the bar number climbs to 141 and the playpause 
-    // button never reverts to play. Does the timer ever stop??
+    window.clearInterval(timerId);
     timerId = setInterval(() => {
       setBar(Math.floor(spemaudio.currentTime / (beattime * 4)));
       paintCanvas();
@@ -247,7 +253,7 @@ function pauseSpem() {
   if (!spemaudio.paused) {
     spemaudio.pause();
     playpausebutton.classList.add("paused");
-    clearInterval(timerId);
+    window.clearInterval(timerId);
   }
 }
 
@@ -329,22 +335,22 @@ function keyboardTapped(e) {
   if (classes.includes('control')) {
     return;
   }
-  if (event.isComposing || event.keyCode === 229) {
+  if (e.isComposing || e.keyCode === 229) {
     return;
   }
-  if (event.code == 'Enter') {
+  if (e.code == 'Enter') {
     playpause();
     return;
   }
-  if (event.code === 'KeyD') {
+  if (e.code === 'KeyD') {
     setBar(Number(barinput.value) + 1);
     pauseAndRepaint();
   }
-  else if (event.code === 'KeyA') {
+  else if (e.code === 'KeyA') {
     setBar(Number(barinput.value) - 1);
     pauseAndRepaint();
   }
-  else if (event.code === 'KeyS') {
+  else if (e.code === 'KeyS') {
     if ((choirselect.value === '8') && (partselect.value === '5')) {
       setChoir(0);
       setPart(0);
@@ -359,7 +365,7 @@ function keyboardTapped(e) {
     }
     pauseAndRepaint();
   }
-  else if (event.code === 'KeyW') {
+  else if (e.code === 'KeyW') {
     if ((choirselect.value === '0') && (partselect.value === '0')) {
       setChoir(8);
       setPart(5);
@@ -375,7 +381,8 @@ function keyboardTapped(e) {
     }
     pauseAndRepaint();
   }
-  else if (event.code === 'KeyX') {
+  // Toggle between ALL choirs and selected choir
+  else if (e.code === 'KeyX') {
     setChoir(0);
     setPart(0);
     pauseAndRepaint();
