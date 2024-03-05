@@ -17,6 +17,7 @@ let timerId = 0;
 const container = document.getElementById("spemFrame");
 const canvas = document.getElementById("spemCanvas");
 const playpausebutton = document.getElementById('playpausebutton');
+const playpauseicon = document.getElementById('playpauseicon');
 const choirselect = document.getElementById('choir-select');
 const partselect = document.getElementById('part-select');
 const barinput = document.getElementById('bar-field');
@@ -65,11 +66,8 @@ pSBC.pSBCr=(d)=>{
 	}return x
 };
 
-// TODO: put these colours in a config object? or as
-// SASS variables?
 const backgroundColor = "#123456";
-const lineColor = "#FFFFFF"
-// BUG: Choir 8 blue is too dark for the background
+const lineColor = "#F5F5F5"
 const choirColors = [
   "#c1121f",
   "#ce6d8b",
@@ -77,8 +75,8 @@ const choirColors = [
   "#FFA600",
   "#72B043",
   "#2B7654",
-  "#13788D",
-  "#003f88"
+  "#13608D",
+  "#0B478C"
 ];
 
 // Parse "21.75-25.5" into two floats
@@ -94,23 +92,36 @@ function getPartName(n) {
 // use changed to know whether we need to redraw or not
 var changed = true;
 
-// TODO: Check if choir has changed (like for bar below)
 function setChoir(c) {
-  choirselect.value = c;
-  changed = true;
+  const oldChoir = choirselect.value;
+  if (c != oldChoir) {
+    if (isNaN(c)) {
+      c = 0;  
+    }
+    choirselect.value = c;
+    changed = true;
+  }
 }
 
-// TODO: Check if part has changed (like for bar below)
 function setPart(p) {
-  partselect.value = p;
-  changed = true;
+  const oldPart = partselect.value;
+  if (p != oldPart) {
+    if (isNaN(p)) {
+      p = 0;  
+    }
+    partselect.value = p;
+    changed = true;
+  }
 }
 
 function setBar(b) {
   const oldBar = barinput.value;
   if (b != oldBar) {
+    if (isNaN(b)) {
+      b = 0;  
+    }
     if (b > 140) {
-      playpausebutton.classList.add("paused");
+      playpauseicon.classList.add("paused");
       window.clearInterval(timerId);
       b  = 0;
     }
@@ -119,6 +130,24 @@ function setBar(b) {
     }
     barinput.value = b;
     changed = true;
+  }
+}
+
+function parseURL() {
+  const url = window.location.search.substring(1);
+  const parms = url.split("&");
+  
+  for (let i=0; i < parms.length;i++) {
+    const p = parms[i].split("=");
+    if (p[0] == "choir") {
+      setChoir(p[1]);
+    }
+    else if (p[0] == "part") {
+      setPart(p[1]);
+    }
+    else if (p[0] == "bar") {
+      setBar(Number(p[1]));
+    }
   }
 }
 
@@ -242,7 +271,7 @@ function loadAudio(c, p, b) {
 function playSpem() {
   if (spemaudio.paused) {
     spemaudio.play();
-    playpausebutton.classList.remove("paused");
+    playpauseicon.classList.remove("paused");
     window.clearInterval(timerId);
     timerId = setInterval(() => {
       setBar(Math.floor(spemaudio.currentTime / (beattime * 4)));
@@ -254,7 +283,7 @@ function playSpem() {
 function pauseSpem() {
   if (!spemaudio.paused) {
     spemaudio.pause();
-    playpausebutton.classList.add("paused");
+    playpauseicon.classList.add("paused");
     window.clearInterval(timerId);
   }
 }
@@ -439,9 +468,8 @@ window.addEventListener("load", async () => {
   const response = await fetch(jsonFilename);
   json = await response.json();
 
-  setChoir(0);
-  setPart(0);
-  setBar(0);
+  // read choir, part and bar from the URL
+  parseURL();
   pauseAndRepaint();
 
   playpausebutton.addEventListener('click', playpause);
