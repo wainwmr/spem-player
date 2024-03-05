@@ -34,10 +34,10 @@
                 <tr>
                     <th>Keyboard</th>
                     <td>
-                            <kbd>A</kbd> / <kbd>D</kbd> - select bar<br />
-                            <kbd>W</kbd> / <kbd>S</kbd> - select part<br />
-                            <kbd>X</kbd> - toggle between selected part and whole choir<br />
-                            <kbd>Enter</kbd> - start or stop
+                        <kbd>A</kbd> / <kbd>D</kbd> - select bar<br />
+                        <kbd>W</kbd> / <kbd>S</kbd> - select part<br />
+                        <kbd>X</kbd> - toggle between selected part and whole choir<br />
+                        <kbd>Enter</kbd> - start or stop
                     </td>
                 </tr>
             </table>
@@ -52,41 +52,41 @@
                 Your browser does not support the HTML canvas element.
             </canvas>
         </div>
-        <!-- TODO: use id= for controls, playpause and controlsection -->
         <div class="controls">
-            <div class="playpause" tabindex="0">
-                <span id="playpausebutton" class="button paused control"></span>
+            <div id="playpausebutton" tabindex="0">
+                <span id="playpauseicon" class="button paused control"></span>
             </div>
-            <!-- TODO: Can we populate choir, part and bar from parameters in the URL? -->
             <div class="controlsection choircontrol">
-                <label for="choir">Choir</label>
-                <select name="choir" id="choir-select" class="control">
-                    <option value="0">All</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                </select>
+                <label>Choir
+                    <select name="choir" id="choir-select" class="control">
+                        <option value="0">All</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                    </select>
+                </label>
             </div>
             <div class="controlsection partcontrol">
-                <label for="part">Part</label>
-                <select name="part" id="part-select" disabled="" class="control">
-                    <option value="0">All</option>
-                    <option value="1">Soprano</option>
-                    <option value="2">Alto</option>
-                    <option value="3">Tenor</option>
-                    <option value="4">Baritone</option>
-                    <option value="5">Bass</option>
-                </select>
+                <label>Part
+                    <select name="part" id="part-select" disabled="" class="control">
+                        <option value="0">All</option>
+                        <option value="1">Soprano</option>
+                        <option value="2">Alto</option>
+                        <option value="3">Tenor</option>
+                        <option value="4">Baritone</option>
+                        <option value="5">Bass</option>
+                    </select>
+                </label>
             </div>
-            <!-- BUG: on mobile, bar input field is bigger than select fields -->
             <div class="controlsection barcontrol">
-                <label for="bar">Bar</label>
-                <input type="number" name="bar" id="bar-field" value="0" min="0" max="138" class="control" />
+                <label>Bar
+                    <input type="number" name="bar" id="bar-field" value="0" min="0" max="138" class="control" />
+                </label>
             </div>
 
             <div class="statusspacer"></div>
