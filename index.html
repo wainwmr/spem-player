@@ -45,7 +45,7 @@
                     <a href="https://www.choiroftheearth.com" target="_blank">Choir of the Earth</a>
                 </p>
                 <!-- TODO: Needs auto-increasing version somehow -->
-                <p class="version">Spem Player v1.0.7</p>
+                <p class="version">Spem Player v1.0.8</p>
                 <p class="copyright">© 2024, Mark Wainwright</p>
             </div>
         <div id="spemFrame">
@@ -55,6 +55,9 @@
         </div>
         <div class="controls">
             <div id="playpausebutton" tabindex="0">
+                <svg id="spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="path" fill="none" stroke-width="10" stroke-linecap="round" cx="50" cy="50" r="30"></circle>
+                </svg>
                 <span id="playpauseicon" class="button paused control"></span>
             </div>
             <div class="controlsection choircontrol">

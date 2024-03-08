@@ -1,3 +1,20 @@
+:root {
+  --temp: 341;
+  --color-background: hsl(210, 65%, 20%);
+  --color-text: hsl(0, 0%, 92%);
+  --color-border: hsl(210, 58%, 57%);
+  --color-background-lighter: hsl(210, 65%, 80%);
+  --color-active-button: hsl(210, 65%, 80%);
+  --color-c1: 360;
+  --color-c2: 341;
+  --color-c3: 14;
+  --color-c4: 39;
+  --color-c5: 110;
+  --color-c6: 153;
+  --color-c7: 200;
+  --color-c8: 220;
+}
+
 html {
   font-size: 14px;
   font-family: Helvetica neue;
@@ -9,7 +26,7 @@ body {
 }
 
 .wrapper {
-  background: #123456;
+  background: var(--color-background);
   border-radius: 1rem;
   position: relative;
 }
@@ -26,7 +43,7 @@ body {
 .wrapper header .title {
   display: inline-block;
   font-size: 1.4rem;
-  color: #accdee;
+  color: var(--color-background-lighter);
   padding-top: 5px;
   padding-left: 10px;
   margin: 0;
@@ -37,10 +54,10 @@ body {
 .wrapper #help {
   display: none;
   padding: 0 5px;
-  border: 2px solid #5392d1;
+  border: 2px solid var(--color-border);
   border-radius: 10px;
   position: absolute;
-  background: #accdee;
+  background: var(--color-background-lighter);
   max-width: 80%;
   left: 10%;
   z-index: 10;
@@ -73,7 +90,7 @@ body {
   margin: 5px;
 }
 .wrapper #help a {
-  color: #123456;
+  color: var(--color-background);
   text-decoration: none;
 }
 .wrapper #help a:hover {
@@ -127,21 +144,36 @@ body {
   -webkit-box-pack: center;
       -ms-flex-pack: center;
           justify-content: center;
-  border: 2px solid #5392d1;
+  border: 2px solid var(--color-border);
   border-radius: 50%;
   cursor: pointer;
 }
 .controls #playpausebutton:hover, .controls #playpausebutton:focus {
-  background: #accdee;
+  background: var(--color-background-lighter);
   -webkit-transition: all 0.2s ease-in-out;
   transition: all 0.2s ease-in-out;
 }
 .controls #playpausebutton:active {
-  background: #589adc;
-  border: 2px solid #1b4e80;
+  background: var(--color-active-button);
+  border: 2px solid var(--color-background);
   padding: 4px 2px 2px 4px;
   -webkit-transition: all 0.2s ease-in-out;
   transition: all 0.2s ease-in-out;
+}
+.controls #playpausebutton #spinner {
+  display: none;
+  -webkit-animation: rotator 1.4s linear infinite;
+          animation: rotator 1.4s linear infinite;
+}
+.controls #playpausebutton .path {
+  width: 50px;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 0;
+  -webkit-transform-origin: center;
+      -ms-transform-origin: center;
+          transform-origin: center;
+  -webkit-animation: dash 1.4s ease-in-out infinite, colors 5.6s ease-in-out infinite;
+          animation: dash 1.4s ease-in-out infinite, colors 5.6s ease-in-out infinite;
 }
 .controls #playpausebutton .button {
   border: 0;
@@ -174,14 +206,14 @@ body {
 }
 .controls .controlsection label {
   text-align: left;
-  color: #f5f5f5;
+  color: var(--color-text);
 }
 .controls .controlsection input,
 .controls .controlsection select,
 .controls .controlsection #bar-field {
   -webkit-box-sizing: border-box;
           box-sizing: border-box;
-  border: 2px solid #5392d1;
+  border: 2px solid var(--color-border);
   height: 2rem;
   padding: 2px;
   margin: 0;
@@ -210,15 +242,101 @@ body {
   font-size: 0.9rem;
   text-align: left;
   text-transform: capitalize;
-  color: #f5f5f5;
+  color: var(--color-text);
 }
 .controls #statusarea.hide {
   -webkit-transition: 1.5s;
   transition: 1.5s;
-  color: #123456;
+  color: var(--color-background);
 }
 @media screen and (max-width: 25rem) {
   .controls #statusarea {
     display: none;
+  }
+}
+
+@-webkit-keyframes rotator {
+  0% {
+    -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(270deg);
+            transform: rotate(270deg);
+  }
+}
+
+@keyframes rotator {
+  0% {
+    -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(270deg);
+            transform: rotate(270deg);
+  }
+}
+@-webkit-keyframes colors {
+  0% {
+    stroke: hsl(var(--color-c1), 50%, 50%);
+  }
+  25% {
+    stroke: var(--color-c3);
+  }
+  50% {
+    stroke: var(--color-c5);
+  }
+  75% {
+    stroke: var(--color-c8);
+  }
+  100% {
+    stroke: hsl(var(--color-c1), 50%, 50%);
+  }
+}
+@keyframes colors {
+  0% {
+    stroke: hsl(var(--color-c1), 50%, 50%);
+  }
+  25% {
+    stroke: var(--color-c3);
+  }
+  50% {
+    stroke: var(--color-c5);
+  }
+  75% {
+    stroke: var(--color-c8);
+  }
+  100% {
+    stroke: hsl(var(--color-c1), 50%, 50%);
+  }
+}
+@-webkit-keyframes dash {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  50% {
+    stroke-dashoffset: 25;
+    -webkit-transform: rotate(135deg);
+            transform: rotate(135deg);
+  }
+  100% {
+    stroke-dashoffset: 100;
+    -webkit-transform: rotate(450deg);
+            transform: rotate(450deg);
+  }
+}
+@keyframes dash {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  50% {
+    stroke-dashoffset: 25;
+    -webkit-transform: rotate(135deg);
+            transform: rotate(135deg);
+  }
+  100% {
+    stroke-dashoffset: 100;
+    -webkit-transform: rotate(450deg);
+            transform: rotate(450deg);
   }
 }/*# sourceMappingURL=index.css.map */

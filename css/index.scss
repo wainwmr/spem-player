@@ -1,7 +1,23 @@
-$main-bg-color: #123456;
-$main-text-color: #f5f5f5;
-$main-border-color: #5392d1;
-$main-bg-lighter: lighten($main-bg-color, 60%);
+// for the spinner while audio is loading
+$offset: 100;
+$duration: 1.4s;
+
+:root {
+    --temp: 341;
+    --color-background: hsl(210, 65%, 20%);
+    --color-text: hsl(0, 0%, 92%);
+    --color-border: hsl(210, 58%, 57%);
+    --color-background-lighter: hsl(210, 65%, 80%);
+    --color-active-button: hsl(210, 65%, 80%);
+    --color-c1: 360;  // only define hue, because javascript 
+    --color-c2: 341;  // adds a saturation of 50% and modifies the lightness
+    --color-c3: 14;
+    --color-c4: 39;
+    --color-c5: 110;
+    --color-c6: 153;
+    --color-c7: 200;
+    --color-c8: 220;
+}
 
 html {
     font-size: 14px;
@@ -13,7 +29,7 @@ body {
     margin: 0.2rem;
 }
 .wrapper {
-    background: $main-bg-color;
+    background: var(--color-background);
     border-radius: 1rem;
     position: relative;
 
@@ -32,7 +48,7 @@ body {
         .title {
             display: inline-block;
             font-size: 1.4rem;
-            color: $main-bg-lighter;
+            color: var(--color-background-lighter);
             padding-top: 5px;
             padding-left: 10px;
             margin: 0;
@@ -45,10 +61,10 @@ body {
     #help {
         display: none;
         padding: 0 5px;
-        border: 2px solid $main-border-color;
+        border: 2px solid var(--color-border);
         border-radius: 10px;
         position: absolute;
-        background: $main-bg-lighter;
+        background: var(--color-background-lighter);
         max-width: 80%;
         left: 10%;
         z-index: 10;
@@ -86,7 +102,7 @@ body {
         }
 
         a {
-            color: $main-bg-color;
+            color: var(--color-background);
             text-decoration: none;
             &:hover {
                 text-decoration: underline;
@@ -134,20 +150,36 @@ body {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border: 2px solid $main-border-color;
+        border: 2px solid var(--color-border);
         border-radius: 50%;
         cursor: pointer;
         &:hover,
         &:focus {
-            background: $main-bg-lighter;
+            background: var(--color-background-lighter);
             transition: all 0.2s ease-in-out;
         }
         &:active {
-            background: darken($main-bg-lighter, 20);
-            border: 2px solid darken($main-bg-lighter, 50);
+            background: var(--color-active-button);
+            border: 2px solid var(--color-background);
             padding: 4px 2px 2px 4px;
             transition: all 0.2s ease-in-out;
         }
+
+        #spinner {
+            display: none;
+            animation: rotator $duration linear infinite;
+            // animation: pulse 2s infinite;
+        }
+
+        .path {
+            width: 50px;
+            stroke-dasharray: $offset;
+            stroke-dashoffset: 0;
+            transform-origin: center;
+            animation:
+              dash $duration ease-in-out infinite, 
+              colors ($duration*4) ease-in-out infinite;
+          }
 
         .button {
             border: 0;
@@ -167,7 +199,7 @@ body {
             &.paused {
                 border-style: solid;
                 border-width: 1rem 0 1rem 1.8rem;
-            }        
+            }                
         }
         
     }    
@@ -180,13 +212,13 @@ body {
 
         label {
             text-align: left;
-            color: $main-text-color;
+            color: var(--color-text);
         }
         input,
         select,
         #bar-field {
             box-sizing: border-box;
-            border: 2px solid $main-border-color;
+            border: 2px solid var(--color-border);
             height: 2rem;
             padding: 2px;
             margin: 0;
@@ -210,10 +242,10 @@ body {
         font-size: 0.9rem;
         text-align: left;
         text-transform: capitalize;
-        color: $main-text-color;
+        color: var(--color-text);
         &.hide {
             transition: 1.5s;
-            color: $main-bg-color;
+            color: var(--color-background);
         }
     
         @media screen and (max-width: 25rem) {
@@ -222,3 +254,27 @@ body {
     }
 }
 
+@keyframes rotator {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(270deg); }
+}
+
+@keyframes colors {
+  0% { stroke: hsl(var(--color-c1), 50%, 50%); }
+  25% { stroke: var(--color-c3); }
+  50% { stroke: var(--color-c5); }
+  75% { stroke: var(--color-c8); }
+  100% { stroke: hsl(var(--color-c1), 50%, 50%); }
+}
+
+@keyframes dash {
+ 0% { stroke-dashoffset: $offset; }
+ 50% {
+   stroke-dashoffset: calc($offset/4);
+   transform:rotate(135deg);
+ }
+ 100% {
+   stroke-dashoffset: $offset;
+   transform:rotate(450deg);
+ }
+}
