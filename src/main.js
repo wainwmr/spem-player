@@ -27,6 +27,7 @@ const partoutput = document.getElementById('part-output');
 const baroutput = document.getElementById('bar-output');
 const info = document.getElementById('info');
 const help = document.getElementById('help');
+const backdrop = document.getElementById('backdrop');
 
 const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass'];
 
@@ -457,6 +458,17 @@ function touchStarted(evt) {
   });
 }
 
+function showHelp(show = true) {
+  if (show) {
+    backdrop.style.display = 'block';
+    help.style.display = 'block';
+  }
+  else {
+    backdrop.style.display = 'none';
+    help.style.display = 'none';
+  }
+}
+
 
 // -----------------------------------------------------
 // Setup page
@@ -481,8 +493,8 @@ window.addEventListener("load", async () => {
     barinput].forEach(el => el.addEventListener('change', pauseAndRepaint));
   document.addEventListener("keydown", keyboardTapped);
   canvas.addEventListener("touchstart", touchStarted, { passive: false });
-  info.addEventListener("mouseover", () => help.style.display = 'block');
-  info.addEventListener("mouseout", () => help.style.display = 'none');
+  info.addEventListener("click", () => showHelp(true));
+  backdrop.addEventListener("click", () => showHelp(false));
 
   // Next line not really necessary, but will make it look clearer on browser resize
   // window.addEventListener("resize", () => {calculateCanvasSize(); paintCanvas(json); });

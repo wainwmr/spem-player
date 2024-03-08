@@ -9,44 +9,45 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
     <link rel="manifest" href="/assets/site.webmanifest">
-    <link rel="stylesheet" href="/css/index-new.css?v2">
+    <link rel="stylesheet" href="/css/index.css?v=3">
 </head>
 
 <body>
 
     <div class="wrapper">
-        <!-- TODO: Needs auto-increasing version somehow -->
+        <div id="backdrop"></div>
         <header>
             <span class="title">Spem Player</span>
             <img id="info" src="/assets/info2.svg" height="15" color="white" />
         </header>
         <div id="help">
             <p><em>Spem in alium nuquam habui</em><br />Thomas Tallis (1505 - 1585)
-            <table>
-                <tr>
-                    <th>Mouse</th>
-                    <td>Click diagram to play selected choir, part and bar.</td>
-                </tr>
-                <tr>
-                    <th>Touch</th>
-                    <td>Drag diagram to select bar.</td>
-                </tr>
-                <tr>
-                    <th>Keyboard</th>
-                    <td>
-                        <kbd>A</kbd> / <kbd>D</kbd> - select bar<br />
-                        <kbd>W</kbd> / <kbd>S</kbd> - select part<br />
-                        <kbd>X</kbd> - toggle between selected part and whole choir<br />
-                        <kbd>Enter</kbd> - start or stop
-                    </td>
-                </tr>
-            </table>
-            <p id="recordings">Recordings by
-                <a href="https://www.choirsoftheearth.com">Choir of the Earth</a>
-            </p>
-            <p class="version">Spem Player v1.0.6</p>
-            <p class="copyright">© 2024, Mark Wainwright</p>
-        </div>
+                <table>
+                    <tr>
+                        <th>Mouse</th>
+                        <td>Click diagram to play selected choir, part and bar.</td>
+                    </tr>
+                    <tr>
+                        <th>Touch</th>
+                        <td>Drag diagram to select bar.</td>
+                    </tr>
+                    <tr>
+                        <th>Keyboard</th>
+                        <td>
+                            <kbd>A</kbd> / <kbd>D</kbd> - select bar<br />
+                            <kbd>W</kbd> / <kbd>S</kbd> - select part<br />
+                            <kbd>X</kbd> - toggle between selected part and whole choir<br />
+                            <kbd>Enter</kbd> - start or stop
+                        </td>
+                    </tr>
+                </table>
+                <p id="recordings">Recordings by
+                    <a href="https://www.choiroftheearth.com" target="_blank">Choir of the Earth</a>
+                </p>
+                <!-- TODO: Needs auto-increasing version somehow -->
+                <p class="version">Spem Player v1.0.7</p>
+                <p class="copyright">© 2024, Mark Wainwright</p>
+            </div>
         <div id="spemFrame">
             <canvas id="spemCanvas" autofocus>
                 Your browser does not support the HTML canvas element.
@@ -100,7 +101,7 @@
         </div>
     </div>
 
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/main.js?v=3"></script>
 
 </body>
 
