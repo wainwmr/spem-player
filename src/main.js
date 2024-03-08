@@ -3,8 +3,7 @@
 let defaultaudiofile = '/audio/spem.mp3';
 let jsonFilename = '/assets/spem.json';
 
-// TODO: Wait for loading? Or disabled play till loaded?
-var spemaudio = new Audio(defaultaudiofile);
+var spemaudio = new Audio();
 
 // storing the definition of all the voice parts
 var json;
@@ -28,6 +27,7 @@ const baroutput = document.getElementById('bar-output');
 const info = document.getElementById('info');
 const help = document.getElementById('help');
 const backdrop = document.getElementById('backdrop');
+const spinner = document.getElementById('spinner');
 
 const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass'];
 
@@ -36,49 +36,20 @@ let barWidth = 0;
 let choirHeight = 0;
 let partHeight = 0;
 
-// https://github.com/PimpTrizkit/PJs/wiki/12.-Shade,-Blend-and-Convert-a-Web-Color-(pSBC.js)#stackoverflow-archive-begin
-// Version 4.1
-const pSBC=(p,c0,c1,l)=>{
-	let r,g,b,P,f,t,h,m=Math.round,a=typeof(c1)=="string";
-	if(typeof(p)!="number"||p<-1||p>1||typeof(c0)!="string"||(c0[0]!='r'&&c0[0]!='#')||(c1&&!a))return null;
-	h=c0.length>9,h=a?c1.length>9?true:c1=="c"?!h:false:h,f=pSBC.pSBCr(c0),P=p<0,t=c1&&c1!="c"?pSBC.pSBCr(c1):P?{r:0,g:0,b:0,a:-1}:{r:255,g:255,b:255,a:-1},p=P?p*-1:p,P=1-p;
-	if(!f||!t)return null;
-	if(l)r=m(P*f.r+p*t.r),g=m(P*f.g+p*t.g),b=m(P*f.b+p*t.b);
-	else r=m((P*f.r**2+p*t.r**2)**0.5),g=m((P*f.g**2+p*t.g**2)**0.5),b=m((P*f.b**2+p*t.b**2)**0.5);
-	a=f.a,t=t.a,f=a>=0||t>=0,a=f?a<0?t:t<0?a:a*P+t*p:0;
-	if(h)return"rgb"+(f?"a(":"(")+r+","+g+","+b+(f?","+m(a*1000)/1000:"")+")";
-	else return"#"+(4294967296+r*16777216+g*65536+b*256+(f?m(a*255):0)).toString(16).slice(1,f?undefined:-2)
-}
-
-pSBC.pSBCr=(d)=>{
-	const i=parseInt;
-	let n=d.length,x={};
-	if(n>9){
-		const [r, g, b, a] = (d = d.split(','));
-       n = d.length;
-		if(n<3||n>4)return null;
-		x.r=i(r[3]=="a"?r.slice(5):r.slice(4)),x.g=i(g),x.b=i(b),x.a=a?parseFloat(a):-1
-	}else{
-		if(n==8||n==6||n<4)return null;
-		if(n<6)d="#"+d[1]+d[1]+d[2]+d[2]+d[3]+d[3]+(n>4?d[4]+d[4]:"");
-		d=i(d.slice(1),16);
-		if(n==9||n==5)x.r=d>>24&255,x.g=d>>16&255,x.b=d>>8&255,x.a=Math.round((d&255)/0.255)/1000;
-		else x.r=d>>16,x.g=d>>8&255,x.b=d&255,x.a=-1
-	}return x
-};
-
-const backgroundColor = "#123456";
-const lineColor = "#F5F5F5"
+// All the colors are defined in the style sheet
+var style = getComputedStyle(document.body);
+const backgroundColor = style.getPropertyValue('--color-background');
+const lineColor = style.getPropertyValue('--color-text');
 const choirColors = [
-  "#c1121f",
-  "#ce6d8b",
-  "#FF8531",
-  "#FFA600",
-  "#72B043",
-  "#2B7654",
-  "#13608D",
-  "#0B478C"
-];
+  style.getPropertyValue('--color-c1'),
+  style.getPropertyValue('--color-c2'),
+  style.getPropertyValue('--color-c3'),
+  style.getPropertyValue('--color-c4'),
+  style.getPropertyValue('--color-c5'),
+  style.getPropertyValue('--color-c6'),
+  style.getPropertyValue('--color-c7'),
+  style.getPropertyValue('--color-c8')
+ ];
 
 // Parse "21.75-25.5" into two floats
 function getRange(s) {
@@ -219,7 +190,7 @@ function paintCanvas() {
         const Y = startY + (partHeight / 2);
         ctx.moveTo(startX, Y);
         ctx.lineTo(endX, Y);
-        ctx.strokeStyle = pSBC(0.24 - (0.08 * p), choirColors[c]);
+        ctx.strokeStyle = `hsl(${choirColors[c]}, 50%, ${67 - (5 * p)}%)`;
         ctx.stroke();
       });
     }
@@ -255,23 +226,30 @@ function getFilename(s) {
 function loadAudio(c, p, b) {
   let newfile = defaultaudiofile;
   if (c != '0' && p != '0') {
-    newfile = `../audio/spem-${c}-${getPartName(p)}.mp3`;
+    newfile = `/audio/spem-${c}-${getPartName(p)}.mp3`;
   }
 
   // just compare the filename, not the whole URL, to see if we
   // need to load a new MP3
-  if (getFilename(newfile) != getFilename(spemaudio.src)) {
+  if (getFilename(newfile) != getFilename(spemaudio.currentSrc)) {
     spemaudio.src = newfile;
+    spemaudio.load();
   }
-  // TODO: Wait for loading? Or disabled play till loaded?
 
   spemaudio.currentTime = b * 4 * beattime;
 }
 
-// TODO: Are you sure spemaudio is loaded?
-function playSpem() {
+async function playSpem() {
   if (spemaudio.paused) {
-    spemaudio.play();
+
+    playpauseicon.style.display = "none";
+    spinner.style.display="block";
+
+    await spemaudio.play();
+
+    playpauseicon.style.display = "block";
+    spinner.style.display="none";
+
     playpauseicon.classList.remove("paused");
     window.clearInterval(timerId);
     timerId = setInterval(() => {
