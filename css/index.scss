@@ -17,6 +17,17 @@ body {
     border-radius: 1rem;
     position: relative;
 
+    #backdrop {
+        position: fixed;
+        display: none;
+        z-index: 5;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
     header {
         .title {
             display: inline-block;
