@@ -502,6 +502,7 @@ window.addEventListener("load", async () => {
 
   // watch for change in user's preference of color scheme
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    darkswitch.checked = !darkswitch.checked;
     loadColors();
     pauseAndRepaint();
   });
