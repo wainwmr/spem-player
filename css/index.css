@@ -1,7 +1,37 @@
-:root {
-  --temp: 341;
-  --color-background: hsl(210, 65%, 20%);
+/* Default colors */
+body {
+  --color-title: hsl(210, 65%, 20%);
+  --color-background: hsl(210, 65%, 100%);
+  --color-text: hsl(210, 65%, 30%);
+  --color-highlight: hsl(58, 90%, 64%);
+}
+
+/* Dark theme colors */
+body.dark-theme {
   --color-text: hsl(0, 0%, 92%);
+  --color-title: hsl(210, 65%, 80%);
+  --color-background: hsl(210, 65%, 20%);
+  --color-highlight: hsl(58, 50%, 81%);
+}
+
+/* Styles for users who prefer dark mode at the OS level */
+@media (prefers-color-scheme: dark) {
+  /* defaults to dark theme */
+  body {
+    --color-text: hsl(0, 0%, 92%);
+    --color-title: hsl(210, 65%, 80%);
+    --color-background: hsl(210, 65%, 20%);
+    --color-highlight: hsl(58, 50%, 81%);
+  }
+  /* Override dark mode with light mode styles if the user decides to swap */
+  body.light-theme {
+    --color-title: hsl(210, 65%, 20%);
+    --color-background: hsl(210, 65%, 100%);
+    --color-text: hsl(210, 65%, 30%);
+    --color-highlight: hsl(58, 90%, 64%);
+  }
+}
+body {
   --color-border: hsl(210, 58%, 57%);
   --color-background-lighter: hsl(210, 65%, 80%);
   --color-active-button: hsl(210, 65%, 80%);
@@ -40,16 +70,90 @@ body {
   height: 100vh;
   background: rgba(0, 0, 0, 0.5);
 }
+.wrapper header {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: baseline;
+      -ms-flex-align: baseline;
+          align-items: baseline;
+  -webkit-column-gap: 3px;
+     -moz-column-gap: 3px;
+          column-gap: 3px;
+  /* The switch - the box around the slider */
+}
 .wrapper header .title {
   display: inline-block;
   font-size: 1.4rem;
-  color: var(--color-background-lighter);
+  color: var(--color-title);
   padding-top: 5px;
   padding-left: 10px;
   margin: 0;
 }
 .wrapper header #info {
   cursor: pointer;
+}
+.wrapper header #info path {
+  fill: var(--color-title);
+}
+.wrapper header .header-spacer {
+  -webkit-box-flex: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1;
+}
+.wrapper header .dark-label {
+  color: var(--color-text);
+  font-size: small;
+}
+.wrapper header .switch {
+  position: relative;
+  display: inline-block;
+  width: 30px;
+  height: 20px;
+  margin-right: 20px;
+  /* Hide default HTML checkbox */
+  /* The slider */
+}
+.wrapper header .switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.wrapper header .switch .slider {
+  position: absolute;
+  border-radius: 34px;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: 0.4s;
+  transition: 0.4s;
+}
+.wrapper header .switch .slider:before {
+  position: absolute;
+  border-radius: 50%;
+  content: "";
+  height: 80%;
+  aspect-ratio: 1/1;
+  left: 8%;
+  bottom: 10%;
+  background-color: white;
+  -webkit-transition: 0.2s;
+  transition: 0.2s;
+}
+.wrapper header input:checked + .slider {
+  background-color: var(--color-background-lighter);
+}
+.wrapper header input:focus + .slider {
+  -webkit-box-shadow: 0 0 1px #2196F3;
+          box-shadow: 0 0 1px #2196F3;
+}
+.wrapper header input:checked + .slider:before {
+  -webkit-transform: translateX(70%);
+      -ms-transform: translateX(70%);
+          transform: translateX(70%);
 }
 .wrapper #help {
   display: none;
@@ -281,13 +385,13 @@ body {
     stroke: hsl(var(--color-c1), 50%, 50%);
   }
   25% {
-    stroke: var(--color-c3);
+    stroke: hsl(var(--color-c3), 50%, 50%);
   }
   50% {
-    stroke: var(--color-c5);
+    stroke: hsl(var(--color-c5), 50%, 50%);
   }
   75% {
-    stroke: var(--color-c8);
+    stroke: hsl(var(--color-c8), 50%, 50%);
   }
   100% {
     stroke: hsl(var(--color-c1), 50%, 50%);
@@ -298,13 +402,13 @@ body {
     stroke: hsl(var(--color-c1), 50%, 50%);
   }
   25% {
-    stroke: var(--color-c3);
+    stroke: hsl(var(--color-c3), 50%, 50%);
   }
   50% {
-    stroke: var(--color-c5);
+    stroke: hsl(var(--color-c5), 50%, 50%);
   }
   75% {
-    stroke: var(--color-c8);
+    stroke: hsl(var(--color-c8), 50%, 50%);
   }
   100% {
     stroke: hsl(var(--color-c1), 50%, 50%);

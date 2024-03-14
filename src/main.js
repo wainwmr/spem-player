@@ -28,6 +28,7 @@ const info = document.getElementById('info');
 const help = document.getElementById('help');
 const backdrop = document.getElementById('backdrop');
 const spinner = document.getElementById('spinner');
+const darkswitch = document.getElementById('darkswitch');
 
 const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass'];
 
@@ -36,24 +37,37 @@ let barWidth = 0;
 let choirHeight = 0;
 let partHeight = 0;
 
+const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+if (prefersDarkScheme.matches) {
+  document.body.classList.add('dark-theme');
+  darkswitch.checked = true;
+} else {
+  document.body.classList.remove('dark-theme');
+  darkswitch.checked = false;
+}
+
 // All the colors are defined in the style sheet
-var style = getComputedStyle(document.body);
-const backgroundColor = style.getPropertyValue('--color-background');
-const lineColor = style.getPropertyValue('--color-text');
-const choirColors = [
-  style.getPropertyValue('--color-c1'),
-  style.getPropertyValue('--color-c2'),
-  style.getPropertyValue('--color-c3'),
-  style.getPropertyValue('--color-c4'),
-  style.getPropertyValue('--color-c5'),
-  style.getPropertyValue('--color-c6'),
-  style.getPropertyValue('--color-c7'),
-  style.getPropertyValue('--color-c8')
- ];
+var backgroundColor, lineColor, highlightColor, choirColors;
+function loadColors() {
+  var style = getComputedStyle(document.body);
+  backgroundColor = style.getPropertyValue('--color-background');
+  lineColor = style.getPropertyValue('--color-text');
+  highlightColor = style.getPropertyValue('--color-highlight');
+  choirColors = [
+    style.getPropertyValue('--color-c1'),
+    style.getPropertyValue('--color-c2'),
+    style.getPropertyValue('--color-c3'),
+    style.getPropertyValue('--color-c4'),
+    style.getPropertyValue('--color-c5'),
+    style.getPropertyValue('--color-c6'),
+    style.getPropertyValue('--color-c7'),
+    style.getPropertyValue('--color-c8')
+  ];
+}
 
 // Parse "21.75-25.5" into two floats
 function getRange(s) {
-  if (!s) return [999, 999]; 
+  if (!s) return [999, 999];
   return s.split("-").map(numStr => parseFloat(numStr));
 }
 
@@ -68,7 +82,7 @@ function setChoir(c) {
   const oldChoir = choirselect.value;
   if (c != oldChoir) {
     if (isNaN(c)) {
-      c = 0;  
+      c = 0;
     }
     choirselect.value = c;
     changed = true;
@@ -79,7 +93,7 @@ function setPart(p) {
   const oldPart = partselect.value;
   if (p != oldPart) {
     if (isNaN(p)) {
-      p = 0;  
+      p = 0;
     }
     partselect.value = p;
     changed = true;
@@ -90,12 +104,12 @@ function setBar(b) {
   const oldBar = barinput.value;
   if (b != oldBar) {
     if (isNaN(b)) {
-      b = 0;  
+      b = 0;
     }
     if (b > 140) {
       playpauseicon.classList.add("paused");
       window.clearInterval(timerId);
-      b  = 0;
+      b = 0;
     }
     else if (b < 0) {
       b = 139;
@@ -108,8 +122,8 @@ function setBar(b) {
 function parseURL() {
   const url = window.location.search.substring(1);
   const parms = url.split("&");
-  
-  for (let i=0; i < parms.length;i++) {
+
+  for (let i = 0; i < parms.length; i++) {
     const p = parms[i].split("=");
     if (p[0] == "choir") {
       setChoir(p[1]);
@@ -167,7 +181,7 @@ function paintCanvas() {
     ctx.moveTo(canvasPadding + barWidth, startY + (partHeight / 2));
     ctx.lineTo(canvasPadding + (140 * barWidth) - barWidth, startY + (partHeight / 2));
     ctx.lineWidth = partHeight * 1.4;
-    ctx.strokeStyle = '#f6f3a8';
+    ctx.strokeStyle = highlightColor;
     ctx.lineCap = "round";
     ctx.stroke();
   }
@@ -243,12 +257,12 @@ async function playSpem() {
   if (spemaudio.paused) {
 
     playpauseicon.style.display = "none";
-    spinner.style.display="block";
+    spinner.style.display = "block";
 
     await spemaudio.play();
 
     playpauseicon.style.display = "block";
-    spinner.style.display="none";
+    spinner.style.display = "none";
 
     playpauseicon.classList.remove("paused");
     window.clearInterval(timerId);
@@ -447,12 +461,23 @@ function showHelp(show = true) {
   }
 }
 
+function toggleDark() {
+  if (prefersDarkScheme.matches) {
+    document.body.classList.toggle("light-theme");
+  } else {
+    document.body.classList.toggle("dark-theme");
+  }
+  loadColors();
+  pauseAndRepaint();
+}
+
 
 // -----------------------------------------------------
 // Setup page
 // -----------------------------------------------------
 
 window.addEventListener("load", async () => {
+  loadColors();
   calculateCanvasSize();
   showLoadingOnCanvas();
   const response = await fetch(jsonFilename);
@@ -473,6 +498,14 @@ window.addEventListener("load", async () => {
   canvas.addEventListener("touchstart", touchStarted, { passive: false });
   info.addEventListener("click", () => showHelp(true));
   backdrop.addEventListener("click", () => showHelp(false));
+  darkswitch.addEventListener("click", () => toggleDark());
+
+  // watch for change in user's preference of color scheme
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    loadColors();
+    pauseAndRepaint();
+  });
+
 
   // Next line not really necessary, but will make it look clearer on browser resize
   // window.addEventListener("resize", () => {calculateCanvasSize(); paintCanvas(json); });
