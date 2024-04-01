@@ -1,0 +1,43 @@
+Lilypond {
+
+	File = (RelativeClause)*
+	
+    RelativeClause = (variable "=")? "\\relative" note? "{" Music "}"
+    
+    Music = Component*
+
+    comment = "%" (~"\n" any)* ("\n" | end)
+    space += comment
+    
+    Component = note --note
+    		| repeatedNote -- repeatedNote
+		    | rest --rest
+		    | barline -- barline
+    
+    barline = "|"
+    
+	note = noteName accidental? octave? durationScaled? slur?
+	noteName = "a" | "b" | "c" | "d" | "e" | "f" | "g"
+    
+    repeatedNote = durationScaled slur?
+    
+    accidental = "is" -- sharp 
+    			| "es" -- flat
+    
+    rest = restName durationScaled?
+    restName = "r" -- rest 
+    		| "R" -- wholeBarRest
+    
+    octave = octaveUp | octaveDown
+    octaveUp = "'"+
+    octaveDown = ","+
+    
+    fraction = #(digit+ ("/" digit+)?)
+    
+    durationScaled = duration ("*" fraction)?
+    duration = ("\\breve" | "64" | "32" | "16" | "8" | "4" | "2" | "1") "."*
+    
+    slur = "~"
+    
+    variable = letter+
+}

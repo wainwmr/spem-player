@@ -1,3 +1,13 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-undef */
+
+// Make an dictionary of music positions (hemidemisemiquavers/128) to array of notes {choir, part, note}
+const dict = {};
+
+// a dictionary to hold the muic in the lilypond input file
+var scores = {};
+
+
 
 // TODO: Perhaps locations = { json: <String>, defaultaudio: <String>, audio: <String>[8][5] }?
 let defaultaudiofile = '/audio/spem.mp3';
@@ -9,7 +19,8 @@ var spemaudio = new Audio();
 var json;
 
 // const beattime = 0.97; // seconds per beat
-const beattime = 0.967;
+// const beattime = 0.967; // old
+const beattime = 0.968;
 
 const container = document.getElementById("spemFrame");
 const canvas = document.getElementById("spemCanvas");
@@ -157,7 +168,35 @@ function showLoadingOnCanvas() {
   ctx.restore();
 }
 
-function paintCanvas() {
+// define array pulses[choir][part] to be min transparency which
+// will be pulsed when the choir is singing a note.
+var pulses = [];
+for (var c = 0; c < 8; c++) {
+  pulses[c] = [];
+  for (var p = 0; p < 5; p++) {
+    pulses[c][p] = 0.7;
+  }
+}
+
+function update(pos = 0) {
+
+  const bar = Math.floor(pos);
+
+  const duration = 0.5;
+
+  const quant = Math.floor(pos * 8) / 8;
+  const notes = dict[quant];
+  if (notes != undefined && notes.length > 0) {
+    for (var n of notes) {
+      pulses[n.c][n.p] = easeOutQuad(pos % quant, 1, -0.3, duration);
+    }
+  }
+
+  setBar(bar);
+}
+
+
+function paintCanvas(currentpos = 0) {
 
   // if (!changed || barWidth === 0) {
   //   return;
@@ -169,15 +208,30 @@ function paintCanvas() {
   ctx.fillStyle = backgroundColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Draw number to the screen
+  // Draw FPS number to the screen
   if (!isNaN(fps)) {
     ctx.font = '25px Arial';
     ctx.fillStyle = '#CCC';
     ctx.fillText("FPS: " + fps, 10, canvas.height - 30);
   }
 
+  // Draw bar highlight
+  ctx.save();
+  let b = Number(barinput.value);
+  ctx.lineWidth = barWidth;
+  ctx.strokeStyle = `hsla(220, 50%, 50%, 0.8)`;
+  // ctx.strokeStyle = lineColor;
+  ctx.beginPath();
+  ctx.moveTo(canvasPadding + (b * barWidth), canvasPadding);
+  ctx.lineTo(canvasPadding + (b * barWidth), canvas.height - canvasPadding);
+  // ctx.setLineDash([0.8 * partHeight, 1.6 * partHeight]);
+  ctx.stroke();
+  ctx.restore();
+
+
   // Draw background line if there is a selected choir & part
-  if (choirselect.value != 0 && partselect.value != 0) {
+  if (choirselect.value != '0' && partselect.value != '0') {
+    ctx.save();
     const c = Number(choirselect.value) - 1;
     const p = Number(partselect.value) - 1;
     const startY = canvasPadding + (c * choirHeight) + (p * partHeight);
@@ -185,9 +239,11 @@ function paintCanvas() {
     ctx.moveTo(canvasPadding + barWidth, startY + (partHeight / 2));
     ctx.lineTo(canvasPadding + (140 * barWidth) - barWidth, startY + (partHeight / 2));
     ctx.lineWidth = partHeight * 1.4;
-    ctx.strokeStyle = highlightColor;
+    // ctx.strokeStyle = highlightColor;
+    ctx.strokeStyle = `hsla(220, 50%, 50%, 0.8)`;
     ctx.lineCap = "round";
     ctx.stroke();
+    ctx.restore();
   }
 
   // Draw each of the 40 voice parts
@@ -209,26 +265,30 @@ function paintCanvas() {
         ctx.moveTo(startX, Y);
         ctx.lineTo(endX, Y);
 
-        // pulse the choir 1 soprano and alto lines
-        var brightness = (67 - (5 * p));
-        if (c === 0) brightness *= pulses[p];
+        var brightness = (67 - (3 * p));
+        var transp = (currentpos >= from && currentpos < to ? pulses[c][p] : 0.7);
+        var saturation = (currentpos >= from && currentpos < to ? 80 : 50);
 
-        ctx.strokeStyle = `hsl(${choirColors[c]}, 50%, ${brightness}%)`;
+        ctx.strokeStyle = `hsla(${choirColors[c]}, ${saturation}%, ${brightness}%, ${transp})`;
         ctx.stroke();
+
+        // // var brightness = 40;
+        // // pulse the transparency when a choir is singing a section
+        // if (currentpos >= from && currentpos < to) {
+        //   var transp = pulses[c][p];
+        //   // ctx.save();
+        //   ctx.strokeStyle = `hsla(${choirColors[c]}, 0%, ${brightness}%, 1})`;
+        //   ctx.stroke();
+        //   // ctx.restore();
+        // }
+        // else {
+        //   ctx.strokeStyle = `hsla(${choirColors[c]}, 60%, ${brightness}%, 0.8)`;
+        //   ctx.stroke();
+        // }
       });
     }
   }
 
-  ctx.save();
-  let b = barinput.value;
-  ctx.lineWidth = Math.max(barWidth / 3, 8);
-  ctx.strokeStyle = lineColor;
-  ctx.beginPath();
-  ctx.moveTo(canvasPadding + (b * barWidth), canvasPadding);
-  ctx.lineTo(canvasPadding + (b * barWidth), canvas.height - canvasPadding);
-  ctx.setLineDash([0.8 * partHeight, 1.6 * partHeight]);
-  ctx.stroke();
-  ctx.restore();
 }
 
 function getMousePos(canv, evt) {
@@ -292,41 +352,16 @@ function playLoop(timestamp) {
   // Calculate fps
   fps = Math.round(1 / secondsPassed);
 
-  update();
-  paintCanvas();
+  const pos = spemaudio.currentTime / (beattime * 4);
+
+  update(pos);
+  paintCanvas(pos);
 
   if (!spemaudio.paused) {
     window.requestAnimationFrame(playLoop);
   }
 }
 
-
-const notes = [
-  [1.5, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4.125, 4.25, 4.75, 5, 5.375, 5.5, 5.75, 6, 6.25, 6.625, 6.75, 7.25, 7.625, 7.75, 8.25, 8.5],
-  [1, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.75, 4, 4.5, 5, 5.375, 5.5, 5.625, 5.75, 6.25, 6.5, 6.875, 6.9375, 7, 7.75, 8, 8.25, 8.375, 8.5],
-  [5.5, 6.25, 6.5, 6.75, 7, 7.25, 7.5, 7.75, 8.125, 8.25, 8.75],
-  [5, 5.75, 6, 6.25, 6.5, 6.75, 7, 7.25, 7.75, 8.25, 8.5],
-  [6.25, 6.75, 7, 7.25, 7.5, 7.75, 8.25, 8.5, 8.75, 9]
- ];
-var pulses = [1, 1, 1, 1, 1];
-
-function update() {
-
-  const pos = spemaudio.currentTime / (beattime * 4);
-  const bar = Math.floor(pos);
-
-  const duration = 0.5;
-
-  for (var i = 0; i < 5; i++) {
-    // find first x in array where pos > x
-    const next = notes[i].findLast(x => pos >= x);
-    if (pos % next < duration) {
-      pulses[i] = easeOutQuad(pos % next, 1.3, -0.3, duration);
-    }
-  }
-
-  setBar(bar);
-}
 
 function easeOutQuad(t, b, c, d) {
   return -c * (t /= d) * (t - 2) + b;
@@ -382,6 +417,10 @@ function canvasMoved(e) {
 // -----------------------------------------------------
 // Field events (chaning choir, part or bar)
 // -----------------------------------------------------
+
+function pauseAndRepaintNoLoad() {
+  pauseAndRepaint(false);
+}
 
 function pauseAndRepaint(load = true) {
   pauseSpem();
@@ -464,9 +503,9 @@ function keyboardTapped(e) {
   }
   // Toggle between ALL choirs and selected choir
   else if (e.code === 'KeyX') {
-    if (choirselect.value != 0 || partselect.value != 0) {
-      lastChoir = choirselect.value;
-      lastPart = partselect.value;
+    if (choirselect.value != '0' || partselect.value != '0') {
+      lastChoir = Number(choirselect.value);
+      lastPart = Number(partselect.value);
       setChoir(0);
       setPart(0);
     }
@@ -490,7 +529,7 @@ function getTouchPos(evt) {
 // BUG: on mobile, touch to move bar to half-way and play
 // and it starts from bar 0.
 function touchStarted(evt) {
-  setBar(parseInt(getTouchPos(evt)));
+  setBar(getTouchPos(evt));
   pauseAndRepaint(false);
 
   // BUG: [Violation] Added non-passive event listener to a scroll-blocking <some> event.
@@ -499,7 +538,7 @@ function touchStarted(evt) {
   evt.preventDefault();
 
   canvas.addEventListener("touchmove", (e) => {
-    setBar(parseInt(getTouchPos(e)));
+    setBar(getTouchPos(e));
     pauseAndRepaint(false);
   });
   canvas.addEventListener("touchend", () => {
@@ -531,10 +570,165 @@ function toggleDark() {
 
 
 // -----------------------------------------------------
+// Set up Lilypond parser
+// -----------------------------------------------------
+
+var lyGrammar, semantics;
+
+async function setupLilypondParser() {
+
+  // Load the OHM grammar for Lilypond 
+  const promise = await fetch('/src/ly-grammar.ohm');
+  const grammarString = await promise.text();
+  lyGrammar = ohm.grammar(grammarString);
+
+  // Create a parse for Lilypond
+  semantics = lyGrammar.createSemantics();
+
+  // If lilypond input has no duration, use lastDuration; use lastNote if note name is missing
+  var lastNote, lastDuration;
+
+  function getDuration(duration) {
+    var d = duration.parse()[0];
+    if (d == undefined) {
+      d = lastDuration;
+    }
+    else {
+      lastDuration = d;
+    }
+    return d;
+  }
+
+
+  semantics.addOperation('parse', {
+    RelativeClause(variable, _, _2, note, _3, music, _4) {
+      const v = variable.parse();
+      const n = note.parse();
+      if (v[0] != undefined) {
+        scores[v[0]] = music.parse();
+      }
+      return scores[v];
+    },
+    Component(comp) {
+      const c = comp.parse();
+      return c;
+    },
+    barline(_) {
+      return new BarLine();
+    },
+    repeatedNote(duration, slur) {
+      const d = duration.parse();
+      const s = slur.sourceString.length == 0 ? undefined : slur.sourceString
+
+      const note = new Note(lastNote.notename, lastNote.accidental, '', d, s);
+      return note;
+    },
+    note(notename, accidental, octave, duration, slur) {
+      const n = notename.sourceString;
+      const a = accidental.sourceString.length == 0 ? undefined : accidental.sourceString;
+      const o = octave.sourceString.length == 0 ? undefined : octave.sourceString;
+      var d = getDuration(duration);
+      const s = slur.sourceString.length == 0 ? undefined : slur.sourceString
+
+      lastNote = new Note(n, a, o, d, s);
+      return lastNote;
+    },
+    rest(restname, duration) {
+      const r = restname.sourceString;
+      var d = getDuration(duration);
+      const rest = new Rest(r, d);
+      return rest;
+    },
+    duration(duration, dotted) {
+      const d = duration.sourceString;
+      const dot = dotted.sourceString;
+      const ret = new Duration(d, dot, 1);
+      return ret;
+    },
+    durationScaled(duration, _, multiplier) {
+      const x = duration.parse();
+      const m = multiplier.parse()[0];
+
+      return new Duration(x.duration, x.dotted, m);
+    },
+    fraction(a, _, b) {
+      // HACK: we're ignoring the denominator altogether.  Let's hope it's not there
+      return parseInt(a.sourceString);
+    },
+    variable(v) {
+      return v.sourceString;
+    },
+    _iter(...children) {
+      return children.map(c => c.parse());
+    }
+  });
+
+}
+
+
+
+async function processLilypond() {
+
+  // Load the Spem lilypond file
+  const promise = await fetch('/spem.ly');
+  const spemly = await promise.text();
+
+  // const spemly  = "choirVBaritone = \\relative { f2 f f}";
+  // Parse it
+  const result = lyGrammar.match(spemly);
+  if (!result.succeeded()) {
+    console.error('Bad Lilypond ' + result.message);
+  }
+
+  semantics(result).parse();
+
+  const choirs = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
+  const parts = ["Soprano", "Alto", "Tenor", "Baritone", "Bass"];
+
+
+  // Read lilypond input into dict{ position -> [{choir, part, note}]}
+  for (var choir = 0; choir < 8; choir++) {
+    for (var part = 0; part < 5; part++) {
+      var key = "choir" + choirs[choir] + parts[part];
+      var lilypond = scores[key];
+
+      // console.log(lilypond.map(x => (typeof x == "undefined") ? "?" : x.toString()).join(" "));
+
+      // Pretty print where we don't show repeated durations
+      // TODO: Move this functionality inside classes/Component
+      // var str = [];
+      // var lastlen;
+      // for (var c of lilypond) {
+      //   // console.log(lastlen, c.duration.sfths);
+      //   str.push(c.toString(lastlen !== c.duration.sfths));
+      //   lastlen = c.duration.sfths;
+      // }
+      // console.log(str.join(" "));
+
+      var pos = 1; // in hemidemisemiquavers (64ths)
+      const barsize = 128; // hemidemisemiquavers in a bar
+      for (var comp of lilypond) {
+        if (comp instanceof Note) {
+          if (dict[pos] == undefined) {
+            dict[pos] = [];
+          }
+          dict[pos].push({ "c": choir, "p": part, "n": comp });
+        }
+        pos += comp.duration.sfths / barsize;
+      }
+    }
+  }
+}
+
+
+// -----------------------------------------------------
 // Setup page
 // -----------------------------------------------------
 
 window.addEventListener("load", async () => {
+  await setupLilypondParser();
+  processLilypond();
+
   loadColors();
   calculateCanvasSize();
   showLoadingOnCanvas();
@@ -551,7 +745,7 @@ window.addEventListener("load", async () => {
   canvas.addEventListener('mousemove', canvasMoved, false);
   [choirselect,
     partselect,
-    barinput].forEach(el => el.addEventListener('change', pauseAndRepaint));
+    barinput].forEach(el => el.addEventListener('change', pauseAndRepaintNoLoad));
   document.addEventListener("keydown", keyboardTapped);
   canvas.addEventListener("touchstart", touchStarted, { passive: false });
   info.addEventListener("click", () => showHelp(true));
@@ -564,7 +758,6 @@ window.addEventListener("load", async () => {
     loadColors();
     pauseAndRepaint();
   });
-
 
   // Next line not really necessary, but will make it look clearer on browser resize
   // window.addEventListener("resize", () => {calculateCanvasSize(); paintCanvas(json); });

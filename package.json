@@ -1,15 +1,19 @@
 {
   "name": "spem-player",
-  "version": "1.0.3",
-  "description": "Helping singers learn Spem in alium",
-  "main": "index.js",
+  "version": "1.0.10",
+  "description": "Helping singers learn Thomas Tallis Spem in alium",
+  "main": "spem.js",
+  "dependencies": {
+    "ohm-js": "^17.1.0"
+  },
   "devDependencies": {
+    "@ohm-js/cli": "^2.0.0",
     "eslint": "^8.57.0"
   },
   "scripts": {
     "start": "node hello.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Mark Wainwright",
   "license": "MIT"
 }
