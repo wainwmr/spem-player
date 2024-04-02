@@ -56,11 +56,11 @@ if (prefersDarkScheme.matches) {
 }
 
 // All the colors are defined in the style sheet
-var backgroundColor, lineColor, highlightColor, choirColors;
+var backgroundColor, textColor, highlightColor, choirColors;
 function loadColors() {
   var style = getComputedStyle(document.body);
   backgroundColor = style.getPropertyValue('--color-background');
-  lineColor = style.getPropertyValue('--color-text');
+  textColor = style.getPropertyValue('--color-text');
   highlightColor = style.getPropertyValue('--color-highlight');
   choirColors = [
     style.getPropertyValue('--color-c1'),
@@ -184,19 +184,27 @@ function update(pos = 0) {
 
   const duration = 0.5;
 
-  const quant = Math.floor(pos * 8) / 8;
+  // find who has a note that starts in this current quaver (16th of a bar)
+  const quant = Math.floor(pos * 16) / 16;
   const notes = dict[quant];
+
+  // 
   if (notes != undefined && notes.length > 0) {
     for (var n of notes) {
-      pulses[n.c][n.p] = easeOutQuad(pos % quant, 1, -0.3, duration);
+      console.log(n.c, n.p, n.n.duration.sfths/128);
+      pulses[n.c][n.p] = easeOutQuad(pos % quant, 1, -0.3, n.n.duration.sfths/128);
     }
   }
 
   setBar(bar);
 }
 
+function easeOutQuad(t, b, c, d) {
+  return -c * (t /= d) * (t - 2) + b;
+}
 
-function paintCanvas(currentpos = 0) {
+
+function draw(currentpos = 0) {
 
   // if (!changed || barWidth === 0) {
   //   return;
@@ -218,13 +226,12 @@ function paintCanvas(currentpos = 0) {
   // Draw bar highlight
   ctx.save();
   let b = Number(barinput.value);
-  ctx.lineWidth = barWidth;
-  ctx.strokeStyle = `hsla(220, 50%, 50%, 0.8)`;
-  // ctx.strokeStyle = lineColor;
   ctx.beginPath();
   ctx.moveTo(canvasPadding + (b * barWidth), canvasPadding);
   ctx.lineTo(canvasPadding + (b * barWidth), canvas.height - canvasPadding);
-  // ctx.setLineDash([0.8 * partHeight, 1.6 * partHeight]);
+  ctx.lineWidth = barWidth * 1.4;
+  ctx.strokeStyle = highlightColor;
+  ctx.lineCap = "square";
   ctx.stroke();
   ctx.restore();
 
@@ -239,8 +246,7 @@ function paintCanvas(currentpos = 0) {
     ctx.moveTo(canvasPadding + barWidth, startY + (partHeight / 2));
     ctx.lineTo(canvasPadding + (140 * barWidth) - barWidth, startY + (partHeight / 2));
     ctx.lineWidth = partHeight * 1.4;
-    // ctx.strokeStyle = highlightColor;
-    ctx.strokeStyle = `hsla(220, 50%, 50%, 0.8)`;
+    ctx.strokeStyle = highlightColor;
     ctx.lineCap = "round";
     ctx.stroke();
     ctx.restore();
@@ -265,11 +271,23 @@ function paintCanvas(currentpos = 0) {
         ctx.moveTo(startX, Y);
         ctx.lineTo(endX, Y);
 
-        var brightness = (67 - (3 * p));
-        var transp = (currentpos >= from && currentpos < to ? pulses[c][p] : 0.7);
-        var saturation = (currentpos >= from && currentpos < to ? 80 : 50);
+        // var brightness = (67 - (3 * p));
+        // var transp = (currentpos >= from && currentpos < to ? pulses[c][p] : 0.7);
+        // var saturation = (currentpos >= from && currentpos < to ? 80 : 40);
 
-        ctx.strokeStyle = `hsla(${choirColors[c]}, ${saturation}%, ${brightness}%, ${transp})`;
+        var lightness, saturation, transparency;
+        if (currentpos >= from && currentpos < to) {
+          lightness = (67 - (3 * p));// * pulses[c][p];
+          saturation = 80;
+          transparency = pulses[c][p];
+        }
+        else {
+          lightness = 67 - (3 * p);
+          saturation = 50;
+          transparency = 0.5;
+        }
+
+        ctx.strokeStyle = `hsla(${choirColors[c]}, ${saturation}%, ${lightness}%, ${transparency})`;
         ctx.stroke();
 
         // // var brightness = 40;
@@ -340,32 +358,27 @@ async function playSpem() {
   }
 }
 
-let secondsPassed;
 let oldTimeStamp;
-let fps;
+let fps;  // frames per second
 
 function playLoop(timestamp) {
-  // Calculate the number of seconds passed since the last frame
-  secondsPassed = (timestamp - oldTimeStamp) / 1000;
+  
+  // Calculate the frames per second
+  const secondsPassed = (timestamp - oldTimeStamp) / 1000;
   oldTimeStamp = timestamp;
-
-  // Calculate fps
   fps = Math.round(1 / secondsPassed);
 
+  // Calculate which bar we are on 
   const pos = spemaudio.currentTime / (beattime * 4);
 
   update(pos);
-  paintCanvas(pos);
+  draw(pos);
 
   if (!spemaudio.paused) {
     window.requestAnimationFrame(playLoop);
   }
 }
 
-
-function easeOutQuad(t, b, c, d) {
-  return -c * (t /= d) * (t - 2) + b;
-}
 
 function pauseSpem() {
   if (!spemaudio.paused) {
@@ -439,7 +452,7 @@ function pauseAndRepaint(load = true) {
     }
     partselect.disabled = false;
   }
-  paintCanvas();
+  draw();
 }
 
 // -----------------------------------------------------
@@ -760,5 +773,5 @@ window.addEventListener("load", async () => {
   });
 
   // Next line not really necessary, but will make it look clearer on browser resize
-  // window.addEventListener("resize", () => {calculateCanvasSize(); paintCanvas(json); });
+  // window.addEventListener("resize", () => {calculateCanvasSize(); draw(json); });
 });

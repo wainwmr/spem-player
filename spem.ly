@@ -1,3 +1,6 @@
+% \version "2.24.3"
+
+
 choirISoprano = \relative c {
   r1 d''1. d2 
   | % 2

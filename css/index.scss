@@ -4,36 +4,37 @@ $duration: 1.4s;
 
 /* Default colors */
 body {
-    --color-title: hsl(210, 65%, 20%);
     --color-background: hsl(210, 65%, 100%);
     --color-text: hsl(210, 65%, 30%);
-    --color-highlight: hsl(58, 90%, 64%);
+    --color-title: hsl(210, 65%, 20%);
+    --color-highlight: hsl(80, 3%, 77%);
 }
-  /* Dark theme colors */
-  body.dark-theme {
+/* Dark theme colors */
+body.dark-theme {
+    --color-background: hsl(210, 65%, 20%);
     --color-text: hsl(0, 0%, 92%);
     --color-title: hsl(210, 65%, 80%);
-    --color-background: hsl(210, 65%, 20%);
-    --color-highlight: hsl(58, 50%, 81%);
+    --color-highlight: hsl(58, 65%, 96%);
 }
   
-  /* Styles for users who prefer dark mode at the OS level */
-  @media (prefers-color-scheme: dark) {
-    /* defaults to dark theme */
+/* Styles for users who prefer dark mode at the OS level */
+@media (prefers-color-scheme: dark) {
+/* defaults to dark theme */
     body { 
+        --color-background: hsl(210, 65%, 20%);
         --color-text: hsl(0, 0%, 92%);
         --color-title: hsl(210, 65%, 80%);
-        --color-background: hsl(210, 65%, 20%);
-        --color-highlight: hsl(58, 50%, 81%);
+        --color-highlight: hsl(58, 65%, 96%);
     }
     /* Override dark mode with light mode styles if the user decides to swap */
     body.light-theme {
-        --color-title: hsl(210, 65%, 20%);
         --color-background: hsl(210, 65%, 100%);
         --color-text: hsl(210, 65%, 30%);
-        --color-highlight: hsl(58, 90%, 64%);
+        --color-title: hsl(210, 65%, 20%);
+        --color-highlight: hsl(90, 1%, 48%);
     }
-  }
+}
+
 
 body {
     --color-border: hsl(210, 58%, 57%);
