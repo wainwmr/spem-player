@@ -191,7 +191,6 @@ function update(pos = 0) {
   // 
   if (notes != undefined && notes.length > 0) {
     for (var n of notes) {
-      console.log(n.c, n.p, n.n.duration.sfths/128);
       pulses[n.c][n.p] = easeOutQuad(pos % quant, 1, -0.3, n.n.duration.sfths/128);
     }
   }
@@ -613,7 +612,11 @@ async function setupLilypondParser() {
   }
 
 
+  var lilypondVersion;
   semantics.addOperation('parse', {
+    Version(_, _2, v, _3) {
+      lilypondVersion = v.sourceString;
+    },
     RelativeClause(variable, _, _2, note, _3, music, _4) {
       const v = variable.parse();
       const n = note.parse();

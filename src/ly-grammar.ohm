@@ -1,7 +1,9 @@
 Lilypond {
 
-	File = (RelativeClause)*
+	File = (Clause)*
+    Clause = RelativeClause | Version
 	
+    Version = "\\version" "\"" (digit | ".")* "\""
     RelativeClause = (variable "=")? "\\relative" note? "{" Music "}"
     
     Music = Component*

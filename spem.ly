@@ -1,4 +1,4 @@
-% \version "2.24.3"
+\version "2.24.3"
 
 
 choirISoprano = \relative c {
