@@ -220,11 +220,11 @@ function draw(currentpos) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Draw FPS number to the screen
-  if (!isNaN(fps)) {
-    ctx.font = '25px Arial';
-    ctx.fillStyle = '#CCC';
-    ctx.fillText("FPS: " + fps, 10, canvas.height - 30);
-  }
+  // if (!isNaN(fps)) {
+  //   ctx.font = '25px Arial';
+  //   ctx.fillStyle = '#CCC';
+  //   ctx.fillText("FPS: " + fps, 10, canvas.height - 30);
+  // }
 
   // Draw bar highlight
   // roundedRect(ctx, canvasPadding + (b * barWidth), canvasPadding, barWidth, canvas.height - canvasPadding, 10);
@@ -289,6 +289,11 @@ function draw(currentpos) {
         else if (c == (selectedChoir - 1) && p == ( selectedPart - 1)) {
           lightness = 67 - (3 * p);
           saturation = 80;
+          transparency = 1;
+        }
+        else if (selectedChoir === 0 && selectedPart === 0 && b === 0) {
+          lightness = 67 - (3 * p);
+          saturation = 50;
           transparency = 1;
         }
         else {
