@@ -105,7 +105,7 @@ function setBar(b) {
     if (isNaN(b)) {
       b = 0;
     }
-    if (b > 140) {
+    if (b > 139) {
       playpauseicon.classList.add("paused");
       b = 0;
     }
@@ -228,7 +228,7 @@ function draw(currentpos) {
 
   // Draw bar highlight
   // roundedRect(ctx, canvasPadding + (b * barWidth), canvasPadding, barWidth, canvas.height - canvasPadding, 10);
-  if (b > 0) {
+  if (b > 0 && b <= 139) {
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(canvasPadding + (b * barWidth), canvasPadding);
@@ -345,14 +345,15 @@ function loadAudio(c, p, b) {
 async function playSpem() {
   if (spemaudio.paused) {
 
+    // set the play button spinner while loading audio
     playpauseicon.style.display = "none";
     spinner.style.display = "block";
 
     await spemaudio.play();
 
+    // set the play button to pause again
     playpauseicon.style.display = "block";
     spinner.style.display = "none";
-
     playpauseicon.classList.remove("paused");
 
     // Animate while playing
@@ -376,7 +377,13 @@ function playLoop(timestamp) {
   update(pos);
   draw(pos);
 
-  if (!spemaudio.paused) {
+  if (pos >= 140) {
+    console.log('here');
+    setBar(0);
+    spemaudio.currentTime = 0;
+    pauseSpem();
+  }
+  else if (!spemaudio.paused) {
     window.requestAnimationFrame(playLoop);
   }
 }
