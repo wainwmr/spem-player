@@ -206,7 +206,7 @@ function draw(currentpos) {
 
   let b = Number(barinput.value);
   if (currentpos == undefined) {
-    currentpos = (b + 1) * beattime;
+    currentpos = b;
   }
 
   // if (!changed || barWidth === 0) {
@@ -228,15 +228,17 @@ function draw(currentpos) {
 
   // Draw bar highlight
   // roundedRect(ctx, canvasPadding + (b * barWidth), canvasPadding, barWidth, canvas.height - canvasPadding, 10);
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(canvasPadding + (b * barWidth), canvasPadding);
-  ctx.lineTo(canvasPadding + (b * barWidth), canvas.height - canvasPadding);
-  ctx.lineWidth = barWidth * 1.4;
-  ctx.strokeStyle = highlightColor;
-  ctx.lineCap = "square";
-  ctx.stroke();
-  ctx.restore();
+  if (b > 0) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(canvasPadding + (b * barWidth), canvasPadding);
+    ctx.lineTo(canvasPadding + (b * barWidth), canvas.height - canvasPadding);
+    ctx.lineWidth = barWidth * 1.4;
+    ctx.strokeStyle = highlightColor;
+    ctx.lineCap = "square";
+    ctx.stroke();
+    ctx.restore();
+  }
 
 
   // Draw background line if there is a selected choir & part

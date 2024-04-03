@@ -3,7 +3,7 @@ body {
   --color-background: hsl(210, 65%, 100%);
   --color-text: hsl(210, 65%, 30%);
   --color-title: hsl(210, 65%, 20%);
-  --color-highlight: hsl(80, 3%, 77%);
+  --color-highlight: hsl(210, 65%, 90%);
 }
 
 /* Dark theme colors */
@@ -11,7 +11,7 @@ body.dark-theme {
   --color-background: hsl(210, 65%, 20%);
   --color-text: hsl(0, 0%, 92%);
   --color-title: hsl(210, 65%, 80%);
-  --color-highlight: hsl(58, 65%, 96%);
+  --color-highlight: hsl(210, 65%, 25%);
 }
 
 /* Styles for users who prefer dark mode at the OS level */
@@ -21,14 +21,14 @@ body.dark-theme {
     --color-background: hsl(210, 65%, 20%);
     --color-text: hsl(0, 0%, 92%);
     --color-title: hsl(210, 65%, 80%);
-    --color-highlight: hsl(58, 65%, 96%);
+    --color-highlight: hsl(210, 65%, 25%);
   }
   /* Override dark mode with light mode styles if the user decides to swap */
   body.light-theme {
     --color-background: hsl(210, 65%, 100%);
     --color-text: hsl(210, 65%, 30%);
     --color-title: hsl(210, 65%, 20%);
-    --color-highlight: hsl(90, 1%, 48%);
+    --color-highlight: hsl(210, 65%, 90%);
   }
 }
 body {
