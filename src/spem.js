@@ -10,15 +10,11 @@ var scores = {};
 
 
 // TODO: Perhaps locations = { json: <String>, defaultaudio: <String>, audio: <String>[8][5] }?
-let defaultaudiofile = '/audio/spem.mp3';
-let jsonFilename = '/assets/spem.json';
+const defaultaudiofile = '/audio/spem.mp3';
+const lilypondfile = '/spem.ly';
 
 var spemaudio = new Audio();
 
-// storing the definition of all the voice parts
-var json;
-
-// const beattime = 0.97; // seconds per beat
 // const beattime = 0.967; // old
 const beattime = 0.968;
 
@@ -72,12 +68,6 @@ function loadColors() {
     style.getPropertyValue('--color-c7'),
     style.getPropertyValue('--color-c8')
   ];
-}
-
-// Parse "21.75-25.5" into two floats
-function getRange(s) {
-  if (!s) return [999, 999];
-  return s.split("-").map(numStr => parseFloat(numStr));
 }
 
 function getPartName(n) {
@@ -191,7 +181,7 @@ function update(pos = 0) {
   // 
   if (notes != undefined && notes.length > 0) {
     for (var n of notes) {
-      pulses[n.c][n.p] = easeOutQuad(pos % quant, 1, -0.3, n.n.duration.sfths/128);
+      pulses[n.c][n.p] = easeOutQuad(pos % quant, 1, -0.3, n.n.duration.sfths / 128);
     }
   }
 
@@ -202,8 +192,22 @@ function easeOutQuad(t, b, c, d) {
   return -c * (t /= d) * (t - 2) + b;
 }
 
+function roundedRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x, y + radius);
+  ctx.arcTo(x, y + height, x + radius, y + height, radius);
+  ctx.arcTo(x + width, y + height, x + width, y + height - radius, radius);
+  ctx.arcTo(x + width, y, x + width - radius, y, radius);
+  ctx.arcTo(x, y, x, y + radius, radius);
+  ctx.stroke();
+}
 
-function draw(currentpos = 0) {
+function draw(currentpos) {
+
+  let b = Number(barinput.value);
+  if (currentpos == undefined) {
+    currentpos = (b + 1) * beattime;
+  }
 
   // if (!changed || barWidth === 0) {
   //   return;
@@ -223,8 +227,8 @@ function draw(currentpos = 0) {
   }
 
   // Draw bar highlight
+  // roundedRect(ctx, canvasPadding + (b * barWidth), canvasPadding, barWidth, canvas.height - canvasPadding, 10);
   ctx.save();
-  let b = Number(barinput.value);
   ctx.beginPath();
   ctx.moveTo(canvasPadding + (b * barWidth), canvasPadding);
   ctx.lineTo(canvasPadding + (b * barWidth), canvas.height - canvasPadding);
@@ -236,11 +240,11 @@ function draw(currentpos = 0) {
 
 
   // Draw background line if there is a selected choir & part
-  if (choirselect.value != '0' && partselect.value != '0') {
+  const selectedChoir = Number(choirselect.value);
+  const selectedPart = Number(partselect.value);
+  if (selectedChoir != 0 && selectedPart != 0) {
     ctx.save();
-    const c = Number(choirselect.value) - 1;
-    const p = Number(partselect.value) - 1;
-    const startY = canvasPadding + (c * choirHeight) + (p * partHeight);
+    const startY = canvasPadding + ((selectedChoir - 1) * choirHeight) + ((selectedPart - 1) * partHeight);
     ctx.beginPath();
     ctx.moveTo(canvasPadding + barWidth, startY + (partHeight / 2));
     ctx.lineTo(canvasPadding + (140 * barWidth) - barWidth, startY + (partHeight / 2));
@@ -255,13 +259,14 @@ function draw(currentpos = 0) {
   ctx.lineWidth = 0.9 * partHeight;
   ctx.lineCap = "round";
   for (let c = 0; c < 8; c++) {
-    const parts = json.choirs[c].parts;
     for (let p = 0; p < 5; p++) {
       const startY = canvasPadding + (c * choirHeight) + (p * partHeight);
 
-      const ranges = parts[p].ranges;
-      ranges.forEach(r => {
-        const [from, to] = getRange(r);
+      const list = ranges[c][p];
+      list.forEach(r => {
+        const from = r.from;
+        const to = r.to;
+
         ctx.beginPath();
         // The weird 0.3 is because we're using rounded lines
         const startX = canvasPadding + ((from + 0.3) * barWidth);
@@ -270,15 +275,19 @@ function draw(currentpos = 0) {
         ctx.moveTo(startX, Y);
         ctx.lineTo(endX, Y);
 
-        // var brightness = (67 - (3 * p));
-        // var transp = (currentpos >= from && currentpos < to ? pulses[c][p] : 0.7);
-        // var saturation = (currentpos >= from && currentpos < to ? 80 : 40);
-
         var lightness, saturation, transparency;
+        
+        // If current bar is highlighted
         if (currentpos >= from && currentpos < to) {
-          lightness = (67 - (3 * p));// * pulses[c][p];
+          lightness = (67 - (3 * p)) * pulses[c][p];
           saturation = 80;
-          transparency = pulses[c][p];
+          transparency = 1; // pulses[c][p];
+        }
+        // if current choir/part is highlighted
+        else if (c == (selectedChoir - 1) && p == ( selectedPart - 1)) {
+          lightness = 67 - (3 * p);
+          saturation = 80;
+          transparency = 1;
         }
         else {
           lightness = 67 - (3 * p);
@@ -289,19 +298,6 @@ function draw(currentpos = 0) {
         ctx.strokeStyle = `hsla(${choirColors[c]}, ${saturation}%, ${lightness}%, ${transparency})`;
         ctx.stroke();
 
-        // // var brightness = 40;
-        // // pulse the transparency when a choir is singing a section
-        // if (currentpos >= from && currentpos < to) {
-        //   var transp = pulses[c][p];
-        //   // ctx.save();
-        //   ctx.strokeStyle = `hsla(${choirColors[c]}, 0%, ${brightness}%, 1})`;
-        //   ctx.stroke();
-        //   // ctx.restore();
-        // }
-        // else {
-        //   ctx.strokeStyle = `hsla(${choirColors[c]}, 60%, ${brightness}%, 0.8)`;
-        //   ctx.stroke();
-        // }
       });
     }
   }
@@ -361,7 +357,7 @@ let oldTimeStamp;
 let fps;  // frames per second
 
 function playLoop(timestamp) {
-  
+
   // Calculate the frames per second
   const secondsPassed = (timestamp - oldTimeStamp) / 1000;
   oldTimeStamp = timestamp;
@@ -681,12 +677,12 @@ async function setupLilypondParser() {
 
 }
 
-
+var ranges = [];
 
 async function processLilypond() {
 
   // Load the Spem lilypond file
-  const promise = await fetch('/spem.ly');
+  const promise = await fetch(lilypondfile);
   const spemly = await promise.text();
 
   // const spemly  = "choirVBaritone = \\relative { f2 f f}";
@@ -701,10 +697,12 @@ async function processLilypond() {
   const choirs = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
   const parts = ["Soprano", "Alto", "Tenor", "Baritone", "Bass"];
 
-
-  // Read lilypond input into dict{ position -> [{choir, part, note}]}
+  // Read lilypond input into dict{ position -> [ {choir, part, note}], ... }
+  // Read lilypond into ranges[choir][part] = [ {from, to}, ... ]
   for (var choir = 0; choir < 8; choir++) {
+    ranges[choir] = [];
     for (var part = 0; part < 5; part++) {
+      ranges[choir][part] = [];
       var key = "choir" + choirs[choir] + parts[part];
       var lilypond = scores[key];
 
@@ -721,17 +719,36 @@ async function processLilypond() {
       // }
       // console.log(str.join(" "));
 
+      var from = undefined;
+
       var pos = 1; // in hemidemisemiquavers (64ths)
       const barsize = 128; // hemidemisemiquavers in a bar
       for (var comp of lilypond) {
         if (comp instanceof Note) {
+          if (from == undefined) {
+            from = pos;
+          }
+
           if (dict[pos] == undefined) {
             dict[pos] = [];
           }
           dict[pos].push({ "c": choir, "p": part, "n": comp });
         }
+        else if (comp instanceof Rest) {
+          if (from != undefined) {
+            ranges[choir][part].push({ "from": from, "to": pos });
+            from = undefined;
+          }
+        }
+
         pos += comp.duration.sfths / barsize;
       }
+
+      if (from != undefined) {
+        ranges[choir][part].push({ "from": from, "to": pos });
+        from = undefined;
+      }
+
     }
   }
 }
@@ -742,14 +759,13 @@ async function processLilypond() {
 // -----------------------------------------------------
 
 window.addEventListener("load", async () => {
-  await setupLilypondParser();
-  processLilypond();
 
   loadColors();
   calculateCanvasSize();
   showLoadingOnCanvas();
-  const response = await fetch(jsonFilename);
-  json = await response.json();
+
+  await setupLilypondParser();
+  await processLilypond();
 
   // read choir, part and bar from the URL
   parseURL();
@@ -776,5 +792,5 @@ window.addEventListener("load", async () => {
   });
 
   // Next line not really necessary, but will make it look clearer on browser resize
-  // window.addEventListener("resize", () => {calculateCanvasSize(); draw(json); });
+  // window.addEventListener("resize", () => {calculateCanvasSize(); draw(); });
 });
