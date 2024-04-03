@@ -36,12 +36,12 @@ body {
   --color-background-lighter: hsl(210, 65%, 80%);
   --color-active-button: hsl(210, 65%, 80%);
   --color-c1: 360;
-  --color-c2: 341;
-  --color-c3: 14;
-  --color-c4: 39;
+  --color-c2: 320;
+  --color-c3: 30;
+  --color-c4: 50;
   --color-c5: 110;
-  --color-c6: 153;
-  --color-c7: 200;
+  --color-c6: 150;
+  --color-c7: 190;
   --color-c8: 220;
 }
 
