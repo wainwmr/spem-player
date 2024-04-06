@@ -11,7 +11,7 @@ var scores = {};
 
 // TODO: Perhaps locations = { json: <String>, defaultaudio: <String>, audio: <String>[8][5] }?
 const defaultaudiofile = '/audio/spem.mp3';
-const lilypondfile = '/spem.ly';
+const lilypondfile = '/spem notes.ly';
 
 var spemaudio = new Audio();
 
@@ -164,7 +164,7 @@ var pulses = [];
 for (var c = 0; c < 8; c++) {
   pulses[c] = [];
   for (var p = 0; p < 5; p++) {
-    pulses[c][p] = 0.7;
+    pulses[c][p] = 1;
   }
 }
 
@@ -181,11 +181,19 @@ function update(pos = 0) {
   // 
   if (notes != undefined && notes.length > 0) {
     for (var n of notes) {
-      pulses[n.c][n.p] = easeOutQuad(pos % quant, 1, -0.3, n.n.duration.sfths / 128);
+      pulses[n.c][n.p] = easeOutCubic(pos % quant, 1.3, -0.3, n.n.duration.sfths / 128);
     }
   }
 
   setBar(bar);
+}
+
+function easeInCubic (t, b, c, d) {
+  return c * (t /= d) * t * t + b;
+}
+
+function easeOutCubic (t, b, c, d) {
+  return c * ((t = t / d - 1) * t * t + 1) + b;
 }
 
 function easeOutQuad(t, b, c, d) {
@@ -378,7 +386,6 @@ function playLoop(timestamp) {
   draw(pos);
 
   if (pos >= 140) {
-    console.log('here');
     setBar(0);
     spemaudio.currentTime = 0;
     pauseSpem();
