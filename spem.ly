@@ -1,5 +1,14 @@
 \version "2.24.3"
 
+\paper {
+  #(set-paper-size "a2")
+  top-margin = 0
+  % left-margin = 0
+  indent = 0\cm
+  print-page-number = ##f
+  % #(set-paper-size '(cons (* 6000 mm) (* 100 mm)))
+}
+
 \include "spem notes.ly"
 \include "spem words.ly"
 
@@ -32,6 +41,7 @@ cIb = <<
 
 
 \score {
+  \compressMMRests
   <<
     \time 4/2
     \context Staff=choirISoprano \cIs

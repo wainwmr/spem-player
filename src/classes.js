@@ -4,9 +4,9 @@ class Duration {
   duration;
   dotted;
   multiplier;
-  sfths; // sixtyfourth note
+  sfths = 0; // sixtyfourth note
 
-  constructor(duration, dotted, multiplier = 1) {
+  constructor(duration = '', dotted = '', multiplier = 1) {
     this.duration = duration;
     this.dotted = dotted;
     this.multiplier = multiplier;
@@ -139,5 +139,14 @@ class Rest extends Component {
     str += this.restname;
     if (showDuration) str += this.duration.toString();
     return (str);
+  }
+}
+
+class Command extends Component {
+  constructor() {
+    super();
+  }
+  toString() {
+    return "Command";
   }
 }

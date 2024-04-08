@@ -16,6 +16,7 @@ const lilypondfile = '/spem notes.ly';
 var spemaudio = new Audio();
 
 // const beattime = 0.967; // old
+// (minim = 124) === (beattime = 0.9677)
 const beattime = 0.968;
 
 const container = document.getElementById("spemFrame");
@@ -646,6 +647,9 @@ async function setupLilypondParser() {
       const c = comp.parse();
       return c;
     },
+    command(_, c) {
+      const command = c.sourceString;
+    },
     barline(_) {
       return new BarLine();
     },
@@ -754,15 +758,17 @@ async function processLilypond() {
             dict[pos] = [];
           }
           dict[pos].push({ "c": choir, "p": part, "n": comp });
+
+          pos += comp.duration.sfths / barsize;
         }
         else if (comp instanceof Rest) {
           if (from != undefined) {
             ranges[choir][part].push({ "from": from, "to": pos });
             from = undefined;
           }
-        }
 
-        pos += comp.duration.sfths / barsize;
+          pos += comp.duration.sfths / barsize;
+        }
       }
 
       if (from != undefined) {

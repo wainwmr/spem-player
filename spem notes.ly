@@ -13,7 +13,7 @@ choirISoprano = \relative c {
   d4 a2 d d, a'4~ 
   a4 e4 r4 g c2 g' 
   f4. e8 d4 c b2 g 
-  d'1*2 
+  d'1 r1 
   r2 d d4 d2 a4 
   | %15
   a2 r4 f c' e2 c4 
@@ -215,7 +215,8 @@ choirIAlto = \relative c {
 }
 
 choirITenor = \relative c {
-    r1*9 d'1~
+  R\breve*4
+  r1 d'1~
   d2 d2 d d
   | % 5
   a a c e2~
@@ -321,7 +322,8 @@ choirITenor = \relative c {
 }
 
 choirIBaritone = \relative c {
-  R\breve*4 g'1. g2 
+  R\breve*4 
+  g'1. g2 
   g f d f 
   f a1 g2~
   g2 f2 e1 
@@ -334,9 +336,10 @@ choirIBaritone = \relative c {
   b2 a1 d,2 
   d'2. d,4 e2 c 
   r2 a' c1 
-  r2 f,2. f2 a 
-  d,4 a' d2 c8 b a2 
-  r2 c4 c,2 g' d4 
+  r2 f,2. f2 a4~ 
+  a d,4 a' d2 c8 b a2 
+  r2 c4 c,2 g'4~
+  g d4 
   r4 d' 
   d2. d,4 g d 
   d1 r1 
@@ -344,6 +347,7 @@ choirIBaritone = \relative c {
   r4 d,2 d'4 d1
   | %24
   R\breve*16
+  \break
   | %40 
   r2 g,2 g4 b b2 
   r4 g 
@@ -355,6 +359,7 @@ choirIBaritone = \relative c {
   d2. b4 b1 
   | %46
   R\breve*19
+  \break
   | r1 g1 
   g1. g2 
   g1 r1
@@ -385,6 +390,7 @@ choirIBaritone = \relative c {
   r2 g g g 
   g g r1 
   R\breve*4
+  \break
   | % 100
   r1 r2 e4 g4~
   g4 d4 r2 d4 g2 c,4 

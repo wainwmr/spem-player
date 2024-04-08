@@ -4,9 +4,10 @@ Lilypond {
     Clause = RelativeClause | Version
 	
     Version = "\\version" "\"" (digit | ".")* "\""
+    
     RelativeClause = (variable "=")? "\\relative" note? "{" Music "}"
     
-    Music = Component*
+    Music = ( Component | command) *
 
     comment = "%" (~"\n" any)* ("\n" | end)
     space += comment
@@ -15,6 +16,8 @@ Lilypond {
     		| repeatedNote -- repeatedNote
 		    | rest --rest
 		    | barline -- barline
+            
+    command = "\\" letter*
     
     barline = "|"
     
