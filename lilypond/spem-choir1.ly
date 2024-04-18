@@ -1,13 +1,6 @@
 \version "2.24.3" 
 
-\paper {
-  left-margin = 0
-  indent = 0
-  ragged-right = ##t
-  print-page-number = ##f
-  #(set-paper-size '(cons (* 7000 mm) (* 110 mm)))
-}
-
+\include "spem layout.ly"
 \include "spem notes.ly"
 \include "spem words.ly"
 
@@ -50,13 +43,13 @@ cIb = <<
   >>
 
   \layout {
-  clip-regions = #(list
-    (cons (make-rhythmic-location 1 0 1) (make-rhythmic-location 139 0 1))
-  )
-  \context {
-    \Staff
-    \consists Ambitus_engraver
+    clip-regions = #(list
+      (cons (make-rhythmic-location 1 0 1) (make-rhythmic-location 139 0 1))
+    )
+    \context {
+      \Staff
+      \consists Ambitus_engraver
+    }
   }
-}
 
 }

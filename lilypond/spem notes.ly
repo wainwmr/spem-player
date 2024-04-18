@@ -1,5 +1,9 @@
 \version "2.24.3"
 
+% ------------
+% Choir 1
+% ------------
+
 choirISoprano = \relative c {
   r1 d''1~ 
   d2 d d d 
@@ -522,6 +526,10 @@ choirIBass = \relative c {
 
 }
 
+% ------------
+% Choir 2
+% ------------
+
 choirIISoprano = \relative c {
   R\breve*7
   | r2 a''1 a2 
@@ -1021,6 +1029,10 @@ choirIIBass = \relative c {
   g\breve
   g\breve
 }
+
+% ------------
+% Choir 3
+% ------------
 
 choirIIISoprano = \relative c {
   R\breve*10
@@ -1559,6 +1571,10 @@ choirIIIBass = \relative c {
   g\breve
 }
 
+% ------------
+% Choir 4
+% ------------
+
 choirIVSoprano = \relative c {
   R\breve*18
   r1 r2 d''2~
@@ -2084,286 +2100,370 @@ choirIVBass = \relative c {
   g\breve
 }
 
+% ------------
+% Choir 5
+% ------------
+
 choirVSoprano = \relative c {
-  r2*89 d''2 d d e1 c c2 f2. e4 d2. c4 c1 b2 c2. d4 e1 f2 
-  | % 19
-  c d2. c8 bes a4 d, a'2 r2 
-  | % 20
-  d1 g,2. a8 b c2 r2 
-  | % 21
-  e e e g1 f2 
-  | % 22
-  d e2. e4 e1*2 r2*23 d2. g,4 b2 g g' g 
-  | % 28
-  g g1 r2 g, c4. d8 
-  | % 29
-  e2 r2 d4 b2 g b4. a8 g4 
-  | % 30
-  r4 d'2 b4 b2 r4 b2 d4 d2 
-  | % 31
-  r1*19 f1 c2 e d2. d4 
-  | % 38
-  c2 r4 c2 g c4 d2. g,4 
-  | % 39
-  c a r4 e'2 c4 d g, g d' d2 
-  | % 40
-  r2*37 b1 e1. e2 
-  | % 47
-  e1 r1 g2 e 
-  | % 48
-  c f2. e4 e2 r4 c g'2 
-  | % 49
-  g1 r2 g4 d2 d4 b2 
-  | % 50
-  e,4 g2 e4 r4 a d,2 r1*3 d'1 e2 e f f 
-  | % 53
-  g1 f2 e e1 
-  | % 54
-  e r4*37 g,4 g2 r2 d d r4 d'2 
-  | % 58
-  d4 b2 g4. a8 b2 r2*29 e2 f e r2 e f 
-  | % 65
-  e d c r4 f e2 d 
-  | % 66
-  r4*11 d4 
-  | % 67
-  c2 b r4 e d d c2 b 
-  | % 68
-  r1*14 e1 e2 e1*2 r2*5 e2 
-  | % 75
-  e e g2. f4 e2. d4 
-  | % 76
-  c2 b a e' e1 
-  | % 77
-  r1*14 d1. d2. e8 f g2 
-  | % 82
-  g1 r2*9 c,2 c c f1. 
-  | % 85
-  d2 r4 d g, d'4. c8 bes4 r4 g d' a2 d4 r4 d2 d4 e2 g2. fis4 
-  fis2 g1 r2 d d d 
-  | % 88
-  e1. d2. c4 c1. g2 r4 g2 f8 e d1. 
-  | % 90
-  r2 d'2*13 
+  R\breve*22
+
+  % 23
+  | r2 d''2 d d 
+  e1 c 
+  c2 f2. e4 d2~
+  d4 c4 c1 b2 
+  c2. d4 e1 
+  f2 c d2. c8 bes 
+  a4 d, a'2 r2 d2~
+  d2 g,2. a8 b c2 
+  r2 e e e 
+  g1 f2 d 
+  e2. e4 e1~
+  e1 r1
+  R\breve*5
+  
+  % 40
+  | r2 d2. g,4 b2 
+  g2 g' g g 
+  g1 r2 g, 
+  c4. d8 e2 r2 d4 b~
+  b4 g2 b4. a8 g4 r4 d'4~
+  d4 b b2 r4 b2 d4 
+  d2 r2 r1
+  R\breve*8
+  
+  % 55
+  | r1 r2 f2~
+  f2 c e d~
+  d4 d4 c2 r4 c2 g4~
+  g4 c d2. g,4 c a 
+  | r4 e'2 c4 d g,2 d'4 
+  | d2 r2 r1
+  R\breve*8
+  
+  % 69
+  | r1 b1 
+  e1. e2 
+  e1 r1 
+  g2 e c f2~
+  f4 e e2 r4 c g'2 
+  g1 r2 g4 d~
+  d4 d b2 e,4 g2 e4 
+  r4 a d,2 r1
+  R\breve
+  
+  %78
+  | d'1 e2 e 
+  f f g1 
+  f2 e e1 
+  e r1
+  R\breve*4
+  
+  % 86
+  | r4 g,4 g2 r2 d 
+  d r4 d'2 d4 b2 
+  g4. a8 b2 r1
+  R\breve*6
+  
+  % 95
+  | r1 r2 e2 
+  f e r2 e 
+  f e d c 
+  r4 f e2 d r2
+  R\breve
+  r4 d4 c2 b r4 e 
+  d4 d c2 b r2
+  R\breve*6
+  
+  %108
+  | r1 r2 e2~
+  e2 e e1~
+  e1 r1
+  r1 r2 e2 
+  e2 e4 e g2. f4 
+  e2. d4 c2 b 
+  a2 e' e1 
+  R\breve*7
+  
+  % 122
+  | d1. d2~ d4 e8 f g2 g1 
+  R\breve*2
+  
+  % 126
+  | r2 c,2 c c4 c 
+  f1. d2 
+  r4 d g, d'4. c8 bes4 r4 g 
+  d'4 a2 d4 r4 d2 d4 
+  e4 e g2. fis4 fis2 
+  g1 r2 d 
+  d2 d4 d e1~
+  e2 d2. c4 c2~
+  c1 g2 r4 g4~
+  g4 f8 e d1. 
+  r2 d'2 d1~
+  d\breve~
+  d\breve
 }
 
 choirVAlto = \relative c {
-  r2*91 g''2 g g a1*2 f2 g a2. a4 g1. e2. f4 g2 c, f2. g4 
-  | % 19
-  a2 d, f d4 g2 g d4 
-  | % 20
-  d2 r1 e2 a a 
-  | % 21
-  c1 b2. a4 a1 
-  | % 22
-  gis2 a1 r2*25 d,2 d4 d d2 r2. g2 g4 
-  | % 28
-  g2. c,4 c2 r4 g'4. e8 e4. c8 c2 e4 g2 r4*5 g,4 g2 g'4 
-  | % 30
-  d r4 g d2 d2. g4 f d g2 r2*33 c1 g2 b4 b a2 r4 a 
-  | % 37
-  a c4. c8 g2 bes f4 a2. f4 
-  | % 38
-  g2 g1 r2 a e4 g2 c,4 g'1 r2*37 d2 g2. g4 g1 r2 
-  | % 47
-  g4 g2 c, e e4 e2 r2 
-  | % 48
-  c' c a c r4 c,4. e8 e4. c8 c4 r4 b4. c8 d4 r2 d d4. g8 g4 g 
-  g g r1*5 g1 c2 b4 a2 d,4 g2 
-  | % 53
-  e r2 e g4. f8 e4. d8 c1 r4*33 a'4 d2 d4. c8 b2 r4 a4. g8 f4 
-  r2 d4. d8 g4 b4. a8 g f e4 c d2 r2*29 e2 a a r2 a a 
-  | % 65
-  a f4 a a2 r4 a a4. g8 f2 
-  | % 66
-  r4*7 a4 c2 g 
-  | % 67
-  e4 g2 d4 r4 g g g g2 g 
-  | % 68
-  r1*14 e1 e2 e e e 
-  | % 73
-  e a1. g2 a 
-  | % 74
-  e r2 a2. g4 a b c2 
-  | % 75
-  b a e e1 r1*15 d1 b2 g d'2. g2 f8 e d4 b r4 d d2 r2*5 a'2 a 
-  a c a a1 r2 d,1. d1 
-  | % 86
-  r1 f2 bes, r4 g' g2 
-  | % 87
-  r2. d4. b4 g8 g2 r4 g'2 g g4 g2 g r2. g2 b4 e,1 r2 c' c2. b8 
-  a b2 b 
-  | % 90
-  r2 b4*5 g4 g1*6 
+  R\breve*22
+  r1 r2 g''2 
+  g g a1~
+  a1 f2 g 
+  a2. a4 g1~
+  g2 e2. f4 g2 
+  c,2 f2. g4 a2 
+  d,2 f d4 g2 g4~
+  g4 d4 d2 r1 
+  e2 a a c~
+  c2 b2. a4 a2~
+  a2 gis2 a1 
+  R\breve*6
+  
+  % 40
+  | r2 d,2 d4 d d2 
+  r2 r4 g2 g4 g2~
+  g4 c, c2 r4 g'4. e8 e4~
+  e8 c c2 e4 g2 r2
+  r2 r4 g,4 g2 g'4 d 
+  r4 g d2 d2. g4 
+  f d g2 r1
+  R\breve*7
+  
+  % 54
+  | r1 r2 c2~
+  c2 g b4 b a2 
+  r4 a a c4. c8 g2 bes4~
+  bes4 f4 a2. f4 g2 
+  g1 r2 a 
+  e4 g2 c,4 g'1 
+  R\breve*9
+  
+  % 69
+  | r2 d2 g2. g4 
+  g1 r2 g4 g~
+  g4 c,2 e e4 e2 
+  r2 c' c a 
+  c r4 c,4. e8 e4. c8 c4 
+  r4 b4. c8 d4 r2 d2 
+  d4. g8 g4 g g g r2
+  R\breve*2
+  
+  % 78
+  | r2 g1 c2 
+  b4 a2 d,4 g2 e 
+  r2 e g4. f8 e4. d8 
+  c1 r1
+  R\breve*3
+  
+  % 85
+  | r1 r4 a'4 d2 
+  d4. c8 b2 r4 a4. g8 f4 
+  r2 d4. d8 g4 b4. a8 g f 
+  e4 c d2 r1
+  R\breve*6
+  
+  % 95
+  | r1 r2 e2 
+  a a r2 a 
+  a a f4 a a2 
+  r4 a a4. g8 f2 r2
+  r1 r4 a4 c2 
+  g e4 g2 d4 r4 g 
+  g4 g g2 g r2
+  R\breve*6
+  
+  % 108
+  | r1 r2 e2~
+  e2 e e e 
+  e2 e4 e a1~
+  a2 g2 a e 
+  r2 a2. g4 a b 
+  c2 b a e 
+  e1 r1
+  R\breve*7
+  
+  % 122
+  | d1 b2 g 
+  d'2. g2 f8 e d4 b 
+  r4 d d2 r1
+  r1 r2 a'2 
+  a2 a4 a c2 a 
+  a1 r2 d,2~
+  d1 d1 
+  r1 f2 bes, 
+  r4 g' g2 r2 r4 d4~
+  d8 b b g g2 r4 g'2 g4
+  g4 g g2 g r2 
+  r4 g2 b4 e,1 
+  r2 c' c4 c2 b8 a 
+  b2 b r2 b2
+  b2. g4 g1~
+  g\breve~
+  g\breve~
 }
 
 choirVTenor = \relative c {
-  r2*93 c'2 c c f1. 
-  | % 17
-  bes,2 c a bes2. a4 g2 
-  | % 18
-  c4. b8 g1 f2. g4 a1 f2. a4 g2 d r2 d' 
-  | % 20
-  g,4 c e8*7 d8 c4 e a,1 
-  | % 21
-  r2 g d' d g1 
-  | % 22
-  c,2 e e2. b4 c4. d8 e4 c 
-  | % 23
-  d2 g, r2*21 g'2 g g c, r2. c2 e4 g c, c2. c4 g2 r4 b d2 r2 d,2. 
-  g4 d2 r2. d'4 
-  | % 30
-  d g2 d4 d2 r2*27 f1 c2 e2. d4 b2 
-  | % 36
-  d f4. f8 e4 c2. d2 d 
-  | % 37
-  d4 f2 c4. d8 e c d1 a2 
-  | % 38
-  r4 c2 e g d4 d2 r4 c2 c4 e2 b4 d4. c8 b4 r4 d g2 d r1*17 g,4 
-  d'2 d4 b2 r2 c4 g'4. e8 e4 
-  | % 47
-  r2 c4 g'2 c,4 g c2 e c4. g8 g4 r1 e4 a2 a4 r2. g4. d'8 d2 d4 
-  r2 b4 b4. c8 d2 
-  | % 50
-  d4 r2. c4. b8 d4. c8 a4 r1*3 b1 c2 c d d 
-  | % 53
-  e2. b4 d2 c b1 
-  | % 54
-  a r1*10 a4 f4. e8 d4 r4 b' b2 r4 g4. g8 g4 
-  | % 58
-  g2 g r2*29 g2 d' c r2 c d 
-  | % 65
-  c f, r2. a4. b8 c4 d2 
-  | % 66
-  r4*7 f4 e2 d4 d 
-  | % 67
-  g,2 d' r4 c d d e c d2 
-  | % 68
-  r1*14 cis1 cis2 cis r4 c c2 
-  | % 73
-  c e a, r2 e a 
-  | % 74
-  b c1 b r1*18 g4. a8 b4. c8 d2. e8 f g4 d d2 
-  | % 82
-  r4 d b d2 a4 a2 r2*5 c2 c c4 f2 c4 c2 r1 bes4 d4. c8 bes2 f'4 
-  r4 g d2 r2 
-  | % 86
-  d2. a4 d2. bes4 c2 g 
-  | % 87
-  r4 d' a2 r4*5 d4 d d 
-  | % 88
-  d b b2 r4 c2 e4. c8 c4 r2 
-  | % 89
-  c4 g g2 r2 g'2. e4 e2 
-  | % 90
-  r4 b b4. a8 g2 r4 g2 b4 b2 
-  | % 91
-  r2 b b1*5 
+  R\breve*23
+
+  % 24
+  r2 c'2 c c 
+  f1. bes,2 
+  c a bes2. a4 
+  g2 c4. b8 g1 
+  f2. g4 a1 
+  f2. a4 g2 d 
+  r2 d' g,4 c e2
+  e4. d8 c4 e a,1 
+  r2 g d' d 
+  g1 c,2 e 
+  e2. b4 c4. d8 e4 c 
+  d2 g, r1
+  R\breve*4
+  
+  % 40
+  r1 r2 g'2 
+  g2 g c, r2
+  r4 c2 e4 g c, c2~
+  c4 c g2 r4 b d2 
+  r2 d,2. g4 d2 
+  r2 r4 d'4 d g2 d4 
+  d2 r2 r1
+  R\breve*4
+  
+  % 53
+  f1 c2 e2~
+  e4 d4 b2 d4 d f4. f8 
+  e4 c2. d2 d 
+  d4 f2 c4. d8 e c d2~
+  d2 a2 r4 c2 e4~
+  e4 g2 d4 d2 r4 c4~
+  c4 c e2 b4 d4. c8 b4 
+  r4 d g2 d r2
+  R\breve*8
+  
+  % 69
+  r2 g,4 d'2 d4 b2 
+  r2 c4 g'4. e8 e4 r2 
+  c4 g'2 c,4 g c4 c e~
+  e4 c4. g8 g4 r1 
+  e4 a2 a4 r2 r4 g4~
+  g8 d' d2 d4 r2 b4 b4~
+  b8 c d2 d4 r2 r4 c4~
+  c8 b d4. c8 a4 r1
+  R\breve
+  b1 c2 c 
+  d d e2. b4 
+  d2 c b1 
+  a r1
+  R\breve*4
+  
+  % 86
+  r1 a4 f4. e8 d4 
+  r4 b' b2 r4 g4. g8 g4 
+  g2 g r1
+  R\breve*6
+  
+  % 95
+  r1 r2 g2 
+  d'2 c r2 c 
+  d4 d c2 f, r2
+  r4 a4. b8 c4 d2 r2
+  r1 r4 f4 e2 
+  d4 d g,2 d' r4 c 
+  d4 d e c d2 r2
+  R\breve*6
+  
+  % 108
+  r1 r2 cis2~
+  cis2 cis cis r4 c 
+  c2 c4 c e2 a, 
+  r2 e a b 
+  c1 b 
+  R\breve*9
+  
+  % 122
+  g4. a8 b4. c8 d2. e8 f 
+  g4 d d2 r4 d b d4~
+  d4 a4 a2 r1
+  r1 r2 c2 
+  c4 c c f2 c4 c2 
+  r1 bes4 d4. c8 bes4~
+  bes4 f'4 r4 g d2 r2 
+  d2. a4 d2. bes4 
+  c2 g r4 d' a2 
+  r1 r4 d2 d4
+  d4 b b2 r4 c2 e4~
+  e8 c c4 r2 c4 g g2 
+  r2 g'2. e4 e2 
+  r4 b b4. a8 g2 r4 g4~
+  g4 b b2 r2 b 
+  b\breve~
+  b\breve
 }
 
 choirVBaritone = \relative c {
   r2*95 f2 f f bes1 a2 
-  | % 17
   f g g c,1 r2 
-  | % 18
   c' c4. bes8 a4. g8 f2. g4 a2 
-  | % 19
   d, d1*2 r2 
-  | % 20
   g c, c c1 r4 g'2 e4 f4. g8 a2 r2 e1 a2 g e r2*23 g2 b4 b4. 
   c8 d4 r2 g, g 
-  | % 28
   g2. g4 g2 r2 g1 
-  | % 29
   c,2 r2. g'2 d d' g,4 
-  | % 30
   d' g, g1 r4*41 f2 c c' c4 b g a4. a8 d,2 r1 bes' f2 a 
-  | % 36
   g g1 r1. 
-  | % 37
   g2. g4 a2. f4. g8 a f g2 
-  | % 38
   r1 c4 f,4. g8 a4 e1 
-  | % 39
   g2 d r1. d2 
-  | % 40
   g d r2*39 c2 e2. e4 g2 r2. e4 
-  | % 48
   e2 e g4. g8 g2 r2 c4 c2 a c4. c8 c4 g4. a8 b4 g g2 r2 g g4. 
   b8 b4 b r4 c g2 r2*7 d'1 g,2 g4 c4. b8 a g f4 d4. e8 f4 c2 r2 d4 
   a'4. e8 a4 g e r4 e e2. a4 f d a'2 r2*17 d2 d d r2 g,2. g4 
-  | % 58
   g2 c, g' r2*29 e2 d e r2 a d, 
-  | % 65
   e4 a2 d,4 e2 r4 d a'2 d, 
-  | % 66
   r4*7 d4 e c g' g 
-  | % 67
   g2 g r4 c, g' g c,2 g' 
-  | % 68
   r1*14 a1 a2 a1 r2 
-  | % 73
   a a a c2. b4 a2 
-  | % 74
   g a1 e r2 
-  | % 75
   g a b c1 b r1*14 g1. g2 d r4 d2 g4 g2 r2*5 a2 a a4 c2 a4 r4 a 
   a2 
-  | % 84
   f4 a2. f4 c' r2. f,4 f bes 
-  | % 85
   bes d2 d4 r4 d,2 a'4 f d d2 
-  | % 86
   r4 g2 c,4 c2 r4 d2 d' d,4 
-  | % 87
   g d r4 g g g g d'2 g,4 r4 g2 c,4 e4. f8 g2 r2 c c4 c c2 c r2 d1 
   b2 b4. c8 
-  | % 91
   d2 r4 d,2 e8 f g2 d1*5 
 }
 
 choirVBass = \relative c {
   r1*52 c1 c2 c f1 
-  | % 19
   f2 d r2 d g, g'2. f8 e d2 c1 r1. e2 e e a f g2. f4 e2 c4 a 
   e'1 a, r2*21 g2 d'1 c g'2 
-  | % 28
   g4. f8 e2 c e e c1 r2 d g b1 g2 
-  | % 30
   b b4. a8 g1 r2*17 d1 a2 c c g 
-  | % 34
   d' d f c r1 
-  | % 35
   f c2 e d1 
-  | % 36
   a'2. g4 e2 g f d4 a'4. g8 f4 e c g'2 r1*25 g2 g1 c,2 g' r4 c, 
-  | % 47
   e2 e g4 g c,2 g'4 e2 c4 
-  | % 48
   c2. c4 c4. d8 e2 r2 g2. d4 d2 r2 d b4. c8 d4 g, r4 
-  | % 50
   g'2 c4 f, a2 d,4 g2 r2*5 g1 c,2 e d f 
-  | % 53
   e1 d2 a e'1 
-  | % 54
   a, r2*19 d2. a'2 d,4 r4 d4. b8 b4. c8 d4 
-  | % 58
   r4*95 d4 a2 b4 g c2 g r1*16 e'1 a, e'2 e1 r1*23 d1. g,1 d'2 
-  | % 82
   d1*2 r2*5 f2 f f a1 f r2 f d g g1 
-  | % 86
   r2 a f g r4 e2. 
-  | % 87
   a2 d,2. g4 g2 r2 g, 
-  | % 88
   g g c1 c2 g 
-  | % 89
   c c g'1 e 
-  | % 90
   d1. b2 b4. c8 d2 
-  | % 91
   r2 g, g1*5 
 }
+
+% ------------
+% Choir 6
+% ------------
 
 choirVISoprano = \relative c {
   r2*99 g''2 c c g'2. f4 e c 
@@ -2630,6 +2730,10 @@ choirVIBass = \relative c {
   d2 r2 d b d d1*5 
 }
 
+% ------------
+% Choir 7
+% ------------
+
 choirVIISoprano = \relative c {
   r1*57 d''1 d2 d e1 
   | % 21
@@ -2876,6 +2980,10 @@ choirVIIBass = \relative c {
   | % 91
   b d d1*5 
 }
+
+% ------------
+% Choir 8
+% ------------
 
 choirVIIISoprano = \relative c {
   r2*129 e''2 e e g1 f2 
