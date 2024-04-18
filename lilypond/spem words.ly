@@ -1529,121 +1529,122 @@ underlayVt = \lyricmode {
 }
 
 underlayVbar = \lyricmode {
-  Spem in a -- li -- um nun -- quam ha -- bu -- i, 
-  Spem in a -- li -- um nun -- quam ha -- _ bu -- i, 
-  nun -- quam ha -- _ bu -- i, 
-
-  % 35
-  prae -- ter in te, De -- us Is -- ra -- _ el
-
+  % 23
+  prae -- | ter in te, | De -- us Is -- ra -- | el, 
+  in | te, De -- _ _ _ us | Is -- ra -- el, 
+  prae -- | ter in te,
+  De -- us Is -- ra -- el, 
+  Is -- ra -- | _ el, 
+  
   % 40
-  prae -- ter in te, 
-  De -- us Is -- ra -- _ el, 
+  prae -- ter in te, _
   De -- us Is -- ra -- el,
-  De -- us Is -- ra -- _ _ el,
+  prae -- ter
+  in te, 
+  De -- us Is -- ra -- | el,
   
-  % 57
-  et pro -- pi -- ti -- us 
-  e -- _ _ _ _ _ ris,
-  et pro -- pi -- ti -- _ us, et pro -- pi -- ti us e -- _ ris, 
-  e -- _ _ ris,
+  % 53
+  qui i -- ra -- sce -- _ _ _ | ris, 
+  qui i -- ra -- sce -- | ris, 
+  et pro -- pi -- ti -- _ _ _ us, 
+  pro -- pi -- ti -- _ us e -- ris,
+  e -- _ ris,
+  
+  % 69
+  | et o -- mni -- a 
+  pec -- ca -- ta ho -- mi -- num,
+  pec -- ca -- ta ho -- mi -- num, ho -- _ | _ mi -- num
 
-  % 70
-  et o -- mni -- a, 
-  pec -- _ ca -- _ ta,
-  pec -- ca -- ta, ho -- mi -- num, 
-  pec -- ca -- ta,
-  ho -- mi -- num, 
-  in tri -- bu -- la -- ti -- o  -- ne
-  
-  % 82
-  di -- mit -- _ tis, 
-  di -- mit -- _ _ tis
-  
-  % 88
-  Do -- mi -- ne De -- us, 
-  Do -- mi -- ne De -- us, 
+  % 74  
+  in | tri -- bu -- la -- ti -- o -- ne,
 
-  % 96
-  Cre -- a -- tor 
-  cae -- li et _ ter -- rae,
-  et ter -- _ rae
+  % 78
+  in tri -- bu -- la -- _ _ _ | ti -- o -- _ _ ne 
+  | di -- mit -- _ _ _ tis,
+  di | mit -- _ _ _ tis,
   
-  % 104
-  Cre -- a -- tor 
-  cae -- li et ter -- rae, 
+  % 86
+  di -- mit -- tis, 
   
+  % 87
+  Do -- mi -- ne | De -- us, 
+
+  % 95
+  Cre -- | a -- tor 
+  cae -- | li et ter -- _ rae,
+  et ter -- rae,
+  et ter -- _ | rae, Cre -- a -- tor 
+  cae -- | li et ter -- rae
+
+  % 108
   re -- spi -- ce
   
-  % 114
-  ad hu -- mi -- li -- ta -- _ _ _ tem no -- _ stram 
-
+  % 109
+  ad hu -- mi -- li -- | ta -- _ _ tem | no -- stram,
+  no -- _ _ | _ stram,
+  
   % 122
-  % re -- spi -- ce, re -- spi -- ce
-  % ad hu -- mi -- li -- ta -- tem no -- stram,
-  % no -- _ _ stram 
-  % no -- _ stram,
-  % no -- _ stram,
-  % no -- stram,
-  % no -- stram, 
-  % no -- _ stram,
-  % no -- _ stram,
-  % ad hu -- mi -- li -- ta -- tem 
-  % no -- _ _ stram,
-  % no -- _ stram, 
-  % no -- stram, 
-  % hu -- mi -- li -- ta -- _ tem no -- stram.
+  | re -- spi -- | ce, re -- spi -- ce, 
+
+  % 126
+  ad hu -- mi -- li -- ta -- tem 
+  no -- _ _ _ stram,
+  ad | hu -- mi -- li -- ta -- tem no -- _ _ _ stram,
+  no -- _ stram,
+  ad hu -- | mi -- li -- ta -- tem,
+  ad hu -- mi -- | li -- ta -- tem,
+  no -- _ | _ _ stram,
+  ad | hu -- mi -- li -- ta -- tem,
+  no -- stram, no -- _ | stram,
+  no -- _ _ _ | stram.
 }
 
 underlayVb = \lyricmode {
-  Spem in a -- li -- um nun -- quam ha -- bu i, 
-  Spem in a -- li -- um nun -- quam ha -- bu i, 
-
-  % 35
-  prae -- ter in te, De -- us Is -- ra -- el
+  % 23
+  | prae -- ter in | te, De -- us 
+  De -- us Is -- ra -- _ _ el, 
+  prae -- | ter in te, De -- | _ us _  Is -- ra -- | _ el, 
   
   % 40
-  prae -- ter,
-  prae -- ter in te 
-  De -- us Is -- ra -- el, Is -- ra -- _ _ el,
+  prae -- ter in | te, in te, De -- _ | _ _ us Is -- ra -- | el,
+  in | te, De -- us | Is -- ra -- _ el,
   
-  % 57
-  et pro -- pi -- ti -- us e -- _ _ ris,
-  pro -- pi -- ti -- us e -- ris,
-  et pro -- pi -- ti -- us e -- _ _ _ _ ris,
-
+  % 50
+  qui i -- | ra -- sce -- ris et | pro -- pi -- ti -- us, 
+  qui i -- | ra -- sce -- ris et pro -- pi -- ti -- us, 
+  | e -- _ _ _ _ _ ris,
+  
   % 69
-  et o -- mni -- a
-  pec -- ca -- ta  ho -- mi -- num,
-  et o -- mni -- a pec -- ca -- ta  ho -- mi -- num
+  et o -- mni -- a 
+  pec -- | ca -- ta ho -- mi -- num, | pec -- ca -- ta ho -- mi -- | num, _ _ 
+  ho -- mi -- num
 
-  % 74
-  in tri -- bu -- la -- ti -- o  -- ne 
+  % 74  
+  in | tri -- bu -- la -- ti -- o -- _ | _ _ _ ne,
+
+  % 78
+  | in tri -- bu -- | la -- ti -- o -- | ne di -- mit -- | tis,
   
   % 86
-  di -- mit -- tis
-  Do -- mi -- ne De -- us,
-  Do -- mi -- ne De -- us,
+  di -- mit -- tis, 
+  di -- _ mit -- _ tis, 
   
-  % 96
-  Cre -- a -- tor 
-  cae -- li et ter -- _ _ rae, 
-  et ter -- rae,
+  % 99
+  et ter -- | rae, Cre -- a -- tor 
 
   % 108
-  re -- spi -- _ _ _ _ ce,
+  re -- spi -- _ | ce
   
   % 122
-  re -- spi -- _ _ ce,
+  re -- spi -- _ ce,
 
-  % 124
-  % ad hu -- mi -- li -- ta -- tem 
-  % no -- _ stram
-  % ad hu -- mi -- li -- ta -- tem no -- stram 
-  % no -- _ stram
-  % ad hu -- mi -- li -- ta -- _ tem no -- _ stram 
-  % no -- _ _ _ _ _ stram,
-  % no -- _ _ stram,
-  % no -- stram.
+  % 125
+  ad | hu -- mi -- li -- ta -- | tem 
+  no -- | _ _ stram,
+  ad hu -- mi -- li -- ta -- tem no -- stram,
+  ad | hu -- mi -- li -- ta -- | tem,
+  ad hu -- mi -- li -- | ta -- tem,
+  | no -- _ | stram, _ _
+  no -- stram.
 }
 

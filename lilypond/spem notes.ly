@@ -2340,7 +2340,7 @@ choirVTenor = \relative c {
   e4 g2 d4 d2 r4 c4~
   c4 c e2 b4 d4. c8 b4 
   r4 d g2 d r2
-  R\breve*8
+  R\breve*10
   
   % 69
   r2 g,4 d'2 d4 b2 
@@ -2403,62 +2403,189 @@ choirVTenor = \relative c {
 }
 
 choirVBaritone = \relative c {
-  r2*95 f2 f f bes1 a2 
-  f g g c,1 r2 
-  c' c4. bes8 a4. g8 f2. g4 a2 
-  d, d1*2 r2 
-  g c, c c1 r4 g'2 e4 f4. g8 a2 r2 e1 a2 g e r2*23 g2 b4 b4. 
-  c8 d4 r2 g, g 
-  g2. g4 g2 r2 g1 
-  c,2 r2. g'2 d d' g,4 
-  d' g, g1 r4*41 f2 c c' c4 b g a4. a8 d,2 r1 bes' f2 a 
-  g g1 r1. 
-  g2. g4 a2. f4. g8 a f g2 
-  r1 c4 f,4. g8 a4 e1 
-  g2 d r1. d2 
-  g d r2*39 c2 e2. e4 g2 r2. e4 
-  e2 e g4. g8 g2 r2 c4 c2 a c4. c8 c4 g4. a8 b4 g g2 r2 g g4. 
-  b8 b4 b r4 c g2 r2*7 d'1 g,2 g4 c4. b8 a g f4 d4. e8 f4 c2 r2 d4 
-  a'4. e8 a4 g e r4 e e2. a4 f d a'2 r2*17 d2 d d r2 g,2. g4 
-  g2 c, g' r2*29 e2 d e r2 a d, 
-  e4 a2 d,4 e2 r4 d a'2 d, 
-  r4*7 d4 e c g' g 
-  g2 g r4 c, g' g c,2 g' 
-  r1*14 a1 a2 a1 r2 
-  a a a c2. b4 a2 
-  g a1 e r2 
-  g a b c1 b r1*14 g1. g2 d r4 d2 g4 g2 r2*5 a2 a a4 c2 a4 r4 a 
-  a2 
-  f4 a2. f4 c' r2. f,4 f bes 
-  bes d2 d4 r4 d,2 a'4 f d d2 
-  r4 g2 c,4 c2 r4 d2 d' d,4 
-  g d r4 g g g g d'2 g,4 r4 g2 c,4 e4. f8 g2 r2 c c4 c c2 c r2 d1 
-  b2 b4. c8 
-  d2 r4 d,2 e8 f g2 d1*5 
+  R\breve*23
+
+  % 24
+  r1 r2 f2 
+  f f bes1 
+  a2 f g g 
+  c,1 r2 c' 
+  c4. bes8 a4. g8 f2. g4 
+  a2 d, d1~
+  d1 r2 g 
+  c, c c1 
+  r4 g'2 e4 f4. g8 a2 
+  r2 e1 a2 
+  g2 e r1
+  R\breve*5
+  
+  % 40
+  r2 g2 b4 b4. c8 d4 
+  r2 g, g g2~
+  g4 g4 g2 r2 g2~
+  g2 c,2 r2 r4 g'4~
+  g4 d2 d' g,4 d' g, 
+  g1 r1
+  R\breve*4
+  
+  % 50
+  r1 r4 f2 c4~
+  c4 c'2 c4 b g a2 
+  d,2 r2 r2 bes'2~
+  bes2 f a g 
+  g1 r1
+  r2 g2. g4 a2~
+  a4 f4. g8 a f g2 r2
+  r2 c4 f,4. g8 a4 e2~
+  e2 g d r2
+  r1 d2 g 
+  d r2 r1
+  R\breve*9
+  
+  % 70
+  c2 e2. e4 g2 
+  r2 r4 e4 e2 e 
+  g4. g8 g2 r2 c4 c4~
+  c4 a2 c4. c8 c4 g4. a8 
+  | b4 g g2 r2 g 
+  g4. b8 b4 b r4 c g2 
+  R\breve
+  r1 r2 d'2~
+  d2 g,2 g4 c4. b8 a g 
+  f4 d4. e8 f4 c2 r2 
+  d4 a'4. e8 a4 g e r4 e 
+  e2. a4 f d a'2 
+  R\breve*4
+  
+  % 86
+  r2 d2 d d 
+  r2 g,2. g4 g2 
+  c, g' r1
+  R\breve*6
+  
+  % 95
+  r1 r2 e2 
+  d2 e r2 a 
+  d, e4 a2 d,4 e2 
+  r4 d a'2 d, r2 
+  r1 r4 d4 e c 
+  g'4 g g2 g r4 c, 
+  g'4 g c,2 g' r2
+  R\breve*6
+  
+  % 108
+  r1 r2 a2~
+  a2 a2 a1 
+  r2 a a a4 a 
+  c2. b4 a2 g 
+  a1 e 
+  r2 g a b 
+  c1 b 
+  R\breve*7
+  
+  % 122
+  g1. g2 
+  d r4 d2 g4 g2 
+  R\breve
+  r2 a2 a4 a a c4~
+  c4 a r4 a2. f4 a4~
+  a2 f4 c' r2 r4 f,4 
+  f4 bes bes d2 d4 r4 d,4~
+  d4 a'4 f d d2 r4 g4~
+  g4 c, c2 r4 d2 d'4
+  d4 d, g d r4 g g g 
+  g d'2 g,4 r4 g2 c,4 
+  | e4. f8 g2 r2 c 
+  | c4 c c c2 c4 r2 
+  d1 b2 b4. c8 
+  d2 r4 d,2 e8 f g2 
+  d\breve~
+  d\breve
 }
 
 choirVBass = \relative c {
-  r1*52 c1 c2 c f1 
-  f2 d r2 d g, g'2. f8 e d2 c1 r1. e2 e e a f g2. f4 e2 c4 a 
-  e'1 a, r2*21 g2 d'1 c g'2 
-  g4. f8 e2 c e e c1 r2 d g b1 g2 
-  b b4. a8 g1 r2*17 d1 a2 c c g 
-  d' d f c r1 
-  f c2 e d1 
-  a'2. g4 e2 g f d4 a'4. g8 f4 e c g'2 r1*25 g2 g1 c,2 g' r4 c, 
-  e2 e g4 g c,2 g'4 e2 c4 
-  c2. c4 c4. d8 e2 r2 g2. d4 d2 r2 d b4. c8 d4 g, r4 
-  g'2 c4 f, a2 d,4 g2 r2*5 g1 c,2 e d f 
-  e1 d2 a e'1 
-  a, r2*19 d2. a'2 d,4 r4 d4. b8 b4. c8 d4 
-  r4*95 d4 a2 b4 g c2 g r1*16 e'1 a, e'2 e1 r1*23 d1. g,1 d'2 
-  d1*2 r2*5 f2 f f a1 f r2 f d g g1 
-  r2 a f g r4 e2. 
-  a2 d,2. g4 g2 r2 g, 
-  g g c1 c2 g 
-  c c g'1 e 
-  d1. b2 b4. c8 d2 
-  r2 g, g1*5 
+  R\breve*26
+  c1 c2 c 
+  f1 f2 d 
+  r2 d g, g'2~
+  g4 f8 e d2 c1 
+  r1 r2 e2 
+  e2 e a f 
+  g2. f4 e2 c4 a 
+  e'1 a, 
+  R\breve*5
+  
+  % 40
+  r2 g2 d'2 d 
+  c2 c g' g4. f8 
+  e4. d8 c2 e e 
+  c1 r2 d 
+  g b1 g2 
+  b b4. a8 g1 
+  R\breve*4
+  
+  % 50
+  r2 d1 a2 
+  c c g d' 
+  d f4 f c2 r2
+  | r2 f1 c2 
+  e d1 a'2~
+  a4 g e2 g4 g f2 
+  | d4 a'4. g8 f4 e c g'2 
+  R\breve*12
+  
+  % 69
+  r1 g2 g2~
+  g2 c, g' r4 c, 
+  e2 e g4 g c,2 
+  g'4 e2 c4 c2. c4 
+  c4. d8 e2 r2 g2~
+  g4 d4 d2 r2 d 
+  b4. c8 d4 g, r4 g'2 c4 
+  f, a2 d,4 g2 r2
+  R\breve
+  
+  % 78
+  g1 c,2 e 
+  d f e1 
+  d2 a e'1 
+  a,1 r1
+  R\breve*4
+  
+  % 86
+  r2 d2. a'2 d,4 
+  r4 d4. b8 b4. c8 d4 r2
+  R\breve*11
+  
+  % 99
+  r1 r4 d4 a2 
+  b4 g c2 g r2
+  R\breve*7
+  
+  % 108
+  r1 r2 e'2~
+  e2 a,1 e'2 
+  e1 r1
+  R\breve*11
+  
+  % 122
+  d1. g,2~
+  g2 d'2 d1~
+  d1 r1 
+  r1 r2 f2 
+  f2 f4 f a1 
+  f1 r2 f 
+  d g g1 
+  r2 a f g 
+  r4 e2. a2 d,2~
+  d4 g4 g2 r2 g, 
+  g2 g4 g c1 
+  c2 g c c4 c 
+  g'1 e 
+  d1. b2 
+  b4. c8 d2 r2 g, 
+  g\breve~
+  g\breve
 }
 
 % ------------

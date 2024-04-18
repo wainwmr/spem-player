@@ -1,6 +1,6 @@
 \version "2.24.3" 
 
-% \include "spem layout.ly"
+\include "spem layout.ly"
 \include "spem notes.ly"
 \include "spem words.ly"
 
@@ -36,11 +36,11 @@ cVb = <<
   <<
     \override Score.BarNumber.break-visibility = ##(#f #t #t)
     \time 4/2
-    % \context Staff=choirVSoprano \cVs
-    % \context Staff=choirVAlto \cVa
+    \context Staff=choirVSoprano \cVs
+    \context Staff=choirVAlto \cVa
     \context Staff=choirVTenor \cVt
-    % \context Staff=choirVBaritone \cVbar
-    % \context Staff=choirVBass \cVb
+    \context Staff=choirVBaritone \cVbar
+    \context Staff=choirVBass \cVb
   >>
 
   \layout {
