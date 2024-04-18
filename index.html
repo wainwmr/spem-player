@@ -54,8 +54,13 @@
                 <tr>
                     <th>Keyboard</th>
                     <td>
-                        <kbd>A</kbd> / <kbd>D</kbd> - select bar<br />
-                        <kbd>W</kbd> / <kbd>S</kbd> - select part<br />
+                        <kbd>1</kbd> to <kbd>8</kbd> - select choir<br />
+                        <kbd>S</kbd> - <b>S</b>oprano<br />
+                        <kbd>A</kbd> - <b>A</b>lto<br />
+                        <kbd>T</kbd> - <b>T</b>enor<br />
+                        <kbd>R</kbd> - Ba<b>R</b>itone<br />
+                        <kbd>B</kbd> - <b>B</b>ass<br />
+                        <kbd>LEFT</kbd> / <kbd>RIGHT</kbd> - select bar<br />
                         <kbd>X</kbd> - toggle between selected part and whole choir<br />
                         <kbd>Enter</kbd> - start or stop
                     </td>
@@ -101,7 +106,6 @@
             <div class="controlsection choircontrol">
                 <label>Choir
                     <select name="choir" id="choir-select" class="control">
-                        <option value="0">All</option>
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3">3</option>
@@ -115,7 +119,7 @@
             </div>
             <div class="controlsection partcontrol">
                 <label>Part
-                    <select name="part" id="part-select" disabled="" class="control">
+                    <select name="part" id="part-select" class="control">
                         <option value="0">All</option>
                         <option value="1">Soprano</option>
                         <option value="2">Alto</option>

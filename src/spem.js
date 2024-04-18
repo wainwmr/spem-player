@@ -79,6 +79,7 @@ function getPartName(n) {
 // use changed to know whether we need to redraw or not
 // var changed = true;
 
+// where c = 1 to 8
 function setChoir(c) {
   const oldChoir = choirselect.value;
   if (c != oldChoir) {
@@ -158,10 +159,10 @@ function setBar(b) {
     const scoresvg = document.querySelector(".emb");
     const subdoc = scoresvg.getSVGDocument();
     svg = subdoc.getElementsByTagName("svg")[0];
-  
+
     svg.addEventListener("click", scoreClicked); // HACK: only register this when score first added
     pt = svg.createSVGPoint();  // HACK: Created once for document
-  
+
     svg.setAttribute("viewBox", viewbox);
     var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect'); //Create a path in SVG's namespace
     newElement.setAttribute("x", scorebars[b]);
@@ -325,21 +326,28 @@ function draw(currentpos) {
   }
 
 
-  // Draw background line if there is a selected choir & part
+  // Draw highlight line for the selected choir or choir and part
   const selectedChoir = Number(choirselect.value);
   const selectedPart = Number(partselect.value);
-  if (selectedChoir != 0 && selectedPart != 0) {
-    ctx.save();
-    const startY = canvasPadding + ((selectedChoir - 1) * choirHeight) + ((selectedPart - 1) * partHeight);
-    ctx.beginPath();
-    ctx.moveTo(canvasPadding + barWidth, startY + (partHeight / 2));
-    ctx.lineTo(canvasPadding + (140 * barWidth) - barWidth, startY + (partHeight / 2));
-    ctx.lineWidth = partHeight * 1.4;
-    ctx.strokeStyle = highlightColor;
-    ctx.lineCap = "round";
-    ctx.stroke();
-    ctx.restore();
+  var startY, width;
+  if (selectedPart != 0) {
+    startY = canvasPadding + ((selectedChoir - 1) * choirHeight) + ((selectedPart - 1) * partHeight);
+    width = partHeight * 1.4;
   }
+  else {
+    // center the highlight on the middle tenor line
+    startY = canvasPadding + ((selectedChoir - 1) * choirHeight) + (2 * partHeight);
+    width = (partHeight * 5.8);
+  }
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(canvasPadding + barWidth, startY + (partHeight / 2));
+  ctx.lineTo(canvasPadding + (140 * barWidth) - barWidth, startY + (partHeight / 2));
+  ctx.lineWidth = width;
+  ctx.strokeStyle = highlightColor;
+  ctx.lineCap = "round";
+  ctx.stroke();
+  ctx.restore();
 
   // Draw each of the 40 voice parts
   ctx.lineWidth = 0.9 * partHeight;
@@ -532,18 +540,6 @@ function pauseAndRepaint(load = true) {
   if (load) {
     loadAudio(choirselect.value, partselect.value, barinput.value);
   }
-  // changed = true;
-  // If Choir or Part is All, then set the other to All
-  if (choirselect.value === '0') {
-    setPart(0);
-    partselect.disabled = true;
-  }
-  else {
-    if (partselect.value === '0') {
-      setPart(1); // Soprano
-    }
-    partselect.disabled = false;
-  }
   draw();
 }
 
@@ -567,59 +563,107 @@ function keyboardTapped(e) {
     playpause();
     return;
   }
-  if (e.code === 'KeyD') {
-    setBar(Number(barinput.value) + 1);
-    pauseAndRepaint();
-  }
-  else if (e.code === 'KeyA') {
-    setBar(Number(barinput.value) - 1);
-    pauseAndRepaint();
-  }
-  else if (e.code === 'KeyS') {
-    if ((choirselect.value === '8') && (partselect.value === '5')) {
-      setChoir(0);
-      setPart(0);
-    }
-    else {
-      const p = (Number(partselect.value) % 5) + 1;  // zero-index, add 1, mod 5 and then one-index the parts
-      setPart(p);
-      if (p === 1) {
-        const c = (Number(choirselect.value) % 8) + 1;  // mod 8 and one-index the choirs
-        setChoir(c);
-      }
-    }
-    pauseAndRepaint();
-  }
-  else if (e.code === 'KeyW') {
-    if ((choirselect.value === '0') && (partselect.value === '0')) {
-      setChoir(8);
+  switch (e.code) {
+    case 'Digit1':
+    case 'Digit2':
+    case 'Digit3':
+    case 'Digit4':
+    case 'Digit5':
+    case 'Digit6':
+    case 'Digit7':
+    case 'Digit8':
+      setChoir(e.key);
+      pauseAndRepaint();
+      break;
+    case 'KeyS':
+      setPart(1);
+      pauseAndRepaint();
+      break;
+    case 'KeyA':
+      setPart(2);
+      pauseAndRepaint();
+      break;
+    case 'KeyT':
+      setPart(3);
+      pauseAndRepaint();
+      break;
+    case 'KeyR':
+      setPart(4);
+      pauseAndRepaint();
+      break;
+    case 'KeyB':
       setPart(5);
-    }
-    else {
-      const p = (4 + Number(partselect.value)) % 5;
-      setPart(p);
-      if (p === 0) {
-        setPart(5);
-        const c = ((7 + Number(choirselect.value)) % 8);
-        setChoir(c);
-      }
-    }
-    pauseAndRepaint();
-  }
-  // Toggle between ALL choirs and selected choir
-  else if (e.code === 'KeyX') {
-    if (choirselect.value != '0' || partselect.value != '0') {
-      lastChoir = Number(choirselect.value);
-      lastPart = Number(partselect.value);
-      setChoir(0);
+      pauseAndRepaint();
+      break;
+
+    case 'ArrowRight':
+      setBar(Number(barinput.value) + 1);
+      pauseAndRepaint();
+      break;
+    case 'ArrowLeft':
+      setBar(Number(barinput.value) - 1);
+      pauseAndRepaint();
+      break;
+    case 'KeyX':
       setPart(0);
-    }
-    else {
-      setChoir(lastChoir);
-      setPart(lastPart);
-    }
-    pauseAndRepaint();
+      pauseAndRepaint();
+      break;
+    default:
   }
+
+  // if (e.code === 'KeyD') {
+  //   setBar(Number(barinput.value) + 1);
+  //   pauseAndRepaint();
+  // }
+  // else if (e.code === 'KeyA') {
+  //   setBar(Number(barinput.value) - 1);
+  //   pauseAndRepaint();
+  // }
+  // else if (e.code === 'KeyS') {
+  //   if ((choirselect.value === '8') && (partselect.value === '5')) {
+  //     setChoir(0);
+  //     setPart(0);
+  //   }
+  //   else {
+  //     const p = (Number(partselect.value) % 5) + 1;  // zero-index, add 1, mod 5 and then one-index the parts
+  //     setPart(p);
+  //     if (p === 1) {
+  //       const c = (Number(choirselect.value) % 8) + 1;  // mod 8 and one-index the choirs
+  //       setChoir(c);
+  //     }
+  //   }
+  //   pauseAndRepaint();
+  // }
+  // else if (e.code === 'KeyW') {
+  //   if ((choirselect.value === '0') && (partselect.value === '0')) {
+  //     setChoir(8);
+  //     setPart(5);
+  //   }
+  //   else {
+  //     const p = (4 + Number(partselect.value)) % 5;
+  //     setPart(p);
+  //     if (p === 0) {
+  //       setPart(5);
+  //       const c = ((7 + Number(choirselect.value)) % 8);
+  //       setChoir(c);
+  //     }
+  //   }
+  //   pauseAndRepaint();
+  // }
+  // Toggle between ALL choirs and selected choir
+  // else if (e.code === 'KeyX') {
+  //   if (choirselect.value != '0' || partselect.value != '0') {
+  //     lastChoir = Number(choirselect.value);
+  //     lastPart = Number(partselect.value);
+  //     setChoir(0);
+  //     setPart(0);
+  //   }
+  //   else {
+  //     setChoir(lastChoir);
+  //     setPart(lastPart);
+  //   }
+  //   pauseAndRepaint();
+  // }
 }
 
 // -----------------------------------------------------
