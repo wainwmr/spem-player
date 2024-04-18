@@ -1,12 +1,11 @@
-\version "2.24.3"
+\version "2.24.3" 
 
 \paper {
-  #(set-paper-size "a2")
-  top-margin = 0
-  % left-margin = 0
-  indent = 0\cm
+  left-margin = 0
+  indent = 0
+  ragged-right = ##t
   print-page-number = ##f
-  % #(set-paper-size '(cons (* 6000 mm) (* 100 mm)))
+  #(set-paper-size '(cons (* 7000 mm) (* 110 mm)))
 }
 
 \include "spem notes.ly"
@@ -36,13 +35,12 @@ cIb = <<
   \clef bass
   \context Voice=choirIBass \choirIBass
   \new Lyrics \lyricsto choirIBass { \underlayIb }
-
 >>
 
-
 \score {
-  \compressMMRests
+  % \compressMMRests
   <<
+    \override Score.BarNumber.break-visibility = ##(#f #t #t)
     \time 4/2
     \context Staff=choirISoprano \cIs
     \context Staff=choirIAlto \cIa
@@ -50,4 +48,15 @@ cIb = <<
     \context Staff=choirIBaritone \cIbar
     \context Staff=choirIBass \cIb
   >>
+
+  \layout {
+  clip-regions = #(list
+    (cons (make-rhythmic-location 1 0 1) (make-rhythmic-location 139 0 1))
+  )
+  \context {
+    \Staff
+    \consists Ambitus_engraver
+  }
+}
+
 }

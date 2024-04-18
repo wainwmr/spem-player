@@ -1,6 +1,6 @@
 \version "2.24.3"
 
-underlayIs = \lyricmode {
+underlayIs = \lyricmode { 
   Spem in a -- li -- um nun -- quam ha -- _ _ _ _ _ _ _ _ _ bu -- i
   nun -- quam, nun -- quam ha -- _ _ _ _ _ _ _ _ _ _ bu -- i
   nu -- quam ha -- _ _ _ _ _ bu -- i
@@ -11,7 +11,7 @@ underlayIs = \lyricmode {
   
   prae -- te in te, in te De -- us Is -- ra -- el, in te, Du -- us Is -- ra -- el
   
-  et o -- mni -- a pec -- ca -- ta ho -- mi -- num
+  etXXX o -- mni -- a pec -- ca -- ta ho -- mi -- num
   et o -- mni -- a pec -- ca -- _ ta ho -- mi -- num
   et o -- mni -- a pec -- ca -- _ ta ho -- _ mi -- _ num, ho -- mi -- num
   in tri -- bu -- la -- ti -- o -- _ _ ne
@@ -78,7 +78,7 @@ underlayIt = \lyricmode {
   Spem in a -- li -- um, nun -- quam ha1 -- _ _ bu _ -- i
   In a -- li -- _ _ _ _ _ um, in a -- li -- um, in a -- _ _ _ li -- um, in a -- _ li -- um
   Spem in a -- li _ -- um, nun -- _ quam in a -- li -- um
-  Nun -- quam, nun -- quam, ha -- _ _ _ bu -- i
+  nun -- quam, nun -- quam, ha -- _ _ _ bu -- i
   In a -- li -- um nun -- quam -- _ ha -- bu -- _ i
   %40
   Pra -- ter in te De -- us Is -- ra -- el, te De -- us, te De -- us Is -- ra -- el, in te De -- _ us Is -- ra -- el

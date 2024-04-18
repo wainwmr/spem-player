@@ -11,7 +11,7 @@ var scores = {};
 
 // TODO: Perhaps locations = { json: <String>, defaultaudio: <String>, audio: <String>[8][5] }?
 const defaultaudiofile = '/audio/spem.mp3';
-const lilypondfile = '/spem notes.ly';
+const lilypondfile = '/lilypond/spem notes.ly';
 
 var spemaudio = new Audio();
 
@@ -19,8 +19,9 @@ var spemaudio = new Audio();
 // (minim = 124) === (beattime = 0.9677)
 const beattime = 0.968;
 
-const container = document.getElementById("spemFrame");
+// const container = document.getElementById("spemFrame");
 const canvas = document.getElementById("spemCanvas");
+const choirscore = document.getElementById("choirscore");
 const playpausebutton = document.getElementById('playpausebutton');
 const playpauseicon = document.getElementById('playpauseicon');
 const choirselect = document.getElementById('choir-select');
@@ -100,6 +101,41 @@ function setPart(p) {
   }
 }
 
+const scorebars1 = [227.9274, 247.8609, 266.1329, 284.9909, 301.5745, 321.0416, 342.0884, 362.7282, 387.7805, 411.3344, 431.6417, 460.0088, 486.1238, 511.4708, 533.9893, 559.6953, 591.8550, 623.2721, 653.8041, 677.8106, 704.6601, 732.4069, 756.9599, 783.0814, 801.5971, 814.3452, 824.9752, 835.6052, 846.2352, 856.8652, 867.4952, 878.1252, 888.7552, 899.3852, 910.0152, 920.6452, 931.2752, 941.9052, 952.5352, 963.1652, 985.2644, 1011.1272, 1038.8366, 1063.2906, 1087.6552, 1111.6276, 1122.2576, 1132.8876, 1143.5176, 1154.1476, 1164.7776, 1175.4076, 1186.0376, 1196.6676, 1207.2976, 1217.9276, 1228.5576, 1239.1876, 1249.8176, 1260.4476, 1271.0776, 1281.7076, 1292.3376, 1302.9676, 1313.5976, 1326.3457, 1346.7032, 1365.1180, 1385.7331, 1403.5796, 1427.7132, 1454.3817, 1486.3269, 1516.5722, 1538.8876, 1564.8961, 1586.2409, 1596.8709, 1607.5009, 1618.1309, 1628.7609, 1648.8225, 1677.4602, 1704.3331, 1721.4459, 1742.8762, 1767.9153, 1789.1062, 1804.5048, 1815.1348, 1825.7648, 1843.3742, 1863.0341, 1881.2415, 1901.3696, 1924.1334, 1934.7634, 1945.3934, 1956.0234, 1966.6534, 1985.0229, 2009.2470, 2032.3832, 2052.5129, 2072.9693, 2095.9450, 2121.5240, 2148.6489, 2168.8466, 2186.8180, 2203.7581, 2214.3881, 2225.0181, 2235.6481, 2246.2781, 2256.9081, 2267.5381, 2282.8475, 2307.4266, 2329.5326, 2355.2208, 2372.5407, 2391.9844, 2412.9859, 2428.3473, 2452.6371, 2477.4349, 2503.1204, 2527.9460, 2551.6335, 2577.9665, 2598.4372, 2622.2343, 2649.0431, 2673.9936, 2696.9553, 2726.0319, 2744.6800];
+const scorebars = [-0.8877, 4.2888, 25.7639, 41.5139, 57.2639, 71.4159, 92.6111, 114.2706, 137.0584, 158.2351, 181.4943, 206.2037, 233.3954, 260.1797, 289.3407, 321.8585, 351.2778, 377.1354, 406.5415, 436.2038, 470.8441, 503.3720, 535.3381, 564.3314, 596.8825, 628.7089, 648.3104, 664.0604, 679.8104, 695.5604, 711.3104, 727.0604, 742.8104, 758.5604, 774.3104, 790.0604, 805.8104, 821.5604, 837.3104, 853.0604, 868.8104, 892.1994, 919.8309, 950.1792, 982.1743, 1014.1621, 1045.2800, 1062.7673, 1078.5173, 1094.2673, 1110.0173, 1125.7673, 1141.5173, 1157.2673, 1173.0173, 1188.7673, 1204.5173, 1220.2673, 1236.0173, 1251.7673, 1267.5173, 1283.2673, 1299.0173, 1314.7673, 1330.5173, 1346.2673, 1360.4193, 1379.4334, 1400.1400, 1420.3356, 1439.1669, 1465.9533, 1492.6193, 1525.8471, 1561.6866, 1593.1154, 1624.8235, 1644.4706, 1660.2206, 1675.9706, 1691.7206, 1707.4706, 1735.9486, 1770.1472, 1807.3113, 1832.3096, 1860.8542, 1893.5158, 1921.8928, 1937.6428, 1953.3928, 1969.1428, 1998.8952, 2018.6574, 2045.9015, 2075.7056, 2099.4090, 2115.1590, 2130.9090, 2146.6590, 2162.4090, 2184.3179, 2218.7274, 2249.6411, 2275.4360, 2299.9777, 2331.5546, 2363.6167, 2395.7326, 2423.2950, 2444.5055, 2458.6575, 2474.4075, 2490.1575, 2505.9075, 2521.6575, 2537.4075, 2554.9044, 2583.4091, 2615.3516, 2642.3908, 2671.5575, 2694.4795, 2707.9931, 2725.7624, 2752.9690, 2781.1041, 2810.9157, 2841.9352, 2870.4187, 2902.4244, 2937.1922, 2968.0204, 2995.8971, 3024.6425, 3057.0204, 3089.4458, 3118.9462, 3144.2318];
+
+function getViewBox(bar, width) {
+  const ideal = 0.3;
+  var left = Math.max(scorebars[0], scorebars[bar - 1] - (width * ideal));
+  var right = Math.min(scorebars[137], scorebars[bar - 1] + (width * (1 - ideal)));
+  if (left > scorebars[137] - width) {
+    left = scorebars[137] - width;
+  }
+  if (right < scorebars[0] + width) {
+    right = scorebars[0] + width;
+  }
+  return `${left - 5} 0 ${right - left} 55`;
+}
+
+var svg;
+var pt;
+function scoreClicked(e) {
+  console.log('hello');
+  pt.x = e.clientX;
+  pt.y = e.clientY;
+
+  // The cursor point, translated into svg coordinates
+  var cursorpt = pt.matrixTransform(svg.getScreenCTM().inverse());
+  console.log("(" + cursorpt.x + ", " + cursorpt.y + ")");
+
+  var result = scorebars.find(x => x > cursorpt.x);
+  console.log(scorebars.indexOf(result));
+  setBar(scorebars.indexOf(result));
+}
+
+
+var previousBarHighlight;
+
 function setBar(b) {
   const oldBar = barinput.value;
   if (b != oldBar) {
@@ -114,7 +150,46 @@ function setBar(b) {
       b = 139;
     }
     barinput.value = b;
-    // changed = true;
+
+    const scorebarwidth = 200;  // HACK: this should be calculated as the width of the visible score
+    const viewbox = getViewBox(b, scorebarwidth);
+    console.log(viewbox);
+
+    const scoresvg = document.querySelector(".emb");
+    const subdoc = scoresvg.getSVGDocument();
+    svg = subdoc.getElementsByTagName("svg")[0];
+  
+    svg.addEventListener("click", scoreClicked); // HACK: only register this when score first added
+    pt = svg.createSVGPoint();  // HACK: Created once for document
+  
+    svg.setAttribute("viewBox", viewbox);
+    var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect'); //Create a path in SVG's namespace
+    newElement.setAttribute("x", scorebars[b]);
+    newElement.setAttribute("y", "0");
+    newElement.setAttribute("width", scorebars[b + 1] - scorebars[b]); // BUG: What if b is 138??
+    newElement.setAttribute("height", "60"); // HACK
+    newElement.style.fill = highlightColor; //Set stroke colour
+    newElement.style.fillOpacity = 0.1;
+    newElement.style.strokeWidth = "5px"; //Set stroke width
+    svg.appendChild(newElement);
+
+    if (previousBarHighlight != undefined) {
+      svg.removeChild(previousBarHighlight);
+    }
+    previousBarHighlight = newElement;
+
+    // bar 0 = scorebars[0] = 227 -> 0
+    // bar 138 = scorebars[137] = 2745 -> 16808
+
+    // const pos = ((scorebars[b-1] - scorebars[0])/(scorebars[137] - scorebars[0])) * 15500;
+
+    // console.log("scrolling to bar " + b + " at " + pos);
+    // choirscore.scrollTo({
+    //   top: 0,
+    //   left: pos, //b * scorebarwidth,
+    //   behavior: "smooth"
+    // });
+    changed = true;
   }
 }
 
@@ -137,7 +212,7 @@ function parseURL() {
 }
 
 function calculateCanvasSize() {
-  canvas.width = container.clientWidth * 4;
+  canvas.width = canvas.clientWidth * 4;
   canvas.height = 300 * 2;
 
   barWidth = (canvas.width - (2 * canvasPadding)) / 140;
@@ -182,18 +257,18 @@ function update(pos = 0) {
   // 
   if (notes != undefined && notes.length > 0) {
     for (var n of notes) {
-      pulses[n.c][n.p] = easeOutCubic(pos % quant, 1.3, -0.3, n.n.duration.sfths / 128);
+      pulses[n.c][n.p] = easeOutCubic(pos % quant, 1.4, -0.4, n.n.duration.sfths / 128);
     }
   }
 
   setBar(bar);
 }
 
-function easeInCubic (t, b, c, d) {
+function easeInCubic(t, b, c, d) {
   return c * (t /= d) * t * t + b;
 }
 
-function easeOutCubic (t, b, c, d) {
+function easeOutCubic(t, b, c, d) {
   return c * ((t = t / d - 1) * t * t + 1) + b;
 }
 
@@ -287,7 +362,7 @@ function draw(currentpos) {
         ctx.lineTo(endX, Y);
 
         var lightness, saturation, transparency;
-        
+
         // If current bar is highlighted
         if (currentpos >= from && currentpos < to) {
           lightness = (67 - (3 * p)) * pulses[c][p];
@@ -295,7 +370,7 @@ function draw(currentpos) {
           transparency = 1; // pulses[c][p];
         }
         // if current choir/part is highlighted
-        else if (c == (selectedChoir - 1) && p == ( selectedPart - 1)) {
+        else if (c == (selectedChoir - 1) && p == (selectedPart - 1)) {
           lightness = 67 - (3 * p);
           saturation = 80;
           transparency = 1;
