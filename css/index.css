@@ -218,17 +218,18 @@ header input:checked + .slider:before {
   font-size: smaller;
 }
 
-.score {
+#spemScore {
   resize: vertical;
   background-color: whitesmoke;
   overflow: auto;
+  min-height: 100;
   border-radius: 10px;
   margin-left: 0.2rem;
   margin-right: 0.2rem;
   padding: 0 0.2rem 0 0.2rem;
   border: 3px solid hsla(var(--color-c1), 50%, 61%, 1);
 }
-.score img {
+#spemScore img {
   display: inline;
   height: 100%;
 }

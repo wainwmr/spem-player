@@ -226,10 +226,11 @@ header {
     }
 }
 
-.score {
+#spemScore {
     resize: vertical;
     background-color: whitesmoke;
     overflow: auto;
+    min-height: 100;
     // font-size: 0; // so that white space between img tags doesn't take any horizontal space
     border-radius: 10px;
     margin-left: 0.2rem;

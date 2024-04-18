@@ -51,10 +51,5 @@ cIIb = <<
       \Staff 
         \consists Ambitus_engraver
     }
-    \context { 
-      \Score 
-        barNumberVisibility = #all-bar-numbers-visible 
-        \override BarNumber.break-visibility = #all-visible 
-    } 
   }
 }
