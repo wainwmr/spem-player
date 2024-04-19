@@ -86,34 +86,6 @@ function getPartName(n) {
   return allparts[n - 1];
 }
 
-// where c = 1 to 8
-function setChoir(c) {
-  if (currentChoir == c) {
-    return;
-  }
-  currentChoir = c;
-
-  // Update the input field
-  choirselect.value = currentChoir;
-
-  // Load the new SVG score
-  svgobject.setAttribute("data", `/svg/spem-choir${c}.svg`);
-  const subdoc = svgobject.getSVGDocument();
-  svg = subdoc.getElementsByTagName("svg")[0];
-  svgobject.addEventListener("click", scoreClicked);
-}
-
-// where p = 0 (for all parts) or 1 - 5 for SATBarB
-function setPart(p) {
-  if (currentPart == p) {
-    return;
-  }
-  currentPart = p;
-
-  // Update the input field
-  partselect.value = currentPart
-}
-
 
 // TODO: Choir 6 Soprano
 // TODO: Choir 6 Alto
@@ -140,7 +112,6 @@ function setPart(p) {
 // TODO: Change dark mode to moon/sun icons
 // TODO: Add hide/show icon to remove score
 // TODO: Visual effect for false relations
-// TODO: change score border colour for different choirs
 // TODO: switching dark mode should not stop play
 // TODO: Better font/graphic for Spem Player title
 // BUG: Kinsta not loading spem notes.ly for some reason
@@ -197,6 +168,38 @@ function scoreClicked(e) {
   setBar(scorebars.indexOf(result));
 }
 
+// where c = 1 to 8
+function setChoir(c) {
+  c = Number(c);
+  if (currentChoir == c) {
+    return;
+  }
+  currentChoir = c;
+
+  // Update the input field
+  choirselect.value = currentChoir;
+
+  // Load the new SVG score
+  svgobject.setAttribute("data", `/svg/spem-choir${c}.svg`);
+  const subdoc = svgobject.getSVGDocument();
+  svg = subdoc.getElementsByTagName("svg")[0];
+  svgobject.addEventListener("click", scoreClicked);
+
+  // set the border color to match
+  spemscore.style.borderColor = `hsla(${choirColors[currentChoir - 1]}, 80%, 55%, 1)`;
+}
+
+// where p = 0 (for all parts) or 1 - 5 for SATBarB
+function setPart(p) {
+  if (currentPart == p) {
+    return;
+  }
+  currentPart = p;
+
+  // Update the input field
+  partselect.value = currentPart
+}
+
 
 var previousBarHighlight;
 
@@ -217,11 +220,9 @@ function setBar(b) {
   // update the input field
   barinput.value = currentBar;
 
-  const scoresvg = document.getElementById("svgo");
-  const subdoc = scoresvg.getSVGDocument();
+  const subdoc = svgobject.getSVGDocument();
   svg = subdoc.getElementsByTagName("svg")[0];
-
-  pt = svg.createSVGPoint();  // HACK: Created once for document
+  // pt = svg.createSVGPoint();  // HACK: Created once for document
 
   var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
   newElement.setAttribute("x", scorebars[currentChoir - 1][b - 1]);
@@ -262,15 +263,18 @@ function parseURL() {
   for (let i = 0; i < parms.length; i++) {
     const p = parms[i].split("=");
     if (p[0] == "choir") {
-      setChoir(p[1]);
+      currentChoir = Number(p[1]);
     }
     else if (p[0] == "part") {
-      setPart(p[1]);
+      currentPart = Number(p[1]);
     }
     else if (p[0] == "bar") {
-      setBar(Number(p[1]));
+      currentBar = Number(p[1]);
     }
   }
+  setChoir(currentChoir);
+  setPart(currentPart);
+  setBar(currentBar);
 }
 
 function calculateCanvasSize() {
@@ -431,14 +435,14 @@ function draw(currentpos) {
 
         // If current bar is highlighted
         if (currentpos >= from && currentpos < to) {
-          lightness = (67 - (3 * p)) * pulses[c][p];
           saturation = 80;
+          lightness = (67 - (3 * p)) * pulses[c][p];
           transparency = 1; // pulses[c][p];
         }
         // if current choir/part is highlighted
         else if (c == (currentChoir - 1) && (currentPart == 0 || p == (currentPart - 1))) {
-          lightness = 67 - (3 * p);
           saturation = 80;
+          lightness = 67 - (3 * p);
           transparency = 1;
         }
         // else if (c == (currentChoir - 1) && p == (currentPart - 1)) {
@@ -447,13 +451,13 @@ function draw(currentpos) {
         //   transparency = 1;
         // }
         else if (currentChoir === 0 && currentPart === 0 && b === 0) {
-          lightness = 67 - (3 * p);
           saturation = 50;
+          lightness = 67 - (3 * p);
           transparency = 1;
         }
         else {
-          lightness = 67 - (3 * p);
           saturation = 50;
+          lightness = 67 - (3 * p);
           transparency = 0.5;
         }
 

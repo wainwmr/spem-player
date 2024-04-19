@@ -237,7 +237,9 @@ header {
     margin-left: 0.2rem;
     margin-right: 0.2rem;
     padding: 0 0.2rem 0 0.2rem;
-    border: 3px solid hsla(var(--color-c1), 50%, 61%, 1); // choir 1 colour
+    border-color: hsla(var(--color-c1), 80%, 55%, 1);
+    border-width: 3px;
+    border-style: solid;
 
     img {
         display: inline;
