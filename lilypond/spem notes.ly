@@ -2621,114 +2621,133 @@ notesVBass = \relative c {
 % ------------
 
 notesVISoprano = \relative c {
-  r2*99 g''2 c c g'2. f4 e c 
-  | % 18
-  e2. d4 c1 r2 a 
-  | % 19
-  a a d2. c4 b g b1 c2 c2. a4 c2. b4 a2 
-  | % 21
-  g e r4*5 g4 b e,2 a e g4. f8 e4 r2 e4. f8 g4 
-  | % 23
-  d g2 r2*19 b2 b4 d2 b4 r2. c4. g8 g4. d8 d4 r2. g4 e e'2 e4 
-  e c c2 r2. g4 d'2. g2 g4 g2. d d1 r2*23 f1 c2 e d2. d4 
-  | % 35
-  c2 r2. c2 g b d4. c8 c2 g4 r4 g g d'4. d8 d4 d2 c c r1*27 g1 
-  c8*7 d8 e2 r4 e,2 g4 g c c g r2. c4 c4. a8 a4 
-  | % 49
-  e' e e,2 g b4 b2 r2 g' g4 g g2 g,4 g2 g4 r2. a2 e4 g2 r1*2 g2 
-  d' c4. b8 g2 r4 f d a' e g 
-  | % 53
-  g2 r4 d a'2 b1 c2 
-  | % 54
-  a a1 r4*33 b4 d2. d,2 a'4 r2 b2. 
-  | % 58
-  b4 d2 e d r2*29 b4. c8 d4 a c2 r2 c f,4 a4. e8 e4 r2 e4 a2 
-  f4 r4 a a2 r1. a4 d4. c8 c4 d2 r4 g, b d g, e 
-  | % 67
-  g g e2 g r1*14 a2. e'2 cis4 cis1 r2 
-  | % 73
-  c c c e2. d4 c2 
-  | % 74
-  b a e' e1 r2 
-  | % 75
-  e,2. f4 g2 e4 a4. b8 c a b1 r1*14 g2 d'2. b2 g d' b4 
-  | % 82
-  b2 r2. a2 a f4 c'2 
-  | % 83
-  a4 c2. f,4 a2 f4 r4 c' c2 
-  | % 84
-  c4 f2 f,4 c' a a2 r4 bes2. 
-  | % 85
-  f'2 r2. d4 bes2 r4 f'2. 
-  | % 86
-  f2 r2. c a2 r4 d2. d2 r2 b b g g 
-  | % 88
-  g r1. g'2 g4 g 
-  | % 89
-  g2 g r4 g,2 d'2. d1. b2 b1*6 
+  R\breve*24
+
+  % 24
+  r1 r2 g''2 
+  c2 c g'2. f4 
+  e4 c e2. d4 c2
+  c2 r2 a a 
+  a2 d2. c4 b g 
+  b1 c2 c2~
+  c4 a4 c2. b4 a2 
+  g e r1
+  r4 g4 b e,2 a e4~
+  e4 g4. f8 e4 r2 e4. f8 
+  g4 d g2 r1
+  R\breve*4
+  
+  % 40
+  r2 b2 b4 d2 b4 
+  r2 r4 c4. g8 g4. d8 d4 
+  r2 r4 g4 e e'2 e4 
+  e4 c c2 r2 r4 g4 
+  | d'2. g2 g4 g2~
+  | g4 d2. d1 
+  R\breve*5
+  
+  % 51
+  r1 r2 f2~
+  f2 c2 e d2~
+  d4 d4 c2 r2 r4 c4~
+  c4 g2 b d4. c8 c4~
+  c4 g4 r4 g g d'4. d8 d4 
+  d2 c c r2
+  R\breve*13
+  
+  %70
+  r2 g1 c2
+  c4. d8 e2 r4 e,2 
+  g4 g c c g r2 r4 c4 
+  c4. a8 a4 e'2 e, g4~
+  g4 b4 b2 r2 g' 
+  g4 g g2 g,4 g2 g4 
+  r2 r4 a2 e4 g2 
+  R\breve
+  g2 d'4 d c4. b8 g2 
+  r4 f d a' e g g2 
+  r4 d a'2 b1 
+  c2 a a1 
+  R\breve*4
+  
+  % 86
+  r4 b4 d2. d,2 a'4 
+  r2 b2. b4 d2 
+  e d r1
+  R\breve*6
+  
+  % 95
+  r1 r2 b4. c8 
+  d4 a c2 r2 c 
+  f,4 a4. e8 e4 r2 e4 a~
+  a4 f4 r4 a a2 r1
+  r2 a4 d4. c8 c4 
+  d2 r4 g, b d g, e 
+  g4 g e2 g r2
+  R\breve*6
+  
+  % 108
+  r1 r2 a2. e'2 cis4 cis1 
+  r2 c c c4 c 
+  e2. d4 c2 b 
+  a e' e1 
+  r2 e,2. f4 g2 
+  e4 a4. b8 c a b1 
+  R\breve*7
+  
+  % 122
+  g2 d'2. b2 g4~
+  g4 d'2 b4 b2 r2
+  r4 a2 a4 a f c'2 
+  a4 c2. f,4 a2 f4 
+  r4 c' c c c f2 f,4 
+  c'4 a2. r4 bes2. 
+  f'2 r2 r4 d4 bes2 
+  r4 f'2. f2 r2
+  r4 c2. a2 r4 d4~
+  d2 d r2 b 
+  b g4 g g2 g 
+  r1 r2 g'2 
+  g4 g g g2 g4 r4 g,4~
+  | g4 d'2. d1~
+  d2 b2 b1~
+  b\breve~
+  b\breve 
 }
 
 notesVIAlto = \relative c {
   r1*52 g''1 g2 g a1. f2 f f g r4 g2 b4. a8 g2 e4 g c, r4 a'2 e 
   c4. 
-  | % 21
   d8 e2 e e4 a, a d2 r2 g c a4 c4. b8 b2 g4 a a e2 
-  | % 23
   r2*21 g2 g4 g2 d4 r4 c g2. g'2 g4 g2 r2 g4 c4. g8 g4. e8 e 
   c g'2 r2 g4 d'4. b4 g8 g2 r4 d2 e8 f 
-  | % 30
   g2. b2 g4 g2 r2*19 c1 g2 b4 b a2 r4 a 
-  | % 35
   a c4. c8 g2 bes f4 a2. f4 
-  | % 36
   g2 e4 g2 d4 g2 r2. c,4 
-  | % 37
   e g2 d4 f a2 a4 r4 a e g 
-  | % 38
   g2 r2*49 b2 b4 b b2 r2. c4 g2 
-  | % 47
   c,4 c2 c4 c2 r2. c4 c4. d8 
-  | % 48
   e2 r4 f2 a4 a c4. c8 c4 r4 c, 
-  | % 49
   c e r4 g4. g8 g4 r2 g4 g4. g,8 g2 g4 r2 e' a,4 a' a2 r2*7 d,2 
   g4. f8 e4. c8 r4 d a'2 c 
-  | % 53
   b2. a4 a1 gis2 a 
-  | % 54
   e r1*9 b4 d2 g,4 r4 d' d2 r2 g2. g4 g2 g g r2*29 g2 f4 a4. 
   g8 e4 r2 e4 a2 a4 
-  | % 65
   c a a2 r1 e4 a,2. 
-  | % 66
   a2 r1 d4 a'2 a4 r4 g 
-  | % 67
   g2 g r4 g2 b4 c g2 b4 
-  | % 68
   e,2 r2*27 a1 a2 a1*2 r2 e e e e2. d4 
-  | % 75
   c2 a b g2. a4 b2 
-  | % 76
   c4 a e'2. d4 c2 g4 b2 c8 d 
-  | % 77
   e1 r1*13 d2 g,4 d'2 g d4 r4 d2 d4 
-  | % 82
   d2 r2. f f4 f a2 
-  | % 83
   f r4 c' c2 f,4 a2. f2 
-  | % 84
   r4 c' c2 r2. f,4 bes,1 
-  | % 85
   r1 bes'2. d4 d2 d, 
-  | % 86
   d r2. e a,1 
-  | % 87
   r2 d d g,4 g'2 d4 d2 
-  | % 88
   r4 e4. f8 g4 g2 r2. c,2 c'4 
-  | % 89
   c2 r4 c,2 e4. d8 c4 r4 g'2. 
-  | % 90
   d2 g, r2 d' d1*6 
 }
 
@@ -2736,58 +2755,33 @@ notesVITenor = \relative c {
   \clef "treble_8"
   
   r2*95 c'2 c c d1 e2 
-  | % 17
   f d2. d4 c1 r2 
-  | % 18
   c c c f1 f2 
-  | % 19
   d r2 d4*5 e8 f e2. c4 e2 a, r2 a b4 a b 
-  | % 21
   c d c b a e'1. a,2 b b a1 r2*21 d2 d4 b b2 r4 c2 e4. c8 c4 
-  | % 28
   r2 c4 g g2 r2 g'2. e4 
-  | % 29
   e2 r4 b b4. a8 g2 r4 g2 b4 
-  | % 30
   b2 r2 b2. b4 b2 r2*15 g'1 d2 f1 e2. c4 d2 d1 a2 c d1 a2 c1. 
   d2 g, 
-  | % 36
   r4 c4. d8 e f g4 g,2 b4 d d, a'1 g r1*26 g'2 g1 g2 g r2 
-  | % 48
   g e c g' c,4 f4. e8 f d 
-  | % 49
   e2 r2. g,2 g4 g2 r1 d'2 d4 d d4. f8 e4 c r4 c4. a8 b c 
-  | % 51
   d e f4 r4 c g2 r1*2 d'2. g2 e4 g2 d4 f4. e8 d4 
-  | % 53
   c4. d8 e2 r2 a,4 e'2 d8 c b4 e 
-  | % 54
   e1 r2*17 a,4 d2. d2 r1. 
-  | % 58
   g,2. g4 b2 c b r2*29 e2 a, e' r2 e4 a,2 f4 
-  | % 65
   a e r4 a2 e4 r4 a c2 f, 
-  | % 66
   r1. a4 a2 e4 r4 b' 
-  | % 67
   e2 b r4 e, b' b e,2 b' 
-  | % 68
   r1*14 e1 e2 e1*2 r2*7 e2 e e g2. f4 e2. d4 c2 a e'2. d4 c b 
   e1 a,2 r1*12 d1. d2. b4 b d2 g,4 b2 a1 r1 c2 c c4 f2 c f,4 a2 
   r2 
-  | % 84
   c4*5 a4 r4 d bes f' f2 
-  | % 85
   r4 bes,2 d4. c8 bes4 r2. a4. g8 f d 
-  | % 86
   d2 r1. d'1 
-  | % 87
   d4 d g2. d4 d2 r1 
-  | % 88
   e2 e r2 e g g 
-  | % 89
   r2 g, c4 c b g d'2 r2 
-  | % 90
   d1. d1*6 
 }
 
@@ -2795,57 +2789,33 @@ notesVIBaritone = \relative c {
   \clef bass
 
   r2*103 g'2 g g c c4. bes8 a4. g8 
-  | % 19
   f4. e8 d8*7 e8 f g a2 d,4 r4 d'2 g,4 g1*2 e1 e2 e2. c4 g'2 
   r1 
-  | % 22
   e2 g r4 c,2 c'4 g e g2 
-  | % 23
   c,1 r2*21 g'2 g4 g g2 r2. e4 e2 
-  | % 28
   r2 c c4 g'4. f8 e4. d8 c4 c'2 
-  | % 29
   r1 g2 g g1 
-  | % 30
   g2 r1 g2. g4 d2 
-  | % 31
   r1*6 d'1 g,2 b b a1 g1. f4 d a'2. a4 
-  | % 35
   g1 r2 c4 f,4. g8 a4 e2 
-  | % 36
   r2 g1 c,2 e2. e4 
-  | % 37
   d2 r4 d'2. a2 c bes4 g 
-  | % 38
   d'2 r2*49 b2 b4 b g2 g2. e2 c e4. f8 g4 r4 c c2 g r2 c4 
-  | % 48
   f, f2 r4 c' c2 g4 c2 b8 a d4 
-  | % 49
   b d2 r2. d,4 d4. b8 b4 b r4 
-  | % 50
   g' g2 r2*7 d1 g2 e4 g2 g4 b d2 a4 r4 e g2 a4 d, e c r4 e g2 
   c,4. d8 e2 r4*35 d4 g2 g r2. d4 d2 d r2*33 g2 a a r2 a a 
-  | % 65
   a a a r4 a a2 a 
-  | % 66
   r4*7 a2 c4 b2 
-  | % 67
   c4 g4. a8 b4 r4 g g g g2 g 
-  | % 68
   r1*14 e1 e2 e1*2 r2*9 e2 e e a g a1 e r1*14 g1. g2 g1*2 r2. f2 
   f c a' f4 
-  | % 84
   r4 a a2 r4 a c1 r2. f,2 f4 f2 r4 bes2. bes2 r1 a2 d2. d,4 d2 
   r1 
-  | % 87
   a'4 d4. c8 a4 r4 d4. g,8 g4 r2 g 
-  | % 88
   b4 b4. c8 d4 r2 g, g1 
-  | % 89
   g r2 g1 c,2 
-  | % 90
   r2. g'2 d d' g,4 d' g, 
-  | % 91
   r2 g g1*5 
 }
 
@@ -2853,41 +2823,24 @@ notesVIBass = \relative c {
   \clef bass
 
   r2*111 d2 d d g2. f8 e d2 
-  | % 20
   g2. f4 e2 a, e'2. e4 
-  | % 21
   a,2 r2*33 g2 g g c1 r2 
-  | % 28
   g c c g'1 e2 
-  | % 29
   e d1. b2 b4. c8 
-  | % 30
   d2 r4 g,2 g4 g1 r1. d'1 a2 c c g 
-  | % 32
   g4 g d'2 c b4 g2. d'2 
-  | % 33
   r2*79 g1 g1. g2 
-  | % 47
   g1 r2 g e c 
-  | % 48
   f2. f4 c2 c2. e4 c g'2 g4 g2 r2 g g g e e a f g1 a1*2 g2 g 
   g c, f a 
-  | % 53
   g2. e4 f4. g8 a4 e4. f8 g a b4 e,2 a4 a2 r2*19 b2 a1 g r4*97 d4 
   a'2 d,4 d e2 d r1*16 a1 cis2 e a, a1 r1*23 g'1. g2 g1 
-  | % 82
   r2 d d d f1 
-  | % 83
   c r1. f2 
-  | % 84
   f f a1 f2 r2 
-  | % 85
   d4 f bes,2 d1 r2 d2. d4 d2 c1 f2 f4. e8 d2 r2. d2 d4 g,2 g'1 
-  | % 88
   e2 c d e1 c2 
-  | % 89
   g' r2 g g r4 g,2 d'4 
-  | % 90
   d2 r2 d b d d1*5 
 }
 

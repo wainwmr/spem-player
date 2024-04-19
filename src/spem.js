@@ -87,7 +87,6 @@ function getPartName(n) {
 }
 
 
-// TODO: Choir 6 Soprano
 // TODO: Choir 6 Alto
 // TODO: Choir 6 Tenor
 // TODO: Choir 6 Baritone
@@ -187,6 +186,9 @@ function setChoir(c) {
 
   // set the border color to match
   spemscore.style.borderColor = `hsla(${choirColors[currentChoir - 1]}, 80%, 55%, 1)`;
+
+  // scroll the score to match the new choir
+  setBar(currentBar);
 }
 
 // where p = 0 (for all parts) or 1 - 5 for SATBarB
@@ -205,9 +207,10 @@ var previousBarHighlight;
 
 // where b = 0 to 139
 function setBar(b) {
-  if (b == currentBar) {
-    return;
-  }
+  console.log("setBar: ", b);
+  // if (b == currentBar) {
+  //   return;
+  // }
   if (b > 139) {
     playpauseicon.classList.add("paused");
     b = 0;
@@ -224,6 +227,7 @@ function setBar(b) {
   svg = subdoc.getElementsByTagName("svg")[0];
   // pt = svg.createSVGPoint();  // HACK: Created once for document
 
+  // Highlight the current bar on the score
   var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
   newElement.setAttribute("x", scorebars[currentChoir - 1][b - 1]);
   newElement.setAttribute("y", "0");
