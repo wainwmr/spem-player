@@ -461,7 +461,7 @@ function draw(currentpos) {
         //   saturation = 80;
         //   transparency = 1;
         // }
-        else if (currentChoir === 0 && currentPart === 0 && b === 0) {
+        else if (currentBar === 0 || currentBar > 138) {
           saturation = 50;
           lightness = 67 - (3 * p);
           transparency = 1;

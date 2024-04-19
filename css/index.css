@@ -230,7 +230,7 @@ header input:checked + .slider:before {
   border-color: hsla(var(--color-c1), 80%, 55%, 1);
   border-width: 3px;
   border-style: solid;
-  height: 200px;
+  height: 300px;
 }
 #spemScore svg {
   height: 100%;
