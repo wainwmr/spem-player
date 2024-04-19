@@ -1,5 +1,7 @@
 \version "2.24.3"
 
+\pointAndClickOff
+
 \paper {
   paper-width = 5200\mm
   paper-height = 100\mm
