@@ -610,8 +610,6 @@ function pauseAndRepaint(load = true) {
 // Keyboard events (wasd)
 // -----------------------------------------------------
 
-let lastPart = 0;
-let lastChoir = 0;
 function keyboardTapped(e) {
   // don't handle keyboard events on the four control widgets
   // cos it messes with the UI interaction
@@ -648,14 +646,20 @@ function keyboardTapped(e) {
       break;
 
     case 'ArrowRight':
-      setBar(Number(barinput.value) + 1);
+      setBar(currentBar + 1);
       pauseAndRepaint();
       break;
     case 'ArrowLeft':
-      setBar(Number(barinput.value) - 1);
+      setBar(currentBar - 1);
       pauseAndRepaint();
       break;
     case 'ArrowDown':
+      setChoir(currentChoir == 8 ? 1 : currentChoir + 1);
+      pauseAndRepaint();
+      break;
+    case 'ArrowUp':
+      setChoir(currentChoir == 1 ? 8 : currentChoir - 1);
+      pauseAndRepaint();
       break;
     case 'KeyX':
       setPart(0);
@@ -664,59 +668,6 @@ function keyboardTapped(e) {
     default:
   }
 
-  // if (e.code === 'KeyD') {
-  //   setBar(Number(barinput.value) + 1);
-  //   pauseAndRepaint();
-  // }
-  // else if (e.code === 'KeyA') {
-  //   setBar(Number(barinput.value) - 1);
-  //   pauseAndRepaint();
-  // }
-  // else if (e.code === 'KeyS') {
-  //   if ((choirselect.value === '8') && (partselect.value === '5')) {
-  //     setChoir(0);
-  //     setPart(0);
-  //   }
-  //   else {
-  //     const p = (Number(partselect.value) % 5) + 1;  // zero-index, add 1, mod 5 and then one-index the parts
-  //     setPart(p);
-  //     if (p === 1) {
-  //       const c = (Number(choirselect.value) % 8) + 1;  // mod 8 and one-index the choirs
-  //       setChoir(c);
-  //     }
-  //   }
-  //   pauseAndRepaint();
-  // }
-  // else if (e.code === 'KeyW') {
-  //   if ((choirselect.value === '0') && (partselect.value === '0')) {
-  //     setChoir(8);
-  //     setPart(5);
-  //   }
-  //   else {
-  //     const p = (4 + Number(partselect.value)) % 5;
-  //     setPart(p);
-  //     if (p === 0) {
-  //       setPart(5);
-  //       const c = ((7 + Number(choirselect.value)) % 8);
-  //       setChoir(c);
-  //     }
-  //   }
-  //   pauseAndRepaint();
-  // }
-  // Toggle between ALL choirs and selected choir
-  // else if (e.code === 'KeyX') {
-  //   if (choirselect.value != '0' || partselect.value != '0') {
-  //     lastChoir = Number(choirselect.value);
-  //     lastPart = Number(partselect.value);
-  //     setChoir(0);
-  //     setPart(0);
-  //   }
-  //   else {
-  //     setChoir(lastChoir);
-  //     setPart(lastPart);
-  //   }
-  //   pauseAndRepaint();
-  // }
 }
 
 // -----------------------------------------------------
