@@ -20,7 +20,7 @@ underlayIs = \lyricmode {
   prae -- te in te, 
   in te 
   De -- us Is -- ra -- el, 
-  in te, Du -- us 
+  in te, De -- us 
   Is -- ra -- el
   
   et o -- mni -- a 

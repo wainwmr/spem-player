@@ -86,7 +86,6 @@ function setChoir(c) {
 
 
   // const svg = document.getElementById("spemSVG");
-  console.log(svgobject);
   svgobject.setAttribute("data", `/svg/spem-choir${c}.svg`);
 
   const subdoc = svgobject.getSVGDocument();
@@ -95,8 +94,6 @@ function setChoir(c) {
 
   // HACK: need to clear this otherwise we would fail to remove bar highlight from the new choir score
   previousBarHighlight = undefined;
-
-  console.log(svg);
 
 
   const oldChoir = choirselect.value;
@@ -119,6 +116,49 @@ function setPart(p) {
     // changed = true;
   }
 }
+
+
+// TODO: Choir 6 Soprano
+// TODO: Choir 6 Alto
+// TODO: Choir 6 Tenor
+// TODO: Choir 6 Baritone
+// TODO: Choir 6 Bass
+// TODO: Choir 7 Soprano
+// TODO: Choir 7 Alto
+// TODO: Choir 7 Tenor
+// TODO: Choir 7 Baritone
+// TODO: Choir 7 Bass
+// TODO: Choir 8 Soprano
+// TODO: Choir 8 Alto
+// TODO: Choir 8 Tenor
+// TODO: Choir 8 Baritone
+// TODO: Choir 8 Bass
+
+// TODO: minimise SVGs in build process
+// TODO: minimse SVGs using <use> and <defs> elements
+// TODO:  when music ends, should show canvas highlighted again
+// TODO: add bar 138 1/2?? like the audio?
+// TODO: click on score should send you to bar.  And part?
+// BUG: need to scroll score in first three bars - even if it is scroll to zero
+// BUG: when page is narrow, showing 2 previous bars is uncomfortable/wrong
+// TODO: Change dark mode to moon/sun icons
+// TODO: Add hide/show icon to remove score
+// TODO: Visual effect for false relations
+// TODO: change score border colour for different choirs
+// TODO: switching dark mode should not stop play
+// TODO: Better font/graphic for Spem Player title
+// BUG: Kinsta not loading spem notes.ly for some reason
+// BUG: can scroll up and down a tiny bit in score
+// BUG: [Violation] Forced reflow while executing JavaScript took 36ms  (this doesn't happen when you have already manually adjusted the height of the score - something to do with the flex: 1 after the reload?)
+// BUG: should scroll to current bar whenever you change scores
+// BUG: Uncaught DOMException: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node. at setBar:239
+// BUG: When clicking on canvas, should highlight bar (call setBar maybe?)
+// TODO: put build process in script (generate SVGs, get scorebars, minimise, rename and move...)
+// TODO: up and down arrows to select different choirs
+// TODO: CMD-B to type in bar number
+// TODO: CMD-left/right to skip to next interesting bit for choir or part
+// TODO: highlight part on score?
+// BUG: highlight sometimes doesn't work in daylight mode
 
 const scorebars = [
   [4.2888, 24.2222, 42.4943, 61.3522, 77.9358, 97.4029, 118.4498, 139.0895, 164.1418, 187.6957, 208.0030, 236.3701, 262.4851, 287.8321, 310.3507, 336.0566, 368.2163, 399.6335, 430.1655, 454.1720, 481.0215, 508.7682, 533.3212, 559.4427, 577.9584, 590.7065, 601.3365, 611.9665, 622.5965, 633.2265, 643.8565, 654.4865, 665.1165, 675.7465, 686.3765, 697.0065, 707.6365, 718.2665, 728.8965, 739.5265, 761.6258, 787.4885, 815.1979, 839.6519, 864.0166, 887.9889, 898.6189, 909.2489, 919.8789, 930.5089, 941.1389, 951.7689, 962.3989, 973.0289, 983.6589, 994.2889, 1004.9189, 1015.5489, 1026.1789, 1036.8089, 1047.4389, 1058.0689, 1068.6989, 1079.3289, 1089.9589, 1102.7070, 1123.0645, 1141.4794, 1162.0944, 1179.9409, 1204.0745, 1230.7430, 1262.6883, 1292.9335, 1315.2489, 1341.2575, 1362.6023, 1373.2323, 1383.8623, 1394.4923, 1405.1223, 1425.1838, 1453.8216, 1480.6944, 1497.8073, 1519.2376, 1544.2766, 1565.4676, 1580.8661, 1591.4961, 1602.1261, 1619.7355, 1639.3955, 1657.6029, 1677.7309, 1700.4948, 1711.1248, 1721.7548, 1732.3848, 1743.0148, 1761.3842, 1785.6083, 1808.7445, 1828.8743, 1849.3307, 1872.3063, 1897.8853, 1925.0102, 1945.2080, 1963.1793, 1980.1194, 1990.7494, 2001.3794, 2012.0094, 2022.6394, 2033.2694, 2043.8994, 2059.2088, 2083.7880, 2105.8940, 2131.5822, 2148.9021, 2168.3458, 2189.3472, 2204.7087, 2228.9984, 2253.7963, 2279.4818, 2304.3074, 2327.9948, 2354.3278, 2374.7985, 2398.5956, 2425.4044, 2450.3550, 2473.3166, 2502.3932, 2521.0413],
@@ -204,7 +244,9 @@ function setBar(b) {
     svg.appendChild(newElement);
 
     if (previousBarHighlight != undefined) {
-      svg.removeChild(previousBarHighlight);
+      if (svg.contains(previousBarHighlight)) {
+        svg.removeChild(previousBarHighlight);
+      }
     }
     previousBarHighlight = newElement;
 
