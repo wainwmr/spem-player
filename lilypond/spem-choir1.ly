@@ -5,7 +5,6 @@
 \include "spem words.ly"
 
 \score {
-
   <<
     \time 4/2
     \override Score.BarNumber.break-visibility = ##(#f #t #t)
@@ -30,10 +29,4 @@
       \addlyrics \wordsIBass
     >>
   >>
-  \layout {
-    \context {
-      \Staff
-      \consists Ambitus_engraver
-    }
-  }
 }

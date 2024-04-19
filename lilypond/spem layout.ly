@@ -10,9 +10,23 @@
   left-margin = 0
   right-margin = 0
   indent = 0
-  % ragged-right = ##t
-  % ragged-bottom = ##t
+  system-count = #1
+  ragged-right = ##f
+  ragged-bottom = ##f
   print-page-number = ##f
 }
 
 \header { tagline = ##f }
+
+\layout {
+  \context {
+    \Staff
+    \consists Ambitus_engraver
+    \override Staff.NoteSpacing.stem-spacing-correction = #2
+    \override Staff.StaffSpacing.stem-spacing-correction = #2
+  }
+  \context {
+    \Score
+    \override SpacingSpanner.base-shortest-duration = #(ly:make-moment 1/16)
+  }
+}

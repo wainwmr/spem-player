@@ -30,11 +30,4 @@
       \addlyrics \wordsIVBass
     >>
   >>
-
-  \layout {
-    \context {
-      \Staff
-      \consists Ambitus_engraver
-    }
-  }
 }
