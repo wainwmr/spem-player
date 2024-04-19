@@ -40,6 +40,7 @@ body {
   --color-border: hsl(210, 58%, 57%);
   --color-background-lighter: hsl(210, 65%, 80%);
   --color-active-button: hsl(210, 65%, 80%);
+  --color-score-highlight: hsl(210, 65%, 25%);
   --color-c1: 360;
   --color-c2: 320;
   --color-c3: 30;

@@ -62,6 +62,7 @@ function loadColors() {
   backgroundColor = style.getPropertyValue('--color-background');
   textColor = style.getPropertyValue('--color-text');
   highlightColor = style.getPropertyValue('--color-highlight');
+  scoreHighlightColor = style.getPropertyValue('--color-score-highlight');
   choirColors = [
     style.getPropertyValue('--color-c1'),
     style.getPropertyValue('--color-c2'),
@@ -139,7 +140,6 @@ function setPart(p) {
 // TODO:  when music ends, should show canvas highlighted again
 // TODO: add bar 138 1/2?? like the audio?
 // TODO: click on score should send you to bar.  And part?
-// BUG: need to scroll score in first three bars - even if it is scroll to zero
 // BUG: when page is narrow, showing 2 previous bars is uncomfortable/wrong
 // TODO: Change dark mode to moon/sun icons
 // TODO: Add hide/show icon to remove score
@@ -158,7 +158,6 @@ function setPart(p) {
 // TODO: CMD-B to type in bar number
 // TODO: CMD-left/right to skip to next interesting bit for choir or part
 // TODO: highlight part on score?
-// BUG: highlight sometimes doesn't work in daylight mode
 // TODO: Add lyrics to footer
 
 const scorebars = [
@@ -239,7 +238,7 @@ function setBar(b) {
     const bw = (b >= 138 ? svg.getBBox().width - scorebars[currentChoir][137] : scorebars[currentChoir][b] - scorebars[currentChoir][b - 1]);
     newElement.setAttribute("width", bw);
     newElement.setAttribute("height", svg.getBBox().height);
-    newElement.style.fill = highlightColor; //Set stroke colour
+    newElement.style.fill = scoreHighlightColor; //Set stroke colour
     newElement.style.fillOpacity = 0.1;
     newElement.style.strokeWidth = "5px"; //Set stroke width
     svg.appendChild(newElement);
