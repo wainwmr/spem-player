@@ -179,11 +179,11 @@ async function setChoir(c) {
   choirselect.value = currentChoir;
 
   await fetch(`/svg/spem-choir${currentChoir}.svg`)
-  .then(r => r.text())
-  .then(text => {
-    spemscore.innerHTML = text;
-  })
-  .catch(console.error.bind(console));
+    .then(r => r.text())
+    .then(text => {
+      spemscore.innerHTML = text;
+    })
+    .catch(console.error.bind(console));
 
 
   // Load the new SVG score
@@ -663,10 +663,12 @@ function keyboardTapped(e) {
     case 'ArrowRight':
       setBar(currentBar + 1);
       pauseAndRepaint();
+      e.preventDefault();
       break;
     case 'ArrowLeft':
       setBar(currentBar - 1);
       pauseAndRepaint();
+      e.preventDefault();
       break;
     case 'ArrowDown':
       setChoir(currentChoir == 8 ? 1 : currentChoir + 1);
