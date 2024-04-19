@@ -13,10 +13,10 @@
       \notesVISoprano
       \addlyrics \wordsVISoprano
     >>
-    % <<
-    %   \notesVIAlto
-    %   \addlyrics \wordsVIAlto
-    % >>
+    <<
+      \notesVIAlto
+      \addlyrics \wordsVIAlto
+    >>
     % <<
     %   \notesVITenor
     %   \addlyrics \wordsVITenor

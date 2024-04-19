@@ -102,7 +102,9 @@ notesISoprano = \relative c {
   e e'2 e4 e c c2 
   r2 r4 g4 d'2. g4 
   g2 r4  g2 d4 d2 
-  d\breve~ d
+  d\breve~ 
+  d\breve~
+  d1
 }
 
 notesIAlto = \relative c {
@@ -214,8 +216,8 @@ notesIAlto = \relative c {
   r2 b,2. b4 b2 
   | b4 d2 d4 r2 g2~
   | g2 d2 d1~
-  | d\breve
-  
+  | d\breve~
+  d1
 }
 
 notesITenor = \relative c {
@@ -328,8 +330,8 @@ notesITenor = \relative c {
   r4 g2. g1
   | % 137
   r2 b b1~
-  | b\breve
-
+  | b\breve~
+  b1
 }
 
 notesIBaritone = \relative c {
@@ -439,7 +441,8 @@ notesIBaritone = \relative c {
   r4 b2 g4 g2 r4 g4~
   | g4 d'4. g,8 b4. c8 d4 d, g4~ 
   g8 a8 b2 g4 g1~ 
-  g\breve 
+  g\breve~
+  g1
 }
 
 notesIBass = \relative c {
@@ -528,8 +531,8 @@ notesIBass = \relative c {
   g2. f8 e d1~ 
   | % 136
   d\breve~
-  d\breve
-
+  d\breve~
+  d1
 }
 
 % ------------
@@ -636,7 +639,8 @@ notesIISoprano = \relative c {
   r4 d g2. b2 g4 
   r4 d'2 g4 g1 
   r4 g,2 d'4 d2 b 
-  b\breve
+  b\breve~
+  b1
 }
 
 notesIIAlto = \relative c {
@@ -741,7 +745,8 @@ notesIIAlto = \relative c {
   r2 g4 d'4. b8 b g g2 
   r4 d2 e8 f g2. b4~
   b4 g4 b4. a8 g1 
-  g\breve
+  g\breve~
+  g1
 }
 
 notesIITenor = \relative c {
@@ -845,7 +850,8 @@ notesIITenor = \relative c {
   g4. g,8 b4. c8 d1 
   b r1 
   b\breve 
-  b\breve 
+  b\breve~
+  b1
 }
 
 notesIIBaritone = \relative c {
@@ -949,7 +955,8 @@ notesIIBaritone = \relative c {
   g4 b b b b4. c8 d2 
   r2 g,4 d'2 g,4 b4. c8 
   d\breve~
-  d\breve
+  d\breve~
+  d1
 }
 
 notesIIBass = \relative c {
@@ -1039,7 +1046,8 @@ notesIIBass = \relative c {
   r2 d g b2~
   b2 g2 b b4. a8 
   g\breve
-  g\breve
+  g\breve~
+  g1
 }
 
 % ------------
@@ -1154,7 +1162,8 @@ notesIIISoprano = \relative c {
   g4 g g g2 f8 e d2~
   | d2 g, d'1 
   d\breve~
-  d\breve
+  d\breve~
+  d1
 }
 
 notesIIIAlto = \relative c {
@@ -1264,7 +1273,8 @@ notesIIIAlto = \relative c {
   r4 d2 g4 g2 g 
   r2 r4 d4. b8 b2 g4 
   r4 d' b d d1~
-  d\breve
+  d\breve~
+  d1
 }
 
 notesIIITenor = \relative c {
@@ -1377,7 +1387,8 @@ notesIIITenor = \relative c {
   r4 b d2 r2 d,2~
   d4 g4 d2 r4 d' d2~
   d4 g,2 b g4 r4 g 
-  | g\breve 
+  | g\breve~
+  g1
 }
 
 notesIIIBaritone = \relative c {
@@ -1484,7 +1495,8 @@ notesIIIBaritone = \relative c {
   r2 d d1 
   r1 d 
   d\breve~
-  d\breve
+  d\breve~
+  d1
 }
 
 notesIIIBass = \relative c {
@@ -1586,7 +1598,8 @@ notesIIIBass = \relative c {
   g\breve~
   g\breve~
   g\breve~
-  g\breve
+  g\breve~
+  g1
 }
 
 % ------------
@@ -1694,7 +1707,8 @@ notesIVSoprano = \relative c {
   r2 b b2. d4~
   d4 b b2. g4 d'2 
   r2 d g1
-  g\breve
+  g\breve~
+  g1
 }
 
 notesIVAlto = \relative c {
@@ -1804,7 +1818,8 @@ notesIVAlto = \relative c {
   r4 g,2. g2 r4 g' 
   b1 r2 b 
   b\breve~
-  b\breve 
+  b\breve~
+  b1
 }
 
 notesIVTenor = \relative c {
@@ -1915,7 +1930,8 @@ notesIVTenor = \relative c {
   b4 d g, b b1 
   r2 r4 d,4 g b g d'~
   d4 b4 d2 d1~
-  d\breve
+  d\breve~
+  d1
 }
 
 notesIVBaritone = \relative c {
@@ -2025,7 +2041,8 @@ notesIVBaritone = \relative c {
   g1 r2 g 
   g4. a8 b4. c8 d2. b4 
   b\breve~
-  b\breve
+  b\breve~
+  b1
 }
 
 notesIVBass = \relative c {
@@ -2121,7 +2138,8 @@ notesIVBass = \relative c {
   r4 g2 d g,4 d'2~
   d2 g2 g1~
   g\breve~
-  g\breve
+  g\breve~
+  g1
 }
 
 % ------------
@@ -2226,7 +2244,8 @@ notesVSoprano = \relative c {
   g4 f8 e d1. 
   r2 d'2 d1~
   d\breve~
-  d\breve
+  d\breve~
+  d1
 }
 
 notesVAlto = \relative c {
@@ -2325,6 +2344,7 @@ notesVAlto = \relative c {
   b2. g4 g1~
   g\breve~
   g\breve~
+  g1
 }
 
 notesVTenor = \relative c {
@@ -2424,7 +2444,8 @@ notesVTenor = \relative c {
   r4 b b4. a8 g2 r4 g4~
   g4 b b2 r2 b 
   b\breve~
-  b\breve
+  b\breve~
+  b1
 }
 
 notesVBaritone = \relative c {
@@ -2526,7 +2547,8 @@ notesVBaritone = \relative c {
   d1 b2 b4. c8 
   d2 r4 d,2 e8 f g2 
   d\breve~
-  d\breve
+  d\breve~
+  d1
 }
 
 notesVBass = \relative c {
@@ -2613,7 +2635,8 @@ notesVBass = \relative c {
   d1. b2 
   b4. c8 d2 r2 g, 
   g\breve~
-  g\breve
+  g\breve~
+  g1
 }
 
 % ------------
@@ -2712,43 +2735,104 @@ notesVISoprano = \relative c {
   | g4 d'2. d1~
   d2 b2 b1~
   b\breve~
-  b\breve 
+  b\breve~
+  b1
 }
 
 notesVIAlto = \relative c {
-  r1*52 g''1 g2 g a1. f2 f f g r4 g2 b4. a8 g2 e4 g c, r4 a'2 e 
-  c4. 
-  d8 e2 e e4 a, a d2 r2 g c a4 c4. b8 b2 g4 a a e2 
-  r2*21 g2 g4 g2 d4 r4 c g2. g'2 g4 g2 r2 g4 c4. g8 g4. e8 e 
-  c g'2 r2 g4 d'4. b4 g8 g2 r4 d2 e8 f 
-  g2. b2 g4 g2 r2*19 c1 g2 b4 b a2 r4 a 
-  a c4. c8 g2 bes f4 a2. f4 
-  g2 e4 g2 d4 g2 r2. c,4 
-  e g2 d4 f a2 a4 r4 a e g 
-  g2 r2*49 b2 b4 b b2 r2. c4 g2 
-  c,4 c2 c4 c2 r2. c4 c4. d8 
-  e2 r4 f2 a4 a c4. c8 c4 r4 c, 
-  c e r4 g4. g8 g4 r2 g4 g4. g,8 g2 g4 r2 e' a,4 a' a2 r2*7 d,2 
-  g4. f8 e4. c8 r4 d a'2 c 
-  b2. a4 a1 gis2 a 
-  e r1*9 b4 d2 g,4 r4 d' d2 r2 g2. g4 g2 g g r2*29 g2 f4 a4. 
-  g8 e4 r2 e4 a2 a4 
-  c a a2 r1 e4 a,2. 
-  a2 r1 d4 a'2 a4 r4 g 
-  g2 g r4 g2 b4 c g2 b4 
-  e,2 r2*27 a1 a2 a1*2 r2 e e e e2. d4 
-  c2 a b g2. a4 b2 
-  c4 a e'2. d4 c2 g4 b2 c8 d 
-  e1 r1*13 d2 g,4 d'2 g d4 r4 d2 d4 
-  d2 r2. f f4 f a2 
-  f r4 c' c2 f,4 a2. f2 
-  r4 c' c2 r2. f,4 bes,1 
-  r1 bes'2. d4 d2 d, 
-  d r2. e a,1 
-  r2 d d g,4 g'2 d4 d2 
-  r4 e4. f8 g4 g2 r2. c,2 c'4 
-  c2 r4 c,2 e4. d8 c4 r4 g'2. 
-  d2 g, r2 d' d1*6 
+  R\breve*26
+
+  % 27
+  g''1 g2 g 
+  a1. f2 
+  f2 f g r4 g~
+  g4 b4. a8 g2 e4 g c, 
+  r4 a'2 e c4. d8 e4~
+  e4 e2 e4 a, a d2 
+  r2 g c a4 c4~
+  c8 b b2 g4 a a e2 
+  R\breve*5
+  
+  % 40
+  r2 g2 g4 g2 d4 
+  r4 c g2. g'2 g4 
+  g2 r2 g4 c4. g8 g4~
+  g8 e e c g'2 r2 g4 d'4~
+  d8 b b g g2 r4 d2 e8 f 
+  g2. b2 g4 g2 
+  R\breve*4
+  
+  % 50
+  r1 r2 c1 g2 b4 b a2 
+  r4 a a c4. c8 g2 bes4~
+  bes4 f a2. f4 g2 
+  e4 g2 d4 g2 r2
+  r4 c,4 e g2 d4 f a~
+  a4 a4 r4 a e g g2 
+  R\breve*12
+  
+  % 69
+  r2 b2 b4 b b2 
+  r2 r4 c4 g2 c,4 c~
+  c4 c c2 r2 r4 c4 
+  c4. d8 e2 r4 f2 a4 
+  a4 c4. c8 c4 r4 c, c e 
+  r4 g4. g8 g4 r2 g4 g4~
+  g8 g, g2 g4 r2 e' 
+  a,4 a' a2 r1
+  R\breve
+  r2 d,2 g4. f8 e4. c8 
+  r4 d a'2 c b2~
+  b4 a4 a1 gis2 
+  a e r1
+  R\breve*4
+  
+  % 86
+  b4 d2 g,4 r4 d' d2 
+  r2 g2. g4 g2 
+  g2 g r1
+  R\breve*6
+  
+  % 95
+  r1 r2 g2 
+  f4 a4. g8 e4 r2 e4 a~
+  a4 a c a a2 r2
+  r2 e4 a,2. a2 
+  r1 d4 a'2 a4 
+  r4 g g2 g r4 g4~
+  g4 b4 c g2 b4 e,2 
+  R\breve*6
+  
+  % 108
+  r1 r2 a2~
+  a2 a a1~
+  a1 r2 e 
+  e e4 e e2. d4 
+  c2 a b g2~
+  g4 a4 b2 c4 a e'2~
+  e4 d4 c2 g4 b2 c8 d 
+  e1 r1
+  R\breve*6
+  
+  % 122
+  d2 g,4 d'2 g d4 
+  r4 d2 d4 d2 r2
+  r4 f2 f4 f f a2 
+  | f2 r4 c' c c f,4 a~
+  | a2 f r4 c' c2 
+  r2. f,4 bes,1 
+  r1 bes'2. d4 
+  d2 d, d r2
+  r4 e2. a,1 
+  r2 d d4 d g, g'~
+  | g4 d d2 r4 e4. f8 g4 
+  | g2 r2. c,2 c'4 
+  c2 r4 c,2 e4. d8 c4 
+  r4 g'2. d2 g, 
+  r2 d' d1~
+  d\breve~
+  d\breve~
+  d1
 }
 
 notesVITenor = \relative c {
