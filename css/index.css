@@ -223,7 +223,6 @@ header input:checked + .slider:before {
   resize: vertical;
   background-color: whitesmoke;
   overflow: auto;
-  min-height: 100;
   border-radius: 10px;
   margin-left: 0.2rem;
   margin-right: 0.2rem;
@@ -231,9 +230,9 @@ header input:checked + .slider:before {
   border-color: hsla(var(--color-c1), 80%, 55%, 1);
   border-width: 3px;
   border-style: solid;
+  height: 200px;
 }
-#spemScore img {
-  display: inline;
+#spemScore svg {
   height: 100%;
 }
 

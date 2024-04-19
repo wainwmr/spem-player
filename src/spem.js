@@ -168,7 +168,7 @@ function scoreClicked(e) {
 }
 
 // where c = 1 to 8
-function setChoir(c) {
+async function setChoir(c) {
   c = Number(c);
   if (currentChoir == c) {
     return;
@@ -178,11 +178,19 @@ function setChoir(c) {
   // Update the input field
   choirselect.value = currentChoir;
 
+  await fetch(`/svg/spem-choir${currentChoir}.svg`)
+  .then(r => r.text())
+  .then(text => {
+    spemscore.innerHTML = text;
+  })
+  .catch(console.error.bind(console));
+
+
   // Load the new SVG score
-  svgobject.setAttribute("data", `/svg/spem-choir${c}.svg`);
-  const subdoc = svgobject.getSVGDocument();
-  svg = subdoc.getElementsByTagName("svg")[0];
-  svgobject.addEventListener("click", scoreClicked);
+  // svgobject.setAttribute("data", `/svg/spem-choir${c}.svg`);
+  // const subdoc = svgobject.getSVGDocument();
+  // svg = subdoc.getElementsByTagName("svg")[0];
+  // svgobject.addEventListener("click", scoreClicked);
 
   // set the border color to match
   spemscore.style.borderColor = `hsla(${choirColors[currentChoir - 1]}, 80%, 55%, 1)`;
@@ -207,10 +215,9 @@ var previousBarHighlight;
 
 // where b = 0 to 139
 function setBar(b) {
-  console.log("setBar: ", b);
-  // if (b == currentBar) {
-  //   return;
-  // }
+  if (b == currentBar) {
+    return;
+  }
   if (b > 139) {
     playpauseicon.classList.add("paused");
     b = 0;
@@ -223,8 +230,8 @@ function setBar(b) {
   // update the input field
   barinput.value = currentBar;
 
-  const subdoc = svgobject.getSVGDocument();
-  svg = subdoc.getElementsByTagName("svg")[0];
+  // const subdoc = svgobject.getSVGDocument();
+  svg = document.getElementsByTagName("svg")[1];
   // pt = svg.createSVGPoint();  // HACK: Created once for document
 
   // Highlight the current bar on the score
@@ -922,6 +929,14 @@ window.addEventListener("load", async () => {
   calculateCanvasSize();
   showLoadingOnCanvas();
 
+
+  await fetch('/svg/spem-choir1.svg')
+    .then(r => r.text())
+    .then(text => {
+      spemscore.innerHTML = text;
+    })
+    .catch(console.error.bind(console));
+
   await setupLilypondParser();
   await processLilypond();
 
@@ -931,7 +946,7 @@ window.addEventListener("load", async () => {
 
   playpausebutton.addEventListener('click', playpause);
 
-  svgobject.addEventListener("click", scoreClicked);
+  // svgobject.addEventListener("click", scoreClicked);
   canvas.addEventListener('click', canvasClicked);
   canvas.addEventListener('mousemove', canvasMoved, false);
   [choirselect,

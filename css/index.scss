@@ -231,7 +231,6 @@ header {
     resize: vertical;
     background-color: whitesmoke;
     overflow: auto;
-    min-height: 100;
     // font-size: 0; // so that white space between img tags doesn't take any horizontal space
     border-radius: 10px;
     margin-left: 0.2rem;
@@ -240,11 +239,12 @@ header {
     border-color: hsla(var(--color-c1), 80%, 55%, 1);
     border-width: 3px;
     border-style: solid;
+    height: 200px;
 
-    img {
-        display: inline;
+    svg {
         height: 100%;
     }
+
 }
 
 #spemCanvas {
