@@ -17,7 +17,7 @@ Lilypond {
 		    | rest --rest
 		    | barline -- barline
             
-    command = "\\" letter*
+    command = "\\" (~"\n" any)* ("\n" | end)
     
     barline = "|"
     

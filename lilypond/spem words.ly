@@ -4,7 +4,7 @@
 % Choir 1
 % ------------
 
-underlayIs = \lyricmode {
+wordsISoprano = \lyricmode {
   Spem in a -- li -- um nun -- quam ha -- bu _ _ _ _ -- i, nun -- quam ha -- bu -- i,
   nun -- quam, nun -- quam ha -- bu -- _ _ i, nu -- quam ha -- bu -- _ _ _ i
   nun -- quam ha -- bu -- _ _ _ _ _ i, 
@@ -63,7 +63,7 @@ underlayIs = \lyricmode {
   no -- stram no -- stram.
 }
 
-underlayIa = \lyricmode {
+wordsIAlto = \lyricmode {
   Spem in a -- li -- um nun -- quam ha -- bu -- _ _ _ _ _ _ i ha -- bu -- _ _ i
   nun -- quam nun -- _ _ quam ha -- bu -- _ _ _ i
   % 10
@@ -130,7 +130,7 @@ underlayIa = \lyricmode {
   ad hu -- mi -- li -- ta -- tem no -- _ stram.
 }
 
-underlayIt = \lyricmode {
+wordsITenor = \lyricmode {
   Spem in a -- li -- um, nun -- quam ha -- bu _ _ _ -- i
   nun -- quam ha -- bu -- _ _ _ _ _ i, 
   nun -- quam ha -- bu -- i
@@ -201,7 +201,7 @@ underlayIt = \lyricmode {
 
 }
 
-underlayIbar = \lyricmode {
+wordsIBaritone = \lyricmode {
   Spem in a -- li -- um nun -- quam ha -- bu -- _ i, ha -- bu -- i
   nun -- quam ha -- bu -- _ _ _ i
   nun -- quam ha -- bu -- _ _ _ _ i
@@ -265,7 +265,7 @@ underlayIbar = \lyricmode {
   no -- _ _ _ stram.
 }
 
-underlayIb = \lyricmode {
+wordsIBass = \lyricmode {
   Spem in a -- li -- um nun -- quam ha -- bu i, nun -- quam ha -- bu -- _ _ _ _ i,
   nun -- quam, nun -- quam ha -- bu -- i,
   ha -- _ bu i,
@@ -318,7 +318,7 @@ underlayIb = \lyricmode {
 % Choir 2
 % ------------
 
-underlayIIs = \lyricmode {
+wordsIISoprano = \lyricmode {
   Spem in a -- li -- um nun -- quam ha -- bu -- i, nun -- quam ha -- bu -- i,
   nun -- quam ha -- bu -- i, ha -- _ bu -- i
   nun -- quam ha -- bu -- i, 
@@ -387,7 +387,7 @@ underlayIIs = \lyricmode {
   no -- _ stram no -- stram.
 }
 
-underlayIIa = \lyricmode {
+wordsIIAlto = \lyricmode {
   Spem in a -- li -- um nun -- quam ha -- bu -- _ i, non ha -- _ _ bu -- _ i
   spem in a -- li -- um, spem in _ a -- li -- _ um, 
   nun -- quam ha -- bu -- _ i
@@ -462,7 +462,7 @@ underlayIIa = \lyricmode {
   no -- _ _ _ _ stram. 
 }
 
-underlayIIt = \lyricmode {
+wordsIITenor = \lyricmode {
   Spem in a -- li -- um, nun -- quam ha -- bu _ _ _ -- i, ha -- bu -- i,
   nun -- quam ha -- bu -- _ _ _ i, 
   ha -- bu -- _ i,
@@ -531,7 +531,7 @@ underlayIIt = \lyricmode {
   no -- stram.
 }
 
-underlayIIbar = \lyricmode {
+wordsIIBaritone = \lyricmode {
   Spem in a -- li -- um nun -- quam ha -- bu -- i, ha _ -- bu -- i
   nun -- quam ha -- bu -- i, nun -- _ quam
   ha -- bu -- i,
@@ -600,7 +600,7 @@ underlayIIbar = \lyricmode {
   no -- _ _ _ _ stram.
 }
 
-underlayIIb = \lyricmode {
+wordsIIBass = \lyricmode {
   Spem in a -- li -- um nun -- quam ha -- bu i, 
   nun -- quam ha -- bu -- _ i,
   nun -- quam ha -- bu -- _ i,
@@ -658,7 +658,7 @@ underlayIIb = \lyricmode {
 % Choir 3
 % ------------
 
-underlayIIIs = \lyricmode {
+wordsIIISoprano = \lyricmode {
   Spem in a -- li -- um nun -- quam ha -- bu -- i, 
   nun -- quam ha -- bu -- i,
   ha -- bu -- _ _ _ i,
@@ -727,7 +727,7 @@ underlayIIIs = \lyricmode {
 
 }
 
-underlayIIIa = \lyricmode {
+wordsIIIAlto = \lyricmode {
   Spem in a -- li -- um nun -- quam ha -- bu -- _ _ _ _ _ _ i, ha -- bu -- i,
   nun -- quam ha -- bu -- _ _ i, ha -- bu -- _ i
   nun -- quam, _ _ ha -- bu -- _ _ _ i
@@ -803,7 +803,7 @@ underlayIIIa = \lyricmode {
   no -- _ _ stram.
 }
 
-underlayIIIt = \lyricmode {
+wordsIIITenor = \lyricmode {
   Spem in a -- li -- um, nun -- quam ha -- bu -- i, 
   nun -- quam ha -- bu -- _ i, 
   ha -- bu -- _ _ i,
@@ -880,7 +880,7 @@ underlayIIIt = \lyricmode {
   no -- stram.
 }
 
-underlayIIIbar = \lyricmode {
+wordsIIIBaritone = \lyricmode {
   Spem in a -- li -- um nun -- quam ha -- bu -- _ _ i, 
   nun -- quam ha -- bu -- _ _ _ i, nun -- quam ha -- _ _ bu -- _ i, 
   nun -- quam, nun -- quam ha -- bu -- _ _ i,
@@ -940,7 +940,7 @@ underlayIIIbar = \lyricmode {
   no -- stram.
 }
 
-underlayIIIb = \lyricmode {
+wordsIIIBass = \lyricmode {
   Spem in a -- li -- um nun -- quam ha -- bu i, nun -- quam ha -- bu -- _ i,
   nun -- quam ha -- bu -- i,
   nun -- quam ha -- bu -- _ i,
@@ -994,7 +994,7 @@ underlayIIIb = \lyricmode {
 % Choir 4
 % ------------
 
-underlayIVs = \lyricmode {
+wordsIVSoprano = \lyricmode {
   Spem in a -- li -- | um nun -- quam _ ha -- bu -- | i, 
   prae -- ter in te, _ De -- _ us Is -- ra -- _ _ el,
   prae -- ter in te, De -- _ us | Is -- ra -- el,
@@ -1061,7 +1061,7 @@ underlayIVs = \lyricmode {
   no -- _ stram.
 }
 
-underlayIVa = \lyricmode {
+wordsIVAlto = \lyricmode {
   Spem in | a -- li -- um nun -- | quam ha -- bu -- _ _ _ | _ i, 
   nun -- quam ha -- bu -- i, 
   nun -- quam, ha -- bu -- | i, prae -- ter in te, De -- _ _ _ _ us Is -- ra -- el, 
@@ -1136,7 +1136,7 @@ underlayIVa = \lyricmode {
   no -- stram.
 }
 
-underlayIVt = \lyricmode {
+wordsIVTenor = \lyricmode {
   Spem in | a -- li -- um nun -- | quam ha -- bu -- | _ _ i, nun -- quam ha -- bu -- _ _ i, 
   pra -- ter in -- _ te,
   De -- _ _ us, 
@@ -1207,7 +1207,7 @@ underlayIVt = \lyricmode {
   ad hu -- mi -- li -- ta -- tem no -- stram.
 }
 
-underlayIVbar = \lyricmode {
+wordsIVBaritone = \lyricmode {
   Spem in a -- li -- | um nun -- quam ha -- bu -- i, 
   Spem in | a -- li -- um nun -- | quam ha -- _ bu -- | i, 
   nun -- quam ha -- _ bu -- i, 
@@ -1274,7 +1274,7 @@ underlayIVbar = \lyricmode {
   hu -- mi -- li -- ta -- _ tem no -- | stram.
 }
 
-underlayIVb = \lyricmode {
+wordsIVBass = \lyricmode {
   Spem in a -- li -- | um nun -- quam | ha -- bu i, 
   Spem in | a -- li -- | um nun -- quam | ha -- bu i, 
 
@@ -1330,7 +1330,7 @@ underlayIVb = \lyricmode {
 % Choir 5
 % ------------
 
-underlayVs = \lyricmode {
+wordsVSoprano = \lyricmode {
   % 23
   prae -- ter in | te, De -- | us Is -- ra -- el, Is -- _ ra -- | el, in te, De -- us Is -- ra -- _ _ _ el,
   Is -- ra -- _ _ el,
@@ -1390,7 +1390,7 @@ underlayVs = \lyricmode {
   no -- stram.
 }
 
-underlayVa = \lyricmode {
+wordsVAlto = \lyricmode {
   % 23
   prae -- | ter in te, De -- us | Is -- ra -- el, De -- _ _ us Is -- ra -- _ | el, De -- us Is -- ra -- _ el, 
   in te, De -- us Is -- _ ra -- _ el,
@@ -1459,7 +1459,7 @@ underlayVa = \lyricmode {
   no -- stram.
 }
 
-underlayVt = \lyricmode {
+wordsVTenor = \lyricmode {
   % 23
   prae -- ter in | te, De -- | - us Is -- ra -- | el, De -- _ us | Is -- ra -- el, | De -- _ _ us 
   Is -- ra -- _ el, | Is -- ra -- _ _ el, 
@@ -1528,7 +1528,7 @@ underlayVt = \lyricmode {
   no -- stram.
 }
 
-underlayVbar = \lyricmode {
+wordsVBaritone = \lyricmode {
   % 23
   prae -- | ter in te, | De -- us Is -- ra -- | el, 
   in | te, De -- _ _ _ us | Is -- ra -- el, 
@@ -1599,7 +1599,7 @@ underlayVbar = \lyricmode {
   no -- _ _ _ | stram.
 }
 
-underlayVb = \lyricmode {
+wordsVBass = \lyricmode {
   % 23
   | prae -- ter in | te, De -- us 
   De -- us Is -- ra -- _ _ el, 

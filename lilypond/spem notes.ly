@@ -4,7 +4,7 @@
 % Choir 1
 % ------------
 
-choirISoprano = \relative c {
+notesISoprano = \relative c {
   r1 d''1~ 
   d2 d d d 
   a c c e2~ 
@@ -105,7 +105,7 @@ choirISoprano = \relative c {
   d\breve~ d
 }
 
-choirIAlto = \relative c {
+notesIAlto = \relative c {
   g''1. g2 
   g g d f 
   f a1 g2 
@@ -218,7 +218,9 @@ choirIAlto = \relative c {
   
 }
 
-choirITenor = \relative c {
+notesITenor = \relative c {
+  \clef "treble_8"
+
   R\breve*4
   r1 d'1~
   | % 5
@@ -330,7 +332,9 @@ choirITenor = \relative c {
 
 }
 
-choirIBaritone = \relative c {
+notesIBaritone = \relative c {
+  \clef bass
+
   R\breve*4 
   g'1. g2 
   g f d f~ 
@@ -438,8 +442,10 @@ choirIBaritone = \relative c {
   g\breve 
 }
 
-choirIBass = \relative c {
-    R\breve*5
+notesIBass = \relative c {
+  \clef bass
+
+  R\breve*5
   r2 d1 d2 
   d d a c2~ 
   c2 d2 a a 
@@ -530,7 +536,7 @@ choirIBass = \relative c {
 % Choir 2
 % ------------
 
-choirIISoprano = \relative c {
+notesIISoprano = \relative c {
   R\breve*7
   | r2 a''1 a2 
   a a d, f 
@@ -633,7 +639,7 @@ choirIISoprano = \relative c {
   b\breve
 }
 
-choirIIAlto = \relative c {
+notesIIAlto = \relative c {
   R\breve*3
   r1 g''1~
   g2 g g g 
@@ -738,7 +744,9 @@ choirIIAlto = \relative c {
   g\breve
 }
 
-choirIITenor = \relative c {
+notesIITenor = \relative c {
+  \clef "treble_8"
+  
   R\breve*8
   r2 d'1 d2 
   d d a a 
@@ -840,7 +848,9 @@ choirIITenor = \relative c {
   b\breve 
 }
 
-choirIIBaritone = \relative c {
+notesIIBaritone = \relative c {
+  \clef bass
+
   R\breve*7
   r1 r2 a'2~
   a2 a2 a a 
@@ -942,7 +952,9 @@ choirIIBaritone = \relative c {
   d\breve
 }
 
-choirIIBass = \relative c {
+notesIIBass = \relative c {
+  \clef bass
+
   R\breve*8
   r1 d1~
   d2 d d d 
@@ -1034,7 +1046,7 @@ choirIIBass = \relative c {
 % Choir 3
 % ------------
 
-choirIIISoprano = \relative c {
+notesIIISoprano = \relative c {
   R\breve*10
   r1 r2 d''2~
   d2 d2 d d 
@@ -1145,7 +1157,7 @@ choirIIISoprano = \relative c {
   d\breve
 }
 
-choirIIIAlto = \relative c {
+notesIIIAlto = \relative c {
   R\breve*11
 
   % 12
@@ -1255,7 +1267,9 @@ choirIIIAlto = \relative c {
   d\breve
 }
 
-choirIIITenor = \relative c {
+notesIIITenor = \relative c {
+  \clef "treble_8"
+  
   R\breve*11
 
   % 12
@@ -1366,7 +1380,9 @@ choirIIITenor = \relative c {
   | g\breve 
 }
 
-choirIIIBaritone = \relative c {
+notesIIIBaritone = \relative c {
+  \clef bass
+
   R\breve*12
 
   % 13
@@ -1471,7 +1487,9 @@ choirIIIBaritone = \relative c {
   d\breve
 }
 
-choirIIIBass = \relative c {
+notesIIIBass = \relative c {
+  \clef bass
+
   R\breve*13
 
   % 14
@@ -1575,7 +1593,7 @@ choirIIIBass = \relative c {
 % Choir 4
 % ------------
 
-choirIVSoprano = \relative c {
+notesIVSoprano = \relative c {
   R\breve*18
   r1 r2 d''2~
   d2 d d d 
@@ -1679,7 +1697,7 @@ choirIVSoprano = \relative c {
   g\breve
 }
 
-choirIVAlto = \relative c {
+notesIVAlto = \relative c {
   R\breve*15
 
   %16
@@ -1789,7 +1807,9 @@ choirIVAlto = \relative c {
   b\breve 
 }
 
-choirIVTenor = \relative c {
+notesIVTenor = \relative c {
+  \clef "treble_8"
+  
   R\breve*16
 
   % 17
@@ -1898,7 +1918,9 @@ choirIVTenor = \relative c {
   d\breve
 }
 
-choirIVBaritone = \relative c {
+notesIVBaritone = \relative c {
+  \clef bass
+
   R\breve*15
 
   % 16
@@ -2006,7 +2028,9 @@ choirIVBaritone = \relative c {
   b\breve
 }
 
-choirIVBass = \relative c {
+notesIVBass = \relative c {
+  \clef bass
+
   R\breve*16
 
   % 17
@@ -2104,7 +2128,7 @@ choirIVBass = \relative c {
 % Choir 5
 % ------------
 
-choirVSoprano = \relative c {
+notesVSoprano = \relative c {
   R\breve*22
 
   % 23
@@ -2205,7 +2229,7 @@ choirVSoprano = \relative c {
   d\breve
 }
 
-choirVAlto = \relative c {
+notesVAlto = \relative c {
   R\breve*22
   r1 r2 g''2 
   g g a1~
@@ -2303,7 +2327,8 @@ choirVAlto = \relative c {
   g\breve~
 }
 
-choirVTenor = \relative c {
+notesVTenor = \relative c {
+  \clef "treble_8"
   R\breve*23
 
   % 24
@@ -2402,7 +2427,8 @@ choirVTenor = \relative c {
   b\breve
 }
 
-choirVBaritone = \relative c {
+notesVBaritone = \relative c {
+  \clef bass
   R\breve*23
 
   % 24
@@ -2503,7 +2529,9 @@ choirVBaritone = \relative c {
   d\breve
 }
 
-choirVBass = \relative c {
+notesVBass = \relative c {
+  \clef bass
+
   R\breve*26
   c1 c2 c 
   f1 f2 d 
@@ -2592,7 +2620,7 @@ choirVBass = \relative c {
 % Choir 6
 % ------------
 
-choirVISoprano = \relative c {
+notesVISoprano = \relative c {
   r2*99 g''2 c c g'2. f4 e c 
   | % 18
   e2. d4 c1 r2 a 
@@ -2640,7 +2668,7 @@ choirVISoprano = \relative c {
   g2 g r4 g,2 d'2. d1. b2 b1*6 
 }
 
-choirVIAlto = \relative c {
+notesVIAlto = \relative c {
   r1*52 g''1 g2 g a1. f2 f f g r4 g2 b4. a8 g2 e4 g c, r4 a'2 e 
   c4. 
   | % 21
@@ -2704,7 +2732,9 @@ choirVIAlto = \relative c {
   d2 g, r2 d' d1*6 
 }
 
-choirVITenor = \relative c {
+notesVITenor = \relative c {
+  \clef "treble_8"
+  
   r2*95 c'2 c c d1 e2 
   | % 17
   f d2. d4 c1 r2 
@@ -2761,7 +2791,9 @@ choirVITenor = \relative c {
   d1. d1*6 
 }
 
-choirVIBaritone = \relative c {
+notesVIBaritone = \relative c {
+  \clef bass
+
   r2*103 g'2 g g c c4. bes8 a4. g8 
   | % 19
   f4. e8 d8*7 e8 f g a2 d,4 r4 d'2 g,4 g1*2 e1 e2 e2. c4 g'2 
@@ -2817,7 +2849,9 @@ choirVIBaritone = \relative c {
   r2 g g1*5 
 }
 
-choirVIBass = \relative c {
+notesVIBass = \relative c {
+  \clef bass
+
   r2*111 d2 d d g2. f8 e d2 
   | % 20
   g2. f4 e2 a, e'2. e4 
@@ -2861,7 +2895,7 @@ choirVIBass = \relative c {
 % Choir 7
 % ------------
 
-choirVIISoprano = \relative c {
+notesVIISoprano = \relative c {
   r1*57 d''1 d2 d e1 
   | % 21
   c2 a e'2. e4 e1 
@@ -2911,7 +2945,7 @@ choirVIISoprano = \relative c {
   r4 g' g2 r4 g2 d g4 g1*3 
 }
 
-choirVIIAlto = \relative c {
+notesVIIAlto = \relative c {
   r2*111 a''2 a a b1 r2 
   | % 20
   g g g c2. b4 a e 
@@ -2963,7 +2997,9 @@ choirVIIAlto = \relative c {
   d4 r4 d2. b4 d g, g' g1*4 
 }
 
-choirVIITenor = \relative c {
+notesVIITenor = \relative c {
+  \clef "treble_8"
+  
   r2*113 d'2 d d g1 r2 
   | % 20
   c, c e e1 e2 
@@ -3012,7 +3048,9 @@ choirVIITenor = \relative c {
   c c2. c4 r2 g' g4 g g2. g4 r2. g,2 d g f8 e d1*4 
 }
 
-choirVIIBaritone = \relative c {
+notesVIIBaritone = \relative c {
+  \clef bass
+
   r2*109 a'2 a a d2. c4 b2 
   | % 20
   b b2. b4 e,2 e a 
@@ -3061,7 +3099,9 @@ choirVIIBaritone = \relative c {
   b1*4 
 }
 
-choirVIIBass = \relative c {
+notesVIIBass = \relative c {
+  \clef bass
+
   r1*57 g1 g2 g c1 
   | % 21
   r2 a a a e'1 
@@ -3112,7 +3152,7 @@ choirVIIBass = \relative c {
 % Choir 8
 % ------------
 
-choirVIIISoprano = \relative c {
+notesVIIISoprano = \relative c {
   r2*129 e''2 e e g1 f2 
   | % 23
   e2. d4 d1 c4 b c4. d8 
@@ -3161,7 +3201,7 @@ choirVIIISoprano = \relative c {
   d r4 g2 d'4 b d d1*5 
 }
 
-choirVIIIAlto = \relative c {
+notesVIIIAlto = \relative c {
   r2*131 a''2 a g c1 bes2. g4 a2 a a1*2 r2*5 g2 
   | % 25
   e2. g d2 r4 a2 a4 
@@ -3200,7 +3240,9 @@ choirVIIIAlto = \relative c {
   d4 g4. a8 b2 g4 b b1*3 
 }
 
-choirVIIITenor = \relative c {
+notesVIIITenor = \relative c {
+  \clef "treble_8"
+  
   r2*133 e'2 c c g' d4 d e2. e4 e1 r2*7 b2 c c d2. e4 f1 g2 d1 
   d2 g,1 
   | % 28
@@ -3242,7 +3284,9 @@ choirVIIITenor = \relative c {
   g2 r1 g g1*3 
 }
 
-choirVIIIBaritone = \relative c {
+notesVIIIBaritone = \relative c {
+  \clef bass
+
   r2*131 e2 e e a1 g2 
   | % 23
   bes a2. a4 a1*2 r1. d1 b2 
@@ -3286,7 +3330,9 @@ choirVIIIBaritone = \relative c {
   d2 g, c r4 g e2 g4 c,2 g'4 r4 d'4. b8 b4 r2 b b1 r2 g1. g1*4 
 }
 
-choirVIIIBass = \relative c {
+notesVIIIBass = \relative c {
+  \clef bass
+
   r2*149 g2 c c g'1 f2 
   | % 26
   a g2. g4 g2 g g1 e4 c g'1 c,2 c1*2 g1 g1*2 
