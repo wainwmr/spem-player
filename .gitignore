@@ -3,3 +3,6 @@ node_modules
 *.ipynb
 .vscode
 *.pdf
+dist/js
+dist/css
+src/barlines.temp
