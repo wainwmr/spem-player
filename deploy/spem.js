@@ -10,8 +10,8 @@ var scores = {};
 
 
 // TODO: Perhaps locations = { json: <String>, defaultaudio: <String>, audio: <String>[8][5] }?
-const defaultaudiofile = '/audio/spem.mp3';
-const lilypondfile = '/lilypond/spem notes.ly';
+const defaultaudiofile = 'audio/spem.mp3';
+const lilypondfile = 'lilypond/spem notes.ly';
 
 // const beattime = 0.967; // old
 // (minim = 124) === (beattime = 0.9677)
@@ -175,7 +175,7 @@ async function setChoir(c) {
   // Update the input field
   choirselect.value = currentChoir;
 
-  await fetch(`/svg/spem-choir${currentChoir}.svg`)
+  await fetch(`./svg/spem-choir${currentChoir}.svg`)
     .then(r => r.text())
     .then(text => {
       spemscore.innerHTML = text;
@@ -496,7 +496,7 @@ function getFilename(s) {
 function loadAudio(c, p, b) {
   let newfile = defaultaudiofile;
   if (c != '0' && p != '0') {
-    newfile = `/audio/spem-${c}-${getPartName(p)}.mp3`;
+    newfile = `audio/spem-${c}-${getPartName(p)}.mp3`;
   }
 
   // just compare the filename, not the whole URL, to see if we
@@ -745,7 +745,7 @@ var lyGrammar, semantics;
 async function setupLilypondParser() {
 
   // Load the OHM grammar for Lilypond 
-  const promise = await fetch('/src/ly-grammar.ohm');
+  const promise = await fetch('ly-grammar.ohm');
   const grammarString = await promise.text();
   lyGrammar = ohm.grammar(grammarString);
 
@@ -929,7 +929,7 @@ window.addEventListener("load", async () => {
   showLoadingOnCanvas();
 
 
-  await fetch('/svg/spem-choir1.svg')
+  await fetch('svg/spem-choir1.svg')
     .then(r => r.text())
     .then(text => {
       spemscore.innerHTML = text;
