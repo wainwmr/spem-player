@@ -87,7 +87,6 @@ function getPartName(n) {
 }
 
 
-// TODO: Choir 6 Alto
 // TODO: Choir 6 Tenor
 // TODO: Choir 6 Baritone
 // TODO: Choir 6 Bass
@@ -116,11 +115,9 @@ function getPartName(n) {
 // BUG: Kinsta not loading spem notes.ly for some reason
 // BUG: can scroll up and down a tiny bit in score
 // BUG: [Violation] Forced reflow while executing JavaScript took 36ms  (this doesn't happen when you have already manually adjusted the height of the score - something to do with the flex: 1 after the reload?)
-// BUG: should scroll to current bar whenever you change scores
 // BUG: Uncaught DOMException: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node. at setBar:239
 // BUG: When clicking on canvas, should highlight bar (call setBar maybe?)
 // TODO: put build process in script (generate SVGs, get scorebars, minimise, rename and move...)
-// TODO: up and down arrows to select different choirs
 // TODO: CMD-B to type in bar number
 // TODO: CMD-left/right to skip to next interesting bit for choir or part
 // TODO: highlight part on score?
@@ -196,7 +193,7 @@ async function setChoir(c) {
   spemscore.style.borderColor = `hsla(${choirColors[currentChoir - 1]}, 80%, 55%, 1)`;
 
   // scroll the score to match the new choir
-  setBar(currentBar);
+  setBar(currentBar, true);
 }
 
 // where p = 0 (for all parts) or 1 - 5 for SATBarB
@@ -214,8 +211,8 @@ function setPart(p) {
 var previousBarHighlight;
 
 // where b = 0 to 139
-function setBar(b) {
-  if (b == currentBar) {
+function setBar(b, changedChoirs = false) {
+  if (b == currentBar && !changedChoirs) {
     return;
   }
   if (b > 139) {
