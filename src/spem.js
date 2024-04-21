@@ -188,6 +188,7 @@ var previousBarHighlight;
 
 // where b = 0 to 139
 function setBar(b, changedChoirs = false) {
+  console.log("setBar", b);
   if (b == currentBar && !changedChoirs) {
     return;
   }
@@ -617,6 +618,22 @@ function keyboardTapped(e) {
   if (e.isComposing || e.keyCode === 229) {
     return;
   }
+  if (e.metaKey || e.ctrlKey) {
+    console.log('meta or ctrl pressed');
+    switch (e.code) {
+      case 'ArrowRight':
+        setBar(seek(currentBar, +1));
+        pauseAndRepaint();
+        break;
+      case 'ArrowLeft':
+        setBar(seek(currentBar, -1));
+        pauseAndRepaint();
+        break;
+      default:
+        break;
+    }
+    return;
+  }
   if (e.code == 'Enter') {
     playpause();
     return;
@@ -902,6 +919,25 @@ async function processLilypond() {
   }
 }
 
+function seek(b, direction) {
+  // Read lilypond input into dict{ position -> [ {choir, part, note}], ... }
+  // Read lilypond into ranges[choir][part] = [ {from, to}, ... ]
+
+  console.log("seeking", b, direction, currentChoir);
+  const choirnotes = dict[b].filter(x => x.c == currentChoir - 1);
+  const singing  = choirnotes.length != 0;
+  
+  // loop until we find a bar where choir is not doing what it's doing in currentBar
+
+  var changed = false;
+  do {
+    b = b + direction;
+    const newsinging = (dict[b].filter(x => x.c == currentChoir - 1).length != 0);
+    changed = (singing != newsinging)
+    console.log("singing in bar ", b, newsinging, changed);
+  } while (!changed && b > 0 && b < 139);
+  return b;
+}
 
 // -----------------------------------------------------
 // Setup page
