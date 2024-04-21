@@ -1,7 +1,6 @@
 \version "2.24.3"
 
 
-% TODO: Choir 7 Soprano
 % TODO: Choir 7 Alto
 % TODO: Choir 7 Tenor
 % TODO: Choir 7 Baritone
@@ -3201,104 +3200,127 @@ notesVIBass = \relative c {
 % ------------
 
 notesVIISoprano = \relative c {
-  r1*57 d''1 d2 d e1 
-  | % 21
-  c2 a e'2. e4 e1 
-  | % 22
-  r2 d b1 r4 c2 e2. b4 e2 d4 c2 r2 g e 
-  | % 24
-  a e1 r2*11 g2 c c g' r2 d 
-  | % 27
-  d4 d e1. d2. c4 
-  | % 28
-  c1 c2 g r4 g2 f8 e 
-  | % 29
-  d2. d4 d2 r2 d'1 
-  | % 30
-  g,2 b1 a2 g4 e f d4. e8 f g a2. f4 g2 e g1 r2 c,4 c g'2. d4 
-  d2 r2. d'2 f4. e8 d4 r4 c2 e4 g g,2 
-  | % 34
-  d'4 d2. a2 f4 g2. f8 e d4 
-  | % 35
-  f r4 c' f2 e4. d8 c4. a8 b c d2 
-  | % 36
-  g,4 c a r4 e'4. d8 c4 b g r4 d f 
-  | % 37
-  d a'2 r4 e g2 r1*26 c4 g'2 e4 e2 r2. c4 g2. g4 g2 r2 g' f2. 
-  c4 r4 
-  | % 49
-  c c a r4 e g c, g'1 r2 g g g4 g'2 g,4. c8 c4 r4 f,4. e8 d4 
-  r4 g2 b4 c a e'4. d8 c2 a b1 r2*31 d2 d1 d r2*7 d2. d4 b2 g a 
-  r2*7 c2. c4 c2 a4 d2 b4 r2 
-  | % 62
-  g e4 g2 d4 r2 g e 
-  | % 63
-  b' e,4 e' e2 r4*25 d4 c8 b a g f4 a a2 r4*19 e'4 c2 c r1 a2 
-  e'4 
-  | % 69
-  e a, a r1*9 e'1 e2 e1*2 r1*23 d1. d2 d2. e8 f 
-  | % 82
-  g4 g,2 d'4 d1 r2*5 a2 a4 a a c4. bes8 a4. g8 f2 c'4 
-  | % 85
-  c2 r2*5 
-  | % 86
-  d2 d4 d d f4. e8 d4 d2 g,4 c4. bes8 g4 d'1 r2. b2 b4 d2. g,4 
-  b2 g r4 g' g2 g g g r2 g, c4. d8 e2 r2 
-  | % 90
-  d4 b2 g b4. a8 g4 r4 d'2 b4 
-  | % 91
-  r4 g' g2 r4 g2 d g4 g1*3 
+
+  R\breve*28
+  r1 d''1 
+  d2 d e1 
+  c2 a e'2. e4 
+  e1 r2 d 
+  b1 r4 c2 e4~
+  e2 b4 e2 d4 c2 
+  r2 g e a 
+  e1 r1
+  R\breve*2
+  
+  % 39
+  r2 g2 c c 
+  g' r2 d d4 d 
+  e1. d2~
+  d4 c4 c1 c2 
+  g r4 g2 f8 e d2~
+  d4 d4 d2 r2 d'2~
+  d2 g,2 b1 
+  a2 g4 e f d4. e8 f g 
+  a2. f4 g2 e 
+  g1 r2 c,4 c 
+  g'2. d4 d2 r2
+  r4 d'2 f4. e8 d4 r4 c4~
+  c4 e4 g g,2 d'4 d2~
+  d4 a2 f4 g2. f8 e 
+  d4 f r4 c' f2 e4. d8 
+  c4. a8 b c d2 g,4 c a 
+  r4 e'4. d8 c4 b g r4 d 
+  f d a'2 r4 e g2 
+  R\breve*13
+  
+  % 70
+  c4 g'2 e4 e2 r2
+  r4 c4 g2 g4 g4. g8 g4
+  | r2 g' f2. c4 
+  r4 c c a r4 e g c, 
+  g'1 r2 g 
+  g g4 g'2 g,4. c8 c4 
+  r4 f,4. e8 d4 r4 g2 b4 
+  c a e'4. d8 c2 a 
+  b1 r1
+  R\breve*7
+  
+  % 86
+  r2 d2 d1 
+  d1 r1
+  R\breve
+  r2 d2. d4 b2 
+  g2 a r1
+  R\breve
+  r2 c2. c4 c2 
+  a4 d2 b4 r2 g 
+  e4 g2 d4 r2 g 
+  e b' e,4 e' e2 
+  R\breve*3
+  
+  % 99
+  r4 d4 c8 b a g f4 a a2 
+  R\breve*2
+  
+  % 102
+  r2 r4 e'4 c2 c 
+  r1 a2 e'4 e 
+  a, a r2 r1
+  R\breve*3
+  
+  % 108
+  r1 r2 e'2~
+  e2 e2 e1~
+  e1 r1
+  R\breve*11
+  
+  % 122
+  d1. d2 
+  d2. e8 f g4 g,2 d'4 
+  d1 r1
+  r1 r2 a2 
+  a4 a a c4. bes8 a4. g8 f4~
+  f4 c'4 c2 r1
+  r1 r2 d2 
+  d4 d d f4. e8 d4 d2 
+  g,4 c4. bes8 g4 d'1 
+  r2 r4 b2 b4 d2~
+  d4 g,4 b2 g r4 g'~
+  g4 g g g g2 g 
+  | r2 g, c4. d8 e2 
+  r2 d4 b2 g b4~
+  b8 a8 g4 r4 d'2 b4 r4 g' 
+  g2 r4 g2 d g4 
+  g\breve~
+  g1
 }
 
 notesVIIAlto = \relative c {
   r2*111 a''2 a a b1 r2 
-  | % 20
   g g g c2. b4 a e 
-  | % 21
   a1 g2 r2 f4 a g4. f8 
-  | % 22
   e2. a,4 c4. d8 e4 b r4 e f a2. d,4 g r4 g c2 a2. b4 c2 
-  | % 24
   f,1 r2*5 g2 g g bes1 a2 
-  | % 26
   a bes4. a8 g1 g2 g 
-  | % 27
   r2. g2 b4 e,1 r2 
-  | % 28
   c' c2. b8 a b1 b2 
-  | % 29
   b b2. g4 g1*2 r2*97 g2 c4 c c2 r2. g4 c2 
-  | % 48
   g4 g4. g8 g4 r2. c,2 f4. e8 c4 
-  | % 49
   r2 c'4 c2 g4 r4 g4. a8 b4 r2 
-  | % 50
   b b b c2. c4 a d, 
-  | % 51
   a'2. g4 g2. f4 a2. e4 
-  | % 52
   f2 g1 r1*15 d4 d2 d4 r4*5 d4 d4. c8 
-  | % 58
   b2 r1*3 d4. d8 g4 b4. a8 g f e2 e r2*7 e2. e4 e a4. e8 f4 g2 
   r2 
-  | % 62
   g g g r2 g g 
-  | % 63
   g c, g r4*25 d'4 e2 f r4*21 g4 c,2 g' r1 d4 a'2 
-  | % 69
   c4 f, f r1*9 e1 e2 e1*2 r1*23 g1. g2 g1*2 r2*7 f2 f f4 a2 f4 
   c'1 
-  | % 85
   f,2 r4 f2 bes, bes'4. a8 g4 r2 
-  | % 86
   d d1 r2. g4. e4 c8 
-  | % 87
   c2 r4*5 b2. b4 b 
-  | % 88
   g2 g r4*5 g'4 g2 
-  | % 89
   g4 g2 c,4 c2 r4 g'4. e8 e4. c8 c2 e4 g2 r4*5 g,2 g' 
-  | % 91
   d4 r4 d2. b4 d g, g' g1*4 
 }
 
@@ -3306,50 +3328,29 @@ notesVIITenor = \relative c {
   \clef "treble_8"
   
   r2*113 d'2 d d g1 r2 
-  | % 20
   c, c e e1 e2 
-  | % 21
   b r2 d g,4 b e, e'2 c4 
-  | % 22
   c2 r1. a2 bes 
-  | % 23
   bes c c4 c c2 a a1 r2*5 d2 
-  | % 26
   c g' g1 c,2 f 
-  | % 27
   bes,4 d2 g,4 g2 r2 e4 e'2 c4 
-  | % 28
   c2 r4 g g2 r2 g4 g c2. c4 c2 r2 g' g g g r2. b,2 d, d'4 b4. 
   c8 d2 
-  | % 31
   e4 c d1. c b1 r1*42 d2 g,2. g4 g2 r4 g' e2 
-  | % 47
   c g'4 g c,2 c4 c2 c4 r4 e2 a,4 a2 r2 e e e r4 
-  | % 49
   b'4. g8 g4 r2 g4 g' g g2 d4 r4 
-  | % 50
   c4. b8 g4 r2 d' e4 c d2 r2 a e a4 d2 g,4 b1 
-  | % 52
   r2*29 d2 g r4 d d2 r2 b 
-  | % 58
   d g, r2*5 d'2. d4 g, g2 e4 e2 r2*7 e'2. c4 c2 r4 d b2 r2 
-  | % 62
   b4 d c4. a8 b2 r2 b g 
-  | % 63
   b e e r1*6 a,4 d2 cis4 d2 r4*21 g4 f2 e r2. g4 f f e2 d r1*9 a1 
   a2 a1*2 r1*23 b2. g2 d' b4. c8 d2 g, d'4 d2 r4 d,2 a'4 f a a2 
   r4 
-  | % 83
   c2 c f,4 f'2. c4 c2 r2. f f4 f f2 f r4 d2 
-  | % 85
   bes4 bes2 r2. f2 f4 a r2 
-  | % 86
   g g4 e2 r4*5 d4 d 
-  | % 87
   g g2 d r2. g4. e8 e'4. d8 
-  | % 88
   c4 c2 r4 g g2 r2 g c4 
-  | % 89
   c c2. c4 r2 g' g4 g g2. g4 r2. g,2 d g f8 e d1*4 
 }
 
@@ -3357,50 +3358,28 @@ notesVIIBaritone = \relative c {
   \clef bass
 
   r2*109 a'2 a a d2. c4 b2 
-  | % 20
   b b2. b4 e,2 e a 
-  | % 21
   a c1 g a b2. b4 a1 r2*17 g2 g g g4. a8 bes4 g a2 
-  | % 26
   f bes r4 g d2 d r4 g 
-  | % 27
   c2. b8 a d2 g, c r4 g 
-  | % 28
   e2 g4 c,2 g'4 r4 d'4. b8 b4 r2 
-  | % 29
   b b1 r2 g2. g4 
-  | % 30
   d'2 r2 c f, f d 
-  | % 31
   a' r1. d1 
-  | % 32
   g,2 b1 a2 g r2*79 g2. c2 c4 c2 r4 g2 e c g' c,4 c2 r2 c4 c2 
-  | % 48
   c4 r4 a' a a g e e2 r2 d8 d 
-  | % 49
   d4 r2 d' d4. g,8 g4 g g g r1 f2 c4 e r4 g c,2 c' c 
-  | % 52
   f,4 a r4 d d2 r1*15 g,2 d d r2. d4 d'2 
-  | % 58
   g, d' r4 g, g2 r2*15 e4. e8 a4 c4. b8 a g f4 d d2 r2 
-  | % 62
   b e b r2 b e 
-  | % 63
   b c4 e4. f8 g4 r4*25 d4 a'2 d, r4*21 e4 f2 g r1 f4 d e 
-  | % 69
   a2 a4 r1*9 cis1 a2 a1*2 r1*23 b1. b2 b1 
-  | % 82
   r2 g f d4 d a'2 f 
-  | % 83
   f1*2 f1 
-  | % 84
   r2 f1 c'4 f, f1 
-  | % 85
   r2. d2 g4 g2 r4 a4. g8 f4. d8 d'4 d2 r4*5 d,4. e8 fis4 r2 g2. 
   g4 g g g2 g r2. e4 e2 r2 c2. g'4. f8 e4. d8 
-  | % 89
   c4 c'2 r1 g1. g1 r1 b 
-  | % 92
   b1*4 
 }
 
@@ -3408,48 +3387,27 @@ notesVIIBass = \relative c {
   \clef bass
 
   r1*57 g1 g2 g c1 
-  | % 21
   r2 a a a e'1 
-  | % 22
   d2 f e2. e4 a,1 
-  | % 23
   r2*15 d2 d4 d g1 c,2 g1 r1. d'2 g,4 g g'1 e2 c d e1 c2 
-  | % 28
   g' r2 g g r4 g, g d' 
-  | % 29
   d2 r2 d4 d b2 d d1 r2*11 g1 d2 f e d 
-  | % 33
   f1 c2 e e d1 f e4 c g'2 r1. c,1 g2 b a c1 g2 d'1 f2 c r2*51 g'1 
   e2 e c r4 c 
-  | % 47
   g'2 g4 g2 e4 e2. e4 e2 
-  | % 48
   r2 c c a e'2. e4 
-  | % 49
   d4. c8 b2 r2 b' b4 g g2 
-  | % 50
   c,4 e4. f8 g4 r2*41 g2 f4 d r4 d2 b4. a8 g4 d'2 
-  | % 58
   r1*9 a'2. a4 a2 a g r2 
-  | % 62
   g g g r2 g g 
-  | % 63
   g e e r4*51 g4 a2 e r1 a4 a2 
-  | % 69
   a4 f d r1*9 a1 cis2 e a, a1 r1*23 g1 b2 d1 b4 g 
-  | % 82
   d'2 g, r2*7 c2 c c f c a'1 f2 r2 d4 f bes,2 d1 
-  | % 86
   r2 d2. d4 d d c2 c 
-  | % 87
   f f4. e8 d2 r2. d2 d4 
-  | % 88
   g, g g'1 e2 c d 
-  | % 89
   e1 c2 g' r2 g 
-  | % 90
   g r4 g,2 d'4 d2 r2 d 
-  | % 91
   b d d1*5 
 }
 
