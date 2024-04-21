@@ -1,7 +1,5 @@
 \version "2.24.3"
 
-% TODO: Choir 7 Tenor
-% TODO: Choir 7 Baritone
 % TODO: Choir 7 Bass
 % TODO: Choir 8 Soprano
 % TODO: Choir 8 Alto
@@ -3475,31 +3473,93 @@ notesVIITenor = \relative c {
 
 notesVIIBaritone = \relative c {
   \clef bass
+  R\breve*27
 
-  r2*109 a'2 a a d2. c4 b2 
-  b b2. b4 e,2 e a 
-  a c1 g a b2. b4 a1 r2*17 g2 g g g4. a8 bes4 g a2 
-  f bes r4 g d2 d r4 g 
-  c2. b8 a d2 g, c r4 g 
-  e2 g4 c,2 g'4 r4 d'4. b8 b4 r2 
-  b b1 r2 g2. g4 
-  d'2 r2 c f, f d 
-  a' r1. d1 
-  g,2 b1 a2 g r2*79 g2. c2 c4 c2 r4 g2 e c g' c,4 c2 r2 c4 c2 
-  c4 r4 a' a a g e e2 r2 d8 d 
-  d4 r2 d' d4. g,8 g4 g g g r1 f2 c4 e r4 g c,2 c' c 
-  f,4 a r4 d d2 r1*15 g,2 d d r2. d4 d'2 
-  g, d' r4 g, g2 r2*15 e4. e8 a4 c4. b8 a g f4 d d2 r2 
-  b e b r2 b e 
-  b c4 e4. f8 g4 r4*25 d4 a'2 d, r4*21 e4 f2 g r1 f4 d e 
-  a2 a4 r1*9 cis1 a2 a1*2 r1*23 b1. b2 b1 
-  r2 g f d4 d a'2 f 
-  f1*2 f1 
-  r2 f1 c'4 f, f1 
-  r2. d2 g4 g2 r4 a4. g8 f4. d8 d'4 d2 r4*5 d,4. e8 fis4 r2 g2. 
-  g4 g g g2 g r2. e4 e2 r2 c2. g'4. f8 e4. d8 
-  c4 c'2 r1 g1. g1 r1 b 
-  b1*4 
+  % 28
+  r2 a'2 a a 
+  d2. c4 b2 b 
+  b2. b4 e,2 e 
+  a a c1 
+  g1 a 
+  b2. b4 a1 
+  R\breve*4
+  
+  % 38
+  r2 g2 g g 
+  g4. a8 bes4 g a2 f 
+  bes2 r4 g d2 d 
+  r4 g c2. b8 a d2 
+  g,2 c r4 g e2 
+  g4 c,2 g'4 r4 d'4. b8 b4 
+  r2 b b1 
+  r2 g2. g4 d'2 
+  r2 c f, f 
+  d a' r1 
+  r2 d1 g,2 
+  b1 a2 g 
+  R\breve*19
+  
+  % 69
+  r1 r2 g2~
+  g4 c2 c4 c2 r4 g~
+  g4 e2 c g' c,4 
+  c2 r2 c4 c2 c4 
+  r4 a' a a g e e2 
+  r2 d8 d d4 r2 d' 
+  d4. g,8 g4 g g g r2
+  r2 f2 c4 e r4 g 
+  c,2 c' c f,4 a 
+  r4 d d2 r1
+  R\breve*7
+  
+  % 86
+  g,2 d d r2
+  r4 d4 d'2 g, d' 
+  r4 g, g2 r1
+  R\breve* 3
+
+  % 92
+  r2 e4. e8 a4 c4. b8 a g 
+  f4 d d2 r2 b 
+  e2 b r2 b 
+  e b c4 e4. f8 g4 
+  R\breve*3
+  
+  % 99
+  r4 d4 a'2 d, r2
+  R\breve*2
+  
+  % 102
+  r2 r4 e4 f2 g 
+  r1 f4 d e a~
+  a4 a r2 r1
+  R\breve*3
+  
+  % 108
+  r1 r2 cis2~
+  cis2 a2 a1~
+  a1 r1
+  R\breve*11
+  
+  % 122
+  b1. b2 
+  b1 r2 g 
+  f2 d4 d a'2 f 
+  f\breve 
+  f1 r2 f2~
+  f2 c'4 f, f1 
+  r2 r4 d2 g4 g2 
+  r4 a4. g8 f4. d8 d'4 d2 
+  | r1 r4 d,4. e8 fis4 
+  | r2 g2. g4 g g 
+  | g2 g r2 r4 e4 
+  | e2 r2 c2. g'4~
+  | g8 f e4. d8 c4 c'2 r2 
+  r2 g1. 
+  g1 r1 
+  b1 b1~
+  b\breve~
+  b1
 }
 
 notesVIIBass = \relative c {

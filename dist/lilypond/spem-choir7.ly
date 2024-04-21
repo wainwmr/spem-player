@@ -17,14 +17,14 @@
     %   \notesVIIAlto
     %   \addlyrics \wordsVIIAlto
     % >>
-    <<
-      \notesVIITenor
-      \addlyrics \wordsVIITenor
-    >>
     % <<
-    %   \notesVIIBaritone
-    %   \addlyrics \wordsVIIBaritone
+    %   \notesVIITenor
+    %   \addlyrics \wordsVIITenor
     % >>
+    <<
+      \notesVIIBaritone
+      \addlyrics \wordsVIIBaritone
+    >>
     % <<
     %   \notesVIIBass
     %   \addlyrics \wordsVIIBass
