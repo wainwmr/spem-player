@@ -2272,3 +2272,286 @@ wordsVIIBass = \lyricmode {
   no -- _ stram,
   no -- stram, no -- | stram.
 }
+
+% ------------
+% Choir 8
+% ------------
+
+wordsVIIISoprano = \lyricmode {
+  % 29
+  prae -- ter in | te, De -- _ us Is -- ra -- _ | el, Is -- _ ra -- _ _ el, 
+  
+  % 37
+  prae -- | ter in te, De -- us Is -- ra -- _ | el,
+  prae -- ter in | te, 
+  in te, De -- us Is -- ra -- | el,
+  qui i -- ra -- sce -- | ris, et pro -- pi -- | ti -- _ _ us e -- _ _ | _ ris,
+  e -- _ _ ris,
+  
+  % 69
+  et o -- mni -- | a
+  pec -- ca -- ta ho -- mi -- num,
+  pec -- ca -- ta,
+  ho -- mi -- num,
+  ho -- _ mi -- num,
+
+  % 74  
+  in | tri -- bu -- la -- ti -- | o -- ne di -- | mit -- _ _ | tis,
+
+  % 86
+  di -- _ mit -- _ tis,
+  | di -- mit -- _ _ tis,
+  
+  % 89
+  Do -- mi -- ne | De -- us, 
+  Do -- mi -- ne | De -- us, 
+  Cre -- | a -- tor 
+  cae -- | li et ter -- _ _ _ _ rae,
+  et ter -- rae,
+
+  % 102
+  Cre -- a -- _ tor 
+  cae -- li et | ter -- rae,
+
+  % 108
+  re -- spi -- _ _ _ ce, re -- | spi -- _ _ _ ce,
+  
+  % 122
+  | re -- spi -- | ce ad hu -- mi -- li -- | ta -- tem no -- _ stram,
+
+  % 126
+  ad hu -- mi -- li -- ta -- _ tem 
+  no -- _ _ | stram,
+  no -- | _ _ stram,
+  no -- _ stram,
+  no -- stram,
+  ad hu -- mi -- li -- | ta -- tem,
+  | ad hu -- mi -- li -- ta -- tem,
+  ad hu -- mi -- li -- ta -- tem no -- _ stram,
+  no -- | _ stram,
+  no -- _ _ _ | stram.
+}
+
+wordsVIIIAlto = \lyricmode {
+  % 28
+  prae -- ter in te, 
+  prae -- ter in te, De -- _ _ _ us 
+  te, _ De -- _ us Is -- ra -- _ _ el, 
+  De -- us Is -- ra -- el, 
+  De -- u Is -- ra -- _ el, 
+  prae -- ter in te, De -- us Is -- _ _ ra -- el,
+  Is -- ra -- el,
+  te, De -- _ _ us, De -- us Is -- ra -- el,
+  
+  % 70
+  et o -- mni -- a
+  pec -- ca -- ta ho -- mi -- num,
+  pec -- ca -- _ ta,
+  pec -- ca -- ta 
+  ho -- mi -- num,
+  
+  % 74  
+  in tri -- bu -- la -- ti -- o -- _ _ _ ne di -- mit -- _ _ tis,
+
+  % 86
+  di -- mi -- tis, 
+  di -- mi -- _ tis, 
+  
+  % 89
+  Do -- mi -- ne De -- _ _ _ _ us, 
+  Do -- mi -- ne De -- _ _ us, 
+  Cre -- a -- tor 
+  cae -- li et ter -- rae,
+  et ter -- rae,
+  
+  % 102
+  Cre -- a -- tor 
+  cae -- li et ter -- rae
+
+  % 108
+  re -- spi -- ce
+  
+  % 122
+  % re --  spi -- ce,
+  % ad hu -- mi -- li -- ta -- tem no -- stram,
+  % hu -- mi -- li -- ta -- _ tem 
+  % no -- stram,
+  % no -- _ _ _ stram,
+  % ad hu -- mi -- li -- ta -- tem
+  % ad hu -- mi -- li -- ta -- _ tem
+  % no -- _ _ _ _ _ stram,
+  % no -- _ stram,
+  % no -- _ _ _ _ stram.
+}
+
+wordsVIIITenor = \lyricmode {
+  % 23
+  prae -- ter in te,
+  prae -- ter in te, De -- us
+  in te, De -- us Is -- ra -- el,
+  prae -- ter in te, De -- us Is -- ra -- el,
+  
+  % 38
+  prae -- ter in te, De -- _ us Is -- ra -- el,
+  in te, De -- us,
+  in te, 
+  De -- us Is -- ra -- el,
+  prae -- ter in te, 
+  De -- us Is -- ra -- _ el, De -- us Is -- _ ra -- el, 
+  
+  % 69
+  et o -- mni -- a
+  pec -- ca -- ta ho -- mi -- num, pec -- ca -- ta 
+  ho -- mi -- num,
+  pec -- ca -- ta 
+  ho -- mi -- num
+
+  % 74  
+  in tri -- bu -- la -- ti -- o -- _ ne,
+  di -- mit -- _ tis,
+  di -- mit -- _ _ _ tis,
+
+  % 86
+  di -- mi -- _ tis, 
+  di -- mi -- tis, 
+  
+  % 89
+  Do -- mi -- ne De -- _ us, 
+  Do -- mi -- ne De -- us, 
+  Cre -- _ a -- _ tor 
+  cae -- li et ter -- rae,
+  et ter -- _ rae,
+  Cre -- a -- tor 
+  cae -- li et ter -- rae
+
+  % 108
+  re -- spi -- ce
+  
+  % 122
+  re -- spi -- ce, re -- spi -- _ ce, 
+
+  % 126
+  % ad hu -- mi -- li -- ta -- _ _ tem 
+  % no -- _ stram,
+  % no -- _ _ stram,
+  % no -- _ _ stram,
+  % no -- _ _ _ stram,
+  % ad hu -- mi -- li -- ta -- _ tem 
+  % no -- stram,
+  % no -- _ stram,
+  % no -- _ _ _ stram,
+  % no -- stram.
+}
+
+wordsVIIIBaritone = \lyricmode {
+  % 28
+  prae -- ter in te, De -- _ us Is -- ra -- el, prae -- ter in te, De -- us Is -- ra -- el,
+  
+  % 38
+  prae -- ter in te, De -- _ us Is -- ra -- el,
+  Is -- ra -- el,
+  in te, De -- _ _ _ us 
+  in te, De -- _ us 
+  Is -- ra -- el,
+  De -- us
+  Is -- ra -- el,
+  De -- us Is -- ra -- el,
+  
+  
+  % 48
+  qui i -- ra -- sce -- ris, 
+  
+  % 69
+  et o -- mni -- a 
+  pec -- ca -- ta ho -- mi -- num,
+  pec -- ca -- ta 
+  pec -- ca -- ta ho -- mi -- num, 
+  ho -- mi -- num, 
+
+  % 74  
+  in tri -- bu -- la -- ti -- o -- ne,
+  di -- mit -- tis,
+  di mit -- tis, di mit -- _ _ tis,
+  
+  % 86
+  di -- mit -- tis, 
+  di -- mit -- _ _ _ tis, 
+
+  % 92
+  Do -- mi -- ne De -- _ _ _ _ _ us,
+  
+  % 93
+  Cre -- a -- tor 
+  cae -- li et ter -- rae, __ _ _ 
+
+  % 99
+  et ter -- rae,
+
+  % 102
+  Cre -- a -- tor
+  cae -- li et ter -- rae,
+
+  % 108
+  re -- spi -- ce
+  
+  % 122
+  % re -- spi -- ce,
+  % ad hu -- mi -- li -- ta -- tem no -- stram,
+  % no -- _ _ stram,
+  % no -- _ stram,
+  % no -- _ _ _ _ stram,
+  % no -- _ stram,
+  % ad hu -- mi -- li -- ta -- tem 
+  % no -- stram,
+  % no -- _ _ _ _ _ stram,
+  % no -- stram,
+  % no -- stram.
+}
+
+wordsVIIIBass = \lyricmode {
+  % 23
+  prae -- ter in te, __ _ _ _ De -- _ _ us Is -- ra -- el,
+  
+  % 37
+  prae -- ter in te, De -- us,
+  prae -- ter in te, prae -- ter in te, De -- us, in te, De -- _ us
+  Is -- ra -- el,
+  
+  % 46
+  qui i -- ra -- sce -- ris, et pro -- pi -- ti -- us e -- ris,
+  
+  % 69
+  et o -- mni -- a,
+  pec -- ca -- ta ho -- mi -- num, pec -- ca -- ta ho -- mi -- num, 
+
+  % 74  
+  in tri -- bu -- la -- ti -- o -- ne di -- mit -- tis,
+
+  % 86
+  di -- mit -- tis, 
+  
+  % 92
+  Do -- mi -- ne De -- us,
+  Cre -- a -- tor
+  cae -- li et ter -- rae,
+
+  % 102
+  Cre -- a -- tor 
+  cae -- li et ter -- rae,
+
+  % 108
+  re -- spi -- ce
+  
+  % 122
+  re -- spi -- ce,
+
+  % 125
+  % ad hu -- mi -- li -- ta -- tem  
+  % ad hu -- mi -- li -- ta -- tem  
+  % no -- _ _ stram, 
+  % ad hu -- mi -- li -- ta -- tem no -- _ _ stram,
+  % ad hu -- mi -- li -- ta -- tem no -- _ _ _ stram
+  % no -- stram,
+  % no -- _ stram,
+  % no -- stram, no -- stram.
+}

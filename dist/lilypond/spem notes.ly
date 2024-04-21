@@ -3677,89 +3677,114 @@ notesVIIBass = \relative c {
 % ------------
 
 notesVIIISoprano = \relative c {
-  r2*129 e''2 e e g1 f2 
-  | % 23
-  e2. d4 d1 c4 b c4. d8 
-  | % 24
-  e4 a,2 b8 c d2 r1. 
-  | % 25
-  d2 d d e1. 
-  | % 26
-  d2. c4 c1 b 
-  | % 27
-  g2 g1 r1. 
-  | % 28
-  g'2 g g g r4 g,2 d' d d4 d1 b2 b1 r2*9 g'1 d2 f e d 
-  | % 33
-  d a c b4 a8 g f4 d a'2. f4 g2 e r2. f a2 e g r2*67 g1 c c2 
-  c 
-  | % 47
-  r4 c2 e c e4. e8 e4 r4 a, 
-  | % 48
-  c f, r4 a4. e8 e4 r2. g2 d'4 
-  | % 49
-  g, d' r2 d d d e 
-  | % 50
-  e f1 e2 d c1 a2 d d1 r1*15 g,4 d'2 d4. a8 a4 r2 b4 g4. a8 b4 
-  | % 58
-  b2 r1*3 b2. b4 d2 e c r2*7 e2. e4 a,2 d d r2 
-  | % 62
-  d g, d' r2 d g, 
-  | % 63
-  d'4. g,8 a b c a b2 r4*25 f'4 e2 d r4*21 c4 c4. d8 e2 r1 a,4 
-  d2 
-  | % 69
-  cis4 d d r1*9 cis2. b4 a2. g8 f e4 a8*5 b8 
-  | % 73
-  c d e4 r1*23 g1. g2 g d 
-  | % 82
-  d d f1. c1 f,2. c'4 c2 r2 a a4 a 
-  | % 84
-  a c2. a4 c r4 bes4. a8 f4 f2 
-  | % 85
-  r1 d'2 d,4 f2. f2 
-  | % 86
-  r2. g4. e8 e4 r4 a a2 r2. d d4 d g1 g2 r2 g, g4 g g c c2 r2 g4 
-  e2 e'4. f8 g2 d g,4 b d r4 d, g 
-  | % 91
-  d r4 g2 d'4 b d d1*5 
+  R\breve*32
+
+  % 33
+  r2 e''2 e e 
+  g1 f2 e2~
+  e4 d4 d1 c4 b 
+  c4. d8 e4 a,2 b8 c d2 
+  r1 r2 d2 
+  d2 d e1~
+  e2 d2. c4 c2~
+  c2 b1 g2 
+  g1 r1 
+  r2 g'2 g g 
+  g2 r4 g,2 d'4~
+  d4 d2 d4 d1 b2 
+  b1 r1
+  R\breve
+  r1 r2 g'2~
+  g2 d2 f e 
+  d d a c 
+  b4 a8 g f4 d a'2. f4 
+  g2 e r2 r4 f~
+  f2 a e g 
+  R\breve*16
+  
+  % 69
+  r1 r2 g2~
+  g2 c1 c2 
+  c2 r4 c2 e c4~
+  c4 e4. e8 e4 r4 a, c f, 
+  r4 a4. e8 e4 r2 r4 g4~
+  g4 d'4 g, d' r2 d 
+  d2 d e e 
+  f1 e2 d 
+  c1 a2 d 
+  d1 r1
+  R\breve*7
+  
+  % 86
+  g,4 d'2 d4. a8 a4 r2 
+  b4 g4. a8 b4 b2 r2
+  R\breve
+  r2 b2. b4 d2 
+  e c r1
+  R\breve
+  r2 e2. e4 a,2 
+  d d r2 d 
+  g, d' r2 d 
+  g, d'4. g,8 a b c a b2 
+  R\breve*3
+  
+  % 99
+  r4 f'4 e2 d r2
+  R\breve*2
+
+  % 102
+  r2 r4 c4 c4. d8 e2 
+  r1 a,4 d2 cis4 
+  d d r2 r1
+  R\breve*3
+  
+  % 108
+  r1 r2 cis2~
+  cis4 b4 a2. g8 f e4 a4
+  a4. b8 c d e4 r1
+  R\breve*11
+  
+  % 122
+  g1. g2 
+  g2 d d d4 d4 
+  f1. c2~
+  c2 f,2. c'4 c2 
+  r2 a a4 a a c4~
+  c2 a4 c r4 bes4. a8 f4 
+  f2 r2 r2 d'2 
+  d,4 f2. f2 r2
+  r4 g4. e8 e4 r4 a a2 
+  | r2 r4 d2 d4 d d 
+  | g1 g2 r2 
+  g, g4 g g c c2 
+  r2 g4 e2 e'4. f8 g4~
+  g4 d2 g,4 b d r4 d, 
+  g d r4 g2 d'4 b d 
+  d\breve~
+  d\breve~
+  d1
 }
 
 notesVIIIAlto = \relative c {
   r2*131 a''2 a g c1 bes2. g4 a2 a a1*2 r2*5 g2 
-  | % 25
   e2. g d2 r4 a2 a4 
-  | % 26
   d2 b4 g'2 g4. a8 b4 r2. e, b2 r2 c2. e4 c g'2 g4 
-  | % 29
   g2 r2 b, b b2. d4 
-  | % 30
   d2 r2 g2. b4 g2 r2*5 c1 g2 b b a 
-  | % 32
   r4 g g b4. a8 g2 f4 g2 r2. d2 a c g4 c2 r2 f a4. g8 f2 c' r2*67 g2 
   g2. e2 c4 e g r4 g 
-  | % 47
   c2. g2 g e4 e2 r4 e 
-  | % 48
   a2 a4 a2 a4 a2 r4*5 g4. d8 d4 r2 d4 g,4. g'8 g4 g g4. c,8 
-  | % 50
   c4 r2. d2 a'4. g8 c4 r2 c,4. d8 e4 a,2 a' d,4 d1 r1*15 g4 g2 
   g4 r2 d' d4. b8 b2 
-  | % 58
   r2*7 g2. g4 g2 g c, r2*7 a'2. a4 a2 a b r2 
-  | % 62
   b c b r2 b c4 g4. f8 d4 a'2 g r1*6 f4 a4. g8 e4 a2 r4*21 c4 
   a4. b8 c2 r1 f,4. g8 a4 
-  | % 69
   a a a r1*9 a2. e2 a, a' e f8 g 
-  | % 73
   a2 r1*23 b1. b2 b1*2 r2 a a a c a 
-  | % 83
   a1 r4 f2 f4 f2 a2. f4 f2 r2 f bes, r4 g'2. g2 r4*5 d4. bes4 
   g4. g'4 
-  | % 87
   g2 r1 g2 g4 g b2. g4 g2 r4 g c, e r4 e e2 r4 
-  | % 89
   g c, g' g2 r2 g c, r2. g'4. b8 b4. g8 g4 r4 d d2 r4 b g2 r4 g'2 
   d4 g4. a8 b2 g4 b b1*3 
 }
@@ -3769,42 +3794,26 @@ notesVIIITenor = \relative c {
   
   r2*133 e'2 c c g' d4 d e2. e4 e1 r2*7 b2 c c d2. e4 f1 g2 d1 
   d2 g,1 
-  | % 28
   r2 g' g g c,2. e4 
-  | % 29
   e1 r2. d2 d4. c8 b4 
-  | % 30
   r4 g2 g4 g1 r1. g'1 d2 f f e4 e2 c4 d2. g,4 a4. b8 c4 g2 d'4 
   b 
-  | % 33
   d r4 d2 c4 d2. d4 d2 c4 
-  | % 34
   a r4 c e g2 d4 r4 d d f2 
-  | % 35
   c4 c2 bes4 g d'2 r1*35 e2 e2. e4 e1 r4 g2 e4 a, c4. c8 c4 r2 e4 
   e4. c8 c4 r4 
-  | % 49
   g'4. d8 d4. b8 b4 r2 b b4. b8 b4 
-  | % 50
   b r4 e2 e4 r2 a,4. b8 c4 g b 
-  | % 51
   g r4 c2 f4 e2 d4. c8 b1 r1*15 g'4 d2 b4 r2 d d r1*4 g,2. g4 
   b2 c a r2*7 c2. c4 e2 f d r2 
-  | % 62
   d e d r2 d e 
-  | % 63
   d c b r4*25 a4. b8 c4 f,2 r4*21 c'4 c2 c r1 d4 a a 
-  | % 69
   a4. d,8 a'4 r1*9 e'1 e2 e1*2 r1*23 d1. d2 d1*2 r4*11 c2 c4 
   c2 c4 f2 c4 c1 c r2. bes4. a8 f4 bes2. g4 r4 d'4. a8 a4. d,8 
   d4 r4 a' d2 r4 g, g2 r2 a b b b4 g d'1 
-  | % 88
   b2 e1 r2 d4 g, g2 
-  | % 89
   r4 e'2. e4 e, e4. f8 g4 e r4 g 
-  | % 90
   d d'2 b4 r4 g2 g' g4. d8 g4 
-  | % 91
   g2 r1 g g1*3 
 }
 
@@ -3812,45 +3821,26 @@ notesVIIIBaritone = \relative c {
   \clef bass
 
   r2*131 e2 e e a1 g2 
-  | % 23
   bes a2. a4 a1*2 r1. d1 b2 
-  | % 26
   g c1 bes2 c1 
-  | % 27
   d2. b4 b2 r4 g2 c c,4. d8 e4 r2 e4 g2 c, c'4 c g g1 r2 d1 d2 
   d1*2 r2 d'1 g,2 b b 
-  | % 31
   a1 g2. g4 g2 g 
-  | % 32
   f g4 e g1 r1. f2 d f r2. g 
-  | % 34
   d4 f2 d4 a'2 r1*35 e2. g2 c, e g4 g c 
-  | % 48
   c g g1 r4*5 a4 
-  | % 49
   a a r4 e4. e8 c4 r2. d4. d8 d4 
-  | % 50
   r2 d2. g4 g b g g2 c,4 
-  | % 51
   r4 f4. g8 a4 e g2 d4 e c2 d4 
-  | % 52
   e c f4. e8 d1 r1*15 g2 d' r2. d4. g,8 g4 r4 g 
-  | % 58
   b g4. f8 d4 r2*5 g2. g4 g2 c, c r2*7 e2. e4 e2 d d r2 
-  | % 62
   d4 g2 c,4 d2 r2 d4 g2 c,4 
-  | % 63
   d2 e4 c g'2 r4*25 a4 a2 a r2*11 a4 c2 g4 r1 a2 c4 c 
-  | % 69
   a f r1*9 a1 a2 a1*2 r1*23 d,1. d2 d1*2 r1. a'2 a a 
-  | % 84
   c a a1 r2 a 
-  | % 85
   a a d d r4 d2 g,4 
-  | % 86
   d'1 r2 a a r2. g4 c2 r4 f, d a' r4 g d2 r2 d1 d4 d r4 g c2. 
   b8 a 
-  | % 89
   d2 g, c r4 g e2 g4 c,2 g'4 r4 d'4. b8 b4 r2 b b1 r2 g1. g1*4 
 }
 
@@ -3858,40 +3848,23 @@ notesVIIIBass = \relative c {
   \clef bass
 
   r2*149 g2 c c g'1 f2 
-  | % 26
   a g2. g4 g2 g g1 e4 c g'1 c,2 c1*2 g1 g1*2 
-  | % 30
   r2 g'1 d2 f e 
-  | % 31
   d f1 c2 e e 
-  | % 32
   d1. e4 c d2 d1 e2 f2. g4 a f a2 e4 g2 c,4 g'2 r2*71 g,1 c1. 
   c2 
-  | % 47
   c1*2 r2 c 
-  | % 48
   a f a1 c 
-  | % 49
   g r2 g g g 
-  | % 50
   c c d1 c2 b 
-  | % 51
   a2. b4 c2 d g,1 
-  | % 52
   r2*31 d'2 d1 d1*2 r2*17 a2. a4 c2 d g, r2 
-  | % 62
   g c g r2 g c 
-  | % 63
   g c4 a e'2 r4*51 c4 f2 c f, r4 c' d d a2 d r1*9 a1 a2 a1*2 
   r1*23 g1. g2 g1*2 r1. f2 f f 
-  | % 84
   a f f1 r2 f 
-  | % 85
   f f bes1. g1 bes2 d1. g,2 c 
-  | % 87
   e d1 g, r2 
-  | % 88
   g1 d'4. f8 e4. d8 c1 
-  | % 89
   b2 c g'1 c,2 c1 d2 b r4 d2 g,4 g1*7 
 }
