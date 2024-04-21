@@ -107,6 +107,8 @@ function getPartName(n) {
 // TODO: CMD-left/right to skip to next interesting bit for choir or part
 // TODO: highlight part on score?
 // TODO: Add lyrics to footer
+// TODO: Automatically remove the height and width from the lilypond generate SVGs
+
 
 // function getViewBox(bar, width) {
 //   const ideal = 0.3;
@@ -172,7 +174,7 @@ async function setChoir(c) {
 
 // where p = 0 (for all parts) or 1 - 5 for SATBarB
 function setPart(p) {
-  if (currentPart == p) { 
+  if (currentPart == p) {
     return;
   }
   currentPart = p;
@@ -201,7 +203,8 @@ function setBar(b, changedChoirs = false) {
   // update the input field
   barinput.value = currentBar;
 
-  // const subdoc = svgobject.getSVGDocument();
+  // const subdoc = svgobject.getSVGDocument();  
+  // HACK: get SVG in a better way than just the second SVG on the page!
   svg = document.getElementsByTagName("svg")[1];
   // pt = svg.createSVGPoint();  // HACK: Created once for document
 
@@ -459,7 +462,7 @@ function getMousePos(canv, evt) {
     Math.floor(y + 1),
     Math.floor(((y % 1) * 5) + 1),
     // Math.floor(((evt.offsetX * 138) / rect.width) + 1),
-    Math.floor((evt.offsetX * 140) / rect.width), 
+    Math.floor((evt.offsetX * 140) / rect.width),
   ];
 }
 
@@ -581,6 +584,14 @@ function canvasMoved(e) {
 // -----------------------------------------------------
 
 function pauseAndRepaintNoLoad() {
+  setChoir(choirselect.value);
+  setPart(partselect.value);
+  setBar(barinput.value);
+
+  // update the audio location 
+  // HACK: this can't be the right place for this next line!
+  spemaudio.currentTime = currentBar * 4 * beattime;
+
   pauseAndRepaint(false);
 }
 
