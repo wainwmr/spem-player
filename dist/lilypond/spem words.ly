@@ -2103,73 +2103,61 @@ wordsVIIAlto = \lyricmode {
 
 wordsVIITenor = \lyricmode {
   % 23
-  prae -- ter in te, De -- us Is -- ra -- el, 
-  prae -- ter in te, De -- us Is -- ra -- _ _ _ _ _ el, 
-  in te, _ _ _ _ _ _ _ De -- us Is -- ra -- el,
+  prae -- ter in | te,
+  prae -- | ter in te, | De -- us
+  in | te, De -- us Is -- ra -- el,
+  prae -- | ter in te, De -- us | Is -- ra -- el,
   
-  % 40
-  prae -- ter in te,
-  De -- _ _ us 
-  Is -- ra -- el,
-  Is -- ra -- el,
-  in te, _ _ 
-  De -- _ us,
-  Is -- ra -- el,
-  
-  % 49
-  qui i -- ra -- sce -- _ ris et pro -- pi -- ti -- _ us, e -- ris, 
-  e -- _ _ _ _ _ _ _ _ _ ris,
+  % 38
+  prae -- ter in | te, De -- _ | us Is -- ra -- el,
+  in te, De -- us,
+  in | te, 
+  De -- us Is -- ra -- el,
+  prae -- | ter in te, 
+  De -- us Is -- ra -- _ | el, De -- us Is -- _ ra -- | el, 
   
   % 69
   et o -- mni -- a
-  pec -- ca -- ta ho -- mi -- _ _ _ _ num,
+  pec -- ca -- | ta ho -- mi -- num, pec -- ca -- ta 
+  ho -- mi -- num,
+  pec -- ca -- ta 
   ho -- mi -- num
 
   % 74  
-  in tri -- bu -- la -- ti -- o -- ne,
-  di -- mit -- _ _ _ _ _ _ tis,
+  in tri -- | bu -- la -- ti -- o -- _ ne,
+  di -- mit -- _ tis,
+  di -- mit -- _ _ _ tis,
 
-  % 78
-  in tri -- bu -- la -- ti -- o -- _ _ _ _ ne 
-  di -- mit -- _ _ _ _ tis,
-  
-  % 85
+  % 86
+  | di -- mi -- _ tis, 
   di -- mi -- tis, 
   
-  % 87
+  % 89
+  Do -- mi -- ne De -- _ us, 
   Do -- mi -- ne De -- us, 
-
-  % 95
+  Cre -- _ | a -- _ tor 
+  cae -- | li et ter -- rae,
+  | et ter -- _ rae,
   Cre -- a -- tor 
-  cae -- li et ter -- rae,
-  cae -- li
-  et ter -- rae,
-  et ter -- rae, 
-  Cre -- a -- tor 
-  cae -- li et ter -- rae
+  cae -- li et ter -- | rae
 
   % 108
   re -- spi -- ce
   
-  % 112
-  ad hu -- mi -- li -- ta -- _ _ _ _ tem no -- _ _ _ _ stram,
-  
   % 122
-  re -- spi -- ce, re -- _ _ spi -- _ ce, 
-  re -- spi -- _ _ ce
+  | re -- spi -- ce, re -- spi -- _ | ce, 
 
   % 126
-  % ad hu -- mi -- li -- ta -- _ tem,
-  % ad hu -- mi -- li -- ta -- tem 
-  % no -- _ stram,
-  % no -- _ _  stram,
-  % no -- _ stram,
-  % ad hu -- mi -- li -- ta -- tem
-  % no -- _ _ _ _ stram,
-  % no -- stram,
-  % ad hu -- mi -- li -- ta -- tem,
-  % ad hu -- mi -- li -- ta -- tem 
-  % no -- _ _ _ _ stram.
+  | ad hu -- mi -- li -- ta -- _ _ tem 
+  no -- _ stram,
+  no -- _ _ | stram,
+  no -- _ _ stram,
+  no -- _ _ _ stram,
+  ad hu -- mi -- li -- ta -- _ | tem 
+  no -- | stram,
+  no -- _ | stram,
+  no -- _ | _ _ stram,
+  no -- stram.
 }
 
 wordsVIIBaritone = \lyricmode {

@@ -13,14 +13,14 @@
     %   \notesVIISoprano
     %   \addlyrics \wordsVIISoprano
     % >>
-    <<
-      \notesVIIAlto
-      \addlyrics \wordsVIIAlto
-    >>
     % <<
-    %   \notesVIITenor
-    %   \addlyrics \wordsVIITenor
+    %   \notesVIIAlto
+    %   \addlyrics \wordsVIIAlto
     % >>
+    <<
+      \notesVIITenor
+      \addlyrics \wordsVIITenor
+    >>
     % <<
     %   \notesVIIBaritone
     %   \addlyrics \wordsVIIBaritone
