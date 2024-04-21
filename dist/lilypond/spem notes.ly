@@ -3564,31 +3564,113 @@ notesVIIBaritone = \relative c {
 
 notesVIIBass = \relative c {
   \clef bass
+  R\breve*27
 
-  r1*57 g1 g2 g c1 
-  r2 a a a e'1 
-  d2 f e2. e4 a,1 
-  r2*15 d2 d4 d g1 c,2 g1 r1. d'2 g,4 g g'1 e2 c d e1 c2 
-  g' r2 g g r4 g, g d' 
-  d2 r2 d4 d b2 d d1 r2*11 g1 d2 f e d 
-  f1 c2 e e d1 f e4 c g'2 r1. c,1 g2 b a c1 g2 d'1 f2 c r2*51 g'1 
-  e2 e c r4 c 
-  g'2 g4 g2 e4 e2. e4 e2 
-  r2 c c a e'2. e4 
-  d4. c8 b2 r2 b' b4 g g2 
-  c,4 e4. f8 g4 r2*41 g2 f4 d r4 d2 b4. a8 g4 d'2 
-  r1*9 a'2. a4 a2 a g r2 
-  g g g r2 g g 
-  g e e r4*51 g4 a2 e r1 a4 a2 
-  a4 f d r1*9 a1 cis2 e a, a1 r1*23 g1 b2 d1 b4 g 
-  d'2 g, r2*7 c2 c c f c a'1 f2 r2 d4 f bes,2 d1 
-  r2 d2. d4 d d c2 c 
-  f f4. e8 d2 r2. d2 d4 
-  g, g g'1 e2 c d 
-  e1 c2 g' r2 g 
-  g r4 g,2 d'4 d2 r2 d 
-  b d d1*5 
+  % 28
+  r1 r2 d2
+  d2 d g2. f8 e
+  d2 g2. f4 e2 
+  a,2 e'2. e4 a,2
+  R\breve*5
+
+  % 37
+  r1 r2 d2
+  d4 d g1 c,2
+  g1 r1
+  r2 g g g
+  c1. g2
+  c2 c g'1
+  e2 e d1~
+  d2 b b4. c8 d2
+  r4 g,2 g4 g1
+  r1 r2 d'2~
+  d2 a c c
+  g2 g4 g d'2 c
+  b4 g2. d'2 r2
+  r\breve*19
+
+  % 69
+  r1 g1
+  g1. g2
+  g1 r2 g
+  e2 c f2. f4
+  c2 c2. e4 c g'~
+  g4 g g2 r g
+  g2 g e e
+  a2 f g1
+  a\breve
+  g1 r1
+  R\breve*7
+
+  % 86
+  r2 b2 a1
+  g1 r1
+  R\breve*4
+
+  % 92
+  r2 a2. a4 a2
+  a2 g r g
+  g2 g r g
+  g2 g e e
+  R\breve*6
+
+  % 102
+  r2 r4 g4 a2 e
+  r1 a4 a2 a4
+  f4 d r2 r1
+  R\breve*3
+
+  % 108
+  r1 r2 e2~
+  e2 e e1~
+  e1 r1
+  R\breve*11
+
+  % 122
+  g1. g2
+  g1 r2 d2
+  d2 d4 d f1 
+  c1 r1
+  r2 f2 f f4 f
+  a1 f2 r
+  d4 f bes,2 d1
+  r2 d2. d4 d d
+  c2 c f f4. e8
+  d2 r2 r4 d2 d4
+  g,4 g g'1 e2
+  c2 d e1 
+  c2 g' r g
+  g2 r4 g,2 d'4 d2
+  r2 g d, d'
+  d\breve~
+  d\breve~
+  d1
 }
+
+% From VII Bass
+% r1 r2 g1 g2 g c1 
+% r2 a a a e'1 
+% d2 f e2. e4 a,1 
+% r2*15 d2 d4 d g1 c,2 g1 r1. d'2 g,4 g g'1 e2 c d e1 c2 
+% g' r2 g g r4 g, g d' 
+% d2 r2 d4 d b2 d d1 r2*11 g1 d2 f e d 
+% f1 c2 e e d1 f e4 c g'2 r1. c,1 g2 b a c1 g2 d'1 f2 c r2*51 g'1 
+% e2 e c r4 c 
+% g'2 g4 g2 e4 e2. e4 e2 
+% r2 c c a e'2. e4 
+% d4. c8 b2 r2 b' b4 g g2 
+% c,4 e4. f8 g4 r2*41 g2 f4 d r4 d2 b4. a8 g4 d'2 
+% r1*9 a'2. a4 a2 a g r2 
+% g g g r2 g g 
+% g e e r4*51 g4 a2 e r1 a4 a2 
+% a4 f d r1*9 a1 cis2 e a, a1 r1*23 g1 b2 d1 b4 g 
+% d'2 g, r2*7 c2 c c f c a'1 f2 r2 d4 f bes,2 d1 
+% r2 d2. d4 d d c2 c 
+% f f4. e8 d2 r2. d2 d4 
+% g, g g'1 e2 c d 
+% e1 c2 g' r2 g 
+% g r4 g,2 d'4 d2 r2 d 
+% b d d1*5 
 
 % ------------
 % Choir 8
