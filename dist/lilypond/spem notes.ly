@@ -3516,7 +3516,7 @@ notesVIIBaritone = \relative c {
   g,2 d d r2
   r4 d4 d'2 g, d' 
   r4 g, g2 r1
-  R\breve* 3
+  R\breve*3
 
   % 92
   r2 e4. e8 a4 c4. b8 a g 
