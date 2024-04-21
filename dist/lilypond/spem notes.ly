@@ -3641,7 +3641,7 @@ notesVIIBass = \relative c {
   c2 d e1 
   c2 g' r g
   g2 r4 g,2 d'4 d2
-  r2 g d, d'
+  r2 d2 b2 d
   d\breve~
   d\breve~
   d1
