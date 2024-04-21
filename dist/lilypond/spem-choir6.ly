@@ -1,6 +1,6 @@
 \version "2.24.3" 
 
-% \include "spem layout.ly"
+\include "spem layout.ly"
 \include "spem notes.ly"
 \include "spem words.ly"
 
@@ -9,25 +9,25 @@
   <<
     \time 4/2
     \override Score.BarNumber.break-visibility = ##(#f #t #t)
-    % <<
-    %   \notesVISoprano
-    %   \addlyrics \wordsVISoprano
-    % >>
-    % <<
-    %   \notesVIAlto
-    %   \addlyrics \wordsVIAlto
-    % >>
-    % <<
-    %   \notesVITenor
-    %   \addlyrics \wordsVITenor
-    % >>
+    <<
+      \notesVISoprano
+      \addlyrics \wordsVISoprano
+    >>
+    <<
+      \notesVIAlto
+      \addlyrics \wordsVIAlto
+    >>
+    <<
+      \notesVITenor
+      \addlyrics \wordsVITenor
+    >>
     <<
       \notesVIBaritone
       \addlyrics \wordsVIBaritone
     >>
-    % <<
-    %   \notesVIBass
-    %   \addlyrics \wordsVIBass
-    % >>
+    <<
+      \notesVIBass
+      \addlyrics \wordsVIBass
+    >>
   >>
 }

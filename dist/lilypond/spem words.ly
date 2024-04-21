@@ -1866,121 +1866,118 @@ wordsVITenor = \lyricmode {
 
 wordsVIBaritone = \lyricmode {
   % 23
-  prae -- ter in te, De -- us Is -- ra -- el, 
-  in te, De -- _ _ _ us Is -- ra -- el, 
-  prae -- ter in te,
-  De -- us Is -- ra -- el, 
-  Is -- ra -- _ el, 
+  prae -- | ter in te, De -- _ | _ _ _ _ us, De -- _ | _ _ _ us 
+  Is -- ra -- | el, 
+  | De -- us Is -- ra -- el, 
+  | in te,
+  De -- us | Is -- ra -- _ el, 
   
   % 40
-  prae -- ter in te, _
-  De -- us Is -- ra -- el,
-  prae -- ter
-  in te, 
-  De -- us Is -- ra -- el,
+  prae -- ter in te,
+  De -- us 
+  | De -- us Is -- ra -- _ _ _ | el,
+  in | te, De -- us 
+  Is -- ra -- | el,
   
   % 53
-  qui i -- ra -- sce -- _ _ _ ris, 
-  qui i -- ra -- sce -- ris, 
-  et pro -- pi -- ti -- _ _ _ us, 
-  pro -- pi -- ti -- _ us e -- ris,
-  e -- _ ris,
+  qui i -- | ra -- sce -- ris, | et pro -- _ | pi -- ti -- us, 
+  e -- _ _ _ ris,
+  qui i -- | ra -- sce -- ris,
+  et pro -- pi -- ti -- _ | us, 
   
   % 69
-  et o -- mni -- a 
-  pec -- ca -- ta ho -- mi -- num,
-  pec -- ca -- ta ho -- mi -- num, ho -- _ _ mi -- num
+  et o -- mni -- | a pec -- ca -- ta ho -- mi -- num,
+  pec -- ca -- | ta 
+  ho -- mi -- num, 
+  pec -- ca -- ta ho -- _ _ | _ mi -- num
 
   % 74  
-  in tri -- bu -- la -- ti -- o -- ne,
+  in | tri -- bu -- la -- ti -- o -- ne,
 
-  % 78
-  in tri -- bu -- la -- _ _ _ ti -- o -- _ _ ne 
-  di -- mit -- _ _ _ tis,
-  di mit -- _ _ _ tis,
+  % 77
+  in tri -- bu -- la -- ti -- | o -- _ ne 
+  di -- mit -- | _ _ _ tis,
+  di mit -- | _ _ tis,
   
-  % 86
-  di -- mit -- tis, 
+  % 85
+  di -- | mit -- tis, 
+  di -- | mit -- tis, 
   
-  % 87
-  Do -- mi -- ne De -- us, 
-
   % 95
-  Cre -- a -- tor 
-  cae -- li et ter -- _ rae,
+  Cre -- | a -- tor 
+  cae -- | li et ter -- rae,
   et ter -- rae,
-  et ter -- _ rae, Cre -- a -- tor 
-  cae -- li et ter -- rae
+  et ter -- | rae, Cre -- a -- _ tor 
+  cae -- | li et ter -- rae
 
   % 108
   re -- spi -- ce
   
-  % 109
-  ad hu -- mi -- li -- ta -- _ _ tem no -- stram,
-  no -- _ _ _ stram,
+  % 112
+  ad | hu -- mi -- li -- ta -- tem | no -- stram,
   
   % 122
-  re -- spi -- ce, re -- spi -- ce, 
+  | re -- spi -- | ce,
 
-  % 126
-  % ad hu -- mi -- li -- ta -- tem 
-  % no -- _ _ _ stram,
-  % ad hu -- mi -- li -- ta -- tem no -- _ _ _ stram,
-  % no -- _ stram,
-  % ad hu -- mi -- li -- ta -- tem,
-  % ad hu -- mi -- li -- ta -- tem,
-  % no -- _ _ _ stram,
-  % ad hu -- mi -- li -- ta -- tem,
-  % no -- stram, no -- _ stram,
-  % no -- _ _ _ stram.
+  % 124
+  ad hu -- mi -- li -- ta -- _ _ tem 
+  no -- _ stram,
+  ad hu -- mi -- li -- ta -- tem 
+  | no -- _ _ stram,
+  no -- _ _ stram,
+  no -- _ stram,
+  ad | hu -- mi -- li -- ta -- tem | no -- stram,
+  no -- stram,
+  ad hu -- mi -- li -- ta -- tem,
+  no -- | stram.
 }
 
 wordsVIBass = \lyricmode {
   % 23
-  prae -- ter in te, De -- us 
-  De -- us Is -- ra -- _ _ el, 
-  prae -- ter in te, De -- _ us _  Is -- ra -- _ el, 
+  prae -- | ter in te, 
+  prae -- ter in | te, De -- us | Is -- ra -- el, 
   
   % 40
-  prae -- ter in te, in te, De -- _ _ _ us Is -- ra -- el,
-  in te, De -- us Is -- ra -- _ el,
+  prae -- ter in te, De -- us Is -- | ra -- _ el,
+  in te, 
+  De -- _ us 
+  Is -- | ra -- _ el,
   
-  % 50
-  qui i -- ra -- sce -- ris et pro -- pi -- ti -- us, 
-  qui i -- ra -- sce -- ris et pro -- pi -- ti -- us, 
-  e -- _ _ _ _ _ ris,
+  % 48
+  qui i -- ra -- sce -- | ris, et pro -- | pi -- ti -- us | e -- _ _ ris,
+  qui i -- ra -- sce -- | _ ris, et | pro -- pi -- ti -- us, 
   
   % 69
-  et o -- mni -- a 
-  pec -- ca -- ta ho -- mi -- num, pec -- ca -- ta ho -- mi -- num, _ _ 
-  ho -- mi -- num
+  et | o -- mni -- a,
+  et | o -- mni -- a, et o -- mni -- a
+  pec -- | ca -- ta ho -- mi -- | num, _ _
 
   % 74  
-  in tri -- bu -- la -- ti -- o -- _ _ _ _ ne,
+  in | tri -- bu -- la -- ti -- o -- _ ne,
 
   % 78
-  in tri -- bu -- la -- ti -- o -- ne di -- mit -- tis,
+  in tri -- bu -- | la -- ti -- o -- _ | _ _ ne di -- mit -- _ _ _ _ _ tis,
   
   % 86
   di -- mit -- tis, 
-  di -- _ mit -- _ tis, 
+  di -- mit -- _ _ tis, 
   
   % 99
-  et ter -- rae, Cre -- a -- tor 
+  et ter -- | rae, Cre -- a -- tor 
 
   % 108
-  re -- spi -- _ ce
+  re -- spi -- _ _ | ce
   
   % 122
-  re -- spi -- _ ce,
+  | re -- spi -- ce, re -- spi -- _ ce,
 
   % 125
-  % ad hu -- mi -- li -- ta -- tem 
-  % no -- _ _ stram,
-  % ad hu -- mi -- li -- ta -- tem no -- stram,
-  % ad hu -- mi -- li -- ta -- tem,
-  % ad hu -- mi -- li -- ta -- tem,
-  % no -- _ stram, _ _
-  % no -- stram.
+  ad | hu -- mi -- li -- ta -- tem 
+  no -- _ | stram, no -- stram,
+  ad hu -- mi -- li -- | ta -- _ tem 
+  no -- _ stram,
+  ad hu -- mi -- li -- ta -- | tem,
+  ad | hu -- mi -- li -- | ta -- tem no -- _ _ | stram,
+  no -- | stram.
 }
 

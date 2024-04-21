@@ -1,9 +1,6 @@
 \version "2.24.3"
 
 
-% TODO: Choir 6 Tenor
-% TODO: Choir 6 Baritone
-% TODO: Choir 6 Bass
 % TODO: Choir 7 Soprano
 % TODO: Choir 7 Alto
 % TODO: Choir 7 Tenor
@@ -2953,53 +2950,118 @@ notesVITenor = \relative c {
   d1
 }
 
-  % 122 previous ending - where did this come from???
-  % d1. d2. b4 b d2 g,4 b2 
-  % a1 r1 c2 c c4 f2 c f,4 a2 
-  % r2 c4*5 a4 r4 d bes f' f2 
-  % r4 bes,2 d4. c8 bes4 r2. a4. g8 f d 
-  % d2 r1. d'1 d4 d g2. d4 d2 r1 
-  % e2 e r2 e g g r2 g, c4 c b g 
-  % d'2 r2 d1. d1*6 
-
+% 122 notesVITenor previous ending - where did this come from???
+% d1. d2. b4 b d2 g,4 b2 
+% a1 r1 c2 c c4 f2 c f,4 a2 
+% r2 c4*5 a4 r4 d bes f' f2 
+% r4 bes,2 d4. c8 bes4 r2. a4. g8 f d 
+% d2 r1. d'1 d4 d g2. d4 d2 r1 
+% e2 e r2 e g g r2 g, c4 c b g 
+% d'2 r2 d1. d1*6 
 
 notesVIBaritone = \relative c {
   \clef bass
 
   R\breve*25
   r1 r2 g'2 
-  g g c c4. bes8 a4. g8 
-  f4. e8 d8*7 e8 f g a2 d,4 r4 d'2 g,4 g1*2 e1 e2 e2. c4 g'2 
-  r1 
-  e2 g r4 c,2 c'4 g e g2 
-  c,1 r2*21 g'2 g4 g g2 r2. e4 e2 
-  r2 c c4 g'4. f8 e4. d8 c4 c'2 
-  r1 g2 g g1 
-  g2 r1 g2. g4 d2 
-  r1*6 d'1 g,2 b b a1 g1. f4 d a'2. a4 
-  g1 r2 c4 f,4. g8 a4 e2 
-  r2 g1 c,2 e2. e4 
-  d2 r4 d'2. a2 c bes4 g 
-  d'2 r2*49 b2 b4 b g2 g2. e2 c e4. f8 g4 r4 c c2 g r2 c4 
-  f, f2 r4 c' c2 g4 c2 b8 a d4 
-  b d2 r2. d,4 d4. b8 b4 b r4 
-  g' g2 r2*7 d1 g2 e4 g2 g4 b d2 a4 r4 e g2 a4 d, e c r4 e g2 
-  c,4. d8 e2 r4*35 d4 g2 g r2. d4 d2 d r2*33 g2 a a r2 a a 
-  a a a r4 a a2 a 
-  r4*7 a2 c4 b2 
-  c4 g4. a8 b4 r4 g g g g2 g 
-  r1*14 e1 e2 e1*2 r2*9 e2 e e a g a1 e r1*14 g1. g2 g1*2 r2. f2 
-  f c a' f4 
-  r4 a a2 r4 a c1 r2. f,2 f4 f2 r4 bes2. bes2 r1 a2 d2. d,4 d2 
-  r1 
-  a'4 d4. c8 a4 r4 d4. g,8 g4 r2 g 
-  b4 b4. c8 d4 r2 g, g1 
-  g r2 g1 c,2 
-  r2. g'2 d d' g,4 d' g, 
-  r2 g g1*5 
+  g g c c4. bes8 
+  a4. g8 f4. e8 d2 d4. e8 
+  f8 g a2 d,4 r4 d'2 g,4 
+  g\breve 
+  e1 e2 e2~
+  e4 c4 g'2 r1 
+  e2 g r4 c,2 c'4 
+  g4 e g2 c,1 
+  R\breve*5
+  
+  % 40
+  r2 g'2 g4 g g2 
+  r2 r4 e4 e2 r2 
+  c c4 g'4. f8 e4. d8 c4 
+  c'2 r2 r2 g2 
+  g2 g1 g2 
+  r1 g2. g4 
+  d2 r2 r1
+  R\breve*2
+  
+  % 49
+  r2 d'1 g,2 
+  b2 b a1 
+  g1. f4 d 
+  a'2. a4 g1 
+  r2 c4 f,4. g8 a4 e2 
+  r2 g1 c,2 
+  e2. e4 d2 r4 d'4~
+  d2 a2 c bes4 g 
+  d'2 r2 r1
+  R\breve*11
+  
+  % 69
+  r1  b2 b4 b4 
+  g2 g2. e2 c4~
+  c4 e4. f8 g4 r4 c c2 
+  g r2 c4 f, f2 
+  r4 c' c2 g4 c2 b8 a 
+  d4 b d2 r2 r4 d,4 
+  d4. b8 b4 b r4 g' g2 
+  R\breve
+  
+  % 77
+  r1 r2 d2~
+  d2 g e4 g2 g4 
+  b4 d2 a4 r4 e g2 
+  a4 d, e c r4 e g2 
+  c,4. d8 e2 r1
+  R\breve*3
+  
+  % 85
+  r1 r2 r4 d4 
+  g2 g r2 r4 d4 
+  d2 d r1
+  R\breve*7
+  
+  % 95
+  r1 r2 g2 
+  a2 a r2 a 
+  a2 a a a 
+  r4 a a2 a r2 
+  r1 r4 a2 c4 
+  | b2 c4 g4. a8 b4 r4 g 
+  | g4 g g2 g r2
+  R\breve*6
+  
+  % 108
+  r1 r2 e2~
+  e2 e2 e1~
+  e1 r1
+  R\breve
+  r1 r2 e2 
+  e2 e4 e a2 g 
+  a1 e 
+  R\breve*7
+  
+  % 122
+  g1. g2 
+  g\breve 
+  r2 r4 f2 f4 f c4~
+  c4 a'2 f4 r4 a a2 
+  r4 a c2 c r2
+  r4 f,2 f4 f f r4 bes4~
+  bes2 bes r1 
+  a2 d2. d,4 d2 
+  r1 a'4 d4. c8 a4 
+  r4 d4. g,8 g4 r2 g 
+  b4 b4. c8 d4 r2 g, 
+  g1 g 
+  r2 g1 c,2 
+  r2 r4 g'2 d d'4~
+  | d4 g, d' g, r2 g 
+  | g\breve~
+  g\breve~
+  g1
 }
 
-notesVIBass = \relative c {
+notesVIBassWTF = \relative c {
   \clef bass
 
   r2*111 d2 d d g2. f8 e d2 
@@ -3023,6 +3085,116 @@ notesVIBass = \relative c {
   g' r2 g g r4 g,2 d'4 
   d2 r2 d b d d1*5 
 }
+
+notesVIBass = \relative c {
+  \clef bass
+
+  R\breve*28
+  r1 g1 
+  g2 g c1 
+  r2 a a a 
+  e'1 d2 f 
+  e2. e4 a,1 
+  R\breve*6
+
+  % 40 WTF
+  r2 d2 g,4 g g'2~
+  g2 e c d
+  e1 c2 g'
+  r2 g g r4 g,~
+  g4 d' d2 r2 d2
+  b2 d2 d1
+  R\breve*2
+
+  % 48
+  r1 r2 g2~
+  g2 d f e
+  d2 f1 c2
+  e2 e d1
+  f1 e4 c g'2
+  r1 r2 c,2~
+  c2 g b a
+  c1 g2 d'
+  d2 f4 f c2 r2
+  R\breve*12
+
+  % 69
+  r1 g'1
+  e2 e c r4 c4
+  g'2 g4 g2 e4 e2~
+  e4 e e2 r2 c
+  c2 a e'2. e4
+  d4. c8 b2 r2 b'2
+  b4 g g2 c,4 e4. f8 g4
+  R\breve*2
+
+  % 78
+  r2 g2 g c,
+  f2 a g2. e4
+  f4. g8 a4 e4. f8 g a b4 e,~
+  e4 a a2 r1
+  R\breve*4
+
+  % 86
+  r2 g2 f4 d r d~
+  d4 b4. g8 g4 d'2 r2 
+  R\breve*11
+
+  % 99
+  r1 r4 d a'2
+  d,4 d e2 d r2
+  R\breve*7
+
+  % 108
+  r1 r2 a2~
+  a2 cis e a,
+  a1 r1
+  R\breve*11
+
+  % 122
+  | g1 b2 d~
+  d2 b4 g d'2 g,2
+  R\breve
+  r1 r2 c2
+  c2 c4 c f2 c
+  r2 c d1 
+  bes2 d1 g,2
+  r2 r4 d' a'2 g4. f8
+  e4 c g'2 r2 d~
+  d2 b d r
+  r4 g2 g4 g e g2
+  g2 r2 r2 c,
+  c2 e1 c2
+  | g'2 g g2. f8 e
+  d1 r2 b2
+  b\breve~
+  b\breve~
+  b1
+}
+
+% 40 VIBass or VII Bass ???
+
+% r2 d2 d4 d g2~
+% g2 c,2 g1 r1. d'2 g,4 g g'1 e2 c d e1 c2 
+% g' r2 g g r4 g, g d' 
+% d2 r2 d4 d b2 d d1 r2*11 g1 d2 f e d 
+% f1 c2 e e d1 f e4 c g'2 r1. c,1 g2 b a c1 g2 d'1 f2 c r2*51 g'1 
+% e2 e c r4 c 
+% g'2 g4 g2 e4 e2. e4 e2 
+% r2 c c a e'2. e4 
+% d4. c8 b2 r2 b' b4 g g2 
+% c,4 e4. f8 g4 r2*41 g2 f4 d r4 d2 b4. a8 g4 d'2 
+% r1*9 a'2. a4 a2 a g r2 
+% g g g r2 g g 
+% g e e r4*51 g4 a2 e r1 a4 a2 
+% a4 f d r1*9 a1 cis2 e a, a1 r1*23 g1 b2 d1 b4 g 
+% d'2 g, r2*7 c2 c c f c a'1 f2 r2 d4 f bes,2 d1 
+% r2 d2. d4 d d c2 c 
+% f f4. e8 d2 r2. d2 d4 
+% g, g g'1 e2 c d 
+% e1 c2 g' r2 g 
+% g r4 g,2 d'4 d2 r2 d 
+% b d d1*5 
 
 % ------------
 % Choir 7
