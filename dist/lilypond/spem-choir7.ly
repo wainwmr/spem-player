@@ -9,14 +9,14 @@
   <<
     \time 4/2
     \override Score.BarNumber.break-visibility = ##(#f #t #t)
-    <<
-      \notesVIISoprano
-      \addlyrics \wordsVIISoprano
-    >>
     % <<
-    %   \notesVIIAlto
-    %   \addlyrics \wordsVIIAlto
+    %   \notesVIISoprano
+    %   \addlyrics \wordsVIISoprano
     % >>
+    <<
+      \notesVIIAlto
+      \addlyrics \wordsVIIAlto
+    >>
     % <<
     %   \notesVIITenor
     %   \addlyrics \wordsVIITenor

@@ -2050,76 +2050,55 @@ wordsVIISoprano = \lyricmode {
 }
 
 wordsVIIAlto = \lyricmode {
-  % 23
-  prae -- ter in te, prae -- ter in te,
-  te, De -- _ us Is -- ra -- el, 
-  De -- us Is -- ra -- el, De -- us Is -- ra -- el, 
-  prae -- ter in te, _ De -- us Is -- ra -- el,
+  % 28
+  prae -- | ter in te, 
+  prae -- ter in | te, De -- _ _ _ us 
+  te, _ | De -- _ us Is -- ra -- _ | _ el, 
+  De -- us Is -- | ra -- el, 
+  De -- u Is -- ra -- _ el, 
+  prae -- ter in | te, De -- us | Is -- _ _ ra -- | el,
+  Is -- ra -- | el,
+  te, | De -- _ _ us, De -- us Is -- ra -- | el,
   
-  % 40
-  prae -- ter in te,
-  De -- us Is -- ra -- el,
-  te, De -- us Is -- _ ra -- _ el,
-  Is -- ra -- _ _ _ el,
-  De -- _ _ us,
-  Is -- ra -- el,
-  
-  % 50
-  qui i -- ra -- sce -- ris,
-  et pro -- pi -- ti -- us, et pro -- pi --ti -- us e -- _ _ ris,
-  et pro -- pi -- ti -- us e -- ris,
-  pro -- pi -- ti -- us,
-  
-  % 69
+  % 70
   et o -- mni -- a
   pec -- ca -- ta ho -- mi -- num,
-  ho -- mi -- _ num,
-  pec -- ca -- ta ho -- mi -- num,
+  pec -- ca -- _ ta,
   pec -- ca -- ta 
-  ho -- mi -- num
-
+  ho -- mi -- num,
+  
   % 74  
-  in tri -- bu -- la -- ti -- o -- _ _ ne,
+  in | tri -- bu -- la -- ti -- | o -- _ _ _ ne di -- mit -- _ _ | tis,
 
-  % 78
-  in tri -- bu -- la -- ti -- o -- ne di -- mit -- _ _ _ _ tis,
-  
   % 86
-  di -- mi -- _ _ tis, 
+  | di -- mi -- tis, 
+  di -- mi -- _ tis, 
   
-  % 87
-  Do -- mi -- ne De -- us, 
-
-  % 95
-  Cre -- a -- _ _ tor 
-  cae -- li et ter -- _ rae,
+  % 89
+  Do -- mi -- ne De -- _ _ _ | _ us, 
+  Do -- mi -- ne De -- _ _ us, 
+  Cre -- | a -- tor 
+  cae -- | li et ter -- rae,
   et ter -- rae,
-  et ter -- rae, 
+  
+  % 102
   Cre -- a -- tor 
-  cae -- li et ter -- _ rae
+  cae -- li et | ter -- rae
 
   % 108
   re -- spi -- ce
   
-  % 109
-  ad hu -- mi -- li -- ta -- _ _ _ tem no -- _ _ _ _ _ _ _ _ _ _ _ stram,
-  
   % 122
-  re -- _ _  spi -- ce, re -- spi -- ce, 
-
-  % 126
-  % ad hu -- mi -- li -- ta -- tem 
-  % ad hu -- mi -- li -- ta -- tem 
-  % no -- stram,
-  % no -- stram,
-  % no -- _ _ _ stram,
-  % no -- stram,
-  % ad hu -- mi -- li -- ta -- _ tem
-  % no -- _ _ stram,
-  % no -- _ stram,
-  % no -- _ _ stram,
-  % no -- _ stram,
-  % no -- stram.
+  | re --  spi -- | ce,
+  ad | hu -- mi -- li -- ta -- tem no -- stram,
+  hu -- mi -- | li -- ta -- _ tem 
+  no -- | stram,
+  no -- _ _ _ stram,
+  ad hu -- mi -- li -- ta -- | tem
+  ad | hu -- mi -- li -- ta -- _ tem
+  no -- _ _ _ _ _ | stram,
+  no -- _ stram,
+  no -- | _ _ _ _ stram.
 }
 
 wordsVIITenor = \lyricmode {
