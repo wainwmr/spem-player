@@ -1,5 +1,20 @@
 \version "2.24.3"
 
+
+% TODO: Choir 6 Tenor
+% TODO: Choir 6 Baritone
+% TODO: Choir 6 Bass
+% TODO: Choir 7 Soprano
+% TODO: Choir 7 Alto
+% TODO: Choir 7 Tenor
+% TODO: Choir 7 Baritone
+% TODO: Choir 7 Bass
+% TODO: Choir 8 Soprano
+% TODO: Choir 8 Alto
+% TODO: Choir 8 Tenor
+% TODO: Choir 8 Baritone
+% TODO: Choir 8 Bass
+
 % ------------
 % Choir 1
 % ------------
@@ -2838,41 +2853,122 @@ notesVIAlto = \relative c {
 notesVITenor = \relative c {
   \clef "treble_8"
   
-  r2*95 c'2 c c d1 e2 
-  f d2. d4 c1 r2 
-  c c c f1 f2 
-  d r2 d4*5 e8 f e2. c4 e2 a, r2 a b4 a b 
-  c d c b a e'1. a,2 b b a1 r2*21 d2 d4 b b2 r4 c2 e4. c8 c4 
-  r2 c4 g g2 r2 g'2. e4 
-  e2 r4 b b4. a8 g2 r4 g2 b4 
-  b2 r2 b2. b4 b2 r2*15 g'1 d2 f1 e2. c4 d2 d1 a2 c d1 a2 c1. 
-  d2 g, 
-  r4 c4. d8 e f g4 g,2 b4 d d, a'1 g r1*26 g'2 g1 g2 g r2 
-  g e c g' c,4 f4. e8 f d 
-  e2 r2. g,2 g4 g2 r1 d'2 d4 d d4. f8 e4 c r4 c4. a8 b c 
-  d e f4 r4 c g2 r1*2 d'2. g2 e4 g2 d4 f4. e8 d4 
-  c4. d8 e2 r2 a,4 e'2 d8 c b4 e 
-  e1 r2*17 a,4 d2. d2 r1. 
-  g,2. g4 b2 c b r2*29 e2 a, e' r2 e4 a,2 f4 
-  a e r4 a2 e4 r4 a c2 f, 
-  r1. a4 a2 e4 r4 b' 
-  e2 b r4 e, b' b e,2 b' 
-  r1*14 e1 e2 e1*2 r2*7 e2 e e g2. f4 e2. d4 c2 a e'2. d4 c b 
-  e1 a,2 r1*12 d1. d2. b4 b d2 g,4 b2 a1 r1 c2 c c4 f2 c f,4 a2 
-  r2 
-  c4*5 a4 r4 d bes f' f2 
-  r4 bes,2 d4. c8 bes4 r2. a4. g8 f d 
-  d2 r1. d'1 
-  d4 d g2. d4 d2 r1 
-  e2 e r2 e g g 
-  r2 g, c4 c b g d'2 r2 
-  d1. d1*6 
+  R\breve*23
+  r1 r2 c'2 |
+  c2 c d1 
+  e2 f d2. d4 
+  c1 r2 c 
+  c c f1 
+  f2 d r2 d2
+  d2. e8 f e2. c4 
+  e2 a, r2 a 
+  b4 a b c d c b a 
+  e'1. a,2 
+  b b a1 
+  R\breve*5
+  
+  % 40
+  r2 d2 d4 b b2 
+  r4 c2 e4. c8 c4 r2 
+  c4 g g2 r2 g'2~
+  g4 e4 e2 r4 b b4. a8 
+  g2 r4 g2 b4 b2 
+  r2 b2. b4 b2 
+  R\breve*3
+  
+  % 49
+  r1 r2 g'2~
+  g2 d2 f1 
+  e2. c4 d2 d2~
+  d2 a2 c d2~
+  d2 a2 c1~
+  c2 d2 g, r4 c4~
+  c8 d e f g4 g,2 b4 d d, 
+  a'1 g 
+  R\breve*13
+  
+  % 70
+  g'2 g1 g2 
+  g r2 g e 
+  c2 g' c,4 f4. e8 f d 
+  e2 r2 r4 g,2 g4 
+  g2 r2 r2 d'2 
+  d4 d d4. f8 e4 c r4 c4~
+  c8 a8 b c d e f4 r4 c g2 
+  R\breve
+  
+  % 78
+  d'2. g2 e4 g2 
+  d4 f4. e8 d4 c4. d8 e2 
+  r2 a,4 e'2 d8 c b4 e 
+  e1 r1
+  R\breve*3
+  
+  % 85
+  r1 r2 a,4 d~
+  d2 d r1
+  r2 g,2. g4 b2 
+  c b r1
+  R\breve*6
+  
+  % 95
+  r1 r2 e2 
+  a,2 e' r2 e4 a,~
+  a4 f a e r4 a2 e4 
+  r4 a c2 f, r2
+  | r1 a4 a2 e4 
+  r4 b' e2 b r4 e, 
+  b'4 b e,2 b' r2
+  R\breve*6
+  
+  % 104
+  r1 r2 e2~
+  e2 e e1~
+  e1 r1
+  R\breve
+  r2 e e e4 e 
+  | g2. f4 e2. d4 
+  c2 a e'2. d4 
+  c4 b e1 a,2 
+  R\breve*6
+
+  % 122
+  b2. g2 d' b4~
+  b8 c d2 g,4 r d' d2
+  r4 d,2 a'4 f a a2
+  | r4 c2 c4 c f, f'2~
+  | f4 c c2 r2 r4 f~
+  | f4 f f f f2 f
+  | r4 d2 bes4 bes2 r2
+  | r4 f2 f4 a d r4 g,~
+  | g4 g e2 r1
+  | r4 d d g g g d2
+  | r2 r4 g4. e8 e'4. d8 c4
+  | c2 r4 g4 g2 r2
+  | g2 c4 c c c2 c4
+  | r2 g'2 g4 g g g~
+  | g4 g r2 r4 g,2 d4~
+  | d4 g2 f8 e d1~
+  d\breve~
+  d1
 }
+
+  % 122 previous ending - where did this come from???
+  % d1. d2. b4 b d2 g,4 b2 
+  % a1 r1 c2 c c4 f2 c f,4 a2 
+  % r2 c4*5 a4 r4 d bes f' f2 
+  % r4 bes,2 d4. c8 bes4 r2. a4. g8 f d 
+  % d2 r1. d'1 d4 d g2. d4 d2 r1 
+  % e2 e r2 e g g r2 g, c4 c b g 
+  % d'2 r2 d1. d1*6 
+
 
 notesVIBaritone = \relative c {
   \clef bass
 
-  r2*103 g'2 g g c c4. bes8 a4. g8 
+  R\breve*25
+  r1 r2 g'2 
+  g g c c4. bes8 a4. g8 
   f4. e8 d8*7 e8 f g a2 d,4 r4 d'2 g,4 g1*2 e1 e2 e2. c4 g'2 
   r1 
   e2 g r4 c,2 c'4 g e g2 

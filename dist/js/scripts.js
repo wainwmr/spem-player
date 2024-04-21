@@ -250,21 +250,6 @@ function getPartName(n) {
   return allparts[n - 1];
 }
 
-
-// TODO: Choir 6 Tenor
-// TODO: Choir 6 Baritone
-// TODO: Choir 6 Bass
-// TODO: Choir 7 Soprano
-// TODO: Choir 7 Alto
-// TODO: Choir 7 Tenor
-// TODO: Choir 7 Baritone
-// TODO: Choir 7 Bass
-// TODO: Choir 8 Soprano
-// TODO: Choir 8 Alto
-// TODO: Choir 8 Tenor
-// TODO: Choir 8 Baritone
-// TODO: Choir 8 Bass
-
 // TODO: minimise SVGs in build process
 // TODO: minimse SVGs using <use> and <defs> elements
 // TODO:  when music ends, should show canvas highlighted again

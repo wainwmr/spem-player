@@ -1795,71 +1795,73 @@ wordsVIAlto = \lyricmode {
 
 wordsVITenor = \lyricmode {
   % 23
-  prae -- ter in te, De -- - us Is -- ra -- el, De -- _ us Is -- ra -- el, De -- _ _ us 
-  Is -- ra -- _ el, Is -- ra -- _ _ el, 
-  prae -- ter in te, De -- us Is -- ra -- _ _ _ _ _ el,
+  prae -- | ter in te, | De -- us Is -- ra -- | el, 
+  prae -- | ter in te, | De -- us Is -- | ra -- _ _ _ _ | _ el, 
+  in | te, _ _ _ _ _ _ _ | De -- us | Is -- ra -- el,
   
   % 40
   prae -- ter in te,
-  De -- _ _ us Is -- ra -- el,
-  in te, 
+  De -- _ _ us 
+  | Is -- ra -- el,
+  Is -- ra -- el,
+  in te, _ _ 
   De -- _ us,
-  De -- us Is -- ra -- el,
+  Is -- ra -- el,
   
-  % 53
-  qui i -- ra -- sce -- ris, et pro -- pi -- ti -- us, e -- ris, et pro -- pi -- ti -- _ _ _ _ us,
-  e -- _ _ _ ris,
-  et pro -- pi -- ti -- _ _ us
-  e -- _ ris,
+  % 49
+  qui i -- ra -- | sce -- _ ris et pro -- pi -- ti -- _ us, e -- ris, 
+  e -- _ _ _ _ _ _ _ _ | _ ris,
   
   % 69
-  et o -- mni -- a
-  et o -- mni -- a
-  pec -- ca -- ta, pec -- ca -- ta ho -- _ mi -- num,
-  pec -- _ ca -- ta,
-  ho -- mi -- num
+  | et o -- mni -- | a
+  pec -- ca -- | ta ho -- mi -- _ _ _ _ | num,
+  ho -- mi -- | num
 
   % 74  
-  in tri -- bu -- la -- ti -- o -- _ _ _ ne,
+  in | tri -- bu -- la -- ti -- o -- ne,
+  di -- mit -- _ _ _ _ _ _ tis,
 
   % 78
-  in tri -- bu -- la -- ti -- o -- _ ne di -- mit -- tis,
+  | in tri -- bu -- la -- | ti -- o -- _ _ _ _ ne 
+  di -- mit -- _ _ _ _ tis,
   
-  % 86
-  di -- mi -- _ _ _ tis, 
+  % 85
+  di -- mi -- tis, 
   
   % 87
-  Do -- mi -- ne De -- us, 
+  Do -- mi -- ne | De -- us, 
 
   % 95
-  Cre -- a -- tor 
+  Cre -- | a -- tor 
   cae -- li et ter -- rae,
-  et ter -- _ rae,
-  et ter -- rae, Cre -- a -- tor 
-  cae -- li et ter -- _ rae
+  cae -- li
+  et ter -- rae,
+  et ter -- rae, 
+  Cre -- a -- tor 
+  cae -- | li et ter -- rae
 
   % 108
   re -- spi -- ce
   
-  % 109
-  ad hu -- mi -- li -- ta -- tem 
-  no -- _ _ _ stram,
+  % 112
+  ad hu -- mi -- li -- | ta -- _ _ _ | _ tem no -- _ | _ _ _ stram,
   
   % 122
-  re -- _ _ _ _ _ _ _ spi -- ce, re -- _ spi -- _ ce, 
+  | re -- spi -- ce, re -- _ _ spi -- _ ce, 
+  re -- spi -- _ _ ce
 
   % 126
-  % ad hu -- mi -- li -- ta -- _ tem 
-  % no -- _ _ _ stram,
-  % no -- stram,
-  % no -- _ _ _ _ stram,
-  % no -- stram,
-  % ad hu -- mi -- li -- ta -- tem no -- _ stram,
-  % no -- _ stram,
-  % no -- _ stram,
-  % no -- _ _ stram,
-  % no -- _ stram,
-  % no -- stram.
+  ad hu -- mi -- li -- ta -- _ tem,
+  ad hu -- mi -- li -- ta -- tem 
+  no -- _ stram,
+  no -- _ _  stram,
+  no -- _ stram,
+  ad hu -- mi -- li -- ta -- tem
+  no -- _ _ _ _ | stram,
+  no -- stram,
+  | ad hu -- mi -- li -- ta -- tem,
+  ad hu -- mi -- li -- ta -- tem 
+  no -- _ _ _ _ stram.
 }
 
 wordsVIBaritone = \lyricmode {
