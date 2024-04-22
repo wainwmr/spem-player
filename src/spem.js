@@ -184,7 +184,6 @@ var previousBarHighlight;
 
 // where b = 0 to 139
 function setBar(b, changedChoirs = false) {
-  console.log("setBar", b);
   if (b == currentBar && !changedChoirs) {
     return;
   }
@@ -695,13 +694,19 @@ function keyboardTapped(e) {
 
 // TODO: Not convinced the Maths for getTouchPos() is right...
 function getTouchPos(evt) {
-  return (evt.targetTouches[0].pageX * 140 / canvas.clientWidth);
+  var rect = canvas.getBoundingClientRect();
+  const choir = Math.ceil(8 * ((evt.targetTouches[0].clientY - rect.top - (canvasPadding))  / (canvas.clientHeight - (2 * canvasPadding))));
+  const bar = Math.round(140 * ((evt.targetTouches[0].clientX - rect.left - (canvasPadding))  / (canvas.clientWidth - (2 * canvasPadding))));
+  return [choir, bar];
 }
+
 
 // BUG: on mobile, touch to move bar to half-way and play
 // and it starts from bar 0.
 function touchStarted(evt) {
-  setBar(Math.round(getTouchPos(evt)));
+  const [c, b] = getTouchPos(evt);
+  setChoir(c);
+  setBar(b);
   pauseAndRepaint(false);
 
   // BUG: [Violation] Added non-passive event listener to a scroll-blocking <some> event.
@@ -710,7 +715,9 @@ function touchStarted(evt) {
   evt.preventDefault();
 
   canvas.addEventListener("touchmove", (evt) => {
-    setBar(Math.round(getTouchPos(evt)));
+    const [c, b] = getTouchPos(evt);
+    setChoir(c);
+    setBar(b);
     pauseAndRepaint(false);
   });
   canvas.addEventListener("touchend", () => {
@@ -926,7 +933,6 @@ function seek(b, direction) {
   // Read lilypond input into dict{ position -> [ {choir, part, note}], ... }
   // Read lilypond into ranges[choir][part] = [ {from, to}, ... ]
 
-  console.log("seeking", b, direction, currentChoir);
   const choirnotes = dict[b].filter(x => x.c == currentChoir - 1);
   const singing = choirnotes.length != 0;
 
@@ -937,9 +943,13 @@ function seek(b, direction) {
     b = b + direction;
     const newsinging = (dict[b].filter(x => x.c == currentChoir - 1).length != 0);
     changed = (singing != newsinging)
-    console.log("singing in bar ", b, newsinging, changed);
   } while (!changed && b > 0 && b < 139);
   return b;
+}
+
+function setVH() {
+  let vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
 }
 
 // -----------------------------------------------------
@@ -951,8 +961,7 @@ window.addEventListener("load", async () => {
   // On mobiles, 100vh sometimes is the total vertical space
   // of the browser, but we don't want to include the browser's
   // header and footer in that, so calculate using visible vertical space.
-  let vh = window.innerHeight * 0.01;
-  document.documentElement.style.setProperty('--vh', `${vh}px`);
+  setVH();
 
   loadColors();
   calculateCanvasSize();
@@ -996,4 +1005,6 @@ window.addEventListener("load", async () => {
 
   // Next line not really necessary, but will make it look clearer on browser resize
   // window.addEventListener("resize", () => {calculateCanvasSize(); draw(); });
+  window.addEventListener('resize', () => setVH());
+
 });
