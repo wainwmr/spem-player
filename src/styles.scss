@@ -73,6 +73,7 @@ body {
 
 .viewportDiv {
     display: flex;
+    box-sizing: border-box;
     flex-direction: column;
     background: var(--color-background);
     height: 100vh;
