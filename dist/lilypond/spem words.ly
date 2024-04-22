@@ -2333,52 +2333,69 @@ wordsVIIISoprano = \lyricmode {
 }
 
 wordsVIIIAlto = \lyricmode {
-  % 28
+  % 3
+  prae -- | ter in te, | De -- us Is -- ra -- | el,
   prae -- ter in te, 
-  prae -- ter in te, De -- _ _ _ us 
-  te, _ De -- _ us Is -- ra -- _ _ el, 
-  De -- us Is -- ra -- el, 
-  De -- u Is -- ra -- _ el, 
-  prae -- ter in te, De -- us Is -- _ _ ra -- el,
+  in te, | De -- _ us Is -- ra -- el,
+  in te, 
+  De -- _ us Is -- ra -- el,
+  in | te, De -- _ us, 
   Is -- ra -- el,
-  te, De -- _ _ us, De -- us Is -- ra -- el,
   
-  % 70
-  et o -- mni -- a
+  % 47
+qui i -- | ra -- sce -- ris,
+et | pro -- pi -- ti -- us e -- ris,
+et pro -- pi -- ti -- us 
+e -- | _ _ _ ris,
+
+  % 69
+  et o -- mni -- _ _ a
+  pec -- | ca -- ta ho -- mi -- | num,
   pec -- ca -- ta ho -- mi -- num,
-  pec -- ca -- _ ta,
-  pec -- ca -- ta 
   ho -- mi -- num,
   
   % 74  
-  in tri -- bu -- la -- ti -- o -- _ _ _ ne di -- mit -- _ _ tis,
+  in tri -- bu -- la -- ti -- o -- _ ne 
+  di -- mit -- _ tis,
+  | di -- mit -- _ _ _ _ | tis,
 
   % 86
-  di -- mi -- tis, 
-  di -- mi -- _ tis, 
+  | di -- mi -- tis, 
+  di -- | mi -- _ tis, 
   
   % 89
-  Do -- mi -- ne De -- _ _ _ _ us, 
-  Do -- mi -- ne De -- _ _ us, 
-  Cre -- a -- tor 
-  cae -- li et ter -- rae,
-  et ter -- rae,
+  Do -- mi -- ne | De -- us, 
+  Do -- mi -- ne | De -- us, 
+  Cre -- | a -- tor 
+  cae -- | li et ter -- _ _ rae,
+
+  % 99
+  | et ter -- _ _ rae,
   
   % 102
-  Cre -- a -- tor 
-  cae -- li et ter -- rae
+  Cre -- a -- _ tor 
+  cae -- _ li et | ter -- rae
 
   % 108
-  re -- spi -- ce
+  re -- spi -- ce, re -- spi -- _ _ ce, 
   
   % 122
-  % re --  spi -- ce,
-  % ad hu -- mi -- li -- ta -- tem no -- stram,
-  % hu -- mi -- li -- ta -- _ tem 
-  % no -- stram,
-  % no -- _ _ _ stram,
-  % ad hu -- mi -- li -- ta -- tem
-  % ad hu -- mi -- li -- ta -- _ tem
+  | re --  spi -- | ce,
+  ad hu -- mi -- li -- | ta -- _ tem,
+  ad hu -- mi -- li -- ta -- _ tem 
+  no -- | stram,
+  no -- stram,
+  no -- _ _ _ | stram, no -- stram,
+  | ad hu -- mi -- li -- ta -- _ | tem
+  no -- _ stram,
+  no -- | stram,
+  no -- _ _ stram,
+  no -- stram,
+  no -- _ _ _ stram,
+  no -- | stram,
+  no -- stram,
+  no -- stram, no -- _ _ stram, no -- | stram.
+  % ad | hu -- mi -- li -- ta -- _ tem
   % no -- _ _ _ _ _ stram,
   % no -- _ stram,
   % no -- _ _ _ _ stram.

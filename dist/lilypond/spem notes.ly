@@ -3766,27 +3766,92 @@ notesVIIISoprano = \relative c {
 }
 
 notesVIIIAlto = \relative c {
-  r2*131 a''2 a g c1 bes2. g4 a2 a a1*2 r2*5 g2 
-  e2. g d2 r4 a2 a4 
-  d2 b4 g'2 g4. a8 b4 r2. e, b2 r2 c2. e4 c g'2 g4 
-  g2 r2 b, b b2. d4 
-  d2 r2 g2. b4 g2 r2*5 c1 g2 b b a 
-  r4 g g b4. a8 g2 f4 g2 r2. d2 a c g4 c2 r2 f a4. g8 f2 c' r2*67 g2 
-  g2. e2 c4 e g r4 g 
-  c2. g2 g e4 e2 r4 e 
-  a2 a4 a2 a4 a2 r4*5 g4. d8 d4 r2 d4 g,4. g'8 g4 g g4. c,8 
-  c4 r2. d2 a'4. g8 c4 r2 c,4. d8 e4 a,2 a' d,4 d1 r1*15 g4 g2 
-  g4 r2 d' d4. b8 b2 
-  r2*7 g2. g4 g2 g c, r2*7 a'2. a4 a2 a b r2 
-  b c b r2 b c4 g4. f8 d4 a'2 g r1*6 f4 a4. g8 e4 a2 r4*21 c4 
-  a4. b8 c2 r1 f,4. g8 a4 
-  a a a r1*9 a2. e2 a, a' e f8 g 
-  a2 r1*23 b1. b2 b1*2 r2 a a a c a 
-  a1 r4 f2 f4 f2 a2. f4 f2 r2 f bes, r4 g'2. g2 r4*5 d4. bes4 
-  g4. g'4 
-  g2 r1 g2 g4 g b2. g4 g2 r4 g c, e r4 e e2 r4 
-  g c, g' g2 r2 g c, r2. g'4. b8 b4. g8 g4 r4 d d2 r4 b g2 r4 g'2 
-  d4 g4. a8 b2 g4 b b1*3 
+  R\breve*32
+
+  % 33
+  r1 r2 a''2 
+  a g c1 
+  bes2. g4 a2 a 
+  a\breve 
+  R\breve
+  r2 g2 e2. g4~
+  g2 d r4 a2 a4 
+  d2 b4 g'2 g4. a8 b4 
+  r2 r4 e,2. b2 
+  r2 c2. e4 c g'~
+  g4 g g2 r2 b, 
+  b b2. d4 d2 
+  r2 g2. b4 g2 
+  R\breve
+  r2 c1 g2 
+  b b a r4 g 
+  g4 b4. a8 g2 f4 g2 
+  r2 r4 d2 a c4~
+  c4 g4 c2 r2 f 
+  a4. g8 f2 c' r2
+  R\breve*16
+  
+  % 69
+  r1 g2 g2~
+  g4 e2 c4 e g r4 g 
+  c2. g2 g e4 
+  e2 r4 e a2 a4 a~
+  a4 a a2 r1
+  r4 g4. d8 d4 r2 d4 g,4~
+  g8 g'8 g4 g g4. c,8 c4 r2
+  r4 d2 a'4. g8 c4 r2 
+  c,4. d8 e4 a,2 a' d,4 
+  d1 r1
+  R\breve*7
+  
+  % 86
+  g4 g2 g4 r2 d' 
+  d4. b8 b2 r1
+  R\breve
+  r2 g2. g4 g2 
+  g2 c, r1
+  R\breve
+  r2 a'2. a4 a2 
+  a2 b r b 
+  c b r b 
+  c4 g4. f8 d4 a'2 g 
+  R\breve*3
+  
+  % 99
+  f4 a4. g8 e4 a2 r2
+  R\breve*2
+  
+  % 102
+  r2 r4 c4 a4. b8 c2 
+  r1 f,4. g8 a4 a 
+  a4 a r2 r1
+  R\breve*3
+  
+  % 108
+  r1 r2 a2~
+  a4 e2 a, a' e4~
+  e4 f8 g a2 r1
+  R\breve*11
+  
+  % 122
+  b1. b2 
+  b\breve 
+  r2 a a a4 a 
+  c2 a a1 
+  r4 f2 f4 f f a2~
+  a4 f4 f2 r2 f 
+  bes, r4 g'2. g2 
+  r1 r4 d4. bes8 bes g8 
+  g4 g'4 g2 r1 
+  g4. g8 g4 g b2. g4 
+  g2 r4 g c, e r4 e 
+  e2 r4 g c, g' g2 
+  r2 g c, r
+  r4 g'4. b8 b4. g8 g4 r4 d 
+  d2 r4 b g2 r4 g'~
+  g4 d4 g4. a8 b2 g4 b 
+  b\breve~
+  b1
 }
 
 notesVIIITenor = \relative c {
