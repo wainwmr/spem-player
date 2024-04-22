@@ -17,14 +17,14 @@
     %   \notesVIIIAlto
     %   \addlyrics \wordsVIIIAlto
     % >>
-    <<
-      \notesVIIITenor
-      \addlyrics \wordsVIIITenor
-    >>
     % <<
-    %   \notesVIIIBaritone
-    %   \addlyrics \wordsVIIIBaritone
+    %   \notesVIIITenor
+    %   \addlyrics \wordsVIIITenor
     % >>
+    <<
+      \notesVIIIBaritone
+      \addlyrics \wordsVIIIBaritone
+    >>
     % <<
     %   \notesVIIIBass
     %   \addlyrics \wordsVIIIBass

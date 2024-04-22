@@ -2462,45 +2462,39 @@ wordsVIIITenor = \lyricmode {
 }
 
 wordsVIIIBaritone = \lyricmode {
-  % 28
-  prae -- ter in te, De -- _ us Is -- ra -- el, prae -- ter in te, De -- us Is -- ra -- el,
+  % 33
+  prae -- | ter in te, | De -- us Is -- ra -- | el,
+  prae -- ter in te, De -- us | Is -- ra -- el, 
+  De -- us Is -- ra -- el, 
+  | te, De -- us Is -- ra -- | el, 
+  Is -- ra -- el, __ 
+
+  % 45
+  qui i -- ra -- sce -- | ris, et pro -- | pi -- ti -- us e -- _ |ris,
+  e -- _ ris,
+  e -- _ _ _ ris,
   
-  % 38
-  prae -- ter in te, De -- _ us Is -- ra -- el,
-  Is -- ra -- el,
-  in te, De -- _ _ _ us 
-  in te, De -- _ us 
-  Is -- ra -- el,
-  De -- us
-  Is -- ra -- el,
-  De -- us Is -- ra -- el,
-  
-  
-  % 48
-  qui i -- ra -- sce -- ris, 
-  
-  % 69
-  et o -- mni -- a 
-  pec -- ca -- ta ho -- mi -- num,
-  pec -- ca -- ta 
-  pec -- ca -- ta ho -- mi -- num, 
+  % 70
+  | et o -- mni -- a pec -- ca -- ta ho -- mi -- num,
+  pec -- | ca -- ta 
+  ho -- mi -- num, 
   ho -- mi -- num, 
 
   % 74  
   in tri -- bu -- la -- ti -- o -- ne,
-  di -- mit -- tis,
-  di mit -- tis, di mit -- _ _ tis,
+  di -- mit -- _ _ _ _ | tis, di -- mit -- _ _ _ _ | tis,
   
   % 86
-  di -- mit -- tis, 
-  di -- mit -- _ _ _ tis, 
+  | di -- mit -- _ _ tis, 
+  di -- mit -- _ _ tis, 
 
   % 92
-  Do -- mi -- ne De -- _ _ _ _ _ us,
+  Do -- mi -- ne | De -- us,
+  Do -- mi -- ne | De -- us,
   
   % 93
-  Cre -- a -- tor 
-  cae -- li et ter -- rae, __ _ _ 
+  Cre -- a -- _ tor 
+  cae -- li et _ ter -- _ rae,
 
   % 99
   et ter -- rae,
@@ -2513,17 +2507,19 @@ wordsVIIIBaritone = \lyricmode {
   re -- spi -- ce
   
   % 122
-  % re -- spi -- ce,
-  % ad hu -- mi -- li -- ta -- tem no -- stram,
-  % no -- _ _ stram,
-  % no -- _ stram,
-  % no -- _ _ _ _ stram,
-  % no -- _ stram,
-  % ad hu -- mi -- li -- ta -- tem 
-  % no -- stram,
-  % no -- _ _ _ _ _ stram,
-  % no -- stram,
-  % no -- stram.
+  | re -- spi -- | ce,
+  ad | hu -- mi -- li -- ta -- _ | tem 
+  ad | hu -- mi -- li -- ta -- tem 
+  no -- _ stram,
+  no -- stram,
+  no -- stram,
+  no -- _ stram,
+  no -- stram,
+  ad hu -- mi -- li -- ta -- tem no -- _ _ _ stram,
+  no -- _ _ _ stram,
+  no -- _ stram,
+  no -- | stram,
+  no -- stram.
 }
 
 wordsVIIIBass = \lyricmode {
