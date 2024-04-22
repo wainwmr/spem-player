@@ -253,7 +253,6 @@ function getPartName(n) {
 // TODO: minimise SVGs in build process
 // TODO: minimse SVGs using <use> and <defs> elements
 // TODO: click on score should send you to bar.  And part?
-// BUG: when page is narrow, showing 2 previous bars is uncomfortable/wrong
 // TODO: Change dark mode to moon/sun icons
 // TODO: Add hide/show icon to remove score
 // TODO: Visual effect for false relations
@@ -389,13 +388,20 @@ function setBar(b, changedChoirs = false) {
   }
   previousBarHighlight = newElement;
 
+
+  // determine how many bars from the left should be the
+  // highlighted bar.  It has to depend on the width
+  // of the window.
+  var barsFromLeft = 3;
+  barsFromLeft = Math.ceil(spemscore.clientWidth / 300);
+
   // scroll to current bar
   var pos = 0;
-  if (b > 2) {
-    pos = (scorebars[currentChoir - 1][b - 3] / svg.getBBox().width) * svg.getBoundingClientRect().width;
+  if (b >= barsFromLeft) {
+    pos = (scorebars[currentChoir - 1][b - barsFromLeft] / svg.getBBox().width) * svg.getBoundingClientRect().width;
   }
 
-  console.log("scrolling to bar " + b + " at " + pos, scorebars[currentChoir - 1][b - 3], svg.getBBox().width, svg.getBoundingClientRect().width);
+  console.log("scrolling to bar " + b + " at " + pos, scorebars[currentChoir - 1][b - barsFromLeft], svg.getBBox().width, svg.getBoundingClientRect().width);
   spemscore.scrollTo({
     top: 0,
     left: pos, //b * scorebarwidth,
