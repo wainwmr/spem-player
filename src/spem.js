@@ -695,8 +695,12 @@ function keyboardTapped(e) {
 // TODO: Not convinced the Maths for getTouchPos() is right...
 function getTouchPos(evt) {
   var rect = canvas.getBoundingClientRect();
-  const choir = Math.ceil(8 * ((evt.targetTouches[0].clientY - rect.top - (canvasPadding))  / (canvas.clientHeight - (2 * canvasPadding))));
-  const bar = Math.round(140 * ((evt.targetTouches[0].clientX - rect.left - (canvasPadding))  / (canvas.clientWidth - (2 * canvasPadding))));
+  var choir = Math.ceil(8 * ((evt.targetTouches[0].clientY - rect.top - (canvasPadding))  / 
+    (canvas.clientHeight - (2 * canvasPadding))));
+  choir = Math.min(Math.max(1, choir), 8); // must be from 1 to 8
+  var bar = Math.round(140 * ((evt.targetTouches[0].clientX - rect.left - (canvasPadding))  / 
+  (canvas.clientWidth - (2 * canvasPadding))));
+  bar = Math.min(Math.max(0, bar), 139); // must be from 0 to 139
   return [choir, bar];
 }
 
