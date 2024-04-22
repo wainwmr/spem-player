@@ -88,8 +88,6 @@ function getPartName(n) {
 
 // TODO: minimise SVGs in build process
 // TODO: minimse SVGs using <use> and <defs> elements
-// TODO:  when music ends, should show canvas highlighted again
-// TODO: add bar 138 1/2?? like the audio?
 // TODO: click on score should send you to bar.  And part?
 // BUG: when page is narrow, showing 2 previous bars is uncomfortable/wrong
 // TODO: Change dark mode to moon/sun icons
@@ -97,7 +95,6 @@ function getPartName(n) {
 // TODO: Visual effect for false relations
 // TODO: switching dark mode should not stop play
 // TODO: Better font/graphic for Spem Player title
-// BUG: Kinsta not loading spem notes.ly for some reason
 // BUG: can scroll up and down a tiny bit in score
 // BUG: [Violation] Forced reflow while executing JavaScript took 36ms  (this doesn't happen when you have already manually adjusted the height of the score - something to do with the flex: 1 after the reload?)
 // BUG: Uncaught DOMException: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node. at setBar:239
