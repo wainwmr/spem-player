@@ -13,14 +13,14 @@
     %   \notesVIIISoprano
     %   \addlyrics \wordsVIIISoprano
     % >>
-    <<
-      \notesVIIIAlto
-      \addlyrics \wordsVIIIAlto
-    >>
     % <<
-    %   \notesVIIITenor
-    %   \addlyrics \wordsVIIITenor
+    %   \notesVIIIAlto
+    %   \addlyrics \wordsVIIIAlto
     % >>
+    <<
+      \notesVIIITenor
+      \addlyrics \wordsVIIITenor
+    >>
     % <<
     %   \notesVIIIBaritone
     %   \addlyrics \wordsVIIIBaritone

@@ -1,9 +1,5 @@
 \version "2.24.3"
 
-% TODO: Choir 7 Bass
-% TODO: Choir 8 Soprano
-% TODO: Choir 8 Alto
-% TODO: Choir 8 Tenor
 % TODO: Choir 8 Baritone
 % TODO: Choir 8 Bass
 
@@ -3856,30 +3852,91 @@ notesVIIIAlto = \relative c {
 
 notesVIIITenor = \relative c {
   \clef "treble_8"
+  R\breve*33
+
+  % 34
+  r2 e'2 c c 
+  g' d4 d e2. e4 
+  e1 r1
+  R\breve
+  r2 b2 c c 
+  d2. e4 f1 
+  g2 d1 d2 
+  g,1 r2 g' 
+  g2 g c,2. e4 
+  e1 r2 r4 d~
+  d4 d4. c8 b4 r4 g2 g4 
+  g1 r1
+  r2 g'1 d2 
+  f2 f e4 e2 c4 
+  d2. g,4 a4. b8 c4 g~
+  g4 d' b d r4 d2 c4 
+  d2. d4 d2 c4 a 
+  r4 c e g2 d4 r4 d d 
+  f2 c4 c2 bes4 g 
+  d'2 r2 r1
+  R\breve*16
   
-  r2*133 e'2 c c g' d4 d e2. e4 e1 r2*7 b2 c c d2. e4 f1 g2 d1 
-  d2 g,1 
-  r2 g' g g c,2. e4 
-  e1 r2. d2 d4. c8 b4 
-  r4 g2 g4 g1 r1. g'1 d2 f f e4 e2 c4 d2. g,4 a4. b8 c4 g2 d'4 
-  b 
-  d r4 d2 c4 d2. d4 d2 c4 
-  a r4 c e g2 d4 r4 d d f2 
-  c4 c2 bes4 g d'2 r1*35 e2 e2. e4 e1 r4 g2 e4 a, c4. c8 c4 r2 e4 
-  e4. c8 c4 r4 
-  g'4. d8 d4. b8 b4 r2 b b4. b8 b4 
-  b r4 e2 e4 r2 a,4. b8 c4 g b 
-  g r4 c2 f4 e2 d4. c8 b1 r1*15 g'4 d2 b4 r2 d d r1*4 g,2. g4 
-  b2 c a r2*7 c2. c4 e2 f d r2 
-  d e d r2 d e 
-  d c b r4*25 a4. b8 c4 f,2 r4*21 c'4 c2 c r1 d4 a a 
-  a4. d,8 a'4 r1*9 e'1 e2 e1*2 r1*23 d1. d2 d1*2 r4*11 c2 c4 
-  c2 c4 f2 c4 c1 c r2. bes4. a8 f4 bes2. g4 r4 d'4. a8 a4. d,8 
-  d4 r4 a' d2 r4 g, g2 r2 a b b b4 g d'1 
-  b2 e1 r2 d4 g, g2 
-  r4 e'2. e4 e, e4. f8 g4 e r4 g 
-  d d'2 b4 r4 g2 g' g4. d8 g4 
-  g2 r1 g g1*3 
+  % 70
+  r1 r2 e2 
+  e2. e4 e1 
+  r4 g2 e4 a, c4. c8 c4 
+  r2 e4 e4. c8 c4 r4 g'4~
+  g8 d8 d4. b8 b4 r2 
+  b b4. b8 b4 b r4 e2 e4 
+  r2 a,4. b8 c4 g b g 
+  r4 c2 f4 e2 d4. c8 
+  b1 r1
+  R\breve*7
+  
+  % 86
+  g'4 d2 b4 r2 d 
+  d2 r2 r1
+  R\breve
+  r2 g,2. g4 b2 
+  c a r1
+  R\breve
+  r2 c2. c4 e2 
+  f d r2 d 
+  e d r2 d 
+  e d c b 
+  R\breve*3
+  
+  % 99
+  r4 a4. b8 c4 f,2 r2
+  R\breve*2
+  
+  % 102
+  r2 r4 c'4 c2 c 
+  r1 d4 a a a~
+  a8 d, a'4 r2 r1
+  R\breve*3
+  
+  % 108
+  r1 r2 e'2~
+  e2 e2 e1~
+  e1 r1
+  R\breve*11
+  
+  % 122
+  d1. d2 
+  d\breve 
+  R\breve
+  r2 r4 c2 c4 c2 
+  c4 f2 c4 c1 
+  c1 r2 r4 bes4~
+  bes8 a f4 bes2. g4 r4 d'4~
+  d8 a a4. d,8 d4 r4 a' d2 
+  r4 g, g2 r2 a 
+  b2 b4 b b g d'2~
+  d2 b2 e1 
+  r2 d4 g, g2 r4 e'4~
+  e4 e e e, e4. f8 g4 e 
+  r4 g d d'2 b4 r4 g~
+  g4 g'2 g4. d8 g4 g2 
+  r1 g 
+  g\breve~
+  g1
 }
 
 notesVIIIBaritone = \relative c {
