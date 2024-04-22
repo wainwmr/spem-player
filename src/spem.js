@@ -695,7 +695,7 @@ function getTouchPos(evt) {
 // BUG: on mobile, touch to move bar to half-way and play
 // and it starts from bar 0.
 function touchStarted(evt) {
-  setBar(getTouchPos(evt));
+  setBar(Math.round(getTouchPos(evt)));
   pauseAndRepaint(false);
 
   // BUG: [Violation] Added non-passive event listener to a scroll-blocking <some> event.
@@ -703,8 +703,8 @@ function touchStarted(evt) {
   // to move the screen around when on mobile.
   evt.preventDefault();
 
-  canvas.addEventListener("touchmove", (e) => {
-    setBar(getTouchPos(e));
+  canvas.addEventListener("touchmove", (evt) => {
+    setBar(Math.round(getTouchPos(evt)));
     pauseAndRepaint(false);
   });
   canvas.addEventListener("touchend", () => {
