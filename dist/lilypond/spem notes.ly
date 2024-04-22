@@ -1,7 +1,5 @@
 \version "2.24.3"
 
-% TODO: Choir 8 Bass
-
 % ------------
 % Choir 1
 % ------------
@@ -3153,30 +3151,6 @@ notesVIBass = \relative c {
   b1
 }
 
-% 40 VIBass or VII Bass ???
-
-% r2 d2 d4 d g2~
-% g2 c,2 g1 r1. d'2 g,4 g g'1 e2 c d e1 c2 
-% g' r2 g g r4 g, g d' 
-% d2 r2 d4 d b2 d d1 r2*11 g1 d2 f e d 
-% f1 c2 e e d1 f e4 c g'2 r1. c,1 g2 b a c1 g2 d'1 f2 c r2*51 g'1 
-% e2 e c r4 c 
-% g'2 g4 g2 e4 e2. e4 e2 
-% r2 c c a e'2. e4 
-% d4. c8 b2 r2 b' b4 g g2 
-% c,4 e4. f8 g4 r2*41 g2 f4 d r4 d2 b4. a8 g4 d'2 
-% r1*9 a'2. a4 a2 a g r2 
-% g g g r2 g g 
-% g e e r4*51 g4 a2 e r1 a4 a2 
-% a4 f d r1*9 a1 cis2 e a, a1 r1*23 g1 b2 d1 b4 g 
-% d'2 g, r2*7 c2 c c f c a'1 f2 r2 d4 f bes,2 d1 
-% r2 d2. d4 d d c2 c 
-% f f4. e8 d2 r2. d2 d4 
-% g, g g'1 e2 c d 
-% e1 c2 g' r2 g 
-% g r4 g,2 d'4 d2 r2 d 
-% b d d1*5 
-
 % ------------
 % Choir 7
 % ------------
@@ -3454,18 +3428,6 @@ notesVIITenor = \relative c {
 
 }
 
-% 122 VIITenor
-% b2. g2 d' b4. c8 d2 g, d'4 d2 
-% r4 d,2 a'4 f a a2 
-% r4 c2 c f,4 f'2. c4 c2 r2. 
-% f f4 f f2 f r4 d2 
-% bes4 bes2 r2. f2 f4 a r2 
-% g g4 e2 r4*5 d4 d 
-% g g2 d r2. g4. e8 e'4. d8 
-% c4 c2 r4 g g2 r2 g c4 
-% c c2. c4 r2 g' g4 g g2. g4 
-% r2. g,2 d g f8 e d1*4 
-
 notesVIIBaritone = \relative c {
   \clef bass
   R\breve*27
@@ -3641,31 +3603,6 @@ notesVIIBass = \relative c {
   d\breve~
   d1
 }
-
-% From VII Bass
-% r1 r2 g1 g2 g c1 
-% r2 a a a e'1 
-% d2 f e2. e4 a,1 
-% r2*15 d2 d4 d g1 c,2 g1 r1. d'2 g,4 g g'1 e2 c d e1 c2 
-% g' r2 g g r4 g, g d' 
-% d2 r2 d4 d b2 d d1 r2*11 g1 d2 f e d 
-% f1 c2 e e d1 f e4 c g'2 r1. c,1 g2 b a c1 g2 d'1 f2 c r2*51 g'1 
-% e2 e c r4 c 
-% g'2 g4 g2 e4 e2. e4 e2 
-% r2 c c a e'2. e4 
-% d4. c8 b2 r2 b' b4 g g2 
-% c,4 e4. f8 g4 r2*41 g2 f4 d r4 d2 b4. a8 g4 d'2 
-% r1*9 a'2. a4 a2 a g r2 
-% g g g r2 g g 
-% g e e r4*51 g4 a2 e r1 a4 a2 
-% a4 f d r1*9 a1 cis2 e a, a1 r1*23 g1 b2 d1 b4 g 
-% d'2 g, r2*7 c2 c c f c a'1 f2 r2 d4 f bes,2 d1 
-% r2 d2. d4 d d c2 c 
-% f f4. e8 d2 r2. d2 d4 
-% g, g g'1 e2 c d 
-% e1 c2 g' r2 g 
-% g r4 g,2 d'4 d2 r2 d 
-% b d d1*5 
 
 % ------------
 % Choir 8
@@ -4029,25 +3966,79 @@ notesVIIIBaritone = \relative c {
 
 notesVIIIBass = \relative c {
   \clef bass
+  R\breve*37
 
-  r2*149 g2 c c g'1 f2 
-  a g2. g4 g2 g g1 e4 c g'1 c,2 c1*2 g1 g1*2 
-  r2 g'1 d2 f e 
-  d f1 c2 e e 
-  d1. e4 c d2 d1 e2 f2. g4 a f a2 e4 g2 c,4 g'2 r2*71 g,1 c1. 
-  c2 
-  c1*2 r2 c 
-  a f a1 c 
-  g r2 g g g 
-  c c d1 c2 b 
-  a2. b4 c2 d g,1 
-  r2*31 d'2 d1 d1*2 r2*17 a2. a4 c2 d g, r2 
-  g c g r2 g c 
-  g c4 a e'2 r4*51 c4 f2 c f, r4 c' d d a2 d r1*9 a1 a2 a1*2 
-  r1*23 g1. g2 g1*2 r1. f2 f f 
-  a f f1 r2 f 
-  f f bes1. g1 bes2 d1. g,2 c 
-  e d1 g, r2 
-  g1 d'4. f8 e4. d8 c1 
-  b2 c g'1 c,2 c1 d2 b r4 d2 g,4 g1*7 
+  % 38
+  r2 g2 c c 
+  g'1 f2 a 
+  g2. g4 g2 g 
+  g1 e4 c g'2~
+  g2 c,2 c1~
+  c1 g1 
+  g\breve
+  r2 g'1 d2 
+  f e d f~
+  f2 c e e 
+  d1. e4 c 
+  d2 d1 e2 
+  f2. g4 a f a2 
+  e4 g2 c,4 g'2 r2
+  R\breve*17
+  
+  % 69
+  r1 g,1 
+  c1. c2 
+  c\breve
+  r2 c a f 
+  a1 c2 c 
+  g1 r2 g 
+  g2 g c c 
+  d1 c2 b 
+  a2. b4 c2 d 
+  g,1 r1
+  R\breve*7
+
+  % 86
+  r2 d'2 d1 
+  d\breve 
+  R\breve*4
+  
+  % 92
+  r2 a2. a4 c2 
+  d g, r2 g 
+  c g r g 
+  c g c4 a e'2 
+  R\breve*6
+  
+  % 102
+  r2 r4 c4 f2 c 
+  f, r4 c' d d a2 
+  d2 r2 r1
+  R\breve*3
+  
+  % 108
+  r1 r2 a~ 
+  a2 a a1~
+  a1 r1
+  R\breve*11
+
+  % 122 
+  g1. g2 
+  g\breve 
+  r1 r2 f2 
+  f2 f4 f a2 f 
+  f1 r2 f 
+  f2 f4 f bes1~
+  bes2 g1 bes2 
+  d1. g,2 
+  c e d1 
+  g, r2 g2~
+  g4 g d'4. f8 e4. d8 c2~
+  c2 b c g'~
+  g2 c, c1 
+  d2 b r4 d2 g,4
+  g\breve~
+  g\breve~
+  g\breve~
+  g1
 }
