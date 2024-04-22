@@ -928,8 +928,8 @@ function seek(b, direction) {
 
   console.log("seeking", b, direction, currentChoir);
   const choirnotes = dict[b].filter(x => x.c == currentChoir - 1);
-  const singing  = choirnotes.length != 0;
-  
+  const singing = choirnotes.length != 0;
+
   // loop until we find a bar where choir is not doing what it's doing in currentBar
 
   var changed = false;
@@ -947,6 +947,12 @@ function seek(b, direction) {
 // -----------------------------------------------------
 
 window.addEventListener("load", async () => {
+
+  // On mobiles, 100vh sometimes is the total vertical space
+  // of the browser, but we don't want to include the browser's
+  // header and footer in that, so calculate using visible vertical space.
+  let vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
 
   loadColors();
   calculateCanvasSize();
