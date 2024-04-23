@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spem Player</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <!-- <link rel="manifest" href="assets/site.webmanifest"> -->
+
+    <script src="https://unpkg.com/ohm-js@17/dist/ohm.min.js"></script>
+
+  <script type="module" crossorigin src="/assets/index-WE0H2G2l.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BvZNRnHC.css">
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-24WFKKD6JP"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-24WFKKD6JP');
+</script>
+
+<body>
+    <div id="backdrop"></div>
+
+    <div class="viewportDiv">
+
+        <header class="header">
+            <span class="title">Spem Player</span>
+            <span id="info">
+                <svg width="15px" height="15px" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M512 64a448 448 0 1 1 0 896.064A448 448 0 0 1 512 64zm67.2 275.072c33.28 0 60.288-23.104 60.288-57.344s-27.072-57.344-60.288-57.344c-33.28 0-60.16 23.104-60.16 57.344s26.88 57.344 60.16 57.344zM590.912 699.2c0-6.848 2.368-24.64 1.024-34.752l-52.608 60.544c-10.88 11.456-24.512 19.392-30.912 17.28a12.992 12.992 0 0 1-8.256-14.72l87.68-276.992c7.168-35.136-12.544-67.2-54.336-71.296-44.096 0-108.992 44.736-148.48 101.504 0 6.784-1.28 23.68.064 33.792l52.544-60.608c10.88-11.328 23.552-19.328 29.952-17.152a12.8 12.8 0 0 1 7.808 16.128L388.48 728.576c-10.048 32.256 8.96 63.872 55.04 71.04 67.84 0 107.904-43.648 147.456-100.416z" />
+                </svg>
+            </span>
+            <div class="header-spacer"></div>
+            <div class="dark-label">Dark mode:</div>
+            <span>
+                <label class="switch">
+                    <input id="darkswitch" type="checkbox">
+                    <span class="slider"></span>
+                </label>
+            </span>
+        </header>
+
+        <div id="help">
+            <p><em>Spem in alium nuquam habui</em><br />Thomas Tallis (1505 - 1585)
+            <table>
+                <tr>
+                    <th>Mouse</th>
+                    <td>Click diagram to play selected choir, part and bar.</td>
+                </tr>
+                <tr>
+                    <th>Touch</th>
+                    <td>Drag diagram to select bar.</td>
+                </tr>
+                <tr>
+                    <th>Keyboard</th>
+                    <td>
+                        <kbd>1</kbd> to <kbd>8</kbd> - select choir<br />
+                        <kbd>S</kbd> - <b>S</b>oprano<br />
+                        <kbd>A</kbd> - <b>A</b>lto<br />
+                        <kbd>T</kbd> - <b>T</b>enor<br />
+                        <kbd>R</kbd> - Ba<b>R</b>itone<br />
+                        <kbd>B</kbd> - <b>B</b>ass<br />
+                        <kbd>X</kbd> - All voice parts<br />
+                        <kbd>LEFT</kbd> / <kbd>RIGHT</kbd> - select bar<br />
+                        <kbd>Enter</kbd> - start or stop
+                    </td>
+                </tr>
+            </table>
+            <p id="recordings">Recordings by
+                <a href="https://www.choiroftheearth.com" target="_blank">Choir of the Earth</a>
+            </p>
+            <!-- TODO: Needs auto-increasing version somehow -->
+            <p class="version">Spem Player v2.0.0</p>
+            <p class="copyright">© 2024, Mark Wainwright</p>
+        </div>
+
+        <div id="spemScore">
+            <!-- <img src="/spem-choir1-from-1.0.1-to-139.0.1-clip.svg"/> -->
+            <!-- <object data="/spem.pdf" type="application/pdf" width="100%" height="200px">
+                <p>Unable to display PDF file. <a href="/uploads/media/default/0001/01/540cb75550adf33f281f29132dddd14fded85bfc.pdf">Download</a> instead.</p>
+            </object> -->
+            <!-- <object id="svgo" data="/svg/spem-choir1.svg" height="100%" type="image/svg+xml"></object> -->
+            <!-- <object class="svgo" data="/svg/spem-choir2.svg" height="100%" type="image/svg+xml"></object>
+            <object class="svgo" data="/svg/spem-choir3.svg" height="100%" type="image/svg+xml"></object>
+            <object class="svgo" data="/svg/spem-choir4.svg" height="100%" type="image/svg+xml"></object>
+            <object class="svgo" data="/svg/spem-choir5.svg" height="100%" type="image/svg+xml"></object>
+            <object class="svgo" data="/svg/spem-choir6.svg" height="100%" type="image/svg+xml"></object>
+            <object class="svgo" data="/svg/spem-choir7.svg" height="100%" type="image/svg+xml"></object>
+            <object class="svgo" data="/svg/spem-choir8.svg" height="100%" type="image/svg+xml"></object> -->
+
+        </div>
+
+        <canvas id="spemCanvas" autofocus>
+            Your browser does not support the HTML canvas element.
+        </canvas>
+
+        <div class="footer">
+            <div id="playpausebutton" tabindex="0">
+                <svg id="spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <circle class="path" fill="none" stroke-width="10" stroke-linecap="round" cx="50" cy="50" r="30">
+                    </circle>
+                </svg>
+                <span id="playpauseicon" class="button paused control"></span>
+            </div>
+            <div class="controlsection choircontrol">
+                <label>Choir
+                    <select name="choir" id="choir-select" class="control">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                    </select>
+                </label>
+            </div>
+            <div class="controlsection partcontrol">
+                <label>Part
+                    <select name="part" id="part-select" class="control">
+                        <option value="0">All</option>
+                        <option value="1">Soprano</option>
+                        <option value="2">Alto</option>
+                        <option value="3">Tenor</option>
+                        <option value="4">Baritone</option>
+                        <option value="5">Bass</option>
+                    </select>
+                </label>
+            </div>
+            <div class="controlsection barcontrol">
+                <label>Bar
+                    <input type="number" name="bar" id="bar-field" value="0" min="0" max="138" class="control" />
+                </label>
+            </div>
+
+            <div class="statusspacer"></div>
+
+            <div id="statusarea" class="hide">
+                <span id="choir-output">All</span>
+                <span id="part-output">All</span>
+                <span id="bar-output">0</span>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

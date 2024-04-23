@@ -7,16 +7,67 @@ import { setupLilypondParser, processLilypond, dict, ranges } from "./src/js/lil
 
 import lilypondfile from "./src/lilypond/spem notes.ly?raw";
 
-import spemsvg1 from "./src/svg/spem-choir1.svg?raw";
-import spemsvg2 from "./src/svg/spem-choir2.svg?raw";
-import spemsvg3 from "./src/svg/spem-choir3.svg?raw";
-import spemsvg4 from "./src/svg/spem-choir4.svg?raw";
-import spemsvg5 from "./src/svg/spem-choir5.svg?raw";
-import spemsvg6 from "./src/svg/spem-choir6.svg?raw";
-import spemsvg7 from "./src/svg/spem-choir7.svg?raw";
-import spemsvg8 from "./src/svg/spem-choir8.svg?raw";
+import spemsvg1 from "./src/svg/spem-choir1.svg";
+import spemsvg2 from "./src/svg/spem-choir2.svg";
+import spemsvg3 from "./src/svg/spem-choir3.svg";
+import spemsvg4 from "./src/svg/spem-choir4.svg";
+import spemsvg5 from "./src/svg/spem-choir5.svg";
+import spemsvg6 from "./src/svg/spem-choir6.svg";
+import spemsvg7 from "./src/svg/spem-choir7.svg";
+import spemsvg8 from "./src/svg/spem-choir8.svg";
 const spemsvg = [ spemsvg1, spemsvg2, spemsvg3, spemsvg4, spemsvg5, spemsvg6, spemsvg7, spemsvg8 ];
-// await fetch(`./svg/spem-choir${currentChoir}.svg`)
+
+import spemmp3 from "./src/audio/spem.mp3";
+import spem1s from "./src/audio/spem-1-soprano.mp3";
+import spem1a from "./src/audio/spem-1-alto.mp3";
+import spem1t from "./src/audio/spem-1-tenor.mp3";
+import spem1r from "./src/audio/spem-1-baritone.mp3";
+import spem1b from "./src/audio/spem-1-bass.mp3";
+import spem2s from "./src/audio/spem-2-soprano.mp3";
+import spem2a from "./src/audio/spem-2-alto.mp3";
+import spem2t from "./src/audio/spem-2-tenor.mp3";
+import spem2r from "./src/audio/spem-2-baritone.mp3";
+import spem2b from "./src/audio/spem-2-bass.mp3";
+import spem3s from "./src/audio/spem-3-soprano.mp3";
+import spem3a from "./src/audio/spem-3-alto.mp3";
+import spem3t from "./src/audio/spem-3-tenor.mp3";
+import spem3r from "./src/audio/spem-3-baritone.mp3";
+import spem3b from "./src/audio/spem-3-bass.mp3";
+import spem4s from "./src/audio/spem-4-soprano.mp3";
+import spem4a from "./src/audio/spem-4-alto.mp3";
+import spem4t from "./src/audio/spem-4-tenor.mp3";
+import spem4r from "./src/audio/spem-4-baritone.mp3";
+import spem4b from "./src/audio/spem-4-bass.mp3";
+import spem5s from "./src/audio/spem-5-soprano.mp3";
+import spem5a from "./src/audio/spem-5-alto.mp3";
+import spem5t from "./src/audio/spem-5-tenor.mp3";
+import spem5r from "./src/audio/spem-5-baritone.mp3";
+import spem5b from "./src/audio/spem-5-bass.mp3";
+import spem6s from "./src/audio/spem-6-soprano.mp3";
+import spem6a from "./src/audio/spem-6-alto.mp3";
+import spem6t from "./src/audio/spem-6-tenor.mp3";
+import spem6r from "./src/audio/spem-6-baritone.mp3";
+import spem6b from "./src/audio/spem-6-bass.mp3";
+import spem7s from "./src/audio/spem-7-soprano.mp3";
+import spem7a from "./src/audio/spem-7-alto.mp3";
+import spem7t from "./src/audio/spem-7-tenor.mp3";
+import spem7r from "./src/audio/spem-7-baritone.mp3";
+import spem7b from "./src/audio/spem-7-bass.mp3";
+import spem8s from "./src/audio/spem-8-soprano.mp3";
+import spem8a from "./src/audio/spem-8-alto.mp3";
+import spem8t from "./src/audio/spem-8-tenor.mp3";
+import spem8r from "./src/audio/spem-8-baritone.mp3";
+import spem8b from "./src/audio/spem-8-bass.mp3";
+const spemmp3array = [
+  [ spem1s, spem1a, spem1t, spem1r, spem1b ],
+  [ spem2s, spem2a, spem2t, spem2r, spem2b ],
+  [ spem3s, spem3a, spem3t, spem3r, spem3b ],
+  [ spem4s, spem4a, spem4t, spem4r, spem4b ],
+  [ spem5s, spem5a, spem5t, spem5r, spem5b ],
+  [ spem6s, spem6a, spem6t, spem6r, spem6b ],
+  [ spem7s, spem7a, spem7t, spem7r, spem7b ],
+  [ spem8s, spem8a, spem8t, spem8r, spem8b ],
+];
 
 
 // TODO: Perhaps locations = { json: <String>, defaultaudio: <String>, audio: <String>[8][5] }?
@@ -157,13 +208,13 @@ async function setChoir(c) {
   // Update the input field
   choirselect.value = currentChoir;
 
-  spemscore.innerHTML = spemsvg[currentChoir - 1];
-  // await fetch(`./svg/spem-choir${currentChoir}.svg`)
-  //   .then(r => r.text())
-  //   .then(text => {
-  //     spemscore.innerHTML = text;
-  //   })
-  //   .catch(console.error.bind(console));
+  // spemscore.innerHTML = spemsvg[currentChoir - 1];
+  await fetch(spemsvg[currentChoir - 1])
+    .then(r => r.text())
+    .then(text => {
+      spemscore.innerHTML = text;
+    })
+    .catch(console.error.bind(console));
 
 
   // Load the new SVG score
@@ -485,9 +536,10 @@ function getFilename(s) {
 }
 
 function loadAudio(c, p, b) {
-  let newfile = defaultaudiofile;
+  // let newfile = defaultaudiofile
+  let newfile = spemmp3;
   if (c != '0' && p != '0') {
-    newfile = `audio/spem-${c}-${getPartName(p)}.mp3`;
+    newfile = spemmp3array[c - 1][p - 1];
   }
 
   // just compare the filename, not the whole URL, to see if we
@@ -802,13 +854,13 @@ window.addEventListener("load", async () => {
   showLoadingOnCanvas();
 
 
-  spemscore.innerHTML = spemsvg[0];
-  // await fetch('svg/spem-choir1.svg')
-  //   .then(r => r.text())
-  //   .then(text => {
-  //     spemscore.innerHTML = text;
-  //   })
-  //   .catch(console.error.bind(console));
+  // spemscore.innerHTML = spemsvg[0];
+  await fetch(spemsvg[0])
+    .then(r => r.text())
+    .then(text => {
+      spemscore.innerHTML = text;
+    })
+    .catch(console.error.bind(console));
 
   await setupLilypondParser();
   await processLilypond(lilypondfile);
