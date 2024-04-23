@@ -1,4 +1,5 @@
-// vite.config.js
-export default ({
-  assetsInclude: ['**/*.ohm', '**/*.ly'],
+import { defineConfig } from "vite"
+
+export default defineConfig ({
+  assetsInclude: ['**/*.ohm', '**/*.ly']
 })
