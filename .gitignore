@@ -4,3 +4,5 @@ node_modules
 dist
 *.ipynb
 *.pdf
+# Local Netlify folder
+.netlify
