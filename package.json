@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "description": "Helping singers learn Thomas Tallis Spem in alium",
   "main": "spem.js",
+  "type": "module",
   "dependencies": {
     "ohm-js": "^17.1.0"
   },

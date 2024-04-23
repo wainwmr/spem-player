@@ -227,7 +227,7 @@ if (prefersDarkScheme.matches) {
 }
 
 // All the colors are defined in the style sheet
-var backgroundColor, textColor, highlightColor, choirColors;
+var backgroundColor, textColor, highlightColor, scoreHighlightColor, choirColors;
 function loadColors() {
   var style = getComputedStyle(document.body);
   backgroundColor = style.getPropertyValue('--color-background');
