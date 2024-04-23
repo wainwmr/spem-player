@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 
-class Duration {
+export class Duration {
   duration;
   dotted;
   multiplier;
@@ -80,14 +80,14 @@ class Duration {
   }
 }
 
-class Component {
+export class Component {
   duration = new Duration();  // 0 length
   toString() {
     return "huh";
   }
 }
 
-class BarLine extends Component {
+export class BarLine extends Component {
   constructor() {
     super();
   }
@@ -96,7 +96,7 @@ class BarLine extends Component {
   }
 }
 
-class Note extends Component {
+export class Note extends Component {
   notename;
   accidental;
   octave;
@@ -124,7 +124,7 @@ class Note extends Component {
   }
 }
 
-class Rest extends Component {
+export class Rest extends Component {
   restname;
   // duration;
   constructor(restname, duration) {
@@ -142,7 +142,7 @@ class Rest extends Component {
   }
 }
 
-class Command extends Component {
+export class Command extends Component {
   constructor() {
     super();
   }

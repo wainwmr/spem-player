@@ -1,4 +1,4 @@
-Lilypond {
+Lilypond { 
 
 	File = (Clause)*
     Clause = RelativeClause | Version

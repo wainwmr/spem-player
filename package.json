@@ -1,8 +1,9 @@
 {
   "name": "spem-player",
+  "private": true,
   "version": "2.0.0",
   "description": "Helping singers learn Thomas Tallis Spem in alium",
-  "main": "spem.js",
+  "main": "src/index.js",
   "type": "module",
   "dependencies": {
     "ohm-js": "^17.1.0"
@@ -18,20 +19,18 @@
     "postcss": "^8.4.38",
     "postcss-cli": "^11.0.0",
     "sass": "^1.75.0",
-    "uglify": "^0.1.5"
+    "uglify": "^0.1.5",
+    "vite": "^5.2.10"
   },
   "scripts": {
-    "scss": "sass src/styles.scss dist/css/styles.css",
-    "autoprefixer": "postcss dist/css/styles.css -u autoprefixer -r",
-    "barlines": "src/bars.sh dist/svg src/barlines.temp",
-    "cssmin": "cleancss -o dist/css/styles.min.css dist/css/styles.css",
-    "concat:js": "mkdir -p dist/js && concat -o dist/js/scripts.js src/classes.js src/barlines.temp src/spem.js ",
-    "build:css": "npm run scss && npm run autoprefixer && npm run cssmin",
-    "build:js": "npm run barlines && npm run concat:js",
-    "build": "npm run build:css && npm run build:js",
-    "watch:js": "onchange 'src/*.js' -- npm run build:js",
-    "watch:css": "onchange 'src/*.scss' -- npm run build:css",
-    "watch": "npm-run-all --parallel watch:*"
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+
+    "scss": "sass src/scss/style.scss style.css",
+    "autoprefixer": "postcss style.css -u autoprefixer -r",
+    "build:css": "npm run scss && npm run autoprefixer"
+
   },
   "author": "Mark Wainwright",
   "license": "MIT"
