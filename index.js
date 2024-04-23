@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 
-import './style.css';
+import './src/scss/style.scss';
 
 import { scorebars } from "./src/js/barlines.js";
 import { setupLilypondParser, processLilypond, dict, ranges } from "./src/js/lily.js";
