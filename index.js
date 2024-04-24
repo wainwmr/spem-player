@@ -1,17 +1,78 @@
 /* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
 
-// Make an dictionary of music positions (hemidemisemiquavers/128) to array of notes {choir, part, note}
-const dict = {};
+import './src/scss/style.scss';
 
-// a dictionary to hold the muic in the lilypond input file
-var scores = {};
+import { scorebars } from "./src/js/barlines.js";
+import { setupLilypondParser, processLilypond, dict, ranges } from "./src/js/lily.js";
 
+import lilypondfile from "./src/lilypond/spem notes.ly?raw";
+
+import spemsvg1 from "./src/svg/spem-choir1.svg";
+import spemsvg2 from "./src/svg/spem-choir2.svg";
+import spemsvg3 from "./src/svg/spem-choir3.svg";
+import spemsvg4 from "./src/svg/spem-choir4.svg";
+import spemsvg5 from "./src/svg/spem-choir5.svg";
+import spemsvg6 from "./src/svg/spem-choir6.svg";
+import spemsvg7 from "./src/svg/spem-choir7.svg";
+import spemsvg8 from "./src/svg/spem-choir8.svg";
+const spemsvg = [spemsvg1, spemsvg2, spemsvg3, spemsvg4, spemsvg5, spemsvg6, spemsvg7, spemsvg8];
+
+import spemmp3 from "./src/audio/spem.mp3";
+import spem1s from "./src/audio/spem-1-soprano.mp3";
+import spem1a from "./src/audio/spem-1-alto.mp3";
+import spem1t from "./src/audio/spem-1-tenor.mp3";
+import spem1r from "./src/audio/spem-1-baritone.mp3";
+import spem1b from "./src/audio/spem-1-bass.mp3";
+import spem2s from "./src/audio/spem-2-soprano.mp3";
+import spem2a from "./src/audio/spem-2-alto.mp3";
+import spem2t from "./src/audio/spem-2-tenor.mp3";
+import spem2r from "./src/audio/spem-2-baritone.mp3";
+import spem2b from "./src/audio/spem-2-bass.mp3";
+import spem3s from "./src/audio/spem-3-soprano.mp3";
+import spem3a from "./src/audio/spem-3-alto.mp3";
+import spem3t from "./src/audio/spem-3-tenor.mp3";
+import spem3r from "./src/audio/spem-3-baritone.mp3";
+import spem3b from "./src/audio/spem-3-bass.mp3";
+import spem4s from "./src/audio/spem-4-soprano.mp3";
+import spem4a from "./src/audio/spem-4-alto.mp3";
+import spem4t from "./src/audio/spem-4-tenor.mp3";
+import spem4r from "./src/audio/spem-4-baritone.mp3";
+import spem4b from "./src/audio/spem-4-bass.mp3";
+import spem5s from "./src/audio/spem-5-soprano.mp3";
+import spem5a from "./src/audio/spem-5-alto.mp3";
+import spem5t from "./src/audio/spem-5-tenor.mp3";
+import spem5r from "./src/audio/spem-5-baritone.mp3";
+import spem5b from "./src/audio/spem-5-bass.mp3";
+import spem6s from "./src/audio/spem-6-soprano.mp3";
+import spem6a from "./src/audio/spem-6-alto.mp3";
+import spem6t from "./src/audio/spem-6-tenor.mp3";
+import spem6r from "./src/audio/spem-6-baritone.mp3";
+import spem6b from "./src/audio/spem-6-bass.mp3";
+import spem7s from "./src/audio/spem-7-soprano.mp3";
+import spem7a from "./src/audio/spem-7-alto.mp3";
+import spem7t from "./src/audio/spem-7-tenor.mp3";
+import spem7r from "./src/audio/spem-7-baritone.mp3";
+import spem7b from "./src/audio/spem-7-bass.mp3";
+import spem8s from "./src/audio/spem-8-soprano.mp3";
+import spem8a from "./src/audio/spem-8-alto.mp3";
+import spem8t from "./src/audio/spem-8-tenor.mp3";
+import spem8r from "./src/audio/spem-8-baritone.mp3";
+import spem8b from "./src/audio/spem-8-bass.mp3";
+const spemmp3array = [
+  [spem1s, spem1a, spem1t, spem1r, spem1b],
+  [spem2s, spem2a, spem2t, spem2r, spem2b],
+  [spem3s, spem3a, spem3t, spem3r, spem3b],
+  [spem4s, spem4a, spem4t, spem4r, spem4b],
+  [spem5s, spem5a, spem5t, spem5r, spem5b],
+  [spem6s, spem6a, spem6t, spem6r, spem6b],
+  [spem7s, spem7a, spem7t, spem7r, spem7b],
+  [spem8s, spem8a, spem8t, spem8r, spem8b],
+];
 
 
 // TODO: Perhaps locations = { json: <String>, defaultaudio: <String>, audio: <String>[8][5] }?
 const defaultaudiofile = 'audio/spem.mp3';
-const lilypondfile = 'lilypond/spem notes.ly';
+// const lilypondfile = 'lilypond/spem notes.ly';
 
 // const beattime = 0.967; // old
 // (minim = 124) === (beattime = 0.9677)
@@ -42,10 +103,11 @@ const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass']; // HACK: this
 var currentChoir = 1;  // from 1 to 8
 var currentPart = 0;  // 0 means All parts; 1 is Soprano... 5 is Bass
 var currentBar = 0;
+
+
+
 var svg; // the actual SVG
 var spemaudio = new Audio();
-
-
 
 let canvasPadding = 5;  // padding in px of the canvas
 
@@ -63,7 +125,7 @@ if (prefersDarkScheme.matches) {
 }
 
 // All the colors are defined in the style sheet
-var backgroundColor, textColor, highlightColor, choirColors;
+var backgroundColor, textColor, highlightColor, scoreHighlightColor, choirColors;
 function loadColors() {
   var style = getComputedStyle(document.body);
   backgroundColor = style.getPropertyValue('--color-background');
@@ -86,8 +148,6 @@ function getPartName(n) {
   return allparts[n - 1];
 }
 
-// TODO: minimise SVGs in build process
-// TODO: minimse SVGs using <use> and <defs> elements
 // TODO: click on score should send you to bar.  And part?
 // TODO: Change dark mode to moon/sun icons
 // TODO: Add hide/show icon to remove score
@@ -96,30 +156,15 @@ function getPartName(n) {
 // TODO: Better font/graphic for Spem Player title
 // BUG: can scroll up and down a tiny bit in score
 // BUG: [Violation] Forced reflow while executing JavaScript took 36ms  (this doesn't happen when you have already manually adjusted the height of the score - something to do with the flex: 1 after the reload?)
-// BUG: Uncaught DOMException: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node. at setBar:239
-// BUG: When clicking on canvas, should highlight bar (call setBar maybe?)
-// TODO: put build process in script (generate SVGs, get scorebars, minimise, rename and move...)
+// TODO: build: minimise SVGs in build process
+// TODO: build: minimse SVGs using <use> and <defs> elements
+// TODO: build: generate SVG from lilypond as part of build process
+// TODO: build: Automatically remove the height and width from the lilypond generate SVGs
 // TODO: CMD-B to type in bar number
-// TODO: CMD-left/right to skip to next interesting bit for choir or part
 // TODO: highlight part on score?
 // TODO: Add lyrics to footer
-// TODO: Automatically remove the height and width from the lilypond generate SVGs
 
 
-// function getViewBox(bar, width) {
-//   const ideal = 0.3;
-//   var left = Math.max(scorebars[0], scorebars[bar - 1] - (width * ideal));
-//   var right = Math.min(scorebars[137], scorebars[bar - 1] + (width * (1 - ideal)));
-//   if (left > scorebars[137] - width) {
-//     left = scorebars[137] - width;
-//   }
-//   if (right < scorebars[0] + width) {
-//     right = scorebars[0] + width;
-//   }
-//   return `${left - 5} 0 ${right - left} 55`;
-// }
-
-// var svg;
 var pt;
 
 function scoreClicked(e) {
@@ -145,26 +190,22 @@ async function setChoir(c) {
   currentChoir = c;
 
   // Update the input field
-  choirselect.value = currentChoir;
+  if (choirselect.value != currentChoir) {
+    choirselect.value = currentChoir;
+  }
 
-  await fetch(`./svg/spem-choir${currentChoir}.svg`)
+  // load the correct score for this choir
+  await fetch(spemsvg[currentChoir - 1])
     .then(r => r.text())
     .then(text => {
       spemscore.innerHTML = text;
     })
     .catch(console.error.bind(console));
 
-
-  // Load the new SVG score
-  // svgobject.setAttribute("data", `/svg/spem-choir${c}.svg`);
-  // const subdoc = svgobject.getSVGDocument();
-  // svg = subdoc.getElementsByTagName("svg")[0];
-  // svgobject.addEventListener("click", scoreClicked);
-
   // set the border color to match
   spemscore.style.borderColor = `hsla(${choirColors[currentChoir - 1]}, 80%, 55%, 1)`;
 
-  // scroll the score to match the new choir
+  // scroll the score to match the new choir (with instant scrolling)
   setBar(currentBar, true);
 }
 
@@ -223,25 +264,23 @@ function setBar(b, changedChoirs = false) {
   }
   previousBarHighlight = newElement;
 
-
-  // determine how many bars from the left should be the
-  // highlighted bar.  It has to depend on the width
-  // of the window.
-  var barsFromLeft = 3;
-  barsFromLeft = Math.ceil(spemscore.clientWidth / 300);
-
-  // scroll to current bar
-  var pos = 0;
-  if (b >= barsFromLeft) {
-    pos = (scorebars[currentChoir - 1][b - barsFromLeft] / svg.getBBox().width) * svg.getBoundingClientRect().width;
-  }
-
-  console.log("scrolling to bar " + b + " at " + pos, scorebars[currentChoir - 1][b - barsFromLeft], svg.getBBox().width, svg.getBoundingClientRect().width);
+  // scroll the the right place
+  var pos = getScrollPosition(b);
   spemscore.scrollTo({
     top: 0,
-    left: pos, //b * scorebarwidth,
-    behavior: "smooth"
+    left: pos, 
+    behavior: changedChoirs ? "instant" : "smooth"
   });
+}
+
+function getScrollPosition(bar) {
+  var idealBarPos = 0.25;
+  var frameWidth = spemscore.offsetWidth; // the width of the visible score on the screen
+  var scoreWidth = svg.getBoundingClientRect().width; // the total width of the score
+  var svgWidth = svg.getBBox().width; // the width of the score in SVG unit
+  var pos = scorebars[currentChoir - 1][bar - 1] * scoreWidth / svgWidth; // current % along the score
+  pos -= idealBarPos * frameWidth;
+  return pos;
 }
 
 function parseURL() {
@@ -474,9 +513,10 @@ function getFilename(s) {
 }
 
 function loadAudio(c, p, b) {
-  let newfile = defaultaudiofile;
+  // let newfile = defaultaudiofile
+  let newfile = spemmp3;
   if (c != '0' && p != '0') {
-    newfile = `audio/spem-${c}-${getPartName(p)}.mp3`;
+    newfile = spemmp3array[c - 1][p - 1];
   }
 
   // just compare the filename, not the whole URL, to see if we
@@ -695,8 +735,12 @@ function keyboardTapped(e) {
 // TODO: Not convinced the Maths for getTouchPos() is right...
 function getTouchPos(evt) {
   var rect = canvas.getBoundingClientRect();
-  const choir = Math.ceil(8 * ((evt.targetTouches[0].clientY - rect.top - (canvasPadding))  / (canvas.clientHeight - (2 * canvasPadding))));
-  const bar = Math.round(140 * ((evt.targetTouches[0].clientX - rect.left - (canvasPadding))  / (canvas.clientWidth - (2 * canvasPadding))));
+  var choir = Math.ceil(8 * ((evt.targetTouches[0].clientY - rect.top - (canvasPadding)) /
+    (canvas.clientHeight - (2 * canvasPadding))));
+  choir = Math.min(Math.max(1, choir), 8); // must be from 1 to 8
+  var bar = Math.round(140 * ((evt.targetTouches[0].clientX - rect.left - (canvasPadding)) /
+    (canvas.clientWidth - (2 * canvasPadding))));
+  bar = Math.min(Math.max(0, bar), 139); // must be from 0 to 139
   return [choir, bar];
 }
 
@@ -748,187 +792,6 @@ function toggleDark() {
 }
 
 
-// -----------------------------------------------------
-// Set up Lilypond parser
-// -----------------------------------------------------
-
-var lyGrammar, semantics;
-
-async function setupLilypondParser() {
-
-  // Load the OHM grammar for Lilypond 
-  const promise = await fetch('assets/ly-grammar.ohm');
-  const grammarString = await promise.text();
-  lyGrammar = ohm.grammar(grammarString);
-
-  // Create a parse for Lilypond
-  semantics = lyGrammar.createSemantics();
-
-  // If lilypond input has no duration, use lastDuration; use lastNote if note name is missing
-  var lastNote, lastDuration;
-
-  function getDuration(duration) {
-    var d = duration.parse()[0];
-    if (d == undefined) {
-      d = lastDuration;
-    }
-    else {
-      lastDuration = d;
-    }
-    return d;
-  }
-
-
-  var lilypondVersion;
-  semantics.addOperation('parse', {
-    Version(_, _2, v, _3) {
-      lilypondVersion = v.sourceString;
-    },
-    RelativeClause(variable, _, _2, note, _3, music, _4) {
-      const v = variable.parse();
-      const n = note.parse();
-      if (v[0] != undefined) {
-        scores[v[0]] = music.parse();
-      }
-      return scores[v];
-    },
-    Component(comp) {
-      const c = comp.parse();
-      return c;
-    },
-    command(_, c, _2) {
-      const command = c.sourceString;
-    },
-    barline(_) {
-      return new BarLine();
-    },
-    repeatedNote(duration, slur) {
-      const d = duration.parse();
-      const s = slur.sourceString.length == 0 ? undefined : slur.sourceString
-
-      const note = new Note(lastNote.notename, lastNote.accidental, '', d, s);
-      return note;
-    },
-    note(notename, accidental, octave, duration, slur) {
-      const n = notename.sourceString;
-      const a = accidental.sourceString.length == 0 ? undefined : accidental.sourceString;
-      const o = octave.sourceString.length == 0 ? undefined : octave.sourceString;
-      var d = getDuration(duration);
-      const s = slur.sourceString.length == 0 ? undefined : slur.sourceString
-
-      lastNote = new Note(n, a, o, d, s);
-      return lastNote;
-    },
-    rest(restname, duration) {
-      const r = restname.sourceString;
-      var d = getDuration(duration);
-      const rest = new Rest(r, d);
-      return rest;
-    },
-    duration(duration, dotted) {
-      const d = duration.sourceString;
-      const dot = dotted.sourceString;
-      const ret = new Duration(d, dot, 1);
-      return ret;
-    },
-    durationScaled(duration, _, multiplier) {
-      const x = duration.parse();
-      const m = multiplier.parse()[0];
-
-      return new Duration(x.duration, x.dotted, m);
-    },
-    fraction(a, _, b) {
-      // HACK: we're ignoring the denominator altogether.  Let's hope it's not there
-      return parseInt(a.sourceString);
-    },
-    variable(v) {
-      return v.sourceString;
-    },
-    _iter(...children) {
-      return children.map(c => c.parse());
-    }
-  });
-
-}
-
-var ranges = [];
-
-async function processLilypond() {
-
-  // Load the Spem lilypond file
-  const promise = await fetch(lilypondfile);
-  const spemly = await promise.text();
-
-  // const spemly  = "choirVBaritone = \\relative { f2 f f}";
-  // Parse it
-  const result = lyGrammar.match(spemly);
-  if (!result.succeeded()) {
-    console.error('Bad Lilypond ' + result.message);
-  }
-
-  semantics(result).parse();
-
-  const choirs = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
-  const parts = ["Soprano", "Alto", "Tenor", "Baritone", "Bass"];
-
-  // Read lilypond input into dict{ position -> [ {choir, part, note}], ... }
-  // Read lilypond into ranges[choir][part] = [ {from, to}, ... ]
-  for (var choir = 0; choir < 8; choir++) {
-    ranges[choir] = [];
-    for (var part = 0; part < 5; part++) {
-      ranges[choir][part] = [];
-      var key = "notes" + choirs[choir] + parts[part];
-      var lilypond = scores[key];
-
-      // console.log(lilypond.map(x => (typeof x == "undefined") ? "?" : x.toString()).join(" "));
-
-      // Pretty print where we don't show repeated durations
-      // TODO: Move this functionality inside classes/Component
-      // var str = [];
-      // var lastlen;
-      // for (var c of lilypond) {
-      //   // console.log(lastlen, c.duration.sfths);
-      //   str.push(c.toString(lastlen !== c.duration.sfths));
-      //   lastlen = c.duration.sfths;
-      // }
-      // console.log(str.join(" "));
-
-      var from = undefined;
-
-      var pos = 1; // in hemidemisemiquavers (64ths)
-      const barsize = 128; // hemidemisemiquavers in a bar
-      for (var comp of lilypond) {
-        if (comp instanceof Note) {
-          if (from == undefined) {
-            from = pos;
-          }
-
-          if (dict[pos] == undefined) {
-            dict[pos] = [];
-          }
-          dict[pos].push({ "c": choir, "p": part, "n": comp });
-
-          pos += comp.duration.sfths / barsize;
-        }
-        else if (comp instanceof Rest) {
-          if (from != undefined) {
-            ranges[choir][part].push({ "from": from, "to": pos });
-            from = undefined;
-          }
-
-          pos += comp.duration.sfths / barsize;
-        }
-      }
-
-      if (from != undefined) {
-        ranges[choir][part].push({ "from": from, "to": pos });
-        from = undefined;
-      }
-
-    }
-  }
-}
-
 function seek(b, direction) {
   // Read lilypond input into dict{ position -> [ {choir, part, note}], ... }
   // Read lilypond into ranges[choir][part] = [ {from, to}, ... ]
@@ -968,7 +831,8 @@ window.addEventListener("load", async () => {
   showLoadingOnCanvas();
 
 
-  await fetch('svg/spem-choir1.svg')
+  // spemscore.innerHTML = spemsvg[0];
+  await fetch(spemsvg[0])
     .then(r => r.text())
     .then(text => {
       spemscore.innerHTML = text;
@@ -976,7 +840,7 @@ window.addEventListener("load", async () => {
     .catch(console.error.bind(console));
 
   await setupLilypondParser();
-  await processLilypond();
+  await processLilypond(lilypondfile);
 
   // read choir, part and bar from the URL
   parseURL();

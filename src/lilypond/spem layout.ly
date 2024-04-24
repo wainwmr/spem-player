@@ -4,7 +4,7 @@
 
 \paper {
   paper-width = 5200\mm
-  paper-height = 100\mm
+  paper-height = 150\mm
   top-margin = 0
   bottom-margin = 0
   left-margin = 0
@@ -12,7 +12,7 @@
   indent = 0
   system-count = #1
   ragged-right = ##f
-  ragged-bottom = ##f
+  ragged-bottom = ##t
   print-page-number = ##f
 }
 
@@ -22,8 +22,9 @@
   \context {
     \Staff
     \consists Ambitus_engraver
-    \override Staff.NoteSpacing.stem-spacing-correction = #2
-    \override Staff.StaffSpacing.stem-spacing-correction = #2
+    \override VerticalAxisGroup
+              .default-staff-staff-spacing
+              .basic-distance = #15
   }
   \context {
     \Score
