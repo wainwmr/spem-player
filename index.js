@@ -34,9 +34,9 @@ const darkswitch = document.getElementById('darkswitch');
 const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass']; // HACK: this is repeasted later
 
 // State
-var currentChoir = 1;  // from 1 to 8
-var currentPart = 0;  // 0 means All parts; 1 is Soprano... 5 is Bass
-var currentBar = 0;
+var currentChoir;  // from 1 to 8
+var currentPart;  // 0 means All parts; 1 is Soprano... 5 is Bass
+var currentBar;
 
 
 
@@ -119,7 +119,7 @@ async function setChoir(c) {
   if (currentChoir == c) {
     return;
   }
-  currentChoir = c;
+  currentChoir = Math.min(Math.max(1, c), 8);
 
   // Update the input field
   if (choirselect.value != currentChoir) {
@@ -146,10 +146,12 @@ function setPart(p) {
   if (currentPart == p) {
     return;
   }
-  currentPart = p;
+  currentPart = Math.min(Math.max(0, p), 5); // 0 to 5 inclusive
 
   // Update the input field
-  partselect.value = currentPart
+  if (partselect.value != currentPart) {
+    partselect.value = currentPart;
+  }
 }
 
 
@@ -170,7 +172,9 @@ function setBar(b, changedChoirs = false) {
   currentBar = b;
 
   // update the input field
-  barinput.value = currentBar;
+  if (barinput.value != currentBar) {
+    barinput.value = currentBar;
+  }
 
   // const subdoc = svgobject.getSVGDocument();  
   // HACK: get SVG in a better way than just the second SVG on the page!
@@ -178,16 +182,18 @@ function setBar(b, changedChoirs = false) {
   // pt = svg.createSVGPoint();  // HACK: Created once for document
 
   // Highlight the current bar on the score
-  var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-  newElement.setAttribute("x", scorebars[currentChoir - 1][b - 1]);
-  newElement.setAttribute("y", "0");
-  const bw = (b >= 138 ? svg.getBBox().width - scorebars[currentChoir - 1][137] : scorebars[currentChoir - 1][b] - scorebars[currentChoir - 1][b - 1]);
-  newElement.setAttribute("width", bw);
-  newElement.setAttribute("height", svg.getBBox().height);
-  newElement.style.fill = scoreHighlightColor; //Set stroke colour
-  newElement.style.fillOpacity = 0.1;
-  newElement.style.strokeWidth = "5px"; //Set stroke width
-  svg.appendChild(newElement);
+  if (b > 0 && b < 139) {
+    var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+    newElement.setAttribute("x", scorebars[currentChoir - 1][b - 1]);
+    newElement.setAttribute("y", "0");
+    const bw = (b >= 138 ? svg.getBBox().width - scorebars[currentChoir - 1][137] : scorebars[currentChoir - 1][b] - scorebars[currentChoir - 1][b - 1]);
+    newElement.setAttribute("width", bw);
+    newElement.setAttribute("height", svg.getBBox().height);
+    newElement.style.fill = scoreHighlightColor; //Set stroke colour
+    newElement.style.fillOpacity = 0.1;
+    newElement.style.strokeWidth = "5px"; //Set stroke width
+    svg.appendChild(newElement);
+  }
 
   if (previousBarHighlight != undefined) {
     if (svg.contains(previousBarHighlight)) {
@@ -219,21 +225,24 @@ function parseURL() {
   const url = window.location.search.substring(1);
   const parms = url.split("&");
 
+  var choir = 1; // default choir
+  var part = 0;
+  var bar = 0;
   for (let i = 0; i < parms.length; i++) {
     const p = parms[i].split("=");
     if (p[0] == "choir") {
-      currentChoir = Number(p[1]);
+      choir = Number(p[1]);
     }
     else if (p[0] == "part") {
-      currentPart = Number(p[1]);
+      part = Number(p[1]);
     }
     else if (p[0] == "bar") {
-      currentBar = Number(p[1]);
+      bar = Number(p[1]);
     }
   }
-  setChoir(currentChoir);
-  setPart(currentPart);
-  setBar(currentBar);
+  setChoir(choir);
+  setPart(part);
+  setBar(bar);
 }
 
 function calculateCanvasSize() {
@@ -725,15 +734,6 @@ window.addEventListener("load", async () => {
   loadColors();
   calculateCanvasSize();
   showLoadingOnCanvas();
-
-
-  // spemscore.innerHTML = spemsvg[0];
-  await fetch(spemsvg[0])
-    .then(r => r.text())
-    .then(text => {
-      spemscore.innerHTML = text;
-    })
-    .catch(console.error.bind(console));
 
   await setupLilypondParser();
   await processLilypond(lilypondfile);
