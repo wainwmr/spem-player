@@ -21,7 +21,7 @@ Lilypond {
     
     barline = "|"
     
-	note = noteName accidental? octave? durationScaled? slur?
+	note = noteName accidental? octave? durationScaled? expression? slur?
 	noteName = "a" | "b" | "c" | "d" | "e" | "f" | "g"
     
     repeatedNote = durationScaled slur?
@@ -41,6 +41,8 @@ Lilypond {
     
     durationScaled = duration ("*" fraction)?
     duration = ("\\breve" | "64" | "32" | "16" | "8" | "4" | "2" | "1") "."*
+    
+    expression = ("^" | "_")? (("-" ("+" | "^" | "-" | "!" | ">" | "." | "_")) | ("\\" letter+))
     
     slur = "~"
     

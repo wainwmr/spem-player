@@ -75,11 +75,12 @@ export async function setupLilypondParser() {
       const note = new Note(lastNote.notename, lastNote.accidental, '', d, s);
       return note;
     },
-    note(notename, accidental, octave, duration, slur) {
+    note(notename, accidental, octave, duration, expression, slur) {
       const n = notename.sourceString;
       const a = accidental.sourceString.length == 0 ? undefined : accidental.sourceString;
       const o = octave.sourceString.length == 0 ? undefined : octave.sourceString;
       var d = getDuration(duration);
+      const e = expression.sourceString;
       const s = slur.sourceString.length == 0 ? undefined : slur.sourceString
 
       lastNote = new Note(n, a, o, d, s);
