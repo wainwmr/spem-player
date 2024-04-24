@@ -15,7 +15,7 @@ import spemsvg5 from "./src/svg/spem-choir5.svg";
 import spemsvg6 from "./src/svg/spem-choir6.svg";
 import spemsvg7 from "./src/svg/spem-choir7.svg";
 import spemsvg8 from "./src/svg/spem-choir8.svg";
-const spemsvg = [ spemsvg1, spemsvg2, spemsvg3, spemsvg4, spemsvg5, spemsvg6, spemsvg7, spemsvg8 ];
+const spemsvg = [spemsvg1, spemsvg2, spemsvg3, spemsvg4, spemsvg5, spemsvg6, spemsvg7, spemsvg8];
 
 import spemmp3 from "./src/audio/spem.mp3";
 import spem1s from "./src/audio/spem-1-soprano.mp3";
@@ -59,14 +59,14 @@ import spem8t from "./src/audio/spem-8-tenor.mp3";
 import spem8r from "./src/audio/spem-8-baritone.mp3";
 import spem8b from "./src/audio/spem-8-bass.mp3";
 const spemmp3array = [
-  [ spem1s, spem1a, spem1t, spem1r, spem1b ],
-  [ spem2s, spem2a, spem2t, spem2r, spem2b ],
-  [ spem3s, spem3a, spem3t, spem3r, spem3b ],
-  [ spem4s, spem4a, spem4t, spem4r, spem4b ],
-  [ spem5s, spem5a, spem5t, spem5r, spem5b ],
-  [ spem6s, spem6a, spem6t, spem6r, spem6b ],
-  [ spem7s, spem7a, spem7t, spem7r, spem7b ],
-  [ spem8s, spem8a, spem8t, spem8r, spem8b ],
+  [spem1s, spem1a, spem1t, spem1r, spem1b],
+  [spem2s, spem2a, spem2t, spem2r, spem2b],
+  [spem3s, spem3a, spem3t, spem3r, spem3b],
+  [spem4s, spem4a, spem4t, spem4r, spem4b],
+  [spem5s, spem5a, spem5t, spem5r, spem5b],
+  [spem6s, spem6a, spem6t, spem6r, spem6b],
+  [spem7s, spem7a, spem7t, spem7r, spem7b],
+  [spem8s, spem8a, spem8t, spem8r, spem8b],
 ];
 
 
@@ -103,10 +103,11 @@ const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass']; // HACK: this
 var currentChoir = 1;  // from 1 to 8
 var currentPart = 0;  // 0 means All parts; 1 is Soprano... 5 is Bass
 var currentBar = 0;
+
+
+
 var svg; // the actual SVG
 var spemaudio = new Audio();
-
-
 
 let canvasPadding = 5;  // padding in px of the canvas
 
@@ -147,8 +148,6 @@ function getPartName(n) {
   return allparts[n - 1];
 }
 
-// TODO: minimise SVGs in build process
-// TODO: minimse SVGs using <use> and <defs> elements
 // TODO: click on score should send you to bar.  And part?
 // TODO: Change dark mode to moon/sun icons
 // TODO: Add hide/show icon to remove score
@@ -157,30 +156,15 @@ function getPartName(n) {
 // TODO: Better font/graphic for Spem Player title
 // BUG: can scroll up and down a tiny bit in score
 // BUG: [Violation] Forced reflow while executing JavaScript took 36ms  (this doesn't happen when you have already manually adjusted the height of the score - something to do with the flex: 1 after the reload?)
-// BUG: Uncaught DOMException: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node. at setBar:239
-// BUG: When clicking on canvas, should highlight bar (call setBar maybe?)
-// TODO: put build process in script (generate SVGs, get scorebars, minimise, rename and move...)
+// TODO: build: minimise SVGs in build process
+// TODO: build: minimse SVGs using <use> and <defs> elements
+// TODO: build: generate SVG from lilypond as part of build process
+// TODO: build: Automatically remove the height and width from the lilypond generate SVGs
 // TODO: CMD-B to type in bar number
-// TODO: CMD-left/right to skip to next interesting bit for choir or part
 // TODO: highlight part on score?
 // TODO: Add lyrics to footer
-// TODO: Automatically remove the height and width from the lilypond generate SVGs
 
 
-// function getViewBox(bar, width) {
-//   const ideal = 0.3;
-//   var left = Math.max(scorebars[0], scorebars[bar - 1] - (width * ideal));
-//   var right = Math.min(scorebars[137], scorebars[bar - 1] + (width * (1 - ideal)));
-//   if (left > scorebars[137] - width) {
-//     left = scorebars[137] - width;
-//   }
-//   if (right < scorebars[0] + width) {
-//     right = scorebars[0] + width;
-//   }
-//   return `${left - 5} 0 ${right - left} 55`;
-// }
-
-// var svg;
 var pt;
 
 function scoreClicked(e) {
@@ -206,9 +190,11 @@ async function setChoir(c) {
   currentChoir = c;
 
   // Update the input field
-  choirselect.value = currentChoir;
+  if (choirselect.value != currentChoir) {
+    choirselect.value = currentChoir;
+  }
 
-  // spemscore.innerHTML = spemsvg[currentChoir - 1];
+  // load the correct score for this choir
   await fetch(spemsvg[currentChoir - 1])
     .then(r => r.text())
     .then(text => {
@@ -216,17 +202,10 @@ async function setChoir(c) {
     })
     .catch(console.error.bind(console));
 
-
-  // Load the new SVG score
-  // svgobject.setAttribute("data", `/svg/spem-choir${c}.svg`);
-  // const subdoc = svgobject.getSVGDocument();
-  // svg = subdoc.getElementsByTagName("svg")[0];
-  // svgobject.addEventListener("click", scoreClicked);
-
   // set the border color to match
   spemscore.style.borderColor = `hsla(${choirColors[currentChoir - 1]}, 80%, 55%, 1)`;
 
-  // scroll the score to match the new choir
+  // scroll the score to match the new choir (with instant scrolling)
   setBar(currentBar, true);
 }
 
@@ -285,25 +264,23 @@ function setBar(b, changedChoirs = false) {
   }
   previousBarHighlight = newElement;
 
-
-  // determine how many bars from the left should be the
-  // highlighted bar.  It has to depend on the width
-  // of the window.
-  var barsFromLeft = 3;
-  barsFromLeft = Math.ceil(spemscore.clientWidth / 300);
-
-  // scroll to current bar
-  var pos = 0;
-  if (b >= barsFromLeft) {
-    pos = (scorebars[currentChoir - 1][b - barsFromLeft] / svg.getBBox().width) * svg.getBoundingClientRect().width;
-  }
-
-  console.log("scrolling to bar " + b + " at " + pos, scorebars[currentChoir - 1][b - barsFromLeft], svg.getBBox().width, svg.getBoundingClientRect().width);
+  // scroll the the right place
+  var pos = getScrollPosition(b);
   spemscore.scrollTo({
     top: 0,
-    left: pos, //b * scorebarwidth,
-    behavior: "smooth"
+    left: pos, 
+    behavior: changedChoirs ? "instant" : "smooth"
   });
+}
+
+function getScrollPosition(bar) {
+  var idealBarPos = 0.25;
+  var frameWidth = spemscore.offsetWidth; // the width of the visible score on the screen
+  var scoreWidth = svg.getBoundingClientRect().width; // the total width of the score
+  var svgWidth = svg.getBBox().width; // the width of the score in SVG unit
+  var pos = scorebars[currentChoir - 1][bar - 1] * scoreWidth / svgWidth; // current % along the score
+  pos -= idealBarPos * frameWidth;
+  return pos;
 }
 
 function parseURL() {
@@ -758,11 +735,11 @@ function keyboardTapped(e) {
 // TODO: Not convinced the Maths for getTouchPos() is right...
 function getTouchPos(evt) {
   var rect = canvas.getBoundingClientRect();
-  var choir = Math.ceil(8 * ((evt.targetTouches[0].clientY - rect.top - (canvasPadding))  / 
+  var choir = Math.ceil(8 * ((evt.targetTouches[0].clientY - rect.top - (canvasPadding)) /
     (canvas.clientHeight - (2 * canvasPadding))));
   choir = Math.min(Math.max(1, choir), 8); // must be from 1 to 8
-  var bar = Math.round(140 * ((evt.targetTouches[0].clientX - rect.left - (canvasPadding))  / 
-  (canvas.clientWidth - (2 * canvasPadding))));
+  var bar = Math.round(140 * ((evt.targetTouches[0].clientX - rect.left - (canvasPadding)) /
+    (canvas.clientWidth - (2 * canvasPadding))));
   bar = Math.min(Math.max(0, bar), 139); // must be from 0 to 139
   return [choir, bar];
 }
