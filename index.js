@@ -1,86 +1,26 @@
-/* eslint-disable no-unused-vars */
 
 import './src/scss/style.scss';
 
-import { scorebars } from "./src/js/barlines.js";
+import { scorebars_modern } from "./src/js/barlines-modern.js";
+import { scorebars_ancient } from "./src/js/barlines-ancient.js";
+// eslint-disable-next-line no-constant-condition
+var scorebars = (1 === 1 ? scorebars_ancient : scorebars_modern);
+
 import { setupLilypondParser, processLilypond, dict, ranges } from "./src/js/lily.js";
 
 import lilypondfile from "./src/lilypond/spem notes.ly?raw";
 
-import spemsvg1 from "./src/svg/spem-choir1.svg";
-import spemsvg2 from "./src/svg/spem-choir2.svg";
-import spemsvg3 from "./src/svg/spem-choir3.svg";
-import spemsvg4 from "./src/svg/spem-choir4.svg";
-import spemsvg5 from "./src/svg/spem-choir5.svg";
-import spemsvg6 from "./src/svg/spem-choir6.svg";
-import spemsvg7 from "./src/svg/spem-choir7.svg";
-import spemsvg8 from "./src/svg/spem-choir8.svg";
-const spemsvg = [spemsvg1, spemsvg2, spemsvg3, spemsvg4, spemsvg5, spemsvg6, spemsvg7, spemsvg8];
+import { spemsvg_ancient, spemsvg_modern, spemmp3array } from './src/js/svgmp3imports.js';
+// eslint-disable-next-line no-constant-condition
+var spemsvg = (1 === 1 ? spemsvg_ancient : spemsvg_modern);
 
 import spemmp3 from "./src/audio/spem.mp3";
-import spem1s from "./src/audio/spem-1-soprano.mp3";
-import spem1a from "./src/audio/spem-1-alto.mp3";
-import spem1t from "./src/audio/spem-1-tenor.mp3";
-import spem1r from "./src/audio/spem-1-baritone.mp3";
-import spem1b from "./src/audio/spem-1-bass.mp3";
-import spem2s from "./src/audio/spem-2-soprano.mp3";
-import spem2a from "./src/audio/spem-2-alto.mp3";
-import spem2t from "./src/audio/spem-2-tenor.mp3";
-import spem2r from "./src/audio/spem-2-baritone.mp3";
-import spem2b from "./src/audio/spem-2-bass.mp3";
-import spem3s from "./src/audio/spem-3-soprano.mp3";
-import spem3a from "./src/audio/spem-3-alto.mp3";
-import spem3t from "./src/audio/spem-3-tenor.mp3";
-import spem3r from "./src/audio/spem-3-baritone.mp3";
-import spem3b from "./src/audio/spem-3-bass.mp3";
-import spem4s from "./src/audio/spem-4-soprano.mp3";
-import spem4a from "./src/audio/spem-4-alto.mp3";
-import spem4t from "./src/audio/spem-4-tenor.mp3";
-import spem4r from "./src/audio/spem-4-baritone.mp3";
-import spem4b from "./src/audio/spem-4-bass.mp3";
-import spem5s from "./src/audio/spem-5-soprano.mp3";
-import spem5a from "./src/audio/spem-5-alto.mp3";
-import spem5t from "./src/audio/spem-5-tenor.mp3";
-import spem5r from "./src/audio/spem-5-baritone.mp3";
-import spem5b from "./src/audio/spem-5-bass.mp3";
-import spem6s from "./src/audio/spem-6-soprano.mp3";
-import spem6a from "./src/audio/spem-6-alto.mp3";
-import spem6t from "./src/audio/spem-6-tenor.mp3";
-import spem6r from "./src/audio/spem-6-baritone.mp3";
-import spem6b from "./src/audio/spem-6-bass.mp3";
-import spem7s from "./src/audio/spem-7-soprano.mp3";
-import spem7a from "./src/audio/spem-7-alto.mp3";
-import spem7t from "./src/audio/spem-7-tenor.mp3";
-import spem7r from "./src/audio/spem-7-baritone.mp3";
-import spem7b from "./src/audio/spem-7-bass.mp3";
-import spem8s from "./src/audio/spem-8-soprano.mp3";
-import spem8a from "./src/audio/spem-8-alto.mp3";
-import spem8t from "./src/audio/spem-8-tenor.mp3";
-import spem8r from "./src/audio/spem-8-baritone.mp3";
-import spem8b from "./src/audio/spem-8-bass.mp3";
-const spemmp3array = [
-  [spem1s, spem1a, spem1t, spem1r, spem1b],
-  [spem2s, spem2a, spem2t, spem2r, spem2b],
-  [spem3s, spem3a, spem3t, spem3r, spem3b],
-  [spem4s, spem4a, spem4t, spem4r, spem4b],
-  [spem5s, spem5a, spem5t, spem5r, spem5b],
-  [spem6s, spem6a, spem6t, spem6r, spem6b],
-  [spem7s, spem7a, spem7t, spem7r, spem7b],
-  [spem8s, spem8a, spem8t, spem8r, spem8b],
-];
 
-
-// TODO: Perhaps locations = { json: <String>, defaultaudio: <String>, audio: <String>[8][5] }?
-const defaultaudiofile = 'audio/spem.mp3';
-// const lilypondfile = 'lilypond/spem notes.ly';
-
-// const beattime = 0.967; // old
-// (minim = 124) === (beattime = 0.9677)
-const beattime = 0.968;
+// (minim = 62) === (beattime = 0.9677)
+const beattime = 60 / 62;
 
 // const container = document.getElementById("spemFrame");
 const canvas = document.getElementById("spemCanvas");
-const svgobject = document.getElementById("svgo");
 const spemscore = document.getElementById("spemScore");
 const playpausebutton = document.getElementById('playpausebutton');
 const playpauseicon = document.getElementById('playpauseicon');
@@ -100,9 +40,9 @@ const darkswitch = document.getElementById('darkswitch');
 const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass']; // HACK: this is repeasted later
 
 // State
-var currentChoir = 1;  // from 1 to 8
-var currentPart = 0;  // 0 means All parts; 1 is Soprano... 5 is Bass
-var currentBar = 0;
+var currentChoir;  // from 1 to 8
+var currentPart;  // 0 means All parts; 1 is Soprano... 5 is Bass
+var currentBar;
 
 
 
@@ -125,11 +65,10 @@ if (prefersDarkScheme.matches) {
 }
 
 // All the colors are defined in the style sheet
-var backgroundColor, textColor, highlightColor, scoreHighlightColor, choirColors;
+var backgroundColor, highlightColor, scoreHighlightColor, choirColors;
 function loadColors() {
   var style = getComputedStyle(document.body);
   backgroundColor = style.getPropertyValue('--color-background');
-  textColor = style.getPropertyValue('--color-text');
   highlightColor = style.getPropertyValue('--color-highlight');
   scoreHighlightColor = style.getPropertyValue('--color-score-highlight');
   choirColors = [
@@ -163,23 +102,23 @@ function getPartName(n) {
 // TODO: CMD-B to type in bar number
 // TODO: highlight part on score?
 // TODO: Add lyrics to footer
+// TODO: Add musica ficta to spem notes (ficta = { \once \set suggestAccidentals = ##t }.. then "\ficta fis2")
 
 
-var pt;
+// var pt;
+// function scoreClicked(e) {
+//   console.log("score clicked");
+//   pt.x = e.clientX;
+//   pt.y = e.clientY;
 
-function scoreClicked(e) {
-  console.log("score clicked");
-  pt.x = e.clientX;
-  pt.y = e.clientY;
+//   // The cursor point, translated into svg coordinates
+//   var cursorpt = pt.matrixTransform(svg.getScreenCTM().inverse());
+//   console.log("(" + cursorpt.x + ", " + cursorpt.y + ")");
 
-  // The cursor point, translated into svg coordinates
-  var cursorpt = pt.matrixTransform(svg.getScreenCTM().inverse());
-  console.log("(" + cursorpt.x + ", " + cursorpt.y + ")");
-
-  var result = scorebars.find(x => x > cursorpt.x);
-  console.log(scorebars.indexOf(result));
-  setBar(scorebars.indexOf(result));
-}
+//   var result = scorebars.find(x => x > cursorpt.x);
+//   console.log(scorebars.indexOf(result));
+//   setBar(scorebars.indexOf(result));
+// }
 
 // where c = 1 to 8
 async function setChoir(c) {
@@ -187,7 +126,7 @@ async function setChoir(c) {
   if (currentChoir == c) {
     return;
   }
-  currentChoir = c;
+  currentChoir = Math.min(Math.max(1, c), 8);
 
   // Update the input field
   if (choirselect.value != currentChoir) {
@@ -214,10 +153,12 @@ function setPart(p) {
   if (currentPart == p) {
     return;
   }
-  currentPart = p;
+  currentPart = Math.min(Math.max(0, p), 5); // 0 to 5 inclusive
 
   // Update the input field
-  partselect.value = currentPart
+  if (partselect.value != currentPart) {
+    partselect.value = currentPart;
+  }
 }
 
 
@@ -238,7 +179,9 @@ function setBar(b, changedChoirs = false) {
   currentBar = b;
 
   // update the input field
-  barinput.value = currentBar;
+  if (barinput.value != currentBar) {
+    barinput.value = currentBar;
+  }
 
   // const subdoc = svgobject.getSVGDocument();  
   // HACK: get SVG in a better way than just the second SVG on the page!
@@ -246,16 +189,18 @@ function setBar(b, changedChoirs = false) {
   // pt = svg.createSVGPoint();  // HACK: Created once for document
 
   // Highlight the current bar on the score
-  var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-  newElement.setAttribute("x", scorebars[currentChoir - 1][b - 1]);
-  newElement.setAttribute("y", "0");
-  const bw = (b >= 138 ? svg.getBBox().width - scorebars[currentChoir - 1][137] : scorebars[currentChoir - 1][b] - scorebars[currentChoir - 1][b - 1]);
-  newElement.setAttribute("width", bw);
-  newElement.setAttribute("height", svg.getBBox().height);
-  newElement.style.fill = scoreHighlightColor; //Set stroke colour
-  newElement.style.fillOpacity = 0.1;
-  newElement.style.strokeWidth = "5px"; //Set stroke width
-  svg.appendChild(newElement);
+  if (b > 0 && b < 139) {
+    var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+    newElement.setAttribute("x", scorebars[currentChoir - 1][b - 1]);
+    newElement.setAttribute("y", "0");
+    const bw = (b >= 138 ? svg.getBBox().width - scorebars[currentChoir - 1][137] : scorebars[currentChoir - 1][b] - scorebars[currentChoir - 1][b - 1]);
+    newElement.setAttribute("width", bw);
+    newElement.setAttribute("height", svg.getBBox().height);
+    newElement.style.fill = scoreHighlightColor; //Set stroke colour
+    newElement.style.fillOpacity = 0.1;
+    newElement.style.strokeWidth = "5px"; //Set stroke width
+    svg.appendChild(newElement);
+  }
 
   if (previousBarHighlight != undefined) {
     if (svg.contains(previousBarHighlight)) {
@@ -287,21 +232,24 @@ function parseURL() {
   const url = window.location.search.substring(1);
   const parms = url.split("&");
 
+  var choir = 1; // default choir
+  var part = 0;
+  var bar = 0;
   for (let i = 0; i < parms.length; i++) {
     const p = parms[i].split("=");
     if (p[0] == "choir") {
-      currentChoir = Number(p[1]);
+      choir = Number(p[1]);
     }
     else if (p[0] == "part") {
-      currentPart = Number(p[1]);
+      part = Number(p[1]);
     }
     else if (p[0] == "bar") {
-      currentBar = Number(p[1]);
+      bar = Number(p[1]);
     }
   }
-  setChoir(currentChoir);
-  setPart(currentPart);
-  setBar(currentBar);
+  setChoir(choir);
+  setPart(part);
+  setBar(bar);
 }
 
 function calculateCanvasSize() {
@@ -311,10 +259,6 @@ function calculateCanvasSize() {
   barWidth = (canvas.width - (2 * canvasPadding)) / 140;
   choirHeight = (canvas.height - (2 * canvasPadding)) / 8;
   partHeight = choirHeight / 5;
-
-  // console.log(`calculateCanvasSize(): canvas.width= ${canvas.width}, canvas.height=${canvas.height}, barWidth=${barWidth}, choirHeight=${choirHeight}, partHeight=${partHeight}`)
-
-  // changed = true;
 }
 
 function showLoadingOnCanvas() {
@@ -341,8 +285,6 @@ function update(pos = 0) {
 
   const bar = Math.floor(pos);
 
-  const duration = 0.5;
-
   // find who has a note that starts in this current quaver (16th of a bar)
   const quant = Math.floor(pos * 16) / 16;
   const notes = dict[quant];
@@ -357,26 +299,8 @@ function update(pos = 0) {
   setBar(bar);
 }
 
-function easeInCubic(t, b, c, d) {
-  return c * (t /= d) * t * t + b;
-}
-
 function easeOutCubic(t, b, c, d) {
   return c * ((t = t / d - 1) * t * t + 1) + b;
-}
-
-function easeOutQuad(t, b, c, d) {
-  return -c * (t /= d) * (t - 2) + b;
-}
-
-function roundedRect(ctx, x, y, width, height, radius) {
-  ctx.beginPath();
-  ctx.moveTo(x, y + radius);
-  ctx.arcTo(x, y + height, x + radius, y + height, radius);
-  ctx.arcTo(x + width, y + height, x + width, y + height - radius, radius);
-  ctx.arcTo(x + width, y, x + width - radius, y, radius);
-  ctx.arcTo(x, y, x, y + radius, radius);
-  ctx.stroke();
 }
 
 function draw(currentpos) {
@@ -385,25 +309,19 @@ function draw(currentpos) {
     currentpos = currentBar;
   }
 
-  // if (!changed || barWidth === 0) {
-  //   return;
-  // }
-  // changed = false;
-
   // Blank out the whole canvas
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = backgroundColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Draw FPS number to the screen
-  // if (!isNaN(fps)) {
-  //   ctx.font = '25px Arial';
-  //   ctx.fillStyle = '#CCC';
-  //   ctx.fillText("FPS: " + fps, 10, canvas.height - 30);
-  // }
+  if (!isNaN(fps)) {
+    ctx.font = '25px Arial';
+    ctx.fillStyle = '#CCC';
+    ctx.fillText("FPS: " + fps, 10, canvas.height - 30);
+  }
 
   // Draw bar highlight
-  // roundedRect(ctx, canvasPadding + (currentBar * barWidth), canvasPadding, barWidth, canvas.height - canvasPadding, 10);
   if (currentBar > 0 && currentBar <= 139) {
     ctx.save();
     ctx.beginPath();
@@ -415,7 +333,6 @@ function draw(currentpos) {
     ctx.stroke();
     ctx.restore();
   }
-
 
   // Draw highlight line for the selected choir or choir and part
   var startY, width;
@@ -490,11 +407,9 @@ function draw(currentpos) {
 
         ctx.strokeStyle = `hsla(${choirColors[c]}, ${saturation}%, ${lightness}%, ${transparency})`;
         ctx.stroke();
-
       });
     }
   }
-
 }
 
 function getMousePos(canv, evt) {
@@ -793,9 +708,6 @@ function toggleDark() {
 
 
 function seek(b, direction) {
-  // Read lilypond input into dict{ position -> [ {choir, part, note}], ... }
-  // Read lilypond into ranges[choir][part] = [ {from, to}, ... ]
-
   const choirnotes = dict[b].filter(x => x.c == currentChoir - 1);
   const singing = choirnotes.length != 0;
 
@@ -830,15 +742,6 @@ window.addEventListener("load", async () => {
   calculateCanvasSize();
   showLoadingOnCanvas();
 
-
-  // spemscore.innerHTML = spemsvg[0];
-  await fetch(spemsvg[0])
-    .then(r => r.text())
-    .then(text => {
-      spemscore.innerHTML = text;
-    })
-    .catch(console.error.bind(console));
-
   await setupLilypondParser();
   await processLilypond(lilypondfile);
 
@@ -870,5 +773,4 @@ window.addEventListener("load", async () => {
   // Next line not really necessary, but will make it look clearer on browser resize
   // window.addEventListener("resize", () => {calculateCanvasSize(); draw(); });
   window.addEventListener('resize', () => setVH());
-
 });

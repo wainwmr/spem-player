@@ -4,7 +4,7 @@
 
 \paper {
   paper-width = 5200\mm
-  paper-height = 150\mm
+  paper-height = 110\mm
   top-margin = 0
   bottom-margin = 0
   left-margin = 0

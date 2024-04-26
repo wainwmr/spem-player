@@ -1,32 +1,31 @@
 \version "2.24.3" 
 
 \include "spem layout.ly"
-\include "spem notes.ly"
-\include "spem words.ly"
+\include "../spem notes.ly"
+\include "../spem words.ly"
 
 \score {
-
   <<
     \time 4/2
     \override Score.BarNumber.break-visibility = ##(#f #t #t)
     <<
-      \notesVSoprano
+      \new Voice { \clef "treble" \notesVSoprano }
       \addlyrics \wordsVSoprano
     >>
     <<
-      \notesVAlto
+      \new Voice { \clef "treble" \notesVAlto }
       \addlyrics \wordsVAlto
     >>
     <<
-      \notesVTenor
+      \new Voice { \clef "treble_8" \notesVTenor }
       \addlyrics \wordsVTenor
     >>
     <<
-      \notesVBaritone
+      \new Voice { \clef "bass" \notesVBaritone }
       \addlyrics \wordsVBaritone
     >>
     <<
-      \notesVBass
+      \new Voice { \clef "bass" \notesVBass }
       \addlyrics \wordsVBass
     >>
   >>
