@@ -7,14 +7,14 @@
 notesISoprano = \relative c {
   r1 d''1. %tie1.
    d2 d d 
-  a c c e2~ 
-  e4 d d1 c2 
+  a c c e2. %tie2.
+   d4 d1 c2 
   b2. a4 g2 d 
   g a2. a4 d,2 
   r2 d'2. c4 c1 %tie
    f,2 c'4. b8 a4 g 
-  f2 f'2. e4 d2~ 
-  d4 a2 d d, a'4~ 
+  f2 f'2. e4 d2. %tie2.
+   a2 d d, a'4~ 
   a4 e4 r4 g c2 g' 
   f4. e8 d4 c b2 g 
   d'1 r1 
@@ -36,9 +36,9 @@ notesISoprano = \relative c {
   R\breve*14
   r2 d2 b b 
   e,1 r2 b' 
-  e r4 e,2 e4 e2~ 
-  e4 e4 e2 r4 d g2~
-  g4 b2 g4 r4 d'2 g4 
+  e r4 e,2 e4 e2. %tie2.
+   e4 e2 r4 d g2. %tie2.
+   b2 g4 r4 d'2 g4 
   g1 r1
   |
   R\breve*19 
@@ -48,8 +48,8 @@ notesISoprano = \relative c {
   e1. e2 
   e1 r2 e 
   e d c2. c4 
-  b1 r2 g2~
-  g4 g4. e8 e4 r4 c2 g'4~
+  b1 r2 g2. %tie2.
+   g4. e8 e4 r4 c2 g'4~
   g8 e8  e2 c'4. c8 c4 r4 e4~ 
   | %72
   \barNumberCheck #72
@@ -229,8 +229,8 @@ notesIAlto = \relative c {
   c4 g'2 c,4. a8 a'4 a2 
   r1 r2 g2 
   g4 g4. a8 b4 r2 r4 e,4
-  | e2 b2 r2 c2~
-  c4 e4 c g' g1 
+  | e2 b2 r2 c2. %tie2.
+   e4 c g' g1 
   r2 b,2. b4 b2 
   | b4 d2 d4 r2 g2~
   | g2 d2 d1~
@@ -243,8 +243,8 @@ notesITenor = \relative c {
   | % 6
   \barNumberCheck #6
   d2 d2 d d
-  a a c e2~
-  e4 d4 d1 cis2
+  a a c e2. %tie2.
+   d4 d1 cis2
   d a r2 d4 d
   f1. d2
   e2. d4 c2 b
@@ -489,12 +489,12 @@ notesIBass = \relative c {
   g2 d d2. g,4 
   g2 r4 d' a'2. a4 
   d,1 r1
-  r2 d2 e a2~
-  a4 a4 d,1 a'2 
+  r2 d2 e a2. %tie2.
+   a4 d,1 a'2 
   | a a2. a4 d,2 
   r2 g e r4 d 
-  d a'2 d,4 r4 g g2~
-  g4 g,4 d' g, d'2 r2 
+  d a'2 d,4 r4 g g2. %tie2.
+   g,4 d' g, d'2 r2 
   |  r1 r4 a'2 d,4~
   d4 g2 f8 e d2 g, 
   | r2  c4 c c1
@@ -512,8 +512,8 @@ notesIBass = \relative c {
 
   | %69
   \barNumberCheck #69
-  | r1 g2 g2~
-  g4 c,4 c e e2 c 
+  | r1 g2 g2. %tie2.
+   c,4 c e e2 c 
   r4 g'2 e c g'4~
   g4 g4 g2 a4 a2 a4 
   e a, c1 c2 
@@ -624,8 +624,8 @@ notesIISoprano = \relative c {
   %81
   \barNumberCheck #81
   | r2 r4 a2 d d4 
-  b4 g d'4. e8 f2 e2~
-  e4 d4 d1 cis2 
+  b4 g d'4. e8 f2 e2. %tie2.
+   d4 d1 cis2 
   d1 r1
   r2 a2 f4 a2 d,4~
   | d4 g b4. c8 d2 r4 d4~
@@ -688,8 +688,8 @@ notesIIAlto = \relative c {
   R\breve*3
   r1 g''1. %tie1.
    g2 g g 
-  d f f a2~
-  a4 g f2. e2 c4 
+  d f f a2. %tie2.
+   g4 f2. e2 c4 
   c4. b8 a1 c2 
   a2 d r4 a'2 a4 
   a2 a4 d,2 f e8 d 
@@ -698,12 +698,12 @@ notesIIAlto = \relative c {
   b4 g d'4. c8 b1 
   | %14
   \barNumberCheck #14
-  r4 d d a'2 f4 f2~
-  f4 f d2 r2 c4 c
+  r4 d d a'2 f4 f2. %tie2.
+   f4 d2 r2 c4 c
   g'2 d a' r2
-  r2 a2 a d,2~
-  d4 a a2 r2 a'2~
-  a4 g8 f g2 c, r2 
+  r2 a2 a d,2. %tie2.
+   a4 a2 r2 a'2. %tie2.
+   g8 f g2 c, r2 
   f a r2 d4 b4~
   b8 a g2 d4 d2 r4 a' 
   e g2 e4 a2 d, 
@@ -714,8 +714,8 @@ notesIIAlto = \relative c {
   \barNumberCheck #40
   | r2 b'2 b b 
   c1 r2 b4 g4~
-  g2 e r4 g g2~
-  g4 c2 g4 r4 g,2 g4 
+  g2 e r4 g g2. %tie2.
+   c2 g4 r4 g,2 g4 
   g2 r4 g' b b2 b4 
   b\breve 
   | R\breve*19
@@ -764,15 +764,15 @@ notesIIAlto = \relative c {
   a8 g f4 r4 e a d, r4 a' 
   g4. f8 e2 r2 c4 g4~
   g4 g'4 c, g'2 c,4 r2
-  r1 r2 a2~
-  a4 cis2 a4 a1 
+  r1 r2 a2. %tie2.
+   cis2 a4 a1 
   R\breve*7
   
   %117
   \barNumberCheck #117
-  | a'2 a a4 a d2~
-  d4 c4 b a g c, g'2~
-  g4 a b2 g r4 d4~
+  | a'2 a a4 a d2. %tie2.
+   c4 b a g c, g'2. %tie2.
+   a4 b2 g r4 d4~
   d4 a2 d g,4 r4 d'4~
   d4 a'4. d,8 d4 r1 
   g1. g2 
@@ -788,8 +788,8 @@ notesIIAlto = \relative c {
    f4 f4. g8 a4 bes g 
   r4 g2 c4. b8 a g f2 
   r4 d d2 r4 d d d 
-  d4 g2 d4 r4 c g2~
-  g4 g'4 g2 r1 
+  d4 g2 d4 r4 c g2. %tie2.
+   g'4 g2 r1 
   g4 c4. g8 g4. e8 e c g'2 
   r2 g4 d'4. b8 b g g2 
   r4 d2 e8 f g2. b4~
@@ -801,10 +801,10 @@ notesIITenor = \relative c {
   R\breve*8
   r2 d'1 d2 
   d d a a 
-  c e1 d2~
-  d4 c a2 b4 g2 d'4 
-  d2 b r2 g'2~
-  g4 d2 a d c8 b 
+  c e1 d2. %tie2.
+   c4 a2 b4 g2 d'4 
+  d2 b r2 g'2. %tie2.
+   d2 a d c8 b 
   a2 d r2 g 
   e4 c f2 r2 e 
   a, f4 d a'2 d 
@@ -897,8 +897,8 @@ notesIITenor = \relative c {
   f4. g8 a2 r1 
   c4 c4. d8 e c d2 r4 d4~ 
   d4 b b g4 g2 g 
-  r1 r2 c2~
-  c4 g2 d'4 r4 e2 c4~
+  r1 r2 c2. %tie2.
+   g2 d'4 r4 e2 c4~
   c4 g g2 r2 g' 
   g4. g,8 b4. c8 d1 
   b r1 
@@ -913,8 +913,8 @@ notesIIBaritone = \relative c {
   d, f f a1 %tie
    g2 g2. d4 
   f2. e4 d1~
-  d1 r2 d'2~
-  d4 d4 d2 d4 a2 d4~
+  d1 r2 d'2. %tie2.
+   d4 d2 d4 a2 d4~
   d4 a a2 r2 c1 %tie
    f,2 a r4 a4~
   a f4 a2. d4 a d, 
@@ -1048,8 +1048,8 @@ notesIIBass = \relative c {
   \barNumberCheck #69
   | r1 d2. g4~
   g4 g e2 r4 g2 e4~
-  e4 c2 g' c,4 e2~
-  e4 e g2 r2 c,4 c4~
+  e4 c2 g' c,4 e2. %tie2.
+   e4 g2 r2 c,4 c4~
   c4 e4 a e e2 r4 g 
   g4. a8 b2 r2 b, 
   d4 d g2. g4 e2 
@@ -1057,7 +1057,7 @@ notesIIBass = \relative c {
   R\breve*5
   
   | %82
-  \barNumberCheck #81
+  \barNumberCheck #82
   r2 g2 c,2. c4 
   e2 f4 a4. a8 e4 a2 
   a1 r1 
@@ -1091,8 +1091,8 @@ notesIIBass = \relative c {
   g,1. g2 
   g\breve 
   r2 d'1 f2 
-  f4 f a2 f a2~
-  a4 a,4 a2 r2 a 
+  f4 f a2 f a2. %tie2.
+   a,4 a2 r2 a 
   c2 c bes d 
   r4 d2 g f8 e d2 
   r2 r4 f2. d2 
@@ -1115,19 +1115,19 @@ notesIIISoprano = \relative c {
   R\breve*10
   r1 r2 d''1 %tie
    d2 d d 
-  g, b b d2~
-  d4 d4 a2 r2 d 
+  g, b b d2. %tie2.
+   d4 a2 r2 d 
   d2 d2. c4 c2 
   r2 f, c'4. b8 a4. g8 
   f2 f'1 f2 
-  f f4. e8 d2 d2~
-  d4 c4 c2. b8 a b4 g 
+  f f4. e8 d2 d2. %tie2.
+   c4 c2. b8 a b4 g 
   a1 b2. g4 
   b4. c8 d2 d4. e8 f2 
   g e f d 
   d1. b2 
-  e, g r4 c, f2~
-  f4 f f2 r1
+  e, g r4 c, f2. %tie2.
+   f4 f2 r1
   R\breve*9
   
   %35
@@ -1144,8 +1144,8 @@ notesIIISoprano = \relative c {
   g2. c4 c2 r2 
   c2 e e2. e4 
   e1 r2 b 
-  b2. d2 b4 b2~
-  b4 g4 d'2 b1 
+  b2. d2 b4 b2. %tie2.
+   g4 d'2 b1 
   R\breve*16
   
   %62
@@ -1218,9 +1218,9 @@ notesIIISoprano = \relative c {
   g\breve
   R\breve*2
   r1 r2 c,2 
-  c4 c c f2 d4 f2~
-  f4 bes,4 bes2 r2 d2~
-  d4 d,2 a'4 a2 r4 bes4~
+  c4 c c f2 d4 f2. %tie2.
+   bes,4 bes2 r2 d2. %tie2.
+   d,2 a'4 a2 r4 bes4~
   bes8 a16 bes a8 g g2 r2 r4 a4 
   | d2 r2 g, b 
   b4 b d2 r4 g, g2 
@@ -1239,25 +1239,25 @@ notesIIIAlto = \relative c {
   \barNumberCheck #12
   | r1 r2 g''1 %tie
    g2 g g 
-  d f f a2~
-  a4 g4 f2. e4 e4. d8 
+  d f f a2. %tie2.
+   g4 f2. e4 e4. d8 
   c4. b8 a2 e' a,1 %tie
   d2 r2 d2 
   | a4 a' a4. g8 f4 d2 a'4~
   a c2 g4 g2 g 
   f4. e8 d2. b4 d4. c8 
   b4. a8 g2 r2 a4 a 
-  e'2. e4 a,2 d2~
-  d4 g,2 b4 g g'2 d4 
-  r4 g e c2 a4 a2~
-  a4 c2 a4 d2 r2
+  e'2. e4 a,2 d2. %tie2.
+   g,2 b4 g g'2 d4 
+  r4 g e c2 a4 a2. %tie2.
+   c2 a4 d2 r2
   R\breve*9
   
   %35
   \barNumberCheck #35
   | r1 r2 e2 
-  e c f a2~
-  a4 g4 g1 fis2 
+  e c f a2. %tie2.
+   g4 g1 fis2 
   g1 r1
   R\breve
   
@@ -1283,8 +1283,8 @@ notesIIIAlto = \relative c {
   \barNumberCheck #69
   | r1 g2. g4~
   g8 c, e c c4 g g2 r2 
-  e'4 e2 e4 r2 c2~
-  c4 c c2 r1
+  e'4 e2 e4 r2 c2. %tie2.
+   c4 c2 r1
   r2 c'4 c2 g4 c4. c8 
   b1 r2 r4 g4 
   g4 d d d r4 e g2 
@@ -1292,8 +1292,8 @@ notesIIIAlto = \relative c {
   
   %84
   \barNumberCheck #84
-  | r2 a2 d,2 g2~
-  g4 c,4 c2 r1 
+  | r2 a2 d,2 g2. %tie2.
+   c,4 c2 r1 
   g4 b4. c8 d4 d2 r2 
   g,4 d'2 b4 b1 
   r2 d2. d4 g2 
@@ -1378,8 +1378,8 @@ notesIIITenor = \relative c {
   \barNumberCheck #35
   r1 r2 e'2 
   e e a,1 
-  e'1 a,2 d2~
-  d4 g, d'2 r1
+  e'1 a,2 d2. %tie2.
+   g,4 d'2 r1
   R\breve
   
   %40
@@ -1409,8 +1409,8 @@ notesIIITenor = \relative c {
   | g,2. c4 c g2 c4 
   c g g2. g4 c2 
   r4 e, e e r4 c'2 c4 
-  c2 r2 r2 g2~
-  g4 g g2 r2 g4 d' 
+  c2 r2 r2 g2. %tie2.
+   g4 g2 r2 g4 d' 
   d4 d4. g,8 g4 r4 c e2 
   R\breve*8
   
@@ -1446,8 +1446,8 @@ notesIIITenor = \relative c {
 
   %114
   \barNumberCheck #114
-  | r1 r2 g2~
-  g4 a b b c2. b4 
+  | r1 r2 g2. %tie2.
+   a4 b b c2. b4 
   a f g2 a f4 a4~
   a8 b c4 f,2. g4 a2 
   r2 d g,1 
@@ -1468,9 +1468,9 @@ notesIIITenor = \relative c {
   r4 g'2 g4 g g g2 
   | c, r2 r4 c2 e4 
   g c, c1 g2 
-  r4 b d2 r2 d,2~
-  d4 g4 d2 r4 d' d2~
-  d4 g,2 b g4 r4 g 
+  r4 b d2 r2 d,2. %tie2.
+   g4 d2 r4 d' d2. %tie2.
+   g,2 b g4 r4 g 
   | g\breve^\fermata
 }
 
@@ -1483,8 +1483,8 @@ notesIIIBaritone = \relative c {
   g f d f 
   f a1 g1 %tie
    f2 e1 
-  d1 r2 d2~
-  d4 f4 f4. g8 a4 d, f2 
+  d1 r2 d2. %tie2.
+   f4 f4. g8 a4 d, f2 
   c2. e2 c4 d4. e8 
   f2 f4. e8 d1~
   d1 r2 d4 d 
@@ -1574,8 +1574,8 @@ notesIIIBaritone = \relative c {
   r1 r4 a2 a4 
   | a4 f c'2 a4 c2 f,4 
   a2 r4 a f a a2 
-  r2 r4 a4. g8 f d d'2~
-  d4 bes4 bes2 r2 g 
+  r2 r4 a4. g8 f d d'2. %tie2.
+   bes4 bes2 r2 g 
   d2 a' a r2
   r4 c2. f,2 r4 d'4~
   d2 g,4 b r2 b2~
@@ -1705,8 +1705,8 @@ notesIVSoprano = \relative c {
   R\breve*18
   r1 r2 d''1 %tie
    d2 d d 
-  g, b1 a2~
-  a4 g4 g1 fis2 
+  g, b1 a2. %tie2.
+   g4 g1 fis2 
   g1 r2 g2
   g4 c4. d8 e4 f2. f,4
   f4 c'2. f,4 bes4. a8 g4 
@@ -1727,8 +1727,8 @@ notesIVSoprano = \relative c {
   | r2 b2 b4. c8 d2 
   r4 g, g2 r2 g 
   g4 g4. g8 g4 r1
-  r2 g'2 g g2~
-  g4 f8 e d2 d g, 
+  r2 g'2 g g2. %tie2.
+   f8 e d2 d g, 
   d'\breve
   R\breve*13
   
@@ -1748,8 +1748,8 @@ notesIVSoprano = \relative c {
   | r1 b1 
   e,2. e4 e2 r4 e' 
   e2 e4 e2 e4 e2 
-  r2 c4 c2 c4 c2~
-  c4 c c2 r1 
+  r2 c4 c2 c4 c2. %tie2.
+   c4 c2 r1 
   d4. d8 d2 r2 d 
   g2. g4 g2 g 
   f4 d d2 r1
@@ -1789,8 +1789,8 @@ notesIVSoprano = \relative c {
   | r1 r2 e,2 
   e g4 g a2 e 
   r1 r4 a4 d2 
-  e4 e f2. e4 d2~
-  d4 g,4 d'2 c1 
+  e4 e f2. e4 d2. %tie2.
+   g,4 d'2 c1 
   R\breve*3
   
   %122
@@ -1923,8 +1923,8 @@ notesIVAlto = \relative c {
   \barNumberCheck #127
   | r2 f2 f f4 f 
   bes1. g2 
-  a1 r2 g2~
-  g4 e4. d8 c4 r4 a d2 
+  a1 r2 g2. %tie2.
+   e4. d8 c4 r4 a d2 
   r4 d4. g8 g4 r2 r4 b4~
   b4 b b b c2 c 
   r2 b4 g2. e2 
@@ -1973,8 +1973,8 @@ notesIVTenor = \relative c {
   
   %57
   \barNumberCheck #57
-  | f1 c2 e2~
-  e4 d b2 d f 
+  | f1 c2 e2. %tie2.
+   d4 b2 d f 
   e4 c2. b2 g 
   f4 d e4. f8 g1 
   r2 g'1 d2 
@@ -2038,8 +2038,8 @@ notesIVTenor = \relative c {
   | b1. b2 
   b r4 b2 b4 b g 
   d'2. c8 b a2 r2 
-  f4 c'2 f,4 r4 f c'2~
-  c4 d8 e f2 r4 f2 c4 
+  f4 c'2 f,4 r4 f c'2. %tie2.
+   d8 e f2 r4 f2 c4 
   r4 c c2 r1 
   d2 d d4 d g2 
   f r4 d2. d2 
@@ -2094,9 +2094,9 @@ notesIVBaritone = \relative c {
   c8 d e4 c g'2 d4 d2 
   r1 r2 d'1 %tie
    g,2 b b 
-  a1 g2 g2~
-  g4 d g2 f4 d a'2~
-  a4 d,4 d2 r4 a' d1 %tie
+  a1 g2 g2. %tie2.
+   d4 g2 f4 d a'2. %tie2.
+   d,4 d2 r4 a' d1 %tie
    b2 b1 
   R\breve*4
   
@@ -2209,8 +2209,8 @@ notesIVBass = \relative c {
   %57
   \barNumberCheck #57
   | r2 f1 c2 
-  e4 e d1 a'2~
-  a4 g e2 g r4 g, 
+  e4 e d1 a'2. %tie2.
+   g4 e2 g r4 g, 
   d'2 c b4 g2. 
   d'2 r2 r2 d1 %tie
    a2 c c 
@@ -2264,8 +2264,8 @@ notesIVBass = \relative c {
   c1 r2 c a c r2 f 
   f g4 a bes2 bes 
   a1 d, 
-  r1 r2 d2~
-  d4 g,4 d'2 r2 d4 d
+  r1 r2 d2. %tie2.
+   g,4 d'2 r2 d4 d
   d2 g,4 g'2 c,4 e2 
   e4 g2 d4 r4 g2 e4~
   e8 f8 g2 c, g'4 g2 
@@ -2286,8 +2286,8 @@ notesVSoprano = \relative c {
   \barNumberCheck #23
   | r2 d''2 d d 
   e1 c 
-  c2 f2. e4 d2~
-  d4 c4 c1 b2 
+  c2 f2. e4 d2. %tie2.
+   c4 c1 b2 
   c2. d4 e1 
   f2 c d2. c8 bes 
   a4 d, a'2 r2 d1 %tie
@@ -2324,8 +2324,8 @@ notesVSoprano = \relative c {
   | r1 b1 
   e1. e2 
   e1 r1 
-  g2 e c f2~
-  f4 e e2 r4 c g'2 
+  g2 e c f2. %tie2.
+   e4 e2 r4 c g'2 
   g1 r2 g4 d~
   d4 d b2 e,4 g2 e4 
   r4 a d,2 r1
@@ -2408,8 +2408,8 @@ notesVAlto = \relative c {
   %40
   \barNumberCheck #40
   | r2 d,2 d4 d d2 
-  r2 r4 g2 g4 g2~
-  g4 c, c2 r4 g'4. e8 e4~
+  r2 r4 g2 g4 g2. %tie2.
+   c,4 c2 r4 g'4. e8 e4~
   e8 c c2 e4 g2 r2
   r2 r4 g,4 g2 g'4 d 
   r4 g d2 d2. g4 
@@ -2519,8 +2519,8 @@ notesVTenor = \relative c {
   \barNumberCheck #40
   r1 r2 g'2 
   g2 g c, r2
-  r4 c2 e4 g c, c2~
-  c4 c g2 r4 b d2 
+  r4 c2 e4 g c, c2. %tie2.
+   c4 g2 r4 b d2 
   r2 d,2. g4 d2 
   r2 r4 d'4 d g2 d4 
   d2 r2 r1
@@ -2528,8 +2528,8 @@ notesVTenor = \relative c {
   
   %51
   \barNumberCheck #51
-  f1 c2 e2~
-  e4 d4 b2 d4 d f4. f8 
+  f1 c2 e2. %tie2.
+   d4 b2 d4 d f4. f8 
   e4 c2. d2 d 
   d4 f2 c4. d8 e c d1 %tie
    a2 r4 c2 e4~
@@ -2624,8 +2624,8 @@ notesVBaritone = \relative c {
   %40
   \barNumberCheck #40
   r2 g2 b4 b4. c8 d4 
-  r2 g, g g2~
-  g4 g4 g2 r2 g1 %tie
+  r2 g, g g2. %tie2.
+   g4 g2 r2 g1 %tie
    c,2 r2 r4 g'4~
   g4 d2 d' g,4 d' g, 
   g1 r1
@@ -2638,8 +2638,8 @@ notesVBaritone = \relative c {
   d,2 r2 r2 bes'2~
   bes2 f a g 
   g1 r1
-  r2 g2. g4 a2~
-  a4 f4. g8 a f g2 r2
+  r2 g2. g4 a2. %tie2.
+   f4. g8 a f g2 r2
   r2 c4 f,4. g8 a4 e1 %tie
    g2 d r2
   r1 d2 g 
@@ -2716,8 +2716,8 @@ notesVBass = \relative c {
   R\breve*26
   c1 c2 c 
   f1 f2 d 
-  r2 d g, g'2~
-  g4 f8 e d2 c1 
+  r2 d g, g'2. %tie2.
+   f8 e d2 c1 
   r1 r2 e2 
   e2 e a f 
   g2. f4 e2 c4 a 
@@ -2740,8 +2740,8 @@ notesVBass = \relative c {
   c c g d' 
   d f4 f c2 r2
   | r2 f1 c2 
-  e d1 a'2~
-  a4 g e2 g4 g f2 
+  e d1 a'2. %tie2.
+   g4 e2 g4 g f2 
   | d4 a'4. g8 f4 e c g'2 
   R\breve*12
   
@@ -2751,8 +2751,8 @@ notesVBass = \relative c {
    c,2 g' r4 c, 
   e2 e g4 g c,2 
   g'4 e2 c4 c2. c4 
-  c4. d8 e2 r2 g2~
-  g4 d4 d2 r2 d 
+  c4. d8 e2 r2 g2. %tie2.
+   d4 d2 r2 d 
   b4. c8 d4 g, r4 g'2 c4 
   f, a2 d,4 g2 r2
   R\breve
@@ -2794,8 +2794,8 @@ notesVBass = \relative c {
   f1 r2 f 
   d g g1 
   r2 a f g 
-  r4 e2. a2 d,2~
-  d4 g4 g2 r2 g, 
+  r4 e2. a2 d,2. %tie2.
+   g4 g2 r2 g, 
   g2 g4 g c1 
   c2 g c c4 c 
   g'1 e 
@@ -2819,8 +2819,8 @@ notesVISoprano = \relative c {
   e4 c e2. d4 c2
   c2 r2 a a 
   a2 d2. c4 b g 
-  b1 c2 c2~
-  c4 a4 c2. b4 a2 
+  b1 c2 c2. %tie2.
+   a4 c2. b4 a2 
   g e r1
   r4 g4 b e,2 a e4~
   e4 g4. f8 e4 r2 e4. f8 
@@ -2840,8 +2840,8 @@ notesVISoprano = \relative c {
   %51
   \barNumberCheck #51
   r1 r2 f1 %tie
-   c2 e d2~
-  d4 d4 c2 r2 r4 c4~
+   c2 e d2. %tie2.
+   d4 c2 r2 r4 c4~
   c4 g2 b d4. c8 c4~
   c4 g4 r4 g g d'4. d8 d4 
   d2 c c r2
@@ -2959,8 +2959,8 @@ notesVIAlto = \relative c {
   a,4 a' a2 r1
   R\breve
   r2 d,2 g4. f8 e4. c8 
-  r4 d a'2 c b2~
-  b4 a4 a1 gis2 
+  r4 d a'2 c b2. %tie2.
+   a4 a1 gis2 
   a e r1
   R\breve*4
   
@@ -2988,9 +2988,9 @@ notesVIAlto = \relative c {
    a2 a1~
   a1 r2 e 
   e e4 e e2. d4 
-  c2 a b g2~
-  g4 a4 b2 c4 a e'2~
-  e4 d4 c2 g4 b2 c8 d 
+  c2 a b g2. %tie2.
+   a4 b2 c4 a e'2. %tie2.
+   d4 c2 g4 b2 c8 d 
   e1 r1
   R\breve*6
   
@@ -3034,8 +3034,8 @@ notesVITenor = \relative c {
   \barNumberCheck #40
   r2 d2 d4 b b2 
   r4 c2 e4. c8 c4 r2 
-  c4 g g2 r2 g'2~
-  g4 e4 e2 r4 b b4. a8 
+  c4 g g2 r2 g'2. %tie2.
+   e4 e2 r4 b b4. a8 
   g2 r4 g2 b4 b2 
   r2 b2. b4 b2 
   R\breve*3
@@ -3130,8 +3130,8 @@ notesVIBaritone = \relative c {
   a4. g8 f4. e8 d2 d4. e8 
   f8 g a2 d,4 r4 d'2 g,4 
   g\breve 
-  e1 e2 e2~
-  e4 c4 g'2 r1 
+  e1 e2 e2. %tie2.
+   c4 g'2 r1 
   e2 g r4 c,2 c'4 
   g4 e g2 c,1 
   R\breve*5
@@ -3266,8 +3266,8 @@ notesVIBass = \relative c {
   \barNumberCheck #69
   r1 g'1
   e2 e c r4 c4
-  g'2 g4 g2 e4 e2~
-  e4 e e2 r2 c
+  g'2 g4 g2 e4 e2. %tie2.
+   e4 e2 r2 c
   c2 a e'2. e4
   d4. c8 b2 r2 b'2
   b4 g g2 c,4 e4. f8 g4
@@ -3342,18 +3342,18 @@ notesVIISoprano = \relative c {
   \barNumberCheck #39
   r2 g2 c c 
   g' r2 d d4 d 
-  e1. d2~
-  d4 c4 c1 c2 
-  g r4 g2 f8 e d2~
-  d4 d4 d2 r2 d'1 %tie
+  e1. d2. %tie2.
+   c4 c1 c2 
+  g r4 g2 f8 e d2. %tie2.
+   d4 d2 r2 d'1 %tie
    g,2 b1 
   a2 g4 e f d4. e8 f g 
   a2. f4 g2 e 
   g1 r2 c,4 c 
   g'2. d4 d2 r2
   r4 d'2 f4. e8 d4 r4 c4~
-  c4 e4 g g,2 d'4 d2~
-  d4 a2 f4 g2. f8 e 
+  c4 e4 g g,2 d'4 d2. %tie2.
+   a2 f4 g2. f8 e 
   d4 f r4 c' f2 e4. d8 
   c4. a8 b c d2 g,4 c a 
   r4 e'4. d8 c4 b g r4 d 
@@ -3417,8 +3417,8 @@ notesVIISoprano = \relative c {
   r1 r2 d2 
   d4 d d f4. e8 d4 d2 
   g,4 c4. bes8 g4 d'1 
-  r2 r4 b2 b4 d2~
-  d4 g,4 b2 g r4 g'~
+  r2 r4 b2 b4 d2. %tie2.
+   g,4 b2 g r4 g'~
   g4 g g g g2 g 
   | r2 g, c4. d8 e2 
   r2 d4 b2 g b4~
@@ -3439,8 +3439,8 @@ notesVIIAlto = \relative c {
    g2 r2 f4 a 
   g4. f8 e2. a,4 c4. d8 e4 
   b4 r e f a2. 
-  d,4 g r4 g c2 a2~
-  a4 b4 c2 f,1 
+  d,4 g r4 g c2 a2. %tie2.
+   b4 c2 f,1 
   R\breve
   r2 g g g 
   bes1 a2 a 
@@ -3460,8 +3460,8 @@ notesVIIAlto = \relative c {
   f8 e c4 r2 c'4 c2 g4 
   r4 g4. a8 b4 r2 b 
   b2 b c2. c4 
-  a d, a'2. g4 g2~
-  g4 f4 a2. e4 f2 
+  a d, a'2. g4 g2. %tie2.
+   f4 a2. e4 f2 
   g1 r1
   R\breve*7
   
@@ -3537,8 +3537,8 @@ notesVIITenor = \relative c {
   g1 c,2 f 
   bes,4 d2 g,4 g2 r2 
   e4 e'2 c4 c2 r4 g 
-  g2 r2 g4 g c2~
-  c4 c c2 r2 g' 
+  g2 r2 g4 g c2. %tie2.
+   c4 c2 r2 g' 
   g2 g g r2 
   r4 b,2 d, d'4 b4. c8 
   d2 e4 c d1. %tie1.
@@ -3548,8 +3548,8 @@ notesVIITenor = \relative c {
   
   %69
   \barNumberCheck #69
-  r1 d2 g,2~
-  g4 g g2 r4 g' e2 
+  r1 d2 g,2. %tie2.
+   g4 g2 r4 g' e2 
   c g'4 g c,2 c4 c4~
   c4 c r4 e2 a,4 a2 
   r2 e e e 
@@ -3595,12 +3595,12 @@ notesVIITenor = \relative c {
   
   %122
   \barNumberCheck #122
-  d1. d2~
-  d4 b2 d g,4 b2 
+  d1. d2. %tie2.
+   b2 d g,4 b2 
   | a1 r1 
   c2 c4 c c f2 c4~
-  c4 f,4 a2 r2 c2~
-  c4 c2 a4 r4 d bes f' 
+  c4 f,4 a2 r2 c2. %tie2.
+   c2 a4 r4 d bes f' 
   f2 r4 bes,2 d4. c8 bes4 
   r2 r4 a4. f8 f d d2 
   r1 r2 d'2~
@@ -3645,8 +3645,8 @@ notesVIIBaritone = \relative c {
   
   %69
   \barNumberCheck #69
-  r1 r2 g2~
-  g4 c2 c4 c2 r4 g~
+  r1 r2 g2. %tie2.
+   c2 c4 c2 r4 g~
   g4 e2 c g' c,4 
   c2 r2 c4 c2 c4 
   r4 a' a a g e e2 
@@ -3813,8 +3813,8 @@ notesVIIISoprano = \relative c {
   %33
   \barNumberCheck #33
   r2 e''2 e e 
-  g1 f2 e2~
-  e4 d4 d1 c4 b 
+  g1 f2 e2. %tie2.
+   d4 d1 c4 b 
   c4. d8 e4 a,2 b8 c d2 
   r1 r2 d2 
   d2 d e1. %tie1.
@@ -3931,8 +3931,8 @@ notesVIIIAlto = \relative c {
   
   %69
   \barNumberCheck #69
-  r1 g2 g2~
-  g4 e2 c4 e g r4 g 
+  r1 g2 g2. %tie2.
+   e2 c4 e g r4 g 
   c2. g2 g e4 
   e2 r4 e a2 a4 a~
   a4 a a2 r1
@@ -3971,8 +3971,8 @@ notesVIIIAlto = \relative c {
   
   %108
   \barNumberCheck #108
-  r1 r2 a2~
-  a4 e2 a, a' e4~
+  r1 r2 a2. %tie2.
+   e2 a, a' e4~
   e4 f8 g a2 r1
   R\breve*11
   
@@ -3982,8 +3982,8 @@ notesVIIIAlto = \relative c {
   b\breve 
   r2 a a a4 a 
   c2 a a1 
-  r4 f2 f4 f f a2~
-  a4 f4 f2 r2 f 
+  r4 f2 f4 f f a2. %tie2.
+   f4 f2 r2 f 
   bes, r4 g'2. g2 
   r1 r4 d4. bes8 bes g8 
   g4 g'4 g2 r1 
@@ -4124,8 +4124,8 @@ notesVIIIBaritone = \relative c {
   e4 g g c2 g4 g1 %tie
    r2 r2 r4 a4 
   a4 a r4 e4. e8 c4 r2
-  r4 d4. d8 d4 r2 d2~
-  d4 g4 g b g g2 c,4 
+  r4 d4. d8 d4 r2 d2. %tie2.
+   g4 g b g g2 c,4 
   r4 f4. g8 a4 e g2 d4 
   e c2 d4 e c f4. e8 
   d1 r1
@@ -4175,9 +4175,9 @@ notesVIIIBaritone = \relative c {
   r4 d2 g,4 d'1 
   r2 a a r2 
   r4 g4 c2 r4 f, d a' 
-  r4 g d2 r2 d2~
-  d4 d d d r4 g c2~
-  c4 b8 a d2 g, c 
+  r4 g d2 r2 d2. %tie2.
+   d4 d d r4 g c2. %tie2.
+   b8 a d2 g, c 
   r4 g e2 g4 c,2 g'4 
   r4 d'4. b8 b4 r2 b 
   b1 r2 g2~
@@ -4259,8 +4259,8 @@ notesVIIIBass = \relative c {
   bes2 g1 bes2 
   d1. g,2 
   c e d1 
-  g, r2 g2~
-  g4 g d'4. f8 e4. d8 c1 %tie
+  g, r2 g2. %tie2.
+   g4 d'4. f8 e4. d8 c1 %tie
    b2 c g'~
   g2 c, c1 
   d2 b r4 d2 g,4
