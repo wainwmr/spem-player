@@ -1,12 +1,18 @@
 
 import './src/scss/style.scss';
 
-import { scorebars } from "./src/js/barlines.js";
+import { scorebars_modern } from "./src/js/barlines-modern.js";
+import { scorebars_ancient } from "./src/js/barlines-ancient.js";
+// eslint-disable-next-line no-constant-condition
+var scorebars = (1 === 1 ? scorebars_ancient : scorebars_modern);
+
 import { setupLilypondParser, processLilypond, dict, ranges } from "./src/js/lily.js";
 
 import lilypondfile from "./src/lilypond/spem notes.ly?raw";
 
-import { spemsvg, spemmp3array } from './src/js/svgmp3imports.js';
+import { spemsvg_ancient, spemsvg_modern, spemmp3array } from './src/js/svgmp3imports.js';
+// eslint-disable-next-line no-constant-condition
+var spemsvg = (1 === 1 ? spemsvg_ancient : spemsvg_modern);
 
 import spemmp3 from "./src/audio/spem.mp3";
 
@@ -96,6 +102,7 @@ function getPartName(n) {
 // TODO: CMD-B to type in bar number
 // TODO: highlight part on score?
 // TODO: Add lyrics to footer
+// TODO: Add musica ficta to spem notes (ficta = { \once \set suggestAccidentals = ##t }.. then "\ficta fis2")
 
 
 // var pt;

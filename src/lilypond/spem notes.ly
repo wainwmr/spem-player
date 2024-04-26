@@ -219,8 +219,6 @@ notesIAlto = \relative c {
 }
 
 notesITenor = \relative c {
-  \clef "treble_8"
-
   R\breve*4
   r1 d'1~
   | % 5
@@ -332,8 +330,6 @@ notesITenor = \relative c {
 }
 
 notesIBaritone = \relative c {
-  \clef bass
-
   R\breve*4 
   g'1. g2 
   g f d f~ 
@@ -442,8 +438,6 @@ notesIBaritone = \relative c {
 }
 
 notesIBass = \relative c {
-  \clef bass
-
   R\breve*5
   r2 d1 d2 
   d d a c2~ 
@@ -743,8 +737,6 @@ notesIIAlto = \relative c {
 }
 
 notesIITenor = \relative c {
-  \clef "treble_8"
-  
   R\breve*8
   r2 d'1 d2 
   d d a a 
@@ -847,8 +839,6 @@ notesIITenor = \relative c {
 }
 
 notesIIBaritone = \relative c {
-  \clef bass
-
   R\breve*7
   r1 r2 a'2~
   a2 a2 a a 
@@ -951,8 +941,6 @@ notesIIBaritone = \relative c {
 }
 
 notesIIBass = \relative c {
-  \clef bass
-
   R\breve*8
   r1 d1~
   d2 d d d 
@@ -1266,8 +1254,6 @@ notesIIIAlto = \relative c {
 }
 
 notesIIITenor = \relative c {
-  \clef "treble_8"
-  
   R\breve*11
 
   % 12
@@ -1379,8 +1365,6 @@ notesIIITenor = \relative c {
 }
 
 notesIIIBaritone = \relative c {
-  \clef bass
-
   R\breve*12
 
   % 13
@@ -1486,8 +1470,6 @@ notesIIIBaritone = \relative c {
 }
 
 notesIIIBass = \relative c {
-  \clef bass
-
   R\breve*13
 
   % 14
@@ -1806,8 +1788,6 @@ notesIVAlto = \relative c {
 }
 
 notesIVTenor = \relative c {
-  \clef "treble_8"
-  
   R\breve*16
 
   % 17
@@ -1917,8 +1897,6 @@ notesIVTenor = \relative c {
 }
 
 notesIVBaritone = \relative c {
-  \clef bass
-
   R\breve*15
 
   % 16
@@ -2027,8 +2005,6 @@ notesIVBaritone = \relative c {
 }
 
 notesIVBass = \relative c {
-  \clef bass
-
   R\breve*16
 
   % 17
@@ -2326,7 +2302,6 @@ notesVAlto = \relative c {
 }
 
 notesVTenor = \relative c {
-  \clef "treble_8"
   R\breve*23
 
   % 24
@@ -2426,7 +2401,6 @@ notesVTenor = \relative c {
 }
 
 notesVBaritone = \relative c {
-  \clef bass
   R\breve*23
 
   % 24
@@ -2528,8 +2502,6 @@ notesVBaritone = \relative c {
 }
 
 notesVBass = \relative c {
-  \clef bass
-
   R\breve*26
   c1 c2 c 
   f1 f2 d 
@@ -2809,8 +2781,6 @@ notesVIAlto = \relative c {
 }
 
 notesVITenor = \relative c {
-  \clef "treble_8"
-  
   R\breve*23
   r1 r2 c'2 |
   c2 c d1 
@@ -2911,8 +2881,6 @@ notesVITenor = \relative c {
 }
 
 notesVIBaritone = \relative c {
-  \clef bass
-
   R\breve*25
   r1 r2 g'2 
   g g c c4. bes8 
@@ -3012,8 +2980,6 @@ notesVIBaritone = \relative c {
 }
 
 notesVIBass = \relative c {
-  \clef bass
-
   R\breve*28
   r1 g1 
   g2 g c1 
@@ -3281,7 +3247,6 @@ notesVIIAlto = \relative c {
 }
 
 notesVIITenor = \relative c {
-  \clef "treble_8"
   R\breve*28
 
   % 29
@@ -3370,7 +3335,6 @@ notesVIITenor = \relative c {
 }
 
 notesVIIBaritone = \relative c {
-  \clef bass
   R\breve*27
 
   % 28
@@ -3460,7 +3424,6 @@ notesVIIBaritone = \relative c {
 }
 
 notesVIIBass = \relative c {
-  \clef bass
   R\breve*27
 
   % 28
@@ -3724,7 +3687,6 @@ notesVIIIAlto = \relative c {
 }
 
 notesVIIITenor = \relative c {
-  \clef "treble_8"
   R\breve*33
 
   % 34
@@ -3812,7 +3774,6 @@ notesVIIITenor = \relative c {
 }
 
 notesVIIIBaritone = \relative c {
-  \clef bass
   R\breve*32
 
   % 33
@@ -3900,7 +3861,6 @@ notesVIIIBaritone = \relative c {
 }
 
 notesVIIIBass = \relative c {
-  \clef bass
   R\breve*37
 
   % 38
