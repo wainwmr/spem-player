@@ -1,6 +1,6 @@
 \version "2.24.3" 
 
-\include "spem layout.ly"
+% \include "spem layout.ly"
 \include "../spem notes.ly"
 \include "../spem words.ly"
 
@@ -9,23 +9,43 @@
     \time 4/2
     \override Score.BarNumber.break-visibility = ##(#f #t #t)
     <<
-      \new Voice { \clef "treble" \notesIISoprano }
+      \new Voice \with {
+          \remove Note_heads_engraver
+          \consists Completion_heads_engraver
+      }
+      { \clef "treble" \notesIISoprano }
       \addlyrics \wordsIISoprano
     >>
     <<
-      \new Voice { \clef "treble" \notesIIAlto }
+      \new Voice \with {
+          \remove Note_heads_engraver
+          \consists Completion_heads_engraver
+      }
+      { \clef "treble" \notesIIAlto }
       \addlyrics \wordsIIAlto
     >>
     <<
-      \new Voice { \clef "treble_8" \notesIITenor }
+     \new Voice \with {
+          \remove Note_heads_engraver
+          \consists Completion_heads_engraver
+      }
+      { \clef "treble_8" \notesIITenor }
       \addlyrics \wordsIITenor
     >>
     <<
-      \new Voice { \clef "bass" \notesIIBaritone }
+     \new Voice \with {
+          \remove Note_heads_engraver
+          \consists Completion_heads_engraver
+      }
+      { \clef "bass" \notesIIBaritone }
       \addlyrics \wordsIIBaritone
     >>
     <<
-      \new Voice { \clef "bass" \notesIIBass }
+     \new Voice \with {
+          \remove Note_heads_engraver
+          \consists Completion_heads_engraver
+      }
+      { \clef "bass" \notesIIBass }
       \addlyrics \wordsIIBass
     >>
   >>
