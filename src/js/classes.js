@@ -11,6 +11,9 @@ export class Duration {
     this.dotted = dotted;
     this.multiplier = multiplier;
     switch (this.duration) {
+      case "\\longa":
+        this.sfths = 256;
+        break;
       case "\\breve":
         this.sfths = 128;
         break;

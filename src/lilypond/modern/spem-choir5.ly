@@ -1,6 +1,6 @@
 \version "2.24.3" 
 
-% \include "spem layout.ly"
+\include "spem layout.ly"
 \include "../spem notes.ly"
 \include "../spem words.ly"
 

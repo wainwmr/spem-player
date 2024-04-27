@@ -40,7 +40,7 @@ Lilypond {
     fraction = #(digit+ ("/" digit+)?)
     
     durationScaled = duration ("*" fraction)?
-    duration = ("\\breve" | "64" | "32" | "16" | "8" | "4" | "2" | "1") "."*
+    duration = ("\\longa" | "\\breve" | "64" | "32" | "16" | "8" | "4" | "2" | "1") "."*
     
     expression = ("^" | "_")? (("-" ("+" | "^" | "-" | "!" | ">" | "." | "_")) | ("\\" letter+))
     

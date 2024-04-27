@@ -30,4 +30,10 @@
     \Score
     \override SpacingSpanner.base-shortest-duration = #(ly:make-moment 1/16)
   }
+
+  \context {
+    \Voice
+    \remove Note_heads_engraver
+    \consists Completion_heads_engraver
+  }
 }

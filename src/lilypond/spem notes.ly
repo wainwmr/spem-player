@@ -670,7 +670,7 @@ notesIISoprano = \relative c {
   r4 d g2. b2 g4 
   r4 d'2 g4 g1 
   r4 g,2 d'4 d2 b 
-  b\breve^\fermata
+  b\breve
 }
 
 notesIIAlto = \relative c {
@@ -783,7 +783,7 @@ notesIIAlto = \relative c {
   r2 g4 d'4. b8 b g g2 
   r4 d2 e8 f g2. b2 %tie44
    g4 b4. a8 g1 
-  g\breve^\fermata
+  g\breve
 }
 
 notesIITenor = \relative c {
@@ -892,7 +892,7 @@ notesIITenor = \relative c {
   g4. g,8 b4. c8 d1 
   b r1 
   b\breve 
-  b\breve^\fermata
+  b\breve
 }
 
 notesIIBaritone = \relative c {
@@ -1091,7 +1091,7 @@ notesIIBass = \relative c {
   r2 d g b1 %tie
    g2 b b4. a8 
   g\breve
-  g\breve^\fermata
+  g\breve
 }
 
 % ------------
@@ -1455,7 +1455,7 @@ notesIIITenor = \relative c {
   r4 b d2 r2 d,2. %tie2.
    g4 d2 r4 d' d2. %tie2.
    g,2 b g4 r4 g 
-  | g\breve^\fermata
+  | g\breve
 }
 
 notesIIIBaritone = \relative c {
