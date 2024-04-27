@@ -1759,9 +1759,9 @@ notesIVSoprano = \relative c {
   | r4 d4 c8 b a g f4 a a2 
   r4 f a a f4. g8 a2 
   r2 r4 g4 g2 g 
-  r2 r4 d'4 g, c d g~
-  g4 e e2 r2 cis2~
-  | cis2 cis2 cis4. d8 e2 
+  r2 r4 d'4 g, c d g2 %tie44
+  e4 e2 r2 cis1 %tie22 
+  cis2 cis4. d8 e2 
   R\breve*4
   
   %114
@@ -1792,7 +1792,7 @@ notesIVSoprano = \relative c {
   r2 b b2. d2 %tie44
    b4 b2. g4 d'2 
   r2 d g1
-  g\breve^\fermata
+  g\breve
 }
 
 notesIVAlto = \relative c {
@@ -1840,8 +1840,8 @@ notesIVAlto = \relative c {
    g2 b b 
   a r4 g2 b4. a8 g2 %tie44
    fis4 g2 r2 r4 d2 %tie44
-   a2 c4 c g2 g'4~
-  |g4 g g4. f8 d4 f a c4. %tie4.
+   a2 c4 c g2 g'2 %tie44
+  g4 g4. f8 d4 f a c4. %tie4.
    b8 a4. g8 g2 fis8 e fis2 
   g\breve 
   R\breve*3
@@ -1911,8 +1911,7 @@ notesIVAlto = \relative c {
   r4 g g g g c2 g4 
   r4 g,2. g2 r4 g' 
   b1 r2 b 
-  b\breve~
-  b\breve^\fermata
+  b\longa
 }
 
 notesIVTenor = \relative c {
@@ -2029,9 +2028,8 @@ notesIVTenor = \relative c {
   e2 r2 g g 
   r2 e e'4 e2 e4 
   b4 d g, b b1 
-  r2 r4 d,4 g b g d'~
-  d4 b4 d2 d1~
-  d\breve^\fermata
+  r2 r4 d,4 g b g d'2 %tie44
+  b4 d2 d\breve.
 }
 
 notesIVBaritone = \relative c {
@@ -2041,8 +2039,8 @@ notesIVBaritone = \relative c {
   \barNumberCheck #16
   | r1 a'1. %tie1.
    a2 a a 
-  d, f f a~
-  a2 g g1 
+  d,2 f f a1 %tie22
+  g2 g1 
   r2 d'1 d2 
   d2 d g, a 
   b g a a 
@@ -2068,8 +2066,8 @@ notesIVBaritone = \relative c {
   b4. c8 d2 r4 g,2 d'2 %tie44
    g,4 b4. c8 d2 g, 
   R\breve*10
-  | r1 r2 bes2~
-  bes2 f2 a g 
+  | r1 r2 bes1 %tie22
+  f2 a g 
   g1 r2 r4 c,4. %tie4.
    d8 e4 c g'2 d4 d2 
   r1 r2 d'1 %tie
@@ -2135,21 +2133,20 @@ notesIVBaritone = \relative c {
   \barNumberCheck #122
   | d,1. d'2 
   b g2. d4 g2 
-  r2 a a4 a a c~
-  c4 f,2 c2. c2 
+  r2 a a4 a a c2 %tie44
+  f,2 c2. c2 
   r4 f2 c' f,4 f2 
   r4 f4. e8 c4 r4 f2 d4 
   d1 r2 d 
   f1. r2 
   e2 c r4 a'4. g8 f4 
-  r4 d'4. c8 b4 r4 g g g~
-  g8 a b2 b4 r4 g c, g'~
-  g4 c r2 c2. g4 
+  r4 d'4. c8 b4 r4 g g g4. %tie48
+  a8 b2 b4 r4 g c, g'2 %tie44
+  c4 r2 c2. g4 
   g1 r2 g 
   g1 r2 g 
   g4. a8 b4. c8 d2. b4 
-  b\breve~
-  b\breve^\fermata
+  b\longa
 }
 
 notesIVBass = \relative c {
@@ -2251,8 +2248,7 @@ notesIVBass = \relative c {
    f8 g2 c, g'4 g2 
   r4 g2 d g,4 d'1 %tie
    g2 g1~
-  g\breve~
-  g\breve^\fermata
+  g\longa
 }
 
 % ------------
