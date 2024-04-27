@@ -3388,7 +3388,7 @@ notesVIISoprano = \relative c {
   g4 g g g2 g 
   | r2 g, c4. d8 e2 
   r2 d4 b2 g b4. %tie4.
-   a8 g4 r4 d'2 b4 r4 g' 
+   a8 g4 r4 d'2 b4 r4 g'
   g2 r4 g2 d g4 
   g\breve
 }
@@ -3473,16 +3473,15 @@ notesVIIAlto = \relative c {
   f4 f f a2 f4 c'1 %tie
    f,2 r4 f2 bes,4
   bes4 bes'4. a8 g4 r2 d 
-  d1 r2 r4 g4~
-  | g8 e e c c2 r1
+  d1 r2 r4 g4. %tie48
+  e8 e c c2 r1
   | r4 b2 b4 b b g2 
   g2 r2 r2 r4 g'4 
   g4 g g g2 c,4 c2 
   r4 g'4. e8 e4. c8 c2 e4 
   g2 r2 r2 r4 g,2 %tie44
    g'2 d4 r4 d2. 
-  b4 d g, g' g1~
-  g\breve^\fermata
+  b4 d g, g' g\breve.
 }
 
 notesVIITenor = \relative c {
@@ -3569,15 +3568,14 @@ notesVIITenor = \relative c {
    c2 a4 r4 d bes f' 
   f2 r4 bes,2 d4. c8 bes4 
   r2 r4 a4. f8 f d d2 
-  r1 r2 d'2~
-  | d4 d d d g2. d4 
+  r1 r2 d'2. %tie24
+  d4 d d g2. d4 
   | d2 r2 r2 e2 
   | e2 r2 e g 
   g r2 g, c 
-  b4 g d'2 r2 d2~
-  d1 d~
-  d\breve~
-  d\breve^\fermata
+  b4 g d'2 r2 d1. %tie21
+  d1~
+  d\longa
 }
 
 notesVIIBaritone = \relative c {
@@ -3612,8 +3610,8 @@ notesVIIBaritone = \relative c {
   %69
   \barNumberCheck #69
   r1 r2 g2. %tie2.
-   c2 c4 c2 r4 g~
-  g4 e2 c g' c,4 
+   c2 c4 c2 r4 g2 %tie44
+  e2 c g' c,4 
   c2 r2 c4 c2 c4 
   r4 a' a a g e e2 
   r2 d8 d d4 r2 d' 
@@ -3646,14 +3644,14 @@ notesVIIBaritone = \relative c {
   %102
   \barNumberCheck #102
   r2 r4 e4 f2 g 
-  r1 f4 d e a~
-  a4 a r2 r1
+  r1 f4 d e a2 %tie44
+  a4 r2 r1
   R\breve*3
   
   %108
   \barNumberCheck #108
-  r1 r2 cis2~
-  cis2 a2 a\breve %tie11
+  r1 r2 cis1 %tie22
+  a2 a\breve %tie11
     r1
   R\breve*11
   
@@ -3670,12 +3668,11 @@ notesVIIBaritone = \relative c {
   | r1 r4 d,4. e8 fis4 
   | r2 g2. g4 g g 
   | g2 g r2 r4 e4 
-  | e2 r2 c2. g'4~
-  | g8 f e4. d8 c4 c'2 r2 
+  | e2 r2 c2. g'4. %tie48
+  f8 e4. d8 c4 c'2 r2 
   r2 g1. 
   g1 r1 
-  b1 b1~
-  b\breve^\fermata
+  b1 b\breve.
 }
 
 notesVIIBass = \relative c {
@@ -3712,8 +3709,8 @@ notesVIIBass = \relative c {
   g1. g2
   g1 r2 g
   e2 c f2. f4
-  c2 c2. e4 c g'~
-  g4 g g2 r g
+  c2 c2. e4 c g'2 %tie44
+  g4 g2 r g
   g2 g e e
   a2 f g1
   a\breve
@@ -3765,8 +3762,7 @@ notesVIIBass = \relative c {
   c2 g' r g
   g2 r4 g,2 d'4 d2
   r2 d2 b2 d
-  d\breve~
-  d\breve^\fermata
+  d\longa
 }
 
 % ------------
