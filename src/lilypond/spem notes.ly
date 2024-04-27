@@ -571,24 +571,24 @@ notesIISoprano = \relative c {
   f a1 f2 
   c' c2. g4 b g 
   a1 r2 d 
-  d4 b2 g d'4. c8 b2 %tie44
+  |d4 b2 g d'4. c8 b2 %tie44
    g4 a2 r4 f'2 d4 
   f4. f8 f2 r4 c g c 
-  c2 r2 e2. a,2 %tie44
-   d2 d4 d2 d2
-  d2 d2. f4 d2 
+  |c2 r2 e2. a,2 %tie44
+  d2 d4 d2 d2
+  |d2 d2. f4 d2 
   r4 e2 e4 g2 r4 d 
   d4. e8 f4 d r4 d g, b2 %tie44
-   b4. c8 d4 r4 d, d2 
-  r4 g2 c4 f, a r4 d4. %tie4.
-  b b2 g d'4 r4 g,2 %tie44
+  b4. c8 d4 r4 d, d2 
+  |r4 g2 c4 f, a r4 d4. %tie4.
+  b8 b2 g d'4 r4 g,2 %tie44
    e4 e2 r4 a c f2 %tie44
    c4 c2 r1
-  | R\breve*14
+  R\breve*14
   
   %40
   \barNumberCheck #40
-  r2 g'2 g g 
+  | r2 g'2 g g 
   g2 r2 g, g4 g2 %tie44
    c4 c2 r2 g4 e2 %tie44
    e'4. f8 g2 d g,4 
@@ -872,25 +872,25 @@ notesIITenor = \relative c {
   %116
   \barNumberCheck #116
   | r1 r2 a,2 
-  c d4 e f2. e4 
-  d2 g,2. a8 b c1 %tie
+  |c d4 e f2. e4 
+  |d2 g,2. a8 b c1 %tie
    g2. a4 b c 
-  d e fis2 g1 
-  fis r1 
-  d1. d2 
-  d1 r2 d 
-  d4 d d f2 f, c'2 %tie44
+  |d e fis2 g1 
+  |fis r1 
+  |d1. d2 
+  |d1 r2 d 
+  |d4 d d f2 f, c'2 %tie44
    a4 r4 c2 a4 a2 
-  r4 a2 a4. bes8 c4 f,2 
+  |r4 a2 a4. bes8 c4 f,2 
   r2 r4 f2 f4 f f 
   f2 r2 d bes'2 
   f4. g8 a2 r1 
-  c4 c4. d8 e c d2 r4 d2 %tie44
+  |c4 c4. d8 e c d2 r4 d2 %tie44
    b4 b g4 g2 g 
-  r1 r2 c2. %tie2.
+  |r1 r2 c2. %tie2.
    g2 d'4 r4 e2 c2 %tie44
-   g g2 r2 g' 
-  g4. g,8 b4. c8 d1 
+   g4 g2 r2 g' 
+  |g4. g,8 b4. c8 d1 
   b r1 
   b\breve 
   b\breve^\fermata
