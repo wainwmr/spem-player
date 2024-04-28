@@ -191,7 +191,6 @@ export async function processLilypond(lilypondfile) {
         ranges[choir][part].push({ "from": from, "to": pos });
         from = undefined;
       }
-
     }
   }
 }

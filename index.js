@@ -213,7 +213,7 @@ function setBar(b, changedChoirs = false) {
   var pos = getScrollPosition(b);
   spemscore.scrollTo({
     top: 0,
-    left: pos, 
+    left: pos,
     behavior: changedChoirs ? "instant" : "smooth"
   });
 }
