@@ -7,7 +7,7 @@
 \score {
 
   <<
-    \new StaffGroup = choirStaff <<
+    % \new StaffGroup = choirStaff <<
       \override Score.BarNumber.break-visibility = ##(#f #t #t)
       <<
         \new Voice {
@@ -45,7 +45,7 @@
         \addlyrics \wordsIBass
       >>
     >>
-  >>
+  % >>
   \layout {
     \override Staff.Accidental.alteration-glyph-name-alist = #standard-alteration-glyph-name-alist
   }

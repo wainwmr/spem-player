@@ -29,12 +29,13 @@
     % \override NoteHead.style = #'baroque
     \override NoteHead.style = #'petrucci
     \override Rest.style = #'mensural
+    \override Flag.style = #'mensural
     \override NoteHead.font-size = #+2
     \override Accidental.font-size = #+4
     \override Rest.font-size = #+4
-    \override Flag.style = #'mensural
     alterationGlyphs = #alteration-vaticana-glyph-name-alist
     \override Stem.thickness = 3.0
+    \override Score.BarLine.transparent = ##t
     \autoBeamOff
 
     % \override Voice.Stem.thickness = #1.0
