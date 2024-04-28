@@ -1,6 +1,8 @@
 \version "2.24.3"
 
-ficta = { \once \set suggestAccidentals = ##t }
+ficta = { 
+  \once \set suggestAccidentals = ##t 
+}
 
 % ------------
 % Choir 1

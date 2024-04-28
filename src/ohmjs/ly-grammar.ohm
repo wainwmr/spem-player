@@ -5,7 +5,7 @@ Lilypond {
 	
     Version = "\\version" "\"" (digit | ".")* "\""
     
-    RelativeClause = (variable "=")? "\\relative" note? "{" Music "}"
+    RelativeClause = (variable "=")? ("\\relative" note?)? "{" Music "}"
     
     Music = ( Component | command) *
 
