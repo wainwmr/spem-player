@@ -188,11 +188,7 @@ function setBar(b, changedChoirs = false) {
     barinput.value = currentBar;
   }
 
-  // const subdoc = svgobject.getSVGDocument();  
-  // HACK: get SVG in a better way than just the second SVG on the page!
-  // svg = document.getElementsByTagName("svg")[3];
   svg = document.querySelector("#spemScore svg");
-  // pt = svg.createSVGPoint();  // HACK: Created once for document
 
   // Highlight the current bar on the score
   if (b > 0 && b < 139) {
@@ -201,7 +197,7 @@ function setBar(b, changedChoirs = false) {
     newElement.setAttribute("y", "0");
     const bw = (b >= 138 ? svg.getBBox().width - scorebars[currentChoir - 1][137] : scorebars[currentChoir - 1][b] - scorebars[currentChoir - 1][b - 1]);
     newElement.setAttribute("width", bw);
-    newElement.setAttribute("height", svg.getBBox().height);
+    newElement.setAttribute("height", svg.getBBox().height*2);  // HACK: why times two???
     newElement.style.fill = scoreHighlightColor; //Set stroke colour
     newElement.style.fillOpacity = 0.1;
     newElement.style.strokeWidth = "5px"; //Set stroke width
@@ -624,7 +620,12 @@ function keyboardTapped(e) {
       setPart("satrb".indexOf(e.key) + 1);
       pauseAndRepaint();
       break;
-
+    case 'KeyM':
+      toggleScore();
+      break;
+    case 'KeyD':
+      toggleDark();
+      break;
     case 'ArrowRight':
       setBar(currentBar + 1);
       pauseAndRepaint();
