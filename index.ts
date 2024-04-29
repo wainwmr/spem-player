@@ -1,48 +1,48 @@
 
 import './src/scss/style.scss';
 
-import { scorebars_modern } from "./src/js/barlines-modern.js";
-import { scorebars_early } from "./src/js/barlines-early.js";
+import { scorebars_modern } from "./src/ts/barlines-modern.js";
+import { scorebars_early } from "./src/ts/barlines-early.js";
 
-import { setupLilypondParser, processLilypond, dict, ranges } from "./src/js/lily.js";
+import { setupLilypondParser, processLilypond, dict, ranges } from "./src/ts/lily.ts";
+import { spemsvg_early, spemsvg_modern, spemmp3array } from './src/ts/svgmp3imports.ts';
 
 import lilypondfile from "./src/lilypond/spem notes.ly?raw";
-
-import { spemsvg_early, spemsvg_modern, spemmp3array } from './src/js/svgmp3imports.js';
-
 import spemmp3 from "./src/audio/spem.mp3";
 
 // (minim = 62) === (beattime = 0.9677)
 const beattime = 60 / 62;
 
+
 // const container = document.getElementById("spemFrame");
-const canvas = document.getElementById("spemCanvas");
-const spemscore = document.getElementById("spemScore");
-const playpausebutton = document.getElementById('playpausebutton');
-const playpauseicon = document.getElementById('playpauseicon');
-const choirselect = document.getElementById('choir-select');
-const partselect = document.getElementById('part-select');
-const barinput = document.getElementById('bar-field');
-const statusarea = document.getElementById('statusarea');
-const choiroutput = document.getElementById('choir-output');
-const partoutput = document.getElementById('part-output');
-const baroutput = document.getElementById('bar-output');
-const info = document.getElementById('info');
-const help = document.getElementById('help');
-const backdrop = document.getElementById('backdrop');
-const spinner = document.getElementById('spinner');
-const darkswitch = document.getElementById('darkswitch');
-const scoreswitch = document.getElementById('scoreswitch');
+const canvas: HTMLCanvasElement = document.getElementById("spemCanvas") as HTMLCanvasElement;
+const spemscore: HTMLDivElement = document.getElementById("spemScore") as HTMLDivElement;
+const playpausebutton: HTMLDivElement = document.getElementById('playpausebutton') as HTMLDivElement;
+const playpauseicon: HTMLSpanElement = document.getElementById('playpauseicon') as HTMLSpanElement;
+const choirselect: HTMLSelectElement = document.getElementById('choir-select') as HTMLSelectElement;
+const partselect: HTMLSelectElement = document.getElementById('part-select') as HTMLSelectElement;
+const barinput: HTMLInputElement = document.getElementById('bar-field') as HTMLInputElement;
+const statusarea: HTMLDivElement = document.getElementById('statusarea') as HTMLDivElement;
+const choiroutput: HTMLSpanElement = document.getElementById('choir-output') as HTMLSpanElement;
+const partoutput: HTMLSpanElement = document.getElementById('part-output') as HTMLSpanElement;
+const baroutput: HTMLSpanElement = document.getElementById('bar-output') as HTMLSpanElement;
+const info: HTMLSpanElement = document.getElementById('info') as HTMLSpanElement;
+const help: HTMLDivElement = document.getElementById('help') as HTMLDivElement;
+const backdrop: HTMLDivElement = document.getElementById('backdrop') as HTMLDivElement;
+type SvgInHtml = HTMLElement & SVGElement;
+const spinner: SvgInHtml = document.getElementById('spinner') as SvgInHtml;
+const darkswitch: SvgInHtml = document.getElementById('darkswitch') as SvgInHtml;
+const scoreswitch: SvgInHtml = document.getElementById('scoreswitch') as SvgInHtml;
 
 const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass']; // HACK: this is repeasted later
 
 // State
-var currentChoir;  // from 1 to 8
-var currentPart;  // 0 means All parts; 1 is Soprano... 5 is Bass
-var currentBar;
+var currentChoir: number;  // from 1 to 8
+var currentPart: number;  // 0 means All parts; 1 is Soprano... 5 is Bass
+var currentBar: number;
 var scoretype = 0; // 0 for modern and 1 for early
 // eslint-disable-next-line no-unused-vars
-var viewmode; // 0 for dark and 1 for light
+var viewmode: number; // 0 for dark and 1 for light
 
 var spemsvg = (scoretype == 1 ? spemsvg_early : spemsvg_modern);
 var scorebars = (scoretype == 1 ? scorebars_early : scorebars_modern);
@@ -61,12 +61,9 @@ const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
 if (prefersDarkScheme.matches) {
   document.body.classList.add('dark-theme');
   viewmode = 0;
-  darkswitch.checked = true;
 } else {
   document.body.classList.remove('dark-theme');
-  // eslint-disable-next-line no-unused-vars
   viewmode = 1;
-  darkswitch.checked = false;
 }
 
 // All the colors are defined in the style sheet
@@ -122,16 +119,15 @@ function getPartName(n) {
 // }
 
 // where c = 1 to 8
-async function setChoir(c, forceChange = false) {
-  c = Number(c);
+async function setChoir(c: number, forceChange = false) {
   if (currentChoir == c && !forceChange) {
     return;
   }
   currentChoir = Math.min(Math.max(1, c), 8);
 
   // Update the input field
-  if (choirselect.value != currentChoir) {
-    choirselect.value = currentChoir;
+  if (choirselect != null && choirselect.value != String(currentChoir)) {
+    choirselect.value = String(currentChoir);
   }
 
   // load the correct score for this choir
@@ -150,15 +146,15 @@ async function setChoir(c, forceChange = false) {
 }
 
 // where p = 0 (for all parts) or 1 - 5 for SATBarB
-function setPart(p) {
+function setPart(p: number) {
   if (currentPart == p) {
     return;
   }
   currentPart = Math.min(Math.max(0, p), 5); // 0 to 5 inclusive
 
   // Update the input field
-  if (partselect.value != currentPart) {
-    partselect.value = currentPart;
+  if (partselect != null && partselect.value != String(currentPart)) {
+    partselect.value = String(currentPart);
   }
 }
 
@@ -166,7 +162,7 @@ function setPart(p) {
 var previousBarHighlight;
 
 // where b = 0 to 139
-function setBar(b, changedChoirs = false) {
+function setBar(b: number, changedChoirs = false) {
   if (b == currentBar && !changedChoirs) {
     return;
   }
@@ -180,32 +176,33 @@ function setBar(b, changedChoirs = false) {
   currentBar = b;
 
   // update the input field
-  if (barinput.value != currentBar) {
-    barinput.value = currentBar;
+  if (barinput != null && barinput.value != String(currentBar)) {
+    barinput.value = String(currentBar);
   }
 
   svg = document.querySelector("#spemScore svg");
-
-  // Highlight the current bar on the score
-  if (b > 0 && b < 139) {
-    var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-    newElement.setAttribute("x", scorebars[currentChoir - 1][b - 1]);
-    newElement.setAttribute("y", "0");
-    const bw = (b >= 138 ? svg.getBBox().width - scorebars[currentChoir - 1][137] : scorebars[currentChoir - 1][b] - scorebars[currentChoir - 1][b - 1]);
-    newElement.setAttribute("width", bw);
-    newElement.setAttribute("height", svg.getBBox().height * 2);  // HACK: why times two???
-    newElement.style.fill = scoreHighlightColor; //Set stroke colour
-    newElement.style.fillOpacity = 0.1;
-    newElement.style.strokeWidth = "5px"; //Set stroke width
-    svg.appendChild(newElement);
-  }
 
   if (previousBarHighlight != undefined) {
     if (svg.contains(previousBarHighlight)) {
       svg.removeChild(previousBarHighlight);
     }
   }
-  previousBarHighlight = newElement;
+
+  // Highlight the current bar on the score
+  if (b > 0 && b < 139) {
+    var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+    newElement.setAttribute("x", String(scorebars[currentChoir - 1][b - 1]));
+    newElement.setAttribute("y", "0");
+    const bw = (b >= 138 ? svg.getBBox().width - scorebars[currentChoir - 1][137] : scorebars[currentChoir - 1][b] - scorebars[currentChoir - 1][b - 1]);
+    newElement.setAttribute("width", String(bw));
+    newElement.setAttribute("height", String(svg.getBBox().height * 2));  // HACK: why times two???
+    newElement.style.fill = scoreHighlightColor; //Set stroke colour
+    newElement.style.fillOpacity = "0.1";
+    newElement.style.strokeWidth = "5px"; //Set stroke width
+    svg.appendChild(newElement);
+    previousBarHighlight = newElement;
+  }
+
 
   // scroll the the right place
   var pos = getScrollPosition(b);
@@ -278,17 +275,19 @@ function calculateCanvasSize() {
 
 function showLoadingOnCanvas() {
   const ctx = canvas.getContext("2d");
-  ctx.save();
-  ctx.font = "30px Arial";
-  ctx.fillStyle = "white";
-  ctx.scale(canvas.width / canvas.height, 1);
-  ctx.fillText(`Loading...`, 0, canvas.height / 2);
-  ctx.restore();
+  if (ctx != null) {
+    ctx.save();
+    ctx.font = "30px Arial";
+    ctx.fillStyle = "white";
+    ctx.scale(canvas.width / canvas.height, 1);
+    ctx.fillText(`Loading...`, 0, canvas.height / 2);
+    ctx.restore();
+  }
 }
 
 // define array pulses[choir][part] to be min transparency which
 // will be pulsed when the choir is singing a note.
-var pulses = [];
+var pulses: number[][] = [];
 for (var c = 0; c < 8; c++) {
   pulses[c] = [];
   for (var p = 0; p < 5; p++) {
@@ -307,7 +306,9 @@ function update(pos = 0) {
   // 
   if (notes != undefined && notes.length > 0) {
     for (var n of notes) {
-      pulses[n.c][n.p] = easeOutCubic(pos % quant, 1.4, -0.4, n.n.duration.sfths / 128);
+      if (n.n.duration != null) {
+        pulses[n.c][n.p] = easeOutCubic(pos % quant, 1.4, -0.4, n.n.duration.sfths / 128);
+      }
     }
   }
 
@@ -318,7 +319,7 @@ function easeOutCubic(t, b, c, d) {
   return c * ((t = t / d - 1) * t * t + 1) + b;
 }
 
-function draw(currentpos) {
+function draw(currentpos: number) {
 
   if (currentpos == undefined) {
     currentpos = currentBar;
@@ -326,6 +327,8 @@ function draw(currentpos) {
 
   // Blank out the whole canvas
   const ctx = canvas.getContext("2d");
+  if (ctx == null) return;
+
   ctx.fillStyle = backgroundColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -350,7 +353,7 @@ function draw(currentpos) {
   }
 
   // Draw highlight line for the selected choir or choir and part
-  var startY, width;
+  var startY: number, width: number;
   if (currentPart != 0) {
     startY = canvasPadding + ((currentChoir - 1) * choirHeight) + ((currentPart - 1) * partHeight);
     width = partHeight * 1.4;
@@ -377,7 +380,7 @@ function draw(currentpos) {
     for (let p = 0; p < 5; p++) {
       const startY = canvasPadding + (c * choirHeight) + (p * partHeight);
 
-      const list = ranges[c][p];
+      const list: { "from": number, "to": number }[] = ranges[c][p];
       list.forEach(r => {
         const from = r.from;
         const to = r.to;
@@ -557,9 +560,9 @@ function canvasMoved(e) {
 // -----------------------------------------------------
 
 function pauseAndRepaintNoLoad() {
-  setChoir(choirselect.value);
-  setPart(partselect.value);
-  setBar(barinput.value);
+  setChoir(Number(choirselect.value));
+  setPart(Number(partselect.value));
+  setBar(Number(barinput.value));
 
   // update the audio location 
   // HACK: this can't be the right place for this next line!
@@ -573,7 +576,7 @@ function pauseAndRepaint(load = true) {
   if (load) {
     loadAudio(currentChoir, currentPart, currentBar);
   }
-  draw();
+  draw(currentBar);
 }
 
 // -----------------------------------------------------
@@ -810,7 +813,7 @@ window.addEventListener("load", async () => {
 
   // watch for change in user's preference of color scheme
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    darkswitch.checked = !darkswitch.checked;
+    toggleDark();
     loadColors();
     pauseAndRepaint();
   });

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-outfile=js/barlines-early.js
+outfile=ts/barlines-early.ts
 touch $outfile
 
 echo "`date`: Generating $outfile"
