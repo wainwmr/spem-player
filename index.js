@@ -104,8 +104,6 @@ function getPartName(n) {
 // TODO: CMD-B to type in bar number
 // TODO: highlight part on score?
 // TODO: Add lyrics to footer
-// TODO: URL to set dark mode and early/modern
-// TODO: change wording of ancient -> early
 
 
 // var pt;
@@ -238,6 +236,8 @@ function parseURL() {
   var choir = 1; // default choir
   var part = 0;
   var bar = 0;
+  var dark = false;
+  var early = false;
   for (let i = 0; i < parms.length; i++) {
     const p = parms[i].split("=");
     if (p[0] == "choir") {
@@ -249,10 +249,22 @@ function parseURL() {
     else if (p[0] == "bar") {
       bar = Number(p[1]);
     }
+    else if (p[0] == "dark") {
+      dark = true;
+    }
+    else if (p[0] == "score") {
+      early = (p[1] == "early");
+    }
   }
   setChoir(choir);
   setPart(part);
   setBar(bar);
+  toggleScore(early);
+  if (dark) {
+    document.body.classList.add("dark-theme");
+    document.body.classList.remove("light-theme");
+    loadColors();
+  }
 }
 
 function calculateCanvasSize() {
@@ -723,8 +735,8 @@ function toggleDark() {
   pauseAndRepaint();
 }
 
-function toggleScore() {
-  if (scoretype == 0) {
+function toggleScore(forceEarly = false) {
+  if (scoretype == 0 || forceEarly) {
     scoretype = 1; // early
     spemsvg = spemsvg_early;
     scorebars = scorebars_early;

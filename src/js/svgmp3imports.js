@@ -8,15 +8,15 @@ import spemsvg_modern7 from "../svg/modern/spem-choir7.svg";
 import spemsvg_modern8 from "../svg/modern/spem-choir8.svg";
 export const spemsvg_modern = [spemsvg_modern1, spemsvg_modern2, spemsvg_modern3, spemsvg_modern4, spemsvg_modern5, spemsvg_modern6, spemsvg_modern7, spemsvg_modern8];
 
-import spemsvg_ancient1 from "../svg/ancient/spem-choir1.svg";
-import spemsvg_ancient2 from "../svg/ancient/spem-choir2.svg";
-import spemsvg_ancient3 from "../svg/ancient/spem-choir3.svg";
-import spemsvg_ancient4 from "../svg/ancient/spem-choir4.svg";
-import spemsvg_ancient5 from "../svg/ancient/spem-choir5.svg";
-import spemsvg_ancient6 from "../svg/ancient/spem-choir6.svg";
-import spemsvg_ancient7 from "../svg/ancient/spem-choir7.svg";
-import spemsvg_ancient8 from "../svg/ancient/spem-choir8.svg";
-export const spemsvg_ancient = [spemsvg_ancient1, spemsvg_ancient2, spemsvg_ancient3, spemsvg_ancient4, spemsvg_ancient5, spemsvg_ancient6, spemsvg_ancient7, spemsvg_ancient8];
+import spemsvg_early1 from "../svg/early/spem-choir1.svg";
+import spemsvg_early2 from "../svg/early/spem-choir2.svg";
+import spemsvg_early3 from "../svg/early/spem-choir3.svg";
+import spemsvg_early4 from "../svg/early/spem-choir4.svg";
+import spemsvg_early5 from "../svg/early/spem-choir5.svg";
+import spemsvg_early6 from "../svg/early/spem-choir6.svg";
+import spemsvg_early7 from "../svg/early/spem-choir7.svg";
+import spemsvg_early8 from "../svg/early/spem-choir8.svg";
+export const spemsvg_early = [spemsvg_early1, spemsvg_early2, spemsvg_early3, spemsvg_early4, spemsvg_early5, spemsvg_early6, spemsvg_early7, spemsvg_early8];
 
 import spem1s from "../audio/spem-1-soprano.mp3";
 import spem1a from "../audio/spem-1-alto.mp3";
