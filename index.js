@@ -2,13 +2,13 @@
 import './src/scss/style.scss';
 
 import { scorebars_modern } from "./src/js/barlines-modern.js";
-import { scorebars_ancient } from "./src/js/barlines-ancient.js";
+import { scorebars_early } from "./src/js/barlines-early.js";
 
 import { setupLilypondParser, processLilypond, dict, ranges } from "./src/js/lily.js";
 
 import lilypondfile from "./src/lilypond/spem notes.ly?raw";
 
-import { spemsvg_ancient, spemsvg_modern, spemmp3array } from './src/js/svgmp3imports.js';
+import { spemsvg_early, spemsvg_modern, spemmp3array } from './src/js/svgmp3imports.js';
 
 import spemmp3 from "./src/audio/spem.mp3";
 
@@ -44,8 +44,8 @@ var scoretype = 0; // 0 for modern and 1 for early
 // eslint-disable-next-line no-unused-vars
 var viewmode; // 0 for dark and 1 for light
 
-var spemsvg = (scoretype == 1 ? spemsvg_ancient : spemsvg_modern);
-var scorebars = (scoretype == 1 ? scorebars_ancient : scorebars_modern);
+var spemsvg = (scoretype == 1 ? spemsvg_early : spemsvg_modern);
+var scorebars = (scoretype == 1 ? scorebars_early : scorebars_modern);
 
 
 var svg; // the actual SVG
@@ -94,20 +94,18 @@ function getPartName(n) {
 
 // TODO: click on score should send you to bar.  And part?
 // TODO: Change dark mode to moon/sun icons
-// TODO: Add hide/show icon to remove score
 // TODO: Visual effect for false relations
 // TODO: switching dark mode should not stop play
 // TODO: Better font/graphic for Spem Player title
 // BUG: can scroll up and down a tiny bit in score
 // BUG: [Violation] Forced reflow while executing JavaScript took 36ms  (this doesn't happen when you have already manually adjusted the height of the score - something to do with the flex: 1 after the reload?)
-// TODO: build: minimise SVGs in build process
 // TODO: build: minimse SVGs using <use> and <defs> elements
 // TODO: build: generate SVG from lilypond as part of build process
-// TODO: build: Automatically remove the height and width from the lilypond generate SVGs
 // TODO: CMD-B to type in bar number
 // TODO: highlight part on score?
 // TODO: Add lyrics to footer
-// TODO: Add musica ficta to spem notes (ficta = { \once \set suggestAccidentals = ##t }.. then "\ficta fis2")
+// TODO: URL to set dark mode and early/modern
+// TODO: change wording of ancient -> early
 
 
 // var pt;
@@ -728,8 +726,8 @@ function toggleDark() {
 function toggleScore() {
   if (scoretype == 0) {
     scoretype = 1; // early
-    spemsvg = spemsvg_ancient;
-    scorebars = scorebars_ancient;
+    spemsvg = spemsvg_early;
+    scorebars = scorebars_early;
   }
   else {
     scoretype = 0; // modern
