@@ -197,7 +197,7 @@ function setBar(b, changedChoirs = false) {
     newElement.setAttribute("y", "0");
     const bw = (b >= 138 ? svg.getBBox().width - scorebars[currentChoir - 1][137] : scorebars[currentChoir - 1][b] - scorebars[currentChoir - 1][b - 1]);
     newElement.setAttribute("width", bw);
-    newElement.setAttribute("height", svg.getBBox().height*2);  // HACK: why times two???
+    newElement.setAttribute("height", svg.getBBox().height * 2);  // HACK: why times two???
     newElement.style.fill = scoreHighlightColor; //Set stroke colour
     newElement.style.fillOpacity = 0.1;
     newElement.style.strokeWidth = "5px"; //Set stroke width
@@ -626,6 +626,14 @@ function keyboardTapped(e) {
     case 'KeyD':
       toggleDark();
       break;
+    case 'Slash':
+      if (e.shiftKey) {
+        showHelp();
+      }
+      break;
+    case 'Escape':
+      showHelp(false);
+      break;
     case 'ArrowRight':
       setBar(currentBar + 1);
       pauseAndRepaint();
@@ -649,6 +657,7 @@ function keyboardTapped(e) {
       pauseAndRepaint();
       break;
     default:
+      console.log("key pressed: ", e.code);
   }
 
 }
