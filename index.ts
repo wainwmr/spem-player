@@ -15,37 +15,40 @@ const beattime = 60 / 62;
 
 
 // const container = document.getElementById("spemFrame");
-const canvas: HTMLCanvasElement = document.getElementById("spemCanvas") as HTMLCanvasElement;
-const spemscore: HTMLDivElement = document.getElementById("spemScore") as HTMLDivElement;
-const playpausebutton: HTMLDivElement = document.getElementById('playpausebutton') as HTMLDivElement;
-const playpauseicon: HTMLSpanElement = document.getElementById('playpauseicon') as HTMLSpanElement;
-const choirselect: HTMLSelectElement = document.getElementById('choir-select') as HTMLSelectElement;
-const partselect: HTMLSelectElement = document.getElementById('part-select') as HTMLSelectElement;
-const barinput: HTMLInputElement = document.getElementById('bar-field') as HTMLInputElement;
-const statusarea: HTMLDivElement = document.getElementById('statusarea') as HTMLDivElement;
-const choiroutput: HTMLSpanElement = document.getElementById('choir-output') as HTMLSpanElement;
-const partoutput: HTMLSpanElement = document.getElementById('part-output') as HTMLSpanElement;
-const baroutput: HTMLSpanElement = document.getElementById('bar-output') as HTMLSpanElement;
-const info: HTMLSpanElement = document.getElementById('info') as HTMLSpanElement;
-const help: HTMLDivElement = document.getElementById('help') as HTMLDivElement;
-const backdrop: HTMLDivElement = document.getElementById('backdrop') as HTMLDivElement;
+const canvas = document.getElementById("spemCanvas") as HTMLCanvasElement;
+const spemscore = document.getElementById("spemScore") as HTMLDivElement;
+const playpausebutton = document.getElementById('playpausebutton') as HTMLDivElement;
+const playpauseicon = document.getElementById('playpauseicon') as HTMLSpanElement;
+const choirselect = document.getElementById('choir-select') as HTMLSelectElement;
+const partselect = document.getElementById('part-select') as HTMLSelectElement;
+const barinput = document.getElementById('bar-field') as HTMLInputElement;
+const statusarea = document.getElementById('statusarea') as HTMLDivElement;
+const choiroutput = document.getElementById('choir-output') as HTMLSpanElement;
+const partoutput = document.getElementById('part-output') as HTMLSpanElement;
+const baroutput = document.getElementById('bar-output') as HTMLSpanElement;
+const info = document.getElementById('info') as HTMLSpanElement;
+const help = document.getElementById('help') as HTMLDivElement;
+const backdrop = document.getElementById('backdrop') as HTMLDivElement;
 type SvgInHtml = HTMLElement & SVGElement;
-const spinner: SvgInHtml = document.getElementById('spinner') as SvgInHtml;
-const darkswitch: SvgInHtml = document.getElementById('darkswitch') as SvgInHtml;
-const scoreswitch: SvgInHtml = document.getElementById('scoreswitch') as SvgInHtml;
+const spinner = document.getElementById('spinner') as SvgInHtml;
+const darkswitch = document.getElementById('darkswitch') as SvgInHtml;
+const scoreswitch = document.getElementById('scoreswitch') as SvgInHtml;
 
 const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass']; // HACK: this is repeasted later
 
+type ScoreType = "early" | "modern";
+type PartType = "All" | "Soprano" | "Alto" | "Tenor" | "Baritone" | "Bass";
+
 // State
 var currentChoir: number;  // from 1 to 8
-var currentPart: number;  // 0 means All parts; 1 is Soprano... 5 is Bass
+var currentPart: number; 
 var currentBar: number;
-var scoretype = 0; // 0 for modern and 1 for early
+var scoretype: ScoreType = "early";
 // eslint-disable-next-line no-unused-vars
 var viewmode: number; // 0 for dark and 1 for light
 
-var spemsvg = (scoretype == 1 ? spemsvg_early : spemsvg_modern);
-var scorebars = (scoretype == 1 ? scorebars_early : scorebars_modern);
+var spemsvg = (scoretype === "early" ? spemsvg_early : spemsvg_modern);
+var scorebars = (scoretype == "early" ? scorebars_early : scorebars_modern);
 
 
 var svg; // the actual SVG
@@ -739,13 +742,13 @@ function toggleDark() {
 }
 
 function toggleScore(forceEarly = false) {
-  if (scoretype == 0 || forceEarly) {
-    scoretype = 1; // early
+  if (scoretype === "modern" || forceEarly) {
+    scoretype = "early";
     spemsvg = spemsvg_early;
     scorebars = scorebars_early;
   }
   else {
-    scoretype = 0; // modern
+    scoretype = "modern";
     spemsvg = spemsvg_modern;
     scorebars = scorebars_modern;
   }
