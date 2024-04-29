@@ -105,6 +105,14 @@ header {
         flex-grow: 1;
     }
 
+    #scoreswitch {
+        cursor: pointer;
+        margin-right: 5px;
+        path {
+            fill: var(--color-title);
+        }
+    }
+
     #darkswitch {
         cursor: pointer;
         margin-right: 5px;

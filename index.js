@@ -3,16 +3,12 @@ import './src/scss/style.scss';
 
 import { scorebars_modern } from "./src/js/barlines-modern.js";
 import { scorebars_ancient } from "./src/js/barlines-ancient.js";
-// eslint-disable-next-line no-constant-condition
-var scorebars = (1 === 1 ? scorebars_ancient : scorebars_modern);
 
 import { setupLilypondParser, processLilypond, dict, ranges } from "./src/js/lily.js";
 
 import lilypondfile from "./src/lilypond/spem notes.ly?raw";
 
 import { spemsvg_ancient, spemsvg_modern, spemmp3array } from './src/js/svgmp3imports.js';
-// eslint-disable-next-line no-constant-condition
-var spemsvg = (1 === 1 ? spemsvg_ancient : spemsvg_modern);
 
 import spemmp3 from "./src/audio/spem.mp3";
 
@@ -36,6 +32,7 @@ const help = document.getElementById('help');
 const backdrop = document.getElementById('backdrop');
 const spinner = document.getElementById('spinner');
 const darkswitch = document.getElementById('darkswitch');
+const scoreswitch = document.getElementById('scoreswitch');
 
 const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass']; // HACK: this is repeasted later
 
@@ -43,7 +40,12 @@ const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass']; // HACK: this
 var currentChoir;  // from 1 to 8
 var currentPart;  // 0 means All parts; 1 is Soprano... 5 is Bass
 var currentBar;
+var scoretype = 0; // 0 for modern and 1 for early
+// eslint-disable-next-line no-unused-vars
+var viewmode; // 0 for dark and 1 for light
 
+var spemsvg = (scoretype == 1 ? spemsvg_ancient : spemsvg_modern);
+var scorebars = (scoretype == 1 ? scorebars_ancient : scorebars_modern);
 
 
 var svg; // the actual SVG
@@ -58,9 +60,12 @@ let partHeight = 0;
 const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
 if (prefersDarkScheme.matches) {
   document.body.classList.add('dark-theme');
+  viewmode = 0;
   darkswitch.checked = true;
 } else {
   document.body.classList.remove('dark-theme');
+  // eslint-disable-next-line no-unused-vars
+  viewmode = 1;
   darkswitch.checked = false;
 }
 
@@ -121,9 +126,9 @@ function getPartName(n) {
 // }
 
 // where c = 1 to 8
-async function setChoir(c) {
+async function setChoir(c, forceChange = false) {
   c = Number(c);
-  if (currentChoir == c) {
+  if (currentChoir == c && !forceChange) {
     return;
   }
   currentChoir = Math.min(Math.max(1, c), 8);
@@ -185,7 +190,8 @@ function setBar(b, changedChoirs = false) {
 
   // const subdoc = svgobject.getSVGDocument();  
   // HACK: get SVG in a better way than just the second SVG on the page!
-  svg = document.getElementsByTagName("svg")[1];
+  // svg = document.getElementsByTagName("svg")[3];
+  svg = document.querySelector("#spemScore svg");
   // pt = svg.createSVGPoint();  // HACK: Created once for document
 
   // Highlight the current bar on the score
@@ -219,6 +225,9 @@ function setBar(b, changedChoirs = false) {
 }
 
 function getScrollPosition(bar) {
+  if (svg == null) {
+    return 0;
+  }
   var idealBarPos = 0.25;
   var frameWidth = spemscore.offsetWidth; // the width of the visible score on the screen
   var scoreWidth = svg.getBoundingClientRect().width; // the total width of the score
@@ -706,6 +715,21 @@ function toggleDark() {
   pauseAndRepaint();
 }
 
+function toggleScore() {
+  if (scoretype == 0) {
+    scoretype = 1; // early
+    spemsvg = spemsvg_ancient;
+    scorebars = scorebars_ancient;
+  }
+  else {
+    scoretype = 0; // modern
+    spemsvg = spemsvg_modern;
+    scorebars = scorebars_modern;
+  }
+  setChoir(currentChoir, true);
+  pauseAndRepaint();
+}
+
 
 function seek(b, direction) {
   const choirnotes = dict[b].filter(x => x.c == currentChoir - 1);
@@ -762,6 +786,7 @@ window.addEventListener("load", async () => {
   info.addEventListener("click", () => showHelp(true));
   backdrop.addEventListener("click", () => showHelp(false));
   darkswitch.addEventListener("click", () => toggleDark());
+  scoreswitch.addEventListener("click", () => toggleScore());
 
   // watch for change in user's preference of color scheme
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
