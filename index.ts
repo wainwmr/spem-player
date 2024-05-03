@@ -7,8 +7,8 @@ import { scorebars_early } from "./src/ts/barlines-early.js";
 import { setupLilypondParser, processLilypond, dict, ranges } from "./src/ts/lily.ts";
 import { spemsvg_early, spemsvg_modern, spemmp3array } from './src/ts/svgmp3imports.ts';
 
-import lilypondfile from "./src/lilypond/spem notes.ly?raw";
-import spemmp3 from "./src/audio/spem.mp3";
+const lilypondfile = "/lilypond/spem notes.ly";
+const spemmp3 = "/audio/spem.mp3";
 
 // (minim = 62) === (beattime = 0.9677)
 const beattime = 60 / 62;
@@ -57,17 +57,8 @@ var current: State = {
   position: 0
 }
 
-// State
-// var viewmode: Brightness = "dark"; 
-// var scoretype: ScoreType = "early";
-// var currentChoir: number;
-// var currentPart: number = 0; 
-// var currentBar: number;
-// eslint-disable-next-line no-unused-vars
-
 var spemsvg = (current.period === "early" ? spemsvg_early : spemsvg_modern);
 var scorebars = (current.period == "early" ? scorebars_early : scorebars_modern);
-
 
 var svg; // the actual SVG
 var spemaudio = new Audio();
@@ -264,7 +255,6 @@ function parseURL() {
     else if (parm[0] == "part") {
       const n: number = Number(parm[1]);
       if (n >= 1 && n <= 5) part = n;
-      else part = "all";
     }
     else if (parm[0] == "bar") {
       bar = Number(parm[1]);

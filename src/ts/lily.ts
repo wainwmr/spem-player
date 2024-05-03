@@ -3,17 +3,10 @@
 import * as ohm from 'ohm-js';
 import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
 
-import grammarString from '../ohmjs/ly-grammar.ohm?raw';
+const lyURL = '/ohmjs/ly-grammar.ohm';
 
 // Make an dictionary of music positions (hemidemisemiquavers/128) to array of notes {choir, part, note}
-
 export const dict: {"c": number, "p": number, "n": Note}[][] = [];
-
-
-// var persons: { [id: string]: IPerson; } = {
-//   "p1": { firstName: "F1", lastName: "L1" },
-//   "p2": { firstName: "F2" }
-// };
 
 // a dictionary to hold the muic in the lilypond input file
 export var scores: { [id: string]: Component[]} = {};
@@ -29,10 +22,8 @@ export var lilypondVersion: string;
 export async function setupLilypondParser() {
 
   // Load the OHM grammar for Lilypond 
-  // console.log(lyURL);
-  // const promise = await fetch(lyURL);
-  // const grammarString = await promise.text();
-  // console.log(grammarString);
+  const promise = await fetch(lyURL);
+  const grammarString = await promise.text();
   lyGrammar = ohm.grammar(grammarString);
 
   // Create a parse for Lilypond
@@ -130,12 +121,11 @@ export var ranges: {from: number, to: number}[][][] = [];
 export async function processLilypond(lilypondfile: string) {
 
   // Load the Spem lilypond file
-  // const promise = await fetch(lilypondfile);
-  // const spemly = await promise.text();
+  const promise = await fetch(lilypondfile);
+  const spemly = await promise.text();
 
-  // const spemly  = "choirVBaritone = \\relative { f2 f f}";
   // Parse it
-  const result = lyGrammar.match(lilypondfile);
+  const result = lyGrammar.match(spemly);
   if (!result.succeeded()) {
     console.error('Bad Lilypond ' + result.message);
   }
