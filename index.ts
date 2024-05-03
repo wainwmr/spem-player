@@ -1,8 +1,7 @@
 
 import './src/scss/style.scss';
 
-import { scorebars_modern } from "./src/ts/barlines-modern.js";
-import { scorebars_early } from "./src/ts/barlines-early.js";
+import { scorebars_modern, scorebars_early } from "./src/ts/barlines.js";
 
 import { setupLilypondParser, processLilypond, dict, ranges } from "./src/ts/lily.ts";
 import { spemsvg_early, spemsvg_modern, spemmp3array } from './src/ts/svgmp3imports.ts';
