@@ -1,7 +1,8 @@
 
 import './src/scss/style.scss';
 
-import { scorebars_modern, scorebars_early } from "./src/ts/barlines.js";
+import { scorebars_modern, scorebars_early } from "./src/ts/barlines";
+import { Ensemble } from "./src/ts/ensemble";
 
 import { setupLilypondParser, processLilypond, dict, ranges } from "./src/ts/lily.ts";
 import { spemsvg_early, spemsvg_modern, spemmp3array } from './src/ts/svgmp3imports.ts';
@@ -33,7 +34,9 @@ const spinner = document.getElementById('spinner') as SvgInHtml;
 const darkswitch = document.getElementById('darkswitch') as SvgInHtml;
 const scoreswitch = document.getElementById('scoreswitch') as SvgInHtml;
 
-const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass']; // HACK: this is repeasted later
+// const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass']; // HACK: this is repeasted later
+const ens = new Ensemble(8, ["Soprano", "Alto", "Tenor", "Baritone", "Bass"]);
+
 // const allparts = ens.parts();
 
 type Brightness = "dark" | "light";
@@ -96,10 +99,6 @@ function loadColors() {
   ];
 }
 
-function getPartName(n) {
-  return allparts[n - 1];
-}
-
 // TODO: click on score should send you to bar.  And part?
 // TODO: Change dark mode to moon/sun icons
 // TODO: Visual effect for false relations
@@ -129,12 +128,12 @@ function getPartName(n) {
 //   setBar(scorebars.indexOf(result));
 // }
 
-// where c = 1 to 8
+// where c = 1 to number of choirs  TODO: Need to zero index choir
 async function setChoir(c: number, forceChange = false) {
   if (current.choir == c && !forceChange) {
     return;
   }
-  current.choir = Math.min(Math.max(1, c), 8);
+  current.choir = Math.min(Math.max(1, c), ens.choirs.length);
 
   // Update the input field
   if (choirselect != null && choirselect.value != String(current.choir)) {
@@ -253,7 +252,7 @@ function parseURL() {
     }
     else if (parm[0] == "part") {
       const n: number = Number(parm[1]);
-      if (n >= 1 && n <= 5) part = n;
+      if (n >= 1 && n <= ens.parts.length) part = n;
     }
     else if (parm[0] == "bar") {
       bar = Number(parm[1]);
@@ -282,8 +281,8 @@ function calculateCanvasSize() {
   canvas.height = 300 * 2;
 
   barWidth = (canvas.width - (2 * canvasPadding)) / 140;
-  choirHeight = (canvas.height - (2 * canvasPadding)) / 8;
-  partHeight = choirHeight / 5;
+  choirHeight = (canvas.height - (2 * canvasPadding)) / ens.choirs.length;
+  partHeight = choirHeight / ens.parts.length;
 }
 
 function showLoadingOnCanvas() {
@@ -301,9 +300,9 @@ function showLoadingOnCanvas() {
 // define array pulses[choir][part] to be min transparency which
 // will be pulsed when the choir is singing a note.
 var pulses: number[][] = [];
-for (var c = 0; c < 8; c++) {
+for (var c of ens.choirs) {
   pulses[c] = [];
-  for (var p = 0; p < 5; p++) {
+  for (var p of ens.parts) {
     pulses[c][p] = 1;
   }
 }
@@ -389,8 +388,8 @@ function draw(currentpos: number) {
   // Draw each of the 40 voice parts
   ctx.lineWidth = 0.9 * partHeight;
   ctx.lineCap = "round";
-  for (let c = 0; c < 8; c++) {
-    for (let p = 0; p < 5; p++) {
+  for (var c of ens.choirs) {
+    for (var p of ens.parts) {
       const startY = canvasPadding + (c * choirHeight) + (p * partHeight);
 
       const list: { "from": number, "to": number }[] = ranges[c][p];
@@ -445,10 +444,10 @@ function draw(currentpos: number) {
 
 function getMousePos(canv, evt) {
   const rect = canv.getBoundingClientRect();
-  const y = (evt.offsetY * 8) / rect.height;
+  const y = (evt.offsetY * ens.choirs.length) / rect.height;
   return [
     Math.floor(y + 1),
-    Math.floor(((y % 1) * 5) + 1),
+    Math.floor(((y % 1) * ens.parts.length) + 1),
     // Math.floor(((evt.offsetX * 138) / rect.width) + 1),
     Math.floor((evt.offsetX * 140) / rect.width),
   ];
@@ -457,6 +456,8 @@ function getMousePos(canv, evt) {
 function getFilename(s) {
   return s.split("/").pop();
 }
+
+// const template="/audio/spem-${choir}-${part}.mp3";
 
 function loadAudio(c: number, p: PartType, b: number) {
   // let newfile = defaultaudiofile
@@ -557,8 +558,8 @@ let intId = 0;
 function canvasMoved(e) {
   const [c, p, b] = getMousePos(canvas, e);
 
-  choiroutput.textContent = "Choir " + c;
-  partoutput.textContent = getPartName(p);
+  choiroutput.textContent = ens.getChoirName(c);
+  partoutput.textContent = ens.getPartName(p - 1);
   baroutput.textContent = "Bar " + b;
   statusarea.classList.remove("hide");
   clearInterval(intId);
@@ -671,11 +672,11 @@ function keyboardTapped(e) {
       e.preventDefault();
       break;
     case 'ArrowDown':
-      setChoir(current.choir == 8 ? 1 : current.choir + 1);
+      setChoir(current.choir == ens.choirs.length ? 1 : current.choir + 1);
       pauseAndRepaint();
       break;
     case 'ArrowUp':
-      setChoir(current.choir == 1 ? 8 : current.choir - 1);
+      setChoir(current.choir == 1 ? ens.choirs.length : current.choir - 1);
       pauseAndRepaint();
       break;
     case 'KeyX':
@@ -695,9 +696,9 @@ function keyboardTapped(e) {
 // TODO: Not convinced the Maths for getTouchPos() is right...
 function getTouchPos(evt) {
   var rect = canvas.getBoundingClientRect();
-  var choir = Math.ceil(8 * ((evt.targetTouches[0].clientY - rect.top - (canvasPadding)) /
+  var choir = Math.ceil(ens.choirs.length * ((evt.targetTouches[0].clientY - rect.top - (canvasPadding)) /
     (canvas.clientHeight - (2 * canvasPadding))));
-  choir = Math.min(Math.max(1, choir), 8); // must be from 1 to 8
+  choir = Math.min(Math.max(1, choir), ens.choirs.length); 
   var bar = Math.round(140 * ((evt.targetTouches[0].clientX - rect.left - (canvasPadding)) /
     (canvas.clientWidth - (2 * canvasPadding))));
   bar = Math.min(Math.max(0, bar), 139); // must be from 0 to 139
