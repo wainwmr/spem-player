@@ -5,7 +5,7 @@ import { scorebars_modern, scorebars_early } from "./src/ts/barlines";
 import { PartType, Ensemble } from "./src/ts/ensemble";
 
 import { setupLilypondParser, processLilypond, dict, ranges } from "./src/ts/lily.ts";
-import { spemsvg_early, spemsvg_modern, spemmp3array } from './src/ts/svgmp3imports.ts';
+
 
 const lilypondfile = "/lilypond/spem notes.ly";
 
@@ -34,7 +34,7 @@ const darkswitch = document.getElementById('darkswitch') as SvgInHtml;
 const scoreswitch = document.getElementById('scoreswitch') as SvgInHtml;
 
 // const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass']; // HACK: this is repeasted later
-const ens = new Ensemble(8, ["Soprano", "Alto", "Tenor", "Baritone", "Bass"]);
+const ens = new Ensemble(8, ["Soprano", "Alto", "Tenor", "Baritone", "Bass"], ["modern", "early"]);
 
 // const allparts = ens.parts();
 
@@ -57,7 +57,6 @@ var current: State = {
   position: 0
 }
 
-var spemsvg = (current.period === "early" ? spemsvg_early : spemsvg_modern);
 var scorebars = (current.period == "early" ? scorebars_early : scorebars_modern);
 
 var svg; // the actual SVG
@@ -109,7 +108,8 @@ function loadColors() {
 // TODO: CMD-B to type in bar number
 // TODO: highlight part on score?
 // TODO: Add lyrics to footer
-
+// BUG: Bass in choir 7 between bars 50 and 68 - rests not showing correctly.
+// TODO: index.html should not have part and choir names hard-coded.  Come from Ensemble instead.
 
 // var pt;
 // function scoreClicked(e) {
@@ -139,7 +139,7 @@ async function setChoir(c: number, forceChange = false) {
   }
 
   // load the correct score for this choir
-  await fetch(spemsvg[current.choir])
+  await fetch(ens.getSVGfilename(current.choir, "/svg/", current.period))
     .then(r => r.text())
     .then(text => {
       spemscore.innerHTML = text;
@@ -458,7 +458,6 @@ function getFilename(s) {
 
 function loadAudio(c: number, p: PartType, b: number) {
   const newfile = ens.getMP3filename(c, p, "/audio/");
-  console.log(newfile);
 
   // just compare the filename, not the whole URL, to see if we
   // need to load a new MP3
@@ -749,12 +748,10 @@ function toggleDark() {
 function toggleScore(forceEarly = false) {
   if (current.period === "modern" || forceEarly) {
     current.period = "early";
-    spemsvg = spemsvg_early;
     scorebars = scorebars_early;
   }
   else {
     current.period = "modern";
-    spemsvg = spemsvg_modern;
     scorebars = scorebars_modern;
   }
   setChoir(current.choir, true);
