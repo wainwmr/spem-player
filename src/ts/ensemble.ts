@@ -43,7 +43,7 @@ export class Ensemble {
       newfile = this.getChoirName(choir);
     }
     var styleString = this.getStyle(style);
-    return prefix + styleString + "/" + newfile + ".svg";
+    return prefix + styleString + (styleString.length != 0 ? "/" : "") + newfile + ".svg";
   }
 
 }

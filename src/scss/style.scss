@@ -184,7 +184,7 @@ header {
     }
 }
 
-#spemScore {
+#score {
     resize: vertical;
     background-color: whitesmoke;
     overflow: auto;
@@ -203,7 +203,7 @@ header {
 
 }
 
-#spemCanvas {
+#canvas {
     flex-grow: 1;
     cursor: crosshair;
     width: 100%;

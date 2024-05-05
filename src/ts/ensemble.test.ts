@@ -38,5 +38,7 @@ test("SVG name is correct", () => {
   expect(e.getSVGfilename(0, "/svg/")).toBe("/svg/modern/Choir 1.svg");
   expect(e.getSVGfilename(0, "/svg/", "early")).toBe("/svg/early/Choir 1.svg");
   expect(e.getSVGfilename(0, "/svg/", "nothing")).toBe("/svg/modern/Choir 1.svg");
-  expect(e.getSVGfilename(3)).toBe("modern/default.svg");
+  expect(e.getSVGfilename(42)).toBe("modern/default.svg");
+  expect(e2.getSVGfilename(0)).toBe("Choir 1.svg");
+  expect(e2.getSVGfilename(42)).toBe("default.svg");
 });

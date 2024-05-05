@@ -1,21 +1,24 @@
 
 import './src/scss/style.scss';
 
+// TODO: bar positions should come from model
 import { scorebars_modern, scorebars_early } from "./src/ts/barlines";
+
 import { PartType, Ensemble } from "./src/ts/ensemble";
 
+// TODO: don't need setupLilypondParse to be exported, do we?
 import { setupLilypondParser, processLilypond, dict, ranges } from "./src/ts/lily.ts";
 
-
+// TODO: should be part of model?
 const lilypondfile = "/lilypond/spem notes.ly";
 
 // (minim = 62) === (beattime = 0.9677)
+// TODO: tempo should be part of model
 const beattime = 60 / 62;
 
 
-// const container = document.getElementById("spemFrame");
-const canvas = document.getElementById("spemCanvas") as HTMLCanvasElement;
-const spemscore = document.getElementById("spemScore") as HTMLDivElement;
+const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+const score = document.getElementById("score") as HTMLDivElement;
 const playpausebutton = document.getElementById('playpausebutton') as HTMLDivElement;
 const playpauseicon = document.getElementById('playpauseicon') as HTMLSpanElement;
 const choirselect = document.getElementById('choir-select') as HTMLSelectElement;
@@ -60,7 +63,7 @@ var current: State = {
 var scorebars = (current.period == "early" ? scorebars_early : scorebars_modern);
 
 var svg; // the actual SVG
-var spemaudio = new Audio();
+var audio = new Audio();
 
 let canvasPadding = 5;  // padding in px of the canvas
 
@@ -142,12 +145,12 @@ async function setChoir(c: number, forceChange = false) {
   await fetch(ens.getSVGfilename(current.choir, "/svg/", current.period))
     .then(r => r.text())
     .then(text => {
-      spemscore.innerHTML = text;
+      score.innerHTML = text;
     })
     .catch(console.error.bind(console));
 
   // set the border color to match
-  spemscore.style.borderColor = `hsla(${choirColors[current.choir]}, 80%, 55%, 1)`;
+  score.style.borderColor = `hsla(${choirColors[current.choir]}, 80%, 55%, 1)`;
 
   // scroll the score to match the new choir (with instant scrolling)
   setBar(current.position, true);
@@ -188,7 +191,7 @@ function setBar(b: number, changedChoirs = false) {
     barinput.value = String(current.position);
   }
 
-  svg = document.querySelector("#spemScore svg");
+  svg = document.querySelector("#score svg");
 
   if (previousBarHighlight != undefined) {
     if (svg.contains(previousBarHighlight)) {
@@ -214,7 +217,7 @@ function setBar(b: number, changedChoirs = false) {
 
   // scroll the the right place
   var pos = getScrollPosition(b);
-  spemscore.scrollTo({
+  score.scrollTo({
     top: 0,
     left: pos,
     behavior: changedChoirs ? "instant" : "smooth"
@@ -226,7 +229,7 @@ function getScrollPosition(bar) {
     return 0;
   }
   var idealBarPos = 0.25;
-  var frameWidth = spemscore.offsetWidth; // the width of the visible score on the screen
+  var frameWidth = score.offsetWidth; // the width of the visible score on the screen
   var scoreWidth = svg.getBoundingClientRect().width; // the total width of the score
   var svgWidth = svg.getBBox().width; // the width of the score in SVG unit
   var pos = scorebars[current.choir][bar - 1] * scoreWidth / svgWidth; // current % along the score
@@ -461,22 +464,22 @@ function loadAudio(c: number, p: PartType, b: number) {
 
   // just compare the filename, not the whole URL, to see if we
   // need to load a new MP3
-  if (getFilename(newfile) != getFilename(spemaudio.currentSrc)) {
-    spemaudio.src = newfile;
-    spemaudio.load();
+  if (getFilename(newfile) != getFilename(audio.currentSrc)) {
+    audio.src = newfile;
+    audio.load();
   }
 
-  spemaudio.currentTime = b * 4 * beattime;
+  audio.currentTime = b * 4 * beattime;
 }
 
-async function playSpem() {
-  if (spemaudio.paused) {
+async function play() {
+  if (audio.paused) {
 
     // set the play button spinner while loading audio
     playpauseicon.style.display = "none";
     spinner.style.display = "block";
 
-    await spemaudio.play();
+    await audio.play();
 
     // set the play button to pause again
     playpauseicon.style.display = "block";
@@ -499,35 +502,35 @@ function playLoop(timestamp) {
   fps = Math.round(1 / secondsPassed);
 
   // Calculate which bar we are on 
-  const pos = spemaudio.currentTime / (beattime * 4);
+  const pos = audio.currentTime / (beattime * 4);
 
   update(pos);
   draw(pos);
 
   if (pos >= 140) {
     setBar(0);
-    spemaudio.currentTime = 0;
-    pauseSpem();
+    audio.currentTime = 0;
+    pause();
   }
-  else if (!spemaudio.paused) {
+  else if (!audio.paused) {
     window.requestAnimationFrame(playLoop);
   }
 }
 
 
-function pauseSpem() {
-  if (!spemaudio.paused) {
-    spemaudio.pause();
+function pause() {
+  if (!audio.paused) {
+    audio.pause();
     playpauseicon.classList.add("paused");
   }
 }
 
 function playpause() {
-  if (spemaudio.paused) {
-    playSpem();
+  if (audio.paused) {
+    play();
   }
   else {
-    pauseSpem();
+    pause();
   }
 }
 
@@ -543,7 +546,7 @@ function canvasClicked(e) {
   setBar(b);
 
   pauseAndRepaint();
-  playSpem();
+  play();
 }
 
 
@@ -573,13 +576,13 @@ function pauseAndRepaintNoLoad() {
 
   // update the audio location 
   // HACK: this can't be the right place for this next line!
-  spemaudio.currentTime = current.position * 4 * beattime;
+  audio.currentTime = current.position * 4 * beattime;
 
   pauseAndRepaint(false);
 }
 
 function pauseAndRepaint(load = true) {
-  pauseSpem();
+  pause();
   if (load) {
     loadAudio(current.choir, current.part, current.position);
   }
@@ -720,7 +723,7 @@ function touchStarted(evt) {
   });
   canvas.addEventListener("touchend", () => {
     pauseAndRepaint();
-    // playSpem();
+    // play();
   });
 }
 
