@@ -49,7 +49,13 @@ type State = {
   period: ScoreType;
   choir: number;
   part: PartType;
-  position: number;
+  bar: number;
+}
+
+interface Position {
+  choir: number;
+  part: PartType;
+  bar: number;
 }
 
 var current: State = {
@@ -57,7 +63,7 @@ var current: State = {
   period: "modern",
   choir: 0,
   part: "all",
-  position: 0
+  bar: 0
 }
 
 var scorebars = (current.period == "early" ? scorebars_early : scorebars_modern);
@@ -153,7 +159,7 @@ async function setChoir(c: number, forceChange = false) {
   score.style.borderColor = `hsla(${choirColors[current.choir]}, 80%, 55%, 1)`;
 
   // scroll the score to match the new choir (with instant scrolling)
-  setBar(current.position, true);
+  setBar(current.bar, true);
 }
 
 // where p = "all" or 0 -> (ens.part.length-1) for SATB
@@ -174,7 +180,7 @@ var previousBarHighlight;
 
 // where b = 0 to 139
 function setBar(b: number, changedChoirs = false) {
-  if (b == current.position && !changedChoirs) {
+  if (b == current.bar && !changedChoirs) {
     return;
   }
   if (b > 139) {
@@ -184,11 +190,11 @@ function setBar(b: number, changedChoirs = false) {
   else if (b < 0) {
     b = 139;
   }
-  current.position = b;
+  current.bar = b;
 
   // update the input field
-  if (barinput != null && barinput.value != String(current.position)) {
-    barinput.value = String(current.position);
+  if (barinput != null && barinput.value != String(current.bar)) {
+    barinput.value = String(current.bar);
   }
 
   svg = document.querySelector("#score svg");
@@ -335,7 +341,7 @@ function easeOutCubic(t, b, c, d) {
 function draw(currentpos: number) {
 
   if (currentpos == undefined) {
-    currentpos = current.position;
+    currentpos = current.bar;
   }
 
   // Blank out the whole canvas
@@ -353,11 +359,11 @@ function draw(currentpos: number) {
   }
 
   // Draw bar highlight
-  if (current.position > 0 && current.position <= 139) {
+  if (current.bar > 0 && current.bar <= 139) {
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(canvasPadding + (current.position * barWidth), canvasPadding);
-    ctx.lineTo(canvasPadding + (current.position * barWidth), canvas.height - canvasPadding);
+    ctx.moveTo(canvasPadding + (current.bar * barWidth), canvasPadding);
+    ctx.lineTo(canvasPadding + (current.bar * barWidth), canvas.height - canvasPadding);
     ctx.lineWidth = barWidth * 1.4;
     ctx.strokeStyle = highlightColor;
     ctx.lineCap = "square";
@@ -425,7 +431,7 @@ function draw(currentpos: number) {
         //   saturation = 80;
         //   transparency = 1;
         // }
-        else if (current.position === 0 || current.position > 138) {
+        else if (current.bar === 0 || current.bar > 138) {
           saturation = 50;
           lightness = 67 - (3 * p);
           transparency = 1;
@@ -444,15 +450,14 @@ function draw(currentpos: number) {
 }
 
 // BUG: what happens if you click in the canvas padding?
-function getMousePos(canv, evt) {
+function getMousePos(canv: HTMLCanvasElement, evt: MouseEvent) {
   const rect = canv.getBoundingClientRect();
   const y = ((evt.offsetY - canvasPadding) * ens.choirs.length) / (rect.height - (2 * canvasPadding));
-  return [
-    Math.min(ens.choirs.length - 1, Math.max(0, Math.floor(y))),
-    Math.floor((y % 1) * ens.parts.length),
-    // Math.floor(((evt.offsetX * 138) / rect.width) + 1),
-    Math.floor((evt.offsetX * 140) / rect.width),
-  ];
+  return {
+    choir: Math.min(ens.choirs.length - 1, Math.max(0, Math.floor(y))),
+    part: Math.floor((y % 1) * ens.parts.length),
+    bar: Math.floor((evt.offsetX * 140) / rect.width),
+  };
 }
 
 function getFilename(s) {
@@ -539,11 +544,11 @@ function playpause() {
 // -----------------------------------------------------
 
 function canvasClicked(e) {
-  const [c, p, b] = getMousePos(canvas, e);
+  const pos: Position = getMousePos(canvas, e);
 
-  setChoir(c);
-  setPart(p);
-  setBar(b);
+  setChoir(pos.choir);
+  setPart(pos.part);
+  setBar(pos.bar);
 
   pauseAndRepaint();
   play();
@@ -551,12 +556,14 @@ function canvasClicked(e) {
 
 
 let intId = 0;
-function canvasMoved(e) {
-  const [c, p, b] = getMousePos(canvas, e);
+function canvasMoved(e: MouseEvent) {
+  const pos: Position = getMousePos(canvas, e);
 
-  choiroutput.textContent = ens.getChoirName(c);
-  partoutput.textContent = ens.getPartName(p);
-  baroutput.textContent = "Bar " + b;
+  choiroutput.textContent = ens.getChoirName(pos.choir);
+  if (pos.part != 'all') {
+    partoutput.textContent = ens.getPartName(pos.part);
+  }
+  baroutput.textContent = "Bar " + Math.floor(pos.bar);
   statusarea.classList.remove("hide");
   clearInterval(intId);
   intId = setInterval(function () {
@@ -576,7 +583,7 @@ function pauseAndRepaintNoLoad() {
 
   // update the audio location 
   // HACK: this can't be the right place for this next line!
-  audio.currentTime = current.position * 4 * beattime;
+  audio.currentTime = current.bar * 4 * beattime;
 
   pauseAndRepaint(false);
 }
@@ -584,9 +591,9 @@ function pauseAndRepaintNoLoad() {
 function pauseAndRepaint(load = true) {
   pause();
   if (load) {
-    loadAudio(current.choir, current.part, current.position);
+    loadAudio(current.choir, current.part, current.bar);
   }
-  draw(current.position);
+  draw(current.bar);
 }
 
 // -----------------------------------------------------
@@ -607,11 +614,11 @@ function keyboardTapped(e) {
     console.log('meta or ctrl pressed');
     switch (e.code) {
       case 'ArrowRight':
-        setBar(seek(current.position, +1));
+        setBar(seek(current.bar, +1));
         pauseAndRepaint();
         break;
       case 'ArrowLeft':
-        setBar(seek(current.position, -1));
+        setBar(seek(current.bar, -1));
         pauseAndRepaint();
         break;
       default:
@@ -658,12 +665,12 @@ function keyboardTapped(e) {
       showHelp(false);
       break;
     case 'ArrowRight':
-      setBar(current.position + 1);
+      setBar(current.bar + 1);
       pauseAndRepaint();
       e.preventDefault();
       break;
     case 'ArrowLeft':
-      setBar(current.position - 1);
+      setBar(current.bar - 1);
       pauseAndRepaint();
       e.preventDefault();
       break;
@@ -690,7 +697,7 @@ function keyboardTapped(e) {
 // -----------------------------------------------------
 
 // TODO: Not convinced the Maths for getTouchPos() is right...
-function getTouchPos(evt) {
+function getTouchPos(evt: TouchEvent): Position {
   var rect = canvas.getBoundingClientRect();
   var choir = Math.ceil(ens.choirs.length * ((evt.targetTouches[0].clientY - rect.top - (canvasPadding)) /
     (canvas.clientHeight - (2 * canvasPadding))));
@@ -698,16 +705,16 @@ function getTouchPos(evt) {
   var bar = Math.round(140 * ((evt.targetTouches[0].clientX - rect.left - (canvasPadding)) /
     (canvas.clientWidth - (2 * canvasPadding))));
   bar = Math.min(Math.max(0, bar), 139); // must be from 0 to 139
-  return [choir, bar];
+  return {choir: choir, part: "all", bar: bar };
 }
 
 
 // BUG: on mobile, touch to move bar to half-way and play
 // and it starts from bar 0.
-function touchStarted(evt) {
-  const [c, b] = getTouchPos(evt);
-  setChoir(c);
-  setBar(b);
+function touchStarted(evt: TouchEvent) {
+  const pos: Position = getTouchPos(evt);
+  setChoir(pos.choir);
+  setBar(pos.bar);
   pauseAndRepaint(false);
 
   // BUG: [Violation] Added non-passive event listener to a scroll-blocking <some> event.
@@ -716,9 +723,9 @@ function touchStarted(evt) {
   evt.preventDefault();
 
   canvas.addEventListener("touchmove", (evt) => {
-    const [c, b] = getTouchPos(evt);
-    setChoir(c);
-    setBar(b);
+    const pos = getTouchPos(evt);
+    setChoir(pos.choir);
+    setBar(pos.bar);
     pauseAndRepaint(false);
   });
   canvas.addEventListener("touchend", () => {
@@ -762,7 +769,7 @@ function toggleScore(forceEarly = false) {
 }
 
 
-function seek(b, direction) {
+function seek(b: number, direction) {
   const choirnotes = dict[b].filter(x => x.c == current.choir);
   const singing = choirnotes.length != 0;
 
