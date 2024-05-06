@@ -6,7 +6,12 @@ import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
 const lyURL = '/ohmjs/ly-grammar.ohm';
 
 // Make an dictionary of music positions (hemidemisemiquavers/128) to array of notes {choir, part, note}
-export const dict: {"c": number, "p": number, "n": Note}[][] = [];
+export type Dictionary = {
+  "c": number;
+  "p": number;
+  "n": Note;
+};
+export const dict: Dictionary[][] = [];
 
 // a dictionary to hold the muic in the lilypond input file
 export var scores: { [id: string]: Component[]} = {};
@@ -116,7 +121,11 @@ export async function setupLilypondParser() {
 }
 
 // Array of choir, part and 
-export var ranges: {from: number, to: number}[][][] = [];
+export type Range = {
+  from: number;
+  to: number;
+}
+export var ranges:Range[][][] = [];
 
 export async function processLilypond(lilypondfile: string) {
 

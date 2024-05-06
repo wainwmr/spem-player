@@ -12,6 +12,8 @@
 
     <!-- <script src="https://unpkg.com/ohm-js@17/dist/ohm.min.js"></script> -->
     <script src="src/ts/music-classes.ts" type="module"></script>
+    <script src="src/ts/musicCanvas.ts" type="module" defer></script>
+    <script src="src/ts/lily.ts" type="module" defer></script>
     <script src="index.ts" type="module" defer></script>
 
 </head>
@@ -113,7 +115,7 @@
         <div id="score">
         </div>
 
-        <canvas id="canvas" autofocus>
+        <canvas id="canvas" is="music-canvas" config="/spem.json" autofocus>
             Your browser does not support the HTML canvas element.
         </canvas>
 

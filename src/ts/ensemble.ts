@@ -1,5 +1,28 @@
 export type PartType = "all" | number;
 
+export interface Position {
+  choir: number;
+  part: PartType;
+  bar: number;
+}
+
+export interface Colors {
+  background: string;
+  highlight: string;
+  scoreHighlight: string;
+  choir: number[]; // Choir color hues
+}
+
+export type Config = {
+  choirs: number,
+  parts: string[],
+  scores: string[],
+  audio_prefix: string,
+  svg_prefix: string,
+  lilypond: string
+}
+
+
 
 export class Ensemble {
   choirs: number[];

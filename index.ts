@@ -4,20 +4,11 @@ import './src/scss/style.scss';
 // TODO: bar positions should come from model
 import { scorebars_modern, scorebars_early } from "./src/ts/barlines";
 
-import { PartType, Ensemble } from "./src/ts/ensemble";
+import { PartType, Ensemble, Config, Position, Colors } from "./src/ts/ensemble";
 
-// TODO: don't need setupLilypondParse to be exported, do we?
-import { setupLilypondParser, processLilypond, dict, ranges } from "./src/ts/lily.ts";
+import { MusicCanvas } from "./src/ts/musicCanvas";
 
-// TODO: should be part of model?
-const lilypondfile = "/lilypond/spem notes.ly";
-
-// (minim = 62) === (beattime = 0.9677)
-// TODO: tempo should be part of model
-const beattime = 60 / 62;
-
-
-const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+const canvas = document.getElementById("canvas") as MusicCanvas;
 const score = document.getElementById("score") as HTMLDivElement;
 const playpausebutton = document.getElementById('playpausebutton') as HTMLDivElement;
 const playpauseicon = document.getElementById('playpauseicon') as HTMLSpanElement;
@@ -36,23 +27,12 @@ const spinner = document.getElementById('spinner') as SvgInHtml;
 const darkswitch = document.getElementById('darkswitch') as SvgInHtml;
 const scoreswitch = document.getElementById('scoreswitch') as SvgInHtml;
 
-// const allparts = ['soprano', 'alto', 'tenor', 'baritone', 'bass']; // HACK: this is repeasted later
-const ens = new Ensemble(8, ["Soprano", "Alto", "Tenor", "Baritone", "Bass"], ["modern", "early"]);
-
-// const allparts = ens.parts();
-
 type Brightness = "dark" | "light";
 type ScoreType = "early" | "modern";
 
 type State = {
   viewmode: Brightness;
   period: ScoreType;
-  choir: number;
-  part: PartType;
-  bar: number;
-}
-
-interface Position {
   choir: number;
   part: PartType;
   bar: number;
@@ -66,16 +46,21 @@ var current: State = {
   bar: 0
 }
 
+// HACK: this is also in /spem.json - make you your mind.
+const config = {
+  "choirs": 8,
+  "parts": ["Soprano", "Alto", "Tenor", "Baritone", "Bass"],
+  "scores": ["modern", "early"],
+  "audio_prefix": "/audio/",
+  "tempo": 4 * 60 / 62,  // (minim = 62) === (tempo = 4 * 0.9677)
+  "svg_prefix": "/svg/",
+  "lilypond": "/lilypond/spem notes.ly"
+}
+
 var scorebars = (current.period == "early" ? scorebars_early : scorebars_modern);
 
 var svg; // the actual SVG
 var audio = new Audio();
-
-let canvasPadding = 5;  // padding in px of the canvas
-
-let barWidth = 0;
-let choirHeight = 0;
-let partHeight = 0;
 
 const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
 if (prefersDarkScheme.matches) {
@@ -87,22 +72,24 @@ if (prefersDarkScheme.matches) {
 }
 
 // All the colors are defined in the style sheet
-var backgroundColor: string, highlightColor: string, scoreHighlightColor: string, choirColors: string[];
+var colors: Colors;
 function loadColors() {
   var style = getComputedStyle(document.body);
-  backgroundColor = style.getPropertyValue('--color-background');
-  highlightColor = style.getPropertyValue('--color-highlight');
-  scoreHighlightColor = style.getPropertyValue('--color-score-highlight');
-  choirColors = [
-    style.getPropertyValue('--color-c1'),
-    style.getPropertyValue('--color-c2'),
-    style.getPropertyValue('--color-c3'),
-    style.getPropertyValue('--color-c4'),
-    style.getPropertyValue('--color-c5'),
-    style.getPropertyValue('--color-c6'),
-    style.getPropertyValue('--color-c7'),
-    style.getPropertyValue('--color-c8')
-  ];
+  colors = {
+    background: style.getPropertyValue('--color-background'),
+    highlight: style.getPropertyValue('--color-highlight'),
+    scoreHighlight: style.getPropertyValue('--color-score-highlight'),
+    choir: [
+      Number(style.getPropertyValue('--color-c1')),
+      Number(style.getPropertyValue('--color-c2')),
+      Number(style.getPropertyValue('--color-c3')),
+      Number(style.getPropertyValue('--color-c4')),
+      Number(style.getPropertyValue('--color-c5')),
+      Number(style.getPropertyValue('--color-c6')),
+      Number(style.getPropertyValue('--color-c7')),
+      Number(style.getPropertyValue('--color-c8'))
+    ]
+  };
 }
 
 // TODO: click on score should send you to bar.  And part?
@@ -118,7 +105,7 @@ function loadColors() {
 // TODO: highlight part on score?
 // TODO: Add lyrics to footer
 // BUG: Bass in choir 7 between bars 50 and 68 - rests not showing correctly.
-// TODO: index.html should not have part and choir names hard-coded.  Come from Ensemble instead.
+// TODO: index.html should not have part and choir names hard-coded.  Should come from config instead.
 
 // var pt;
 // function scoreClicked(e) {
@@ -140,7 +127,7 @@ async function setChoir(c: number, forceChange = false) {
   if (current.choir == c && !forceChange) {
     return;
   }
-  current.choir = Math.min(Math.max(0, c), ens.choirs.length - 1);
+  current.choir = Math.min(Math.max(0, c), config.choirs - 1);
 
   // Update the input field
   if (choirselect != null && choirselect.value != String(current.choir)) {
@@ -148,7 +135,9 @@ async function setChoir(c: number, forceChange = false) {
   }
 
   // load the correct score for this choir
-  await fetch(ens.getSVGfilename(current.choir, "/svg/", current.period))
+  const filename = config.svg_prefix + current.period + "/Choir " + (current.choir + 1) + ".svg";
+  console.log("fetching", filename);
+  await fetch(filename)
     .then(r => r.text())
     .then(text => {
       score.innerHTML = text;
@@ -156,13 +145,12 @@ async function setChoir(c: number, forceChange = false) {
     .catch(console.error.bind(console));
 
   // set the border color to match
-  score.style.borderColor = `hsla(${choirColors[current.choir]}, 80%, 55%, 1)`;
+  score.style.borderColor = `hsla(${colors.choir[current.choir]}, 80%, 55%, 1)`;
 
   // scroll the score to match the new choir (with instant scrolling)
   setBar(current.bar, true);
 }
 
-// where p = "all" or 0 -> (ens.part.length-1) for SATB
 function setPart(p: PartType) {
   if (current.part == p) {
     return;
@@ -192,9 +180,11 @@ function setBar(b: number, changedChoirs = false) {
   }
   current.bar = b;
 
+  const intbar = Math.floor(current.bar);
+
   // update the input field
-  if (barinput != null && barinput.value != String(current.bar)) {
-    barinput.value = String(current.bar);
+  if (barinput && barinput.value != String(intbar)) {
+    barinput.value = String(intbar);
   }
 
   svg = document.querySelector("#score svg");
@@ -206,14 +196,14 @@ function setBar(b: number, changedChoirs = false) {
   }
 
   // Highlight the current bar on the score
-  if (b > 0 && b < 139) {
+  if (intbar > 0 && intbar < 139) {
     var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-    newElement.setAttribute("x", String(scorebars[current.choir][b - 1]));
+    newElement.setAttribute("x", String(scorebars[current.choir][intbar - 1]));
     newElement.setAttribute("y", "0");
-    const bw = (b >= 138 ? svg.getBBox().width - scorebars[current.choir][137] : scorebars[current.choir][b] - scorebars[current.choir][b - 1]);
+    const bw = (intbar >= 138 ? svg.getBBox().width - scorebars[current.choir][137] : scorebars[current.choir][intbar] - scorebars[current.choir][intbar - 1]);
     newElement.setAttribute("width", String(bw));
     newElement.setAttribute("height", String(svg.getBBox().height * 2));  // HACK: why times two???
-    newElement.style.fill = scoreHighlightColor; //Set stroke colour
+    newElement.style.fill = colors.scoreHighlight; //Set stroke colour
     newElement.style.fillOpacity = "0.1";
     newElement.style.strokeWidth = "5px"; //Set stroke width
     svg.appendChild(newElement);
@@ -222,7 +212,7 @@ function setBar(b: number, changedChoirs = false) {
 
 
   // scroll the the right place
-  var pos = getScrollPosition(b);
+  var pos = getScrollPosition(intbar);
   score.scrollTo({
     top: 0,
     left: pos,
@@ -259,7 +249,7 @@ function parseURL() {
     }
     else if (parm[0] == "part") {
       const n: number = Number(parm[1]);
-      if (n >= 0 && n < ens.parts.length) part = n;
+      if (n >= 0 && n < config.parts.length) part = n;
     }
     else if (parm[0] == "bar") {
       bar = Number(parm[1]);
@@ -271,193 +261,18 @@ function parseURL() {
       early = (parm[1] == "early");
     }
   }
-  setChoir(choir);
+  setChoir(choir, true);
   setPart(part);
   setBar(bar);
-  toggleScore(early);
+  if (early) {
+    toggleScore();
+  }
   if (dark) {
     document.body.classList.add("dark-theme");
     document.body.classList.remove("light-theme");
-    current.viewmode = "dark"; 
+    current.viewmode = "dark";
     loadColors();
   }
-}
-
-function calculateCanvasSize() {
-  canvas.width = canvas.clientWidth * 4;
-  canvas.height = 300 * 2;
-
-  barWidth = (canvas.width - (2 * canvasPadding)) / 140;
-  choirHeight = (canvas.height - (2 * canvasPadding)) / ens.choirs.length;
-  partHeight = choirHeight / ens.parts.length;
-}
-
-function showLoadingOnCanvas() {
-  const ctx = canvas.getContext("2d");
-  if (ctx != null) {
-    ctx.save();
-    ctx.font = "30px Arial";
-    ctx.fillStyle = "white";
-    ctx.scale(canvas.width / canvas.height, 1);
-    ctx.fillText(`Loading...`, 0, canvas.height / 2);
-    ctx.restore();
-  }
-}
-
-// define array pulses[choir][part] to be min transparency which
-// will be pulsed when the choir is singing a note.
-var pulses: number[][] = [];
-for (var c of ens.choirs) {
-  pulses[c] = [];
-  for (var p of ens.parts) {
-    pulses[c][p] = 1;
-  }
-}
-
-function update(pos = 0) {
-
-  const bar = Math.floor(pos);
-
-  // find who has a note that starts in this current quaver (16th of a bar)
-  const quant = Math.floor(pos * 16) / 16;
-  const notes = dict[quant];
-
-  // 
-  if (notes != undefined && notes.length > 0) {
-    for (var n of notes) {
-      if (n.n.duration != null) {
-        pulses[n.c][n.p] = easeOutCubic(pos % quant, 1.4, -0.4, n.n.duration.sfths / 128);
-      }
-    }
-  }
-
-  setBar(bar);
-}
-
-function easeOutCubic(t, b, c, d) {
-  return c * ((t = t / d - 1) * t * t + 1) + b;
-}
-
-function draw(currentpos: number) {
-
-  if (currentpos == undefined) {
-    currentpos = current.bar;
-  }
-
-  // Blank out the whole canvas
-  const ctx = canvas.getContext("2d");
-  if (ctx == null) return;
-
-  ctx.fillStyle = backgroundColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Draw FPS number to the screen
-  if (!isNaN(fps)) {
-    ctx.font = '25px Arial';
-    ctx.fillStyle = '#CCC';
-    ctx.fillText("FPS: " + fps, 10, canvas.height - 30);
-  }
-
-  // Draw bar highlight
-  if (current.bar > 0 && current.bar <= 139) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(canvasPadding + (current.bar * barWidth), canvasPadding);
-    ctx.lineTo(canvasPadding + (current.bar * barWidth), canvas.height - canvasPadding);
-    ctx.lineWidth = barWidth * 1.4;
-    ctx.strokeStyle = highlightColor;
-    ctx.lineCap = "square";
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  // Draw highlight line for the selected choir or choir and part
-  var startY: number, width: number;
-  if (current.part != "all") {
-    startY = canvasPadding + (current.choir * choirHeight) + (current.part * partHeight);
-    width = partHeight * 1.4;
-  }
-  else {
-    // center the highlight on the middle tenor line
-    startY = canvasPadding + (current.choir * choirHeight) + (2 * partHeight);
-    width = (partHeight * 5.8);
-  }
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(canvasPadding + barWidth, startY + (partHeight / 2));
-  ctx.lineTo(canvasPadding + (140 * barWidth) - barWidth, startY + (partHeight / 2));
-  ctx.lineWidth = width;
-  ctx.strokeStyle = highlightColor;
-  ctx.lineCap = "round";
-  ctx.stroke();
-  ctx.restore();
-
-  // Draw each of the 40 voice parts
-  ctx.lineWidth = 0.9 * partHeight;
-  ctx.lineCap = "round";
-  for (var c of ens.choirs) {
-    for (var p of ens.parts) {
-      const startY = canvasPadding + (c * choirHeight) + (p * partHeight);
-
-      const list: { "from": number, "to": number }[] = ranges[c][p];
-      list.forEach(r => {
-        const from = r.from;
-        const to = r.to;
-
-        ctx.beginPath();
-        // The weird 0.3 is because we're using rounded lines
-        const startX = canvasPadding + ((from + 0.3) * barWidth);
-        const endX = canvasPadding + ((to - 0.3) * barWidth);
-        const Y = startY + (partHeight / 2);
-        ctx.moveTo(startX, Y);
-        ctx.lineTo(endX, Y);
-
-        var lightness: number, saturation: number, transparency: number;
-
-        // If current bar is highlighted
-        if (currentpos >= from && currentpos < to) {
-          saturation = 80;
-          lightness = (67 - (3 * p)) * pulses[c][p];
-          transparency = 1; // pulses[c][p];
-        }
-        // if current choir/part is highlighted
-        else if (c == current.choir && (current.part == "all" || p == current.part)) {
-          saturation = 80;
-          lightness = 67 - (3 * p);
-          transparency = 1;
-        }
-        // else if (c == currentChoir && p == currentPart) {
-        //   lightness = 67 - (3 * p);
-        //   saturation = 80;
-        //   transparency = 1;
-        // }
-        else if (current.bar === 0 || current.bar > 138) {
-          saturation = 50;
-          lightness = 67 - (3 * p);
-          transparency = 1;
-        }
-        else {
-          saturation = 50;
-          lightness = 67 - (3 * p);
-          transparency = 0.5;
-        }
-
-        ctx.strokeStyle = `hsla(${choirColors[c]}, ${saturation}%, ${lightness}%, ${transparency})`;
-        ctx.stroke();
-      });
-    }
-  }
-}
-
-// BUG: what happens if you click in the canvas padding?
-function getMousePos(canv: HTMLCanvasElement, evt: MouseEvent) {
-  const rect = canv.getBoundingClientRect();
-  const y = ((evt.offsetY - canvasPadding) * ens.choirs.length) / (rect.height - (2 * canvasPadding));
-  return {
-    choir: Math.min(ens.choirs.length - 1, Math.max(0, Math.floor(y))),
-    part: Math.floor((y % 1) * ens.parts.length),
-    bar: Math.floor((evt.offsetX * 140) / rect.width),
-  };
 }
 
 function getFilename(s) {
@@ -465,7 +280,8 @@ function getFilename(s) {
 }
 
 function loadAudio(c: number, p: PartType, b: number) {
-  const newfile = ens.getMP3filename(c, p, "/audio/");
+  const newfile = config.audio_prefix + (p == "all" ? "default" : "Choir " + c + "-" + config.parts[p]) + ".mp3";
+  console.log("audio:", newfile);
 
   // just compare the filename, not the whole URL, to see if we
   // need to load a new MP3
@@ -474,7 +290,7 @@ function loadAudio(c: number, p: PartType, b: number) {
     audio.load();
   }
 
-  audio.currentTime = b * 4 * beattime;
+  audio.currentTime = b * config.tempo;
 }
 
 async function play() {
@@ -496,8 +312,8 @@ async function play() {
   }
 }
 
-let oldTimeStamp;
-let fps;  // frames per second
+let oldTimeStamp: number = 0;
+let fps = 0;
 
 function playLoop(timestamp) {
 
@@ -507,10 +323,10 @@ function playLoop(timestamp) {
   fps = Math.round(1 / secondsPassed);
 
   // Calculate which bar we are on 
-  const pos = audio.currentTime / (beattime * 4);
+  const pos = audio.currentTime / config.tempo;
 
-  update(pos);
-  draw(pos);
+  setBar(pos);
+  canvas.draw(current, fps);
 
   if (pos >= 140) {
     setBar(0);
@@ -539,38 +355,6 @@ function playpause() {
   }
 }
 
-// -----------------------------------------------------
-// Mouse events
-// -----------------------------------------------------
-
-function canvasClicked(e) {
-  const pos: Position = getMousePos(canvas, e);
-
-  setChoir(pos.choir);
-  setPart(pos.part);
-  setBar(pos.bar);
-
-  pauseAndRepaint();
-  play();
-}
-
-
-let intId = 0;
-function canvasMoved(e: MouseEvent) {
-  const pos: Position = getMousePos(canvas, e);
-
-  choiroutput.textContent = ens.getChoirName(pos.choir);
-  if (pos.part != 'all') {
-    partoutput.textContent = ens.getPartName(pos.part);
-  }
-  baroutput.textContent = "Bar " + Math.floor(pos.bar);
-  statusarea.classList.remove("hide");
-  clearInterval(intId);
-  intId = setInterval(function () {
-    statusarea.classList.add("hide");
-  }, 1500);
-
-}
 
 // -----------------------------------------------------
 // Field events (chaning choir, part or bar)
@@ -583,7 +367,7 @@ function pauseAndRepaintNoLoad() {
 
   // update the audio location 
   // HACK: this can't be the right place for this next line!
-  audio.currentTime = current.bar * 4 * beattime;
+  audio.currentTime = current.bar * config.tempo;
 
   pauseAndRepaint(false);
 }
@@ -593,7 +377,7 @@ function pauseAndRepaint(load = true) {
   if (load) {
     loadAudio(current.choir, current.part, current.bar);
   }
-  draw(current.bar);
+  canvas.draw(current, fps);
 }
 
 // -----------------------------------------------------
@@ -614,11 +398,11 @@ function keyboardTapped(e) {
     console.log('meta or ctrl pressed');
     switch (e.code) {
       case 'ArrowRight':
-        setBar(seek(current.bar, +1));
+        setBar(canvas.seek(current, +1));
         pauseAndRepaint();
         break;
       case 'ArrowLeft':
-        setBar(seek(current.bar, -1));
+        setBar(canvas.seek(current, -1));
         pauseAndRepaint();
         break;
       default:
@@ -675,11 +459,11 @@ function keyboardTapped(e) {
       e.preventDefault();
       break;
     case 'ArrowDown':
-      setChoir(current.choir >= ens.choirs.length - 1 ? 0 : current.choir + 1);
+      setChoir(current.choir >= config.choirs - 1 ? 0 : current.choir + 1);
       pauseAndRepaint();
       break;
     case 'ArrowUp':
-      setChoir(current.choir <= 0 ? ens.choirs.length - 1 : current.choir - 1);
+      setChoir(current.choir <= 0 ? config.choirs - 1 : current.choir - 1);
       pauseAndRepaint();
       break;
     case 'KeyX':
@@ -692,47 +476,6 @@ function keyboardTapped(e) {
 
 }
 
-// -----------------------------------------------------
-// Touch events (mobible, iPad)
-// -----------------------------------------------------
-
-// TODO: Not convinced the Maths for getTouchPos() is right...
-function getTouchPos(evt: TouchEvent): Position {
-  var rect = canvas.getBoundingClientRect();
-  var choir = Math.ceil(ens.choirs.length * ((evt.targetTouches[0].clientY - rect.top - (canvasPadding)) /
-    (canvas.clientHeight - (2 * canvasPadding))));
-  choir = Math.min(Math.max(1, choir), ens.choirs.length); 
-  var bar = Math.round(140 * ((evt.targetTouches[0].clientX - rect.left - (canvasPadding)) /
-    (canvas.clientWidth - (2 * canvasPadding))));
-  bar = Math.min(Math.max(0, bar), 139); // must be from 0 to 139
-  return {choir: choir, part: "all", bar: bar };
-}
-
-
-// BUG: on mobile, touch to move bar to half-way and play
-// and it starts from bar 0.
-function touchStarted(evt: TouchEvent) {
-  const pos: Position = getTouchPos(evt);
-  setChoir(pos.choir);
-  setBar(pos.bar);
-  pauseAndRepaint(false);
-
-  // BUG: [Violation] Added non-passive event listener to a scroll-blocking <some> event.
-  // Can we use no bubble thing instead of preventDefault()?  Don't want gestures on canvas
-  // to move the screen around when on mobile.
-  evt.preventDefault();
-
-  canvas.addEventListener("touchmove", (evt) => {
-    const pos = getTouchPos(evt);
-    setChoir(pos.choir);
-    setBar(pos.bar);
-    pauseAndRepaint(false);
-  });
-  canvas.addEventListener("touchend", () => {
-    pauseAndRepaint();
-    // play();
-  });
-}
 
 function showHelp(show = true) {
   if (show) {
@@ -769,24 +512,36 @@ function toggleScore(forceEarly = false) {
 }
 
 
-function seek(b: number, direction) {
-  const choirnotes = dict[b].filter(x => x.c == current.choir);
-  const singing = choirnotes.length != 0;
-
-  // loop until we find a bar where choir is not doing what it's doing in currentBar
-
-  var changed = false;
-  do {
-    b = b + direction;
-    const newsinging = (dict[b].filter(x => x.c == current.choir).length != 0);
-    changed = (singing != newsinging)
-  } while (!changed && b > 0 && b < 139);
-  return b;
-}
-
 function setVH() {
   let vh = window.innerHeight * 0.01;
   document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+function handleCanvasClick(e: CustomEvent) {
+  const pos = e.detail.position;
+
+  setChoir(pos.choir);
+  setPart(pos.part);
+  setBar(pos.bar);
+
+  pauseAndRepaint();
+  play();
+}
+
+var intId;
+function handleCanvasHover(e: CustomEvent) {
+  const pos = e.detail.position;
+
+  choiroutput.textContent = "Choir " + (pos.choir + 1);
+  if (pos.part != 'all') {
+    partoutput.textContent = config.parts[pos.part];
+  }
+  baroutput.textContent = "Bar " + Math.floor(pos.bar);
+  statusarea.classList.remove("hide");
+  clearInterval(intId);
+  intId = setInterval(function () {
+    statusarea.classList.add("hide");
+  }, 1500);
 }
 
 // -----------------------------------------------------
@@ -801,11 +556,9 @@ window.addEventListener("load", async () => {
   setVH();
 
   loadColors();
-  calculateCanvasSize();
-  showLoadingOnCanvas();
 
-  await setupLilypondParser();
-  await processLilypond(lilypondfile);
+  // canvas = new CanvasView() as CanvasView;
+  canvas.color = colors;
 
   // read choir, part and bar from the URL
   parseURL();
@@ -814,17 +567,16 @@ window.addEventListener("load", async () => {
   playpausebutton.addEventListener('click', playpause);
 
   // svgobject.addEventListener("click", scoreClicked);
-  canvas.addEventListener('click', canvasClicked);
-  canvas.addEventListener('mousemove', canvasMoved, false);
   [choirselect,
     partselect,
     barinput].forEach(el => el.addEventListener('change', pauseAndRepaintNoLoad));
   document.addEventListener("keydown", keyboardTapped);
-  canvas.addEventListener("touchstart", touchStarted, { passive: false });
   info.addEventListener("click", () => showHelp(true));
   backdrop.addEventListener("click", () => showHelp(false));
   darkswitch.addEventListener("click", () => toggleDark());
   scoreswitch.addEventListener("click", () => toggleScore());
+  canvas.addEventListener("music-canvas-click", handleCanvasClick as (e: Event) => void);
+  canvas.addEventListener("music-canvas-hover", handleCanvasHover as (e: Event) => void);
 
   // watch for change in user's preference of color scheme
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
