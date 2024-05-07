@@ -6,6 +6,21 @@ export interface Position {
   bar: number;
 }
 
+export type Brightness = "dark" | "light";
+export type ScoreType = "early" | "modern";
+export type Status = "playing" | "paused" | "loading";
+
+export type State = {
+  viewmode: Brightness;
+  period: ScoreType;
+  choir: number;
+  part: PartType;
+  bar: number;
+  status: Status;
+}
+
+
+
 export interface Colors {
   background: string;
   highlight: string;

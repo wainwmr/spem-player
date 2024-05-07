@@ -4,17 +4,14 @@ import './src/scss/style.scss';
 // TODO: bar positions should come from model
 import { scorebars_modern, scorebars_early } from "./src/ts/barlines";
 
-import { PartType, Ensemble, Config, Position, Colors } from "./src/ts/ensemble";
+import { PartType, State, Colors } from "./src/ts/ensemble";
 
 import { MusicCanvas } from "./src/ts/musicCanvas";
+import { AudioControls } from "./src/ts/audioControls";
 
 const canvas = document.getElementById("canvas") as MusicCanvas;
+const controls = document.getElementById("audio-controls") as AudioControls;
 const score = document.getElementById("score") as HTMLDivElement;
-const playpausebutton = document.getElementById('playpausebutton') as HTMLDivElement;
-const playpauseicon = document.getElementById('playpauseicon') as HTMLSpanElement;
-const choirselect = document.getElementById('choir-select') as HTMLSelectElement;
-const partselect = document.getElementById('part-select') as HTMLSelectElement;
-const barinput = document.getElementById('bar-field') as HTMLInputElement;
 const statusarea = document.getElementById('statusarea') as HTMLDivElement;
 const choiroutput = document.getElementById('choir-output') as HTMLSpanElement;
 const partoutput = document.getElementById('part-output') as HTMLSpanElement;
@@ -27,23 +24,13 @@ const spinner = document.getElementById('spinner') as SvgInHtml;
 const darkswitch = document.getElementById('darkswitch') as SvgInHtml;
 const scoreswitch = document.getElementById('scoreswitch') as SvgInHtml;
 
-type Brightness = "dark" | "light";
-type ScoreType = "early" | "modern";
-
-type State = {
-  viewmode: Brightness;
-  period: ScoreType;
-  choir: number;
-  part: PartType;
-  bar: number;
-}
-
 var current: State = {
   viewmode: "dark",
   period: "modern",
   choir: 0,
   part: "all",
-  bar: 0
+  bar: 0,
+  status: "paused"
 }
 
 // HACK: this is also in /spem.json - make you your mind.
@@ -60,7 +47,6 @@ const config = {
 var scorebars = (current.period == "early" ? scorebars_early : scorebars_modern);
 
 var svg; // the actual SVG
-var audio = new Audio();
 
 const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
 if (prefersDarkScheme.matches) {
@@ -105,6 +91,7 @@ function loadColors() {
 // TODO: highlight part on score?
 // TODO: Add lyrics to footer
 // BUG: Bass in choir 7 between bars 50 and 68 - rests not showing correctly.
+// BUG: Tenor in choir 4 bar 22. Audio has c natural.  Score has c sharp.
 // TODO: index.html should not have part and choir names hard-coded.  Should come from config instead.
 
 // var pt;
@@ -130,9 +117,7 @@ async function setChoir(c: number, forceChange = false) {
   current.choir = Math.min(Math.max(0, c), config.choirs - 1);
 
   // Update the input field
-  if (choirselect != null && choirselect.value != String(current.choir)) {
-    choirselect.value = String(current.choir);
-  }
+  controls.setAttribute("choir", String(current.choir));
 
   // load the correct score for this choir
   const filename = config.svg_prefix + current.period + "/Choir " + (current.choir + 1) + ".svg";
@@ -158,9 +143,7 @@ function setPart(p: PartType) {
   current.part = p;
 
   // Update the input field
-  if (partselect != null && partselect.value != String(current.part)) {
-    partselect.value = String(current.part);
-  }
+  controls.setAttribute("part", String(current.part));
 }
 
 
@@ -172,7 +155,7 @@ function setBar(b: number, changedChoirs = false) {
     return;
   }
   if (b > 139) {
-    playpauseicon.classList.add("paused");
+    controls.setAttribute("status", "paused");
     b = 0;
   }
   else if (b < 0) {
@@ -183,9 +166,7 @@ function setBar(b: number, changedChoirs = false) {
   const intbar = Math.floor(current.bar);
 
   // update the input field
-  if (barinput && barinput.value != String(intbar)) {
-    barinput.value = String(intbar);
-  }
+  controls.setAttribute("bar", String(intbar));
 
   svg = document.querySelector("#score svg");
 
@@ -275,43 +256,6 @@ function parseURL() {
   }
 }
 
-function getFilename(s) {
-  return s.split("/").pop();
-}
-
-function loadAudio(c: number, p: PartType, b: number) {
-  const newfile = config.audio_prefix + (p == "all" ? "default" : "Choir " + c + "-" + config.parts[p]) + ".mp3";
-  console.log("audio:", newfile);
-
-  // just compare the filename, not the whole URL, to see if we
-  // need to load a new MP3
-  if (getFilename(newfile) != getFilename(audio.currentSrc)) {
-    audio.src = newfile;
-    audio.load();
-  }
-
-  audio.currentTime = b * config.tempo;
-}
-
-async function play() {
-  if (audio.paused) {
-
-    // set the play button spinner while loading audio
-    playpauseicon.style.display = "none";
-    spinner.style.display = "block";
-
-    await audio.play();
-
-    // set the play button to pause again
-    playpauseicon.style.display = "block";
-    spinner.style.display = "none";
-    playpauseicon.classList.remove("paused");
-
-    // Animate while playing
-    window.requestAnimationFrame(playLoop);
-  }
-}
-
 let oldTimeStamp: number = 0;
 let fps = 0;
 
@@ -323,35 +267,16 @@ function playLoop(timestamp) {
   fps = Math.round(1 / secondsPassed);
 
   // Calculate which bar we are on 
-  const pos = audio.currentTime / config.tempo;
-
-  setBar(pos);
+  setBar(controls.current.bar);
   canvas.draw(current, fps);
 
-  if (pos >= 140) {
+  if (current.bar >= 140) {
     setBar(0);
-    audio.currentTime = 0;
-    pause();
+    controls.pause();
+    // audio.currentTime = 0;
   }
-  else if (!audio.paused) {
+  else if (controls.isPlaying()) {
     window.requestAnimationFrame(playLoop);
-  }
-}
-
-
-function pause() {
-  if (!audio.paused) {
-    audio.pause();
-    playpauseicon.classList.add("paused");
-  }
-}
-
-function playpause() {
-  if (audio.paused) {
-    play();
-  }
-  else {
-    pause();
   }
 }
 
@@ -360,23 +285,21 @@ function playpause() {
 // Field events (chaning choir, part or bar)
 // -----------------------------------------------------
 
-function pauseAndRepaintNoLoad() {
-  setChoir(Number(choirselect.value));
-  setPart(Number(partselect.value));
-  setBar(Number(barinput.value));
+function handleControlChange(e: CustomEvent) {
+  const pos = e.detail.position;
+  setChoir(Number(pos.choir));
+  setPart(pos.part == "all" ? 0 : Number(pos.part));
+  setBar(Number(pos.bar));
 
   // update the audio location 
   // HACK: this can't be the right place for this next line!
-  audio.currentTime = current.bar * config.tempo;
+  // audio.currentTime = current.bar * config.tempo;
 
   pauseAndRepaint(false);
 }
 
 function pauseAndRepaint(load = true) {
-  pause();
-  if (load) {
-    loadAudio(current.choir, current.part, current.bar);
-  }
+  controls.setAttribute("status", "paused");
   canvas.draw(current, fps);
 }
 
@@ -398,10 +321,12 @@ function keyboardTapped(e) {
     console.log('meta or ctrl pressed');
     switch (e.code) {
       case 'ArrowRight':
+        controls.pause();
         setBar(canvas.seek(current, +1));
         pauseAndRepaint();
         break;
       case 'ArrowLeft':
+        controls.pause();
         setBar(canvas.seek(current, -1));
         pauseAndRepaint();
         break;
@@ -411,7 +336,7 @@ function keyboardTapped(e) {
     return;
   }
   if (e.code == 'Enter') {
-    playpause();
+    controls.isPlaying() ? controls.pause() : controls.play();
     return;
   }
   switch (e.code) {
@@ -449,11 +374,13 @@ function keyboardTapped(e) {
       showHelp(false);
       break;
     case 'ArrowRight':
+      controls.pause();
       setBar(current.bar + 1);
       pauseAndRepaint();
       e.preventDefault();
       break;
     case 'ArrowLeft':
+      controls.pause();
       setBar(current.bar - 1);
       pauseAndRepaint();
       e.preventDefault();
@@ -525,7 +452,7 @@ function handleCanvasClick(e: CustomEvent) {
   setBar(pos.bar);
 
   pauseAndRepaint();
-  play();
+  controls.pause();
 }
 
 var intId;
@@ -564,12 +491,11 @@ window.addEventListener("load", async () => {
   parseURL();
   pauseAndRepaint();
 
-  playpausebutton.addEventListener('click', playpause);
-
-  // svgobject.addEventListener("click", scoreClicked);
-  [choirselect,
-    partselect,
-    barinput].forEach(el => el.addEventListener('change', pauseAndRepaintNoLoad));
+  controls.addEventListener("audio-controls-playing", () => {
+    playLoop(0);
+  });
+  // controls.addEventListener("audio-controls-pause", controls.pause);
+  controls.addEventListener("audio-controls-change", handleControlChange as (e: Event) => void);
   document.addEventListener("keydown", keyboardTapped);
   info.addEventListener("click", () => showHelp(true));
   backdrop.addEventListener("click", () => showHelp(false));

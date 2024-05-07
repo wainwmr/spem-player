@@ -33,26 +33,26 @@ export class MusicCanvas extends HTMLCanvasElement {
   };
 
   async connectedCallback() {
-    console.log("Custom element added to page.");
+    console.log("MusicCanvas added to page.");
     await this.init();
   }
 
   disconnectedCallback() {
-    console.log("Custom element removed from page.");
+    console.log("MusicCanvas removed from page.");
   }
 
   adoptedCallback() {
-    console.log("Custom element moved to new page.");
+    console.log("MusicCanvas moved to new page.");
   }
 
   async attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log(`Attribute ${name} has changed from ${oldValue} to ${newValue}.`);
+    console.log(`MusicCanvas: Attribute ${name} has changed from ${oldValue} to ${newValue}.`);
     switch (name) {
       case "config":
         const response = await fetch(newValue);
         const names = await response.json();
         this.config = names;
-        console.log(this.config);
+        console.log("MusicCanvas: config: ", this.config);
         this.init();
         break;
       default:
@@ -61,13 +61,12 @@ export class MusicCanvas extends HTMLCanvasElement {
   }
 
   async init() {
-    console.log("canvasView.init()");
     if (dict.length != 0) {
-      console.log("Already initialise. Nothing to do.");
+      console.log("MusicCanvas: Already initialise. Nothing to do.");
       return;
     }
     if (!this.config) {
-      console.log("config is null. Nothing we can do.");
+      console.log(`MusicCanvas: must setAttribute config="xxx" before use`);
       return;
     }
 
@@ -79,8 +78,6 @@ export class MusicCanvas extends HTMLCanvasElement {
 
     this.dict = dict;
     this.ranges = ranges;
-    console.log("dict", dict.length);
-    console.log("ranges", ranges.length);
 
     // define array pulses[choir][part] to be min transparency which
     // will be pulsed when the choir is singing a note.
@@ -103,7 +100,7 @@ export class MusicCanvas extends HTMLCanvasElement {
     this.barWidth = (this.width - (2 * this.canvasPadding)) / 140;
     this.choirHeight = (this.height - (2 * this.canvasPadding)) / this.config.choirs;
     this.partHeight = this.choirHeight / this.config.parts.length;
-    console.log("canvas size", this.config, this.width, this.height, this.barWidth, this.choirHeight, this.partHeight);
+    console.log("MusicCanvas: calculated bar choir and part sizes:", this.barWidth, this.choirHeight, this.partHeight);
   };
 
   showLoadingOnCanvas() {
@@ -142,7 +139,7 @@ export class MusicCanvas extends HTMLCanvasElement {
     if (!this.config) return;
 
     if (ranges.length === 0 || dict.length === 0) {
-      console.log("not ready to draw!");
+      console.log("MusicCanvas: not ready to draw!");
       return;
     }
     if (fps == undefined) {
