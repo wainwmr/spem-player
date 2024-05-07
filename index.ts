@@ -4,7 +4,7 @@ import './src/scss/style.scss';
 // TODO: bar positions should come from model
 import { scorebars_modern, scorebars_early } from "./src/ts/barlines";
 
-import { PartType, State, Colors } from "./src/ts/ensemble";
+import { PartType, State, Colors, config } from "./src/ts/ensemble";
 
 import { MusicCanvas } from "./src/ts/musicCanvas";
 import { AudioControls } from "./src/ts/audioControls";
@@ -31,17 +31,6 @@ var current: State = {
   part: "all",
   bar: 0,
   status: "paused"
-}
-
-// HACK: this is also in /spem.json - make you your mind.
-const config = {
-  "choirs": 8,
-  "parts": ["Soprano", "Alto", "Tenor", "Baritone", "Bass"],
-  "scores": ["modern", "early"],
-  "audio_prefix": "/audio/",
-  "tempo": 4 * 60 / 62,  // (minim = 62) === (tempo = 4 * 0.9677)
-  "svg_prefix": "/svg/",
-  "lilypond": "/lilypond/spem notes.ly"
 }
 
 var scorebars = (current.period == "early" ? scorebars_early : scorebars_modern);
@@ -93,6 +82,7 @@ function loadColors() {
 // BUG: Bass in choir 7 between bars 50 and 68 - rests not showing correctly.
 // BUG: Tenor in choir 4 bar 22. Audio has c natural.  Score has c sharp.
 // TODO: index.html should not have part and choir names hard-coded.  Should come from config instead.
+// TODO: Get AudioControls to generate Choirs and Parts from config (rather than hard-coded in index.html
 
 // var pt;
 // function scoreClicked(e) {

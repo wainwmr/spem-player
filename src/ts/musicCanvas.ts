@@ -1,4 +1,4 @@
-import { Position, Colors, Config } from "./ensemble";
+import { Position, Colors, config } from "./ensemble";
 
 // TODO: don't need setupLilypondParse to be exported, do we?
 import { setupLilypondParser, processLilypond, dict, ranges } from "./lily";
@@ -6,10 +6,10 @@ import { setupLilypondParser, processLilypond, dict, ranges } from "./lily";
 import { Dictionary, Range } from "./lily";
 
 export class MusicCanvas extends HTMLCanvasElement {
-  static observedAttributes = [ "config" ];
+  // static observedAttributes = [ "config" ];
 
   // ens: Ensemble;
-  config: Config | null = null;
+  // config: Config | null = null;
   canvasPadding: number = 5;  // padding in px of the canvas
   barWidth: number = 0;
   choirHeight: number = 0;
@@ -48,13 +48,13 @@ export class MusicCanvas extends HTMLCanvasElement {
   async attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     console.log(`MusicCanvas: Attribute ${name} has changed from ${oldValue} to ${newValue}.`);
     switch (name) {
-      case "config":
-        const response = await fetch(newValue);
-        const names = await response.json();
-        this.config = names;
-        console.log("MusicCanvas: config: ", this.config);
-        this.init();
-        break;
+      // case "config":
+      //   const response = await fetch(newValue);
+      //   const names = await response.json();
+      //   this.config = names;
+      //   console.log("MusicCanvas: config: ", this.config);
+      //   this.init();
+      //   break;
       default:
         break;
     }
@@ -65,25 +65,25 @@ export class MusicCanvas extends HTMLCanvasElement {
       console.log("MusicCanvas: Already initialise. Nothing to do.");
       return;
     }
-    if (!this.config) {
-      console.log(`MusicCanvas: must setAttribute config="xxx" before use`);
-      return;
-    }
+    // if (!this.config) {
+    //   console.log(`MusicCanvas: must setAttribute config="xxx" before use`);
+    //   return;
+    // }
 
     this.calculateCanvasSize();
     this.showLoadingOnCanvas();
 
     await setupLilypondParser();
-    await processLilypond(this.config.lilypond);
+    await processLilypond(config.lilypond);
 
     this.dict = dict;
     this.ranges = ranges;
 
     // define array pulses[choir][part] to be min transparency which
     // will be pulsed when the choir is singing a note.
-    for (var c = 0; c < this.config.choirs; c++) {
+    for (var c = 0; c < config.choirs; c++) {
       this.pulses[c] = [];
-      for (var p = 0; p < this.config.parts.length; p++) {
+      for (var p = 0; p < config.parts.length; p++) {
         this.pulses[c][p] = 1;
       }
     }
@@ -92,14 +92,14 @@ export class MusicCanvas extends HTMLCanvasElement {
   }
 
   calculateCanvasSize() {
-    if (this.config == null) return;
+    if (config == null) return;
 
-    this.width = this.clientWidth * 4;
-    this.height = 300 * 2;
+    this.width = this.clientWidth * 20;
+    this.height = 300 * 4;
 
     this.barWidth = (this.width - (2 * this.canvasPadding)) / 140;
-    this.choirHeight = (this.height - (2 * this.canvasPadding)) / this.config.choirs;
-    this.partHeight = this.choirHeight / this.config.parts.length;
+    this.choirHeight = (this.height - (2 * this.canvasPadding)) / config.choirs;
+    this.partHeight = this.choirHeight / config.parts.length;
     console.log("MusicCanvas: calculated bar choir and part sizes:", this.barWidth, this.choirHeight, this.partHeight);
   };
 
@@ -136,7 +136,7 @@ export class MusicCanvas extends HTMLCanvasElement {
 
 
   draw(current: Position, fps?: number) {
-    if (!this.config) return;
+    // if (!this.config) return;
 
     if (ranges.length === 0 || dict.length === 0) {
       console.log("MusicCanvas: not ready to draw!");
@@ -210,8 +210,8 @@ export class MusicCanvas extends HTMLCanvasElement {
     // Draw each of the 40 voice parts
     ctx.lineWidth = 0.9 * this.partHeight;
     ctx.lineCap = "round";
-    for (var c  = 0; c < this.config.choirs; c++) {
-      for (var p  = 0; p < this.config.parts.length; p++) {
+    for (var c  = 0; c < config.choirs; c++) {
+      for (var p  = 0; p < config.parts.length; p++) {
         const startY = this.canvasPadding + (c * this.choirHeight) + (p * this.partHeight);
 
         const list: { "from": number, "to": number }[] = this.ranges[c][p];
@@ -266,13 +266,13 @@ export class MusicCanvas extends HTMLCanvasElement {
 
   // BUG: what happens if you click in the canvas padding?
   getMousePos(evt: MouseEvent): Position {
-    if (!this.config) return { choir: 0, part: 0, bar: 0 };
+    // if (!this.config) return { choir: 0, part: 0, bar: 0 };
 
     const rect = this.getBoundingClientRect();
-    const y = ((evt.offsetY - this.canvasPadding) * this.config.choirs) / (rect.height - (2 * this.canvasPadding));
+    const y = ((evt.offsetY - this.canvasPadding) * config.choirs) / (rect.height - (2 * this.canvasPadding));
     return {
-      choir: Math.min(this.config.choirs - 1, Math.max(0, Math.floor(y))),
-      part: Math.floor((y % 1) * this.config.parts.length),
+      choir: Math.min(config.choirs - 1, Math.max(0, Math.floor(y))),
+      part: Math.floor((y % 1) * config.parts.length),
       bar: Math.floor((evt.offsetX * 140) / rect.width)
     };
   }
@@ -306,12 +306,12 @@ export class MusicCanvas extends HTMLCanvasElement {
 
   // TODO: Not convinced the Maths for getTouchPos() is right...
   getTouchPos(evt: TouchEvent): Position {
-    if (!this.config) return { choir: 0, part: 0, bar: 0 };
+    // if (!this.config) return { choir: 0, part: 0, bar: 0 };
 
     var rect = this.getBoundingClientRect();
-    var choir = Math.ceil(this.config.choirs * ((evt.targetTouches[0].clientY - rect.top - (this.canvasPadding)) /
+    var choir = Math.ceil(config.choirs * ((evt.targetTouches[0].clientY - rect.top - (this.canvasPadding)) /
       (this.clientHeight - (2 * this.canvasPadding))));
-    choir = Math.min(Math.max(1, choir), this.config.choirs);
+    choir = Math.min(Math.max(1, choir), config.choirs);
     var bar = Math.round(140 * ((evt.targetTouches[0].clientX - rect.left - (this.canvasPadding)) /
       (this.clientWidth - (2 * this.canvasPadding))));
     bar = Math.min(Math.max(0, bar), 139); // must be from 0 to 139

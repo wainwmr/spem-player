@@ -1,17 +1,9 @@
-import { Position, State } from "./ensemble";
+import { Position, State, config } from "./ensemble";
 
 type SvgInHtml = HTMLElement & SVGElement;
 
 // HACK: this is also in /spem.json and index.ts - make you your mind.
-const config = {
-  "choirs": 8,
-  "parts": ["Soprano", "Alto", "Tenor", "Baritone", "Bass"],
-  "scores": ["modern", "early"],
-  "audio_prefix": "/audio/",
-  "tempo": 4 * 60 / 62,  // (minim = 62) === (tempo = 4 * 0.9677)
-  "svg_prefix": "/svg/",
-  "lilypond": "/lilypond/spem notes.ly"
-}
+
 
 export class AudioControls extends HTMLDivElement {
   static observedAttributes = ["choir", "part", "bar"];
@@ -176,6 +168,9 @@ export class AudioControls extends HTMLDivElement {
         break;
       case "bar":
         this.current.bar = Number(newValue);
+        if (!this.isPlaying) {
+          this.audio.currentTime = this.current.bar * config.tempo;
+        }
         this.barinput.value = newValue;
         break;
       default:
