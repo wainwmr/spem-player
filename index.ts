@@ -56,6 +56,7 @@ if (prefersDarkScheme.matches) {
 // TODO: Add lyrics to footer
 // BUG: Bass in choir 7 between bars 50 and 68 - rests not showing correctly.
 // BUG: Tenor in choir 4 bar 22. Audio has c natural.  Score has c sharp.
+// BUG: Soprano in choir 1 bar 13.  Breve or Longa?
 // TODO: index.html should not have part and choir names hard-coded.  Should come from config instead.
 // TODO: Get AudioControls to generate Choirs and Parts from config (rather than hard-coded in index.html
 
