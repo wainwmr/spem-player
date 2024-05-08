@@ -1,40 +1,43 @@
 /* eslint-disable no-unused-vars */
 
 import * as ohm from 'ohm-js';
-import { Duration, BarLine, Note, Rest } from "./music-classes";
+import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
 
-import grammarString from '../ohmjs/ly-grammar.ohm?raw';
+const lyURL = '/ohmjs/ly-grammar.ohm';
 
 // Make an dictionary of music positions (hemidemisemiquavers/128) to array of notes {choir, part, note}
-export const dict = {};
+export type Dictionary = {
+  "c": number;
+  "p": number;
+  "n": Note;
+};
+export const dict: Dictionary[][] = [];
 
 // a dictionary to hold the muic in the lilypond input file
-export var scores = {};
+export var scores: { [id: string]: Component[]} = {};
 
 // -----------------------------------------------------
 // Set up Lilypond parser
 // -----------------------------------------------------
 
-var lyGrammar, semantics;
+var lyGrammar: ohm.Grammar, semantics: ohm.Semantics;
 
-export var lilypondVersion;
+export var lilypondVersion: string;
 
 export async function setupLilypondParser() {
 
   // Load the OHM grammar for Lilypond 
-  // console.log(lyURL);
-  // const promise = await fetch(lyURL);
-  // const grammarString = await promise.text();
-  // console.log(grammarString);
+  const promise = await fetch(lyURL);
+  const grammarString = await promise.text();
   lyGrammar = ohm.grammar(grammarString);
 
   // Create a parse for Lilypond
   semantics = lyGrammar.createSemantics();
 
   // If lilypond input has no duration, use lastDuration; use lastNote if note name is missing
-  var lastNote, lastDuration;
+  var lastNote: Note, lastDuration: Duration;
 
-  function getDuration(duration) {
+  function getDuration(duration: ohm.Node) {
     var d = duration.parse()[0];
     if (d == undefined) {
       d = lastDuration;
@@ -50,9 +53,9 @@ export async function setupLilypondParser() {
     Version(_, _2, v, _3) {
       lilypondVersion = v.sourceString;
     },
-    RelativeClause(variable, _, _2, note, _3, music, _4) {
+    RelativeClause(variable, _, _2, _3, _4, music, _5) {
       const v = variable.parse();
-      const n = note.parse();
+      // const n = note.parse();
       if (v[0] != undefined) {
         scores[v[0]] = music.parse();
       }
@@ -62,26 +65,25 @@ export async function setupLilypondParser() {
       const c = comp.parse();
       return c;
     },
-    command(_, c, _2) {
-      const command = c.sourceString;
+    command(_, _2, _3) {
+      // const command = _2.sourceString;
     },
     barline(_) {
       return new BarLine();
     },
     repeatedNote(duration, slur) {
       const d = duration.parse();
-      const s = slur.sourceString.length == 0 ? undefined : slur.sourceString
+      const s = slur.sourceString.length == 0 ? null : slur.sourceString
 
       const note = new Note(lastNote.notename, lastNote.accidental, '', d, s);
       return note;
     },
-    note(notename, accidental, octave, duration, expression, slur) {
+    note(notename, accidental, octave, duration, _, slur) {
       const n = notename.sourceString;
-      const a = accidental.sourceString.length == 0 ? undefined : accidental.sourceString;
-      const o = octave.sourceString.length == 0 ? undefined : octave.sourceString;
+      const a = accidental.sourceString.length == 0 ? null : accidental.sourceString;
+      const o = octave.sourceString.length == 0 ? null : octave.sourceString;
       var d = getDuration(duration);
-      const e = expression.sourceString;
-      const s = slur.sourceString.length == 0 ? undefined : slur.sourceString
+      const s = slur.sourceString.length == 0 ? null : slur.sourceString
 
       lastNote = new Note(n, a, o, d, s);
       return lastNote;
@@ -104,7 +106,7 @@ export async function setupLilypondParser() {
 
       return new Duration(x.duration, x.dotted, m);
     },
-    fraction(a, _, b) {
+    fraction(a, _, _2) {
       // HACK: we're ignoring the denominator altogether.  Let's hope it's not there
       return parseInt(a.sourceString);
     },
@@ -118,17 +120,21 @@ export async function setupLilypondParser() {
 
 }
 
-export var ranges = [];
+// Array of choir, part and 
+export type Range = {
+  from: number;
+  to: number;
+}
+export var ranges:Range[][][] = [];
 
-export async function processLilypond(lilypondfile) {
+export async function processLilypond(lilypondfile: string) {
 
   // Load the Spem lilypond file
-  // const promise = await fetch(lilypondfile);
-  // const spemly = await promise.text();
+  const promise = await fetch(lilypondfile);
+  const spemly = await promise.text();
 
-  // const spemly  = "choirVBaritone = \\relative { f2 f f}";
   // Parse it
-  const result = lyGrammar.match(lilypondfile);
+  const result = lyGrammar.match(spemly);
   if (!result.succeeded()) {
     console.error('Bad Lilypond ' + result.message);
   }
@@ -175,7 +181,7 @@ export async function processLilypond(lilypondfile) {
           }
           dict[pos].push({ "c": choir, "p": part, "n": comp });
 
-          pos += comp.duration.sfths / barsize;
+          if (comp.duration != null) pos += comp.duration.sfths / barsize;
         }
         else if (comp instanceof Rest) {
           if (from != undefined) {
@@ -183,7 +189,7 @@ export async function processLilypond(lilypondfile) {
             from = undefined;
           }
 
-          pos += comp.duration.sfths / barsize;
+          if (comp.duration != null) pos += comp.duration.sfths / barsize;
         }
       }
 

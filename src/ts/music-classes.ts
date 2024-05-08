@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars */
 
 export class Duration {
-  duration;
-  dotted;
-  multiplier;
+  duration: string;
+  dotted: string;
+  multiplier: number;
   sfths = 0; // sixtyfourth note
 
   constructor(duration = '', dotted = '', multiplier = 1) {
@@ -57,34 +57,37 @@ export class Duration {
     return str; // + "(" + this.sfths + ")";
   }
 
-  static getDValue(s, include = undefined) {
-    const ds= [];
+  // static getDValue(s, include = undefined) {
+  //   const ds= [];
 
-    if (include != undefined) {
-      ds.push(...Duration.getDValue(include));
-      s -= include;
-    }
-    // Convert to binary with high end bit first
-    const bin = (s >>> 0).toString(2).split("").reverse();
-    for (var i = 0; i < bin.length; i++) {
-      if (bin[i] == '1') {
-        ds.push(2 ** (6 - i));  // convert to d-value
-      }
-    }
-    return ds.map(x => x.toString()); // convert to strings
-  }
+  //   if (include != undefined) {
+  //     ds.push(...Duration.getDValue(include));
+  //     s -= include;
+  //   }
+  //   // Convert to binary with high end bit first
+  //   const bin = (s >>> 0).toString(2).split("").reverse();
+  //   for (var i = 0; i < bin.length; i++) {
+  //     if (bin[i] == '1') {
+  //       ds.push(2 ** (6 - i));  // convert to d-value
+  //     }
+  //   }
+  //   return ds.map(x => x.toString()); // convert to strings
+  // }
 
   // Given a multibar duration total, return the D-values for the remainder
   // of the bar (first), the number of bars, and the D-Values for the start
   // of the remaining bar
-  static split(total, first) {
-    const x = total - first;
-    return [ Duration.getDValue(first), Math.floor(x / 128), Duration.getDValue(x % 128) ];
-  }
+  // static split(total, first) {
+  //   const x = total - first;
+  //   return [ Duration.getDValue(first), Math.floor(x / 128), Duration.getDValue(x % 128) ];
+  // }
 }
 
 export class Component {
-  duration = new Duration();  // 0 length
+  duration: Duration | null; 
+  constructor(duration: Duration | null) {
+    this.duration = duration; // 0 length
+  }
   toString() {
     return "huh";
   }
@@ -92,7 +95,7 @@ export class Component {
 
 export class BarLine extends Component {
   constructor() {
-    super();
+    super(null);
   }
   toString() {
     return "|";
@@ -100,20 +103,20 @@ export class BarLine extends Component {
 }
 
 export class Note extends Component {
-  notename;
-  accidental;
-  octave;
+  notename: string;
+  accidental: string | null;
+  octave: string | null;
+  // length: number; // in sixtyfourth notes (hemidemisemiquavers)
   // duration;
-  slur;
+  slur: string | null;
 
-  constructor(notename, accidental, octave, duration, slur) {
-    super();
+  constructor(notename: string, accidental: string | null, octave: string | null, duration: Duration, slur: string | null) {
+    super(duration);
     this.notename = notename;
     this.accidental = accidental;
     this.octave = octave;
     this.duration = duration;
     this.slur = slur;
-    if (duration != undefined) this.length = duration.sfths;
   }
 
   toString(showDuration = true) {
@@ -128,26 +131,25 @@ export class Note extends Component {
 }
 
 export class Rest extends Component {
-  restname;
+  restname: string;
   // duration;
-  constructor(restname, duration) {
-    super();
+  constructor(restname: string, duration: Duration) {
+    super(duration);
     this.restname = restname;
     this.duration = duration;
-    this.length = duration.sfths;
   }
 
   toString(showDuration = true) {
     var str = "";
     str += this.restname;
-    if (showDuration) str += this.duration.toString();
+    if (showDuration && this.duration != null) str += this.duration.toString();
     return (str);
   }
 }
 
 export class Command extends Component {
   constructor() {
-    super();
+    super(null);
   }
   toString() {
     return "Command";

@@ -184,7 +184,7 @@ header {
     }
 }
 
-#spemScore {
+#score {
     resize: vertical;
     background-color: whitesmoke;
     overflow: auto;
@@ -203,7 +203,7 @@ header {
 
 }
 
-#spemCanvas {
+#canvas {
     flex-grow: 1;
     cursor: crosshair;
     width: 100%;
@@ -221,91 +221,93 @@ header {
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
- 
-    #playpausebutton {
-        padding: 3px;
-        margin: 3px 5px;
-        
-        width: 3rem;
-        height: 3rem;
-        background: white;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid var(--color-border);
-        border-radius: 50%;
-        cursor: pointer;
-        &:hover,
-        &:focus {
-            background: var(--color-background-lighter);
-            transition: all 0.2s ease-in-out;
-        }
-        &:active {
-            background: var(--color-active-button);
-            border: 2px solid var(--color-background);
-            padding: 4px 2px 2px 4px;
-            transition: all 0.2s ease-in-out;
-        }
 
-        #spinner {
-            display: none;
-            animation: rotator $duration linear infinite;
-            // animation: pulse 2s infinite;
-        }
-
-        .path {
-            width: 50px;
-            stroke-dasharray: $offset;
-            stroke-dashoffset: 0;
-            transform-origin: center;
-            animation:
-              dash $duration ease-in-out infinite, 
-              colors ($duration*4) ease-in-out infinite;
-          }
-
-        .button {
-            border: 0;
-            padding: 0;
-            box-sizing: border-box;
-            width: 0;
-            height: 2rem;
-        
-            border-color: transparent transparent transparent #202020;
-            transition: 100ms all ease;
-        
-            // when playing, show the pause symbol
-            border-style: double;
-            border-width: 0 0 0 1.8rem;
-        
-            // when paused, show the play symbol
-            &.paused {
-                border-style: solid;
-                border-width: 1rem 0 1rem 1.8rem;
-            }                
-        }
-        
-    }    
-
-    .controlsection {
-        flex-basis: 4rem;
-        margin: 0 5px;
+    #audio-controls{
         display: flex;
-        flex-direction: column;
+ 
+        #playpausebutton {
+            padding: 3px;
+            margin: 3px 5px;
+            
+            height: 3rem;
+            width: 3rem;
+            background: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--color-border);
+            border-radius: 50%;
+            cursor: pointer;
+            &:hover,
+            &:focus {
+                background: var(--color-background-lighter);
+                transition: all 0.2s ease-in-out;
+            }
+            &:active {
+                background: var(--color-active-button);
+                border: 2px solid var(--color-background);
+                padding: 4px 2px 2px 4px;
+                transition: all 0.2s ease-in-out;
+            }
+
+            #spinner {
+                display: none;
+                animation: rotator $duration linear infinite;
+                // animation: pulse 2s infinite;
+            }
+
+            .path {
+                width: 50px;
+                stroke-dasharray: $offset;
+                stroke-dashoffset: 0;
+                transform-origin: center;
+                animation:
+                dash $duration ease-in-out infinite, 
+                colors ($duration*4) ease-in-out infinite;
+            }
+
+            .button {
+                border: 0;
+                padding: 0;
+                box-sizing: border-box;
+                width: 0;
+                height: 2rem;
+            
+                border-color: transparent transparent transparent #202020;
+                transition: 100ms all ease;
+            
+                // when playing, show the pause symbol
+                border-style: double;
+                border-width: 0 0 0 1.8rem;
+            
+                // when paused, show the play symbol
+                &.paused {
+                    border-style: solid;
+                    border-width: 1rem 0 1rem 1.8rem;
+                }                
+            }
+            
+        }    
 
         label {
+            flex-basis: 4rem;
+            margin: 0 5px;
+            display: flex;
+            flex-direction: column;
             text-align: left;
             color: var(--color-text);
-        }
-        input,
-        select,
-        #bar-field {
-            box-sizing: border-box;
-            border: 2px solid var(--color-border);
-            height: 2rem;
-            padding: 2px;
-            margin: 0;
-            border-radius: 1vh;
-            font-size: 1.2rem;
+
+            input,
+            select,
+            #bar-field {
+                box-sizing: border-box;
+                border: 2px solid var(--color-border);
+                height: 2rem;
+                padding: 2px;
+                margin: 0;
+                border-radius: 1vh;
+                font-size: 1.2rem;
+            }
         }
     }
 

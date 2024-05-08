@@ -1,0 +1,208 @@
+import { Position, State, config } from "./common";
+
+type SvgInHtml = HTMLElement & SVGElement;
+
+// HACK: this is also in /spem.json and index.ts - make you your mind.
+
+
+export class AudioControls extends HTMLDivElement {
+  static observedAttributes = ["choir", "part", "bar"];
+
+  audio = new Audio();
+
+  current: State = {
+    viewmode: "dark",
+    period: "modern",
+    choir: 0,
+    part: "all",
+    bar: 0,
+    status: "paused"
+  }
+
+  choirselect = document.getElementById('choir-select') as HTMLSelectElement;
+  partselect = document.getElementById('part-select') as HTMLSelectElement;
+  barinput = document.getElementById('bar-field') as HTMLInputElement;
+  playpausebutton = document.getElementById('playpausebutton') as HTMLDivElement;
+  playpauseicon = document.getElementById('playpauseicon') as HTMLSpanElement;
+  spinner = document.getElementById('spinner') as SvgInHtml;
+
+  constructor() {
+    super();
+
+    this.playpausebutton.addEventListener('click', this.playpause.bind(this));
+
+    [this.choirselect,
+    this.partselect,
+    this.barinput].forEach(el => el.addEventListener('change', this.#handleControlsChanged.bind(this)));
+  };
+
+  playpause() {
+    if (this.current.status == "paused") {
+      this.play();
+    }
+    else {
+      this.pause();
+    }
+  }
+
+  isPlaying(): boolean {
+    return this.current.status == "playing";
+  }
+
+  // Returns true if the filename of the current audio source the same as that of the new (input) filename?
+  isSameAudio(file: string): boolean {
+    return (file.split("/").pop() == this.audio.currentSrc.split("/").pop());
+  }
+
+  getMP3filename() {
+    var newfile = "default";
+    if (this.current.choir >= 0 &&
+      this.current.choir < config.choirs &&
+      this.current.part != "all") {
+      newfile = "Choir " + (this.current.choir + 1) + "-" + config.parts[this.current.part];
+    }
+    return config.audio_prefix + newfile + ".mp3";
+  }
+
+
+  async play() {
+    // Load the new audio if necessary
+    const newfile = this.getMP3filename();
+    if (!this.isSameAudio(newfile)) {
+
+      console.log("AudioControls: loading:", newfile);
+      // set the play button spinner while loading audio
+      this.current.status = "loading";
+      this.playpauseicon.style.display = "none";
+      this.spinner.style.display = "block";
+      this.fireEvent('audio-controls-loading');
+
+      // load the new audio
+      this.audio.src = newfile;
+      this.audio.load();
+      this.audio.currentTime = this.current.bar * config.tempo;
+    }
+
+    await this.audio.play();
+
+    this.current.status = "playing";
+    this.spinner.style.display = "none";
+    this.playpauseicon.classList.remove("paused");
+    this.playpauseicon.style.display = "block";
+    this.fireEvent('audio-controls-playing');
+
+    const self = this;
+    function loop() {
+      self.current.bar = self.audio.currentTime / config.tempo;
+      const intbar = Math.floor(self.current.bar);
+      if (Number(self.barinput.value) != intbar) {
+        self.barinput.value = String(intbar);
+      }
+      self.fireEvent('audio-controls-changed');
+
+      if (self.isPlaying()) {
+        window.requestAnimationFrame(loop);
+        // setTimeout(frame, config.tempo / 10);
+      }
+    }
+    window.requestAnimationFrame(loop);
+    // setTimeout(frame, config.tempo / 10);
+  }
+
+  pause() {
+    this.current.status = "paused";
+    this.spinner.style.display = "none";
+    this.playpauseicon.style.display = "block";
+    this.playpauseicon.classList.add("paused");
+    this.audio.pause();
+    this.fireEvent('audio-controls-paused');
+  }
+
+  #handleControlsChanged() {
+    this.current.choir = Number(this.choirselect.value);
+    this.current.part = this.partselect.value == "all" ? "all" : Number(this.partselect.value);
+    this.current.bar = Number(this.barinput.value);
+    this.fireEvent('audio-controls-changed');
+  }
+
+  fireEvent(type: string) {
+    var position: Position = {
+      choir: this.current.choir,
+      part: this.current.part,
+      bar: this.current.bar
+    }
+    const myEvent = new CustomEvent(type, {
+      detail: { position: position },
+      bubbles: true,
+      cancelable: true,
+      composed: false
+    });
+    this.dispatchEvent(myEvent);
+  }
+
+  async connectedCallback() {
+    console.log("AudioControls: added to page.");
+  }
+
+  disconnectedCallback() {
+    console.log("AudioControls: removed from page.");
+  }
+
+  adoptedCallback() {
+    console.log("AudioControls: moved to new page.");
+  }
+
+  async attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (oldValue == newValue) return;
+
+    switch (name) {
+      case "choir":
+        this.setChoir(newValue);
+        break;
+      case "part":
+        this.setPart(newValue);
+        break;
+      case "bar":
+        this.setBar(newValue);
+        break;
+      default:
+        console.log("AudioControls: bad attribute: " + newValue);
+        break;
+    }
+  }
+
+  setChoir(newValue: string) {
+    const intchoir = Number(newValue);
+    if (intchoir === this.current.choir) return;
+    console.log(`AudioControls: changing choir to ${newValue}`);
+
+    this.current.choir = Number(newValue);
+    this.choirselect.value = newValue;
+    if (this.isPlaying()) this.play();
+  }
+
+  setPart(newValue: string | number) {
+    const intpart = Number(newValue);
+    if ((newValue == "all" && this.current.part == "all") || intpart === this.current.part) return;
+    console.log(`AudioControls: changing part to ${newValue}`);
+
+    this.current.part = newValue == "all" ? "all" : intpart;
+    this.partselect.value = String(newValue);
+    if (this.isPlaying()) this.play();
+
+  }
+
+  setBar(newValue: string) {
+    const intbar = Number(newValue);
+    if (intbar === this.current.bar) return;
+    console.log(`AudioControls: changing bar to ${newValue}`);
+
+    this.current.bar = intbar;
+    this.audio.currentTime = this.current.bar * config.tempo;
+    this.barinput.value = newValue;
+  }
+}
+
+
+
+customElements.define("audio-controls", AudioControls, { extends: "div" });
