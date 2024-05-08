@@ -1,7 +1,7 @@
 
 // TODO: bar positions should come from model
 import { scorebars_modern, scorebars_early } from "./barlines";
-import { PartType, config, colors } from "./common";
+import { PartType, config, colors, toNum } from "./common";
 
 export class ScoreSVG extends HTMLDivElement {
   static observedAttributes = ["choir", "part", "bar", "score-type"];
@@ -32,8 +32,7 @@ export class ScoreSVG extends HTMLDivElement {
     console.log("ScoreSVG moved to new page.");
   }
 
-  async attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log(`ScoreSVG: Attribute ${name} has changed from ${oldValue} to ${newValue}.`);
+  async attributeChangedCallback(name: string, _oldValue: string, newValue: string) {
     switch (name) {
       case "choir":
         this.setChoir(newValue);
@@ -67,9 +66,8 @@ export class ScoreSVG extends HTMLDivElement {
   //   setBar(scorebars.indexOf(result));
   // }
 
-  async setChoir(c: string) {
-    const intchoir = Number(c);
-    this.choir = Math.min(Math.max(0, intchoir), config.choirs - 1);
+  async setChoir(c: string | number) {
+    this.choir = toNum(c, true, config.choirs - 1);
 
     // load the correct score for this choir
     const filename = config.svg_prefix + this.scoreType + "/Choir " + (this.choir + 1) + ".svg";
@@ -84,7 +82,7 @@ export class ScoreSVG extends HTMLDivElement {
 
 
     // set the border color to match
-    this.style.borderColor = `hsla(${colors.choir[intchoir]}, 80%, 55%, 1)`;
+    this.style.borderColor = `hsla(${colors.choir[this.choir]}, 80%, 55%, 1)`;
 
     // Highlight and scroll to the current bar
     const intbar = Math.floor(this.bar);
@@ -92,14 +90,15 @@ export class ScoreSVG extends HTMLDivElement {
     this.scrollToPosition(intbar, "instant");
   }
 
-  setPart(p: string) {
-    const intpart = Number(p);
-    this.voicePart = Math.min(Math.max(0, intpart), config.parts.length - 1);
+  setPart(p: string | number) {
+    this.voicePart = toNum(p, true, config.parts.length - 1);
   }
 
   previousBarHighlight: SVGRectElement | null = null;
-  setBar(b: string) {
-    const intbar = Math.min(Math.max(0, Math.floor(Number(b))), 139); // HACK: 139!!
+  setBar(b: string | number) {
+    // const hackint = Number(b) + 0.01; // HACK: 0.01 needs to be a hemidemisemiquaver length of time
+    // console.log("ScoreSVG: setting bar to", b, hackint);
+    const intbar = toNum(b, true, 139); // HACK: 139 
     if (intbar == this.bar) {
       return;
     }

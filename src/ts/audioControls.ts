@@ -33,7 +33,7 @@ export class AudioControls extends HTMLDivElement {
 
     [this.choirselect,
     this.partselect,
-    this.barinput].forEach(el => el.addEventListener('change', this.fireChangeEvent.bind(this)));
+    this.barinput].forEach(el => el.addEventListener('change', this.#handleControlsChanged.bind(this)));
   };
 
   playpause() {
@@ -56,8 +56,8 @@ export class AudioControls extends HTMLDivElement {
 
   getMP3filename() {
     var newfile = "default";
-    if (this.current.choir >= 0 && 
-      this.current.choir < config.choirs && 
+    if (this.current.choir >= 0 &&
+      this.current.choir < config.choirs &&
       this.current.part != "all") {
       newfile = "Choir " + (this.current.choir + 1) + "-" + config.parts[this.current.part];
     }
@@ -92,19 +92,21 @@ export class AudioControls extends HTMLDivElement {
     this.fireEvent('audio-controls-playing');
 
     const self = this;
-    function frame() {
+    function loop() {
       self.current.bar = self.audio.currentTime / config.tempo;
       const intbar = Math.floor(self.current.bar);
       if (Number(self.barinput.value) != intbar) {
         self.barinput.value = String(intbar);
       }
+      self.fireEvent('audio-controls-changed');
+
       if (self.isPlaying()) {
-        // window.requestAnimationFrame(frame);
-        setTimeout(frame, config.tempo / 10);
+        window.requestAnimationFrame(loop);
+        // setTimeout(frame, config.tempo / 10);
       }
     }
-    // window.requestAnimationFrame(frame);
-    setTimeout(frame, config.tempo / 10);
+    window.requestAnimationFrame(loop);
+    // setTimeout(frame, config.tempo / 10);
   }
 
   pause() {
@@ -116,11 +118,11 @@ export class AudioControls extends HTMLDivElement {
     this.fireEvent('audio-controls-paused');
   }
 
-  fireChangeEvent() {
+  #handleControlsChanged() {
     this.current.choir = Number(this.choirselect.value);
     this.current.part = this.partselect.value == "all" ? "all" : Number(this.partselect.value);
     this.current.bar = Number(this.barinput.value);
-    this.fireEvent('audio-controls-change');
+    this.fireEvent('audio-controls-changed');
   }
 
   fireEvent(type: string) {
@@ -129,7 +131,6 @@ export class AudioControls extends HTMLDivElement {
       part: this.current.part,
       bar: this.current.bar
     }
-    console.log(`AudioControls firing ${type}`, position);
     const myEvent = new CustomEvent(type, {
       detail: { position: position },
       bubbles: true,
@@ -180,13 +181,13 @@ export class AudioControls extends HTMLDivElement {
     if (this.isPlaying()) this.play();
   }
 
-  setPart(newValue: string) {
+  setPart(newValue: string | number) {
     const intpart = Number(newValue);
     if ((newValue == "all" && this.current.part == "all") || intpart === this.current.part) return;
     console.log(`AudioControls: changing part to ${newValue}`);
 
     this.current.part = newValue == "all" ? "all" : intpart;
-    this.partselect.value = newValue;
+    this.partselect.value = String(newValue);
     if (this.isPlaying()) this.play();
 
   }
@@ -197,11 +198,9 @@ export class AudioControls extends HTMLDivElement {
     console.log(`AudioControls: changing bar to ${newValue}`);
 
     this.current.bar = intbar;
-    if (!this.isPlaying) {
-      this.audio.currentTime = this.current.bar * config.tempo;
-    }
+    this.audio.currentTime = this.current.bar * config.tempo;
     this.barinput.value = newValue;
-}
+  }
 }
 
 

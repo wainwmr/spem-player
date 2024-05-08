@@ -1,4 +1,4 @@
-import { Position, colors, config } from "./common";
+import { PartType, Position, colors, config, toNum } from "./common";
 
 // TODO: don't need setupLilypondParse to be exported, do we?
 import { setupLilypondParser, processLilypond, dict, ranges } from "./lily";
@@ -6,10 +6,16 @@ import { setupLilypondParser, processLilypond, dict, ranges } from "./lily";
 import { Dictionary, Range } from "./lily";
 
 export class MusicCanvas extends HTMLCanvasElement {
-  // static observedAttributes = [ "config" ];
+  // TODO: MusicCanvas should have its own playloop, not use index.ts to control it.
+  // TODO: MusicCanvas needs state for { choir, part, bar, playing? }
 
-  // ens: Ensemble;
-  // config: Config | null = null;
+  static observedAttributes = ["choir", "part", "bar", "playing"];
+
+  choir: number = 0;
+  voicePart: PartType = "all";
+  bar: number = 0;
+  playing: boolean = false;
+
   canvasPadding: number = 5;  // padding in px of the canvas
   barWidth: number = 0;
   choirHeight: number = 0;
@@ -21,14 +27,14 @@ export class MusicCanvas extends HTMLCanvasElement {
 
   constructor() {
     super();
-    this.addEventListener('click', this.canvasClicked.bind(this));
-    this.addEventListener('mousemove', this.canvasHovered.bind(this), false);
-    this.addEventListener("touchstart", this.touchStarted, { passive: false });
+    this.addEventListener('click', this.#canvasClicked.bind(this));
+    this.addEventListener('mousemove', this.#canvasHovered.bind(this), false);
+    this.addEventListener('touchstart', this.#touchStarted.bind(this), { passive: false });
   };
 
   async connectedCallback() {
     console.log("MusicCanvas added to page.");
-    await this.init();
+    await this.#init();
   }
 
   disconnectedCallback() {
@@ -39,33 +45,65 @@ export class MusicCanvas extends HTMLCanvasElement {
     console.log("MusicCanvas moved to new page.");
   }
 
-  async attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    console.log(`MusicCanvas: Attribute ${name} has changed from ${oldValue} to ${newValue}.`);
+  async attributeChangedCallback(name: string, _oldValue: string, newValue: string) {
     switch (name) {
+      case "choir":
+        this.setChoir(newValue);
+        break;
+      case "part":
+        this.setPart(newValue);
+        break;
+      case "bar":
+        this.setBar(newValue);
+        break;
+      case "playing":
+        this.setPlaying(newValue);
+        break;
       // case "config":
       //   const response = await fetch(newValue);
       //   const names = await response.json();
       //   this.config = names;
       //   console.log("MusicCanvas: config: ", this.config);
-      //   this.init();
+      //   this.#init();
       //   break;
       default:
         break;
     }
   }
 
-  async init() {
+  setChoir(c: string | number) {
+    this.choir = toNum(c, true, config.choirs - 1);
+  }
+
+  setPart(p: string | PartType) {
+    if (typeof p == 'string' && p == 'all') {
+      this.voicePart = "all";
+    }
+    else {
+      this.voicePart = toNum(p, true, config.parts.length - 1);
+    }
+  }
+
+  setBar(b: string | number) {
+    this.bar = toNum(b, false, 139); // HACK: 139
+  }
+
+  setPlaying(playing: string | boolean) {
+    if ((typeof playing == "string" && playing == "true") || playing) {
+      this.playing = true;
+    }
+    else {
+      this.playing = false;
+    }
+  }
+
+  async #init() {
     if (dict.length != 0) {
       console.log("MusicCanvas: Already initialise. Nothing to do.");
       return;
     }
-    // if (!this.config) {
-    //   console.log(`MusicCanvas: must setAttribute config="xxx" before use`);
-    //   return;
-    // }
-
-    this.calculateCanvasSize();
-    this.showLoadingOnCanvas();
+    this.#calculateCanvasSize();
+    this.#showLoadingOnCanvas();
 
     await setupLilypondParser();
     await processLilypond(config.lilypond);
@@ -82,13 +120,13 @@ export class MusicCanvas extends HTMLCanvasElement {
       }
     }
 
-    this.draw({ choir: 0, part: 0, bar: 0 });
+    this.draw();
   }
 
-  calculateCanvasSize() {
+  #calculateCanvasSize() {
     if (config == null) return;
 
-    this.width = this.clientWidth * 20;
+    this.width = this.clientWidth * 15;
     this.height = 300 * 4;
 
     this.barWidth = (this.width - (2 * this.canvasPadding)) / 140;
@@ -97,7 +135,7 @@ export class MusicCanvas extends HTMLCanvasElement {
     console.log("MusicCanvas: calculated bar choir and part sizes:", this.barWidth, this.choirHeight, this.partHeight);
   };
 
-  showLoadingOnCanvas() {
+  #showLoadingOnCanvas() {
     const ctx = this.getContext("2d");
     if (ctx != null) {
       ctx.save();
@@ -109,7 +147,7 @@ export class MusicCanvas extends HTMLCanvasElement {
     }
   }
 
-  easeOutCubic(t: number, b: number, c: number, d: number) {
+  #easeOutCubic(t: number, b: number, c: number, d: number) {
     return c * ((t = t / d - 1) * t * t + 1) + b;
   }
 
@@ -128,27 +166,48 @@ export class MusicCanvas extends HTMLCanvasElement {
     return intbar;
   }
 
+  oldTimeStamp: number = 0;
+  fps: number = 0;
 
-  draw(current: Position, fps?: number) {
-    // if (!this.config) return;
+  // playLoop(timestamp: number) {
 
+  //   // Calculate the frames per second
+  //   const secondsPassed = (timestamp - this.oldTimeStamp) / 1000;
+  //   this.oldTimeStamp = timestamp;
+  //   this.fps = Math.round(1 / secondsPassed);
+
+  //   // Calculate which bar we are on based on the audio position
+  //   this.setBar(this.bar);
+  //   this.#draw(this.fps);
+
+  //   if (this.playing) {
+  //     window.requestAnimationFrame(this.playLoop.bind(this));
+  //   }
+  // }
+
+
+  draw() {
     if (ranges.length === 0 || dict.length === 0) {
       console.log("MusicCanvas: not ready to draw!");
       return;
     }
-    if (fps == undefined) {
-      fps = 0;
-    }
+
+    const now: number = Date.now();
+    const secondsPassed = (now - this.oldTimeStamp) / 1000;
+    if (secondsPassed < 0.01) return; // HACK: throttle
+    this.oldTimeStamp = now;
+    const fps = Math.round(1 / secondsPassed);
+
 
     // find who has a note that starts in this current quaver (16th of a bar)
-    const quant = Math.floor(current.bar * 16) / 16;
+    const quant = Math.floor(this.bar * 16) / 16;
     const notes = this.dict[quant];
 
     // 
     if (notes != undefined && notes.length > 0) {
       for (var n of notes) {
         if (n.n.duration != null) {
-          this.pulses[n.c][n.p] = this.easeOutCubic(current.bar % quant, 1.4, -0.4, n.n.duration.sfths / 128);
+          this.pulses[n.c][n.p] = this.#easeOutCubic(this.bar % quant, 1.4, -0.4, n.n.duration.sfths / 128);
         }
       }
     }
@@ -168,11 +227,11 @@ export class MusicCanvas extends HTMLCanvasElement {
     }
 
     // Draw bar highlight
-    if (current.bar > 0 && current.bar <= 139) {
+    if (this.bar > 0 && this.bar <= 139) {
       ctx.save();
       ctx.beginPath();
-      ctx.moveTo(this.canvasPadding + (current.bar * this.barWidth), this.canvasPadding);
-      ctx.lineTo(this.canvasPadding + (current.bar * this.barWidth), this.height - this.canvasPadding);
+      ctx.moveTo(this.canvasPadding + (this.bar * this.barWidth), this.canvasPadding);
+      ctx.lineTo(this.canvasPadding + (this.bar * this.barWidth), this.height - this.canvasPadding);
       ctx.lineWidth = this.barWidth * 1.4;
       ctx.strokeStyle = colors.highlight;
       ctx.lineCap = "square";
@@ -182,13 +241,13 @@ export class MusicCanvas extends HTMLCanvasElement {
 
     // Draw highlight line for the selected choir or choir and part
     var startY: number, width: number;
-    if (current.part != "all") {
-      startY = this.canvasPadding + (current.choir * this.choirHeight) + (current.part * this.partHeight);
+    if (this.voicePart != "all") {
+      startY = this.canvasPadding + (this.choir * this.choirHeight) + (this.voicePart * this.partHeight);
       width = this.partHeight * 1.4;
     }
     else {
       // center the highlight on the middle tenor line
-      startY = this.canvasPadding + (current.choir * this.choirHeight) + (2 * this.partHeight);
+      startY = this.canvasPadding + (this.choir * this.choirHeight) + (2 * this.partHeight);
       width = (this.partHeight * 5.8);
     }
     ctx.save();
@@ -204,8 +263,8 @@ export class MusicCanvas extends HTMLCanvasElement {
     // Draw each of the 40 voice parts
     ctx.lineWidth = 0.9 * this.partHeight;
     ctx.lineCap = "round";
-    for (var c  = 0; c < config.choirs; c++) {
-      for (var p  = 0; p < config.parts.length; p++) {
+    for (var c = 0; c < config.choirs; c++) {
+      for (var p = 0; p < config.parts.length; p++) {
         const startY = this.canvasPadding + (c * this.choirHeight) + (p * this.partHeight);
 
         const list: { "from": number, "to": number }[] = this.ranges[c][p];
@@ -224,13 +283,13 @@ export class MusicCanvas extends HTMLCanvasElement {
           var lightness: number, saturation: number, transparency: number;
 
           // If current bar is highlighted
-          if (current.bar >= from && current.bar < to) {
+          if (this.bar >= from && this.bar < to) {
             saturation = 80;
             lightness = (67 - (3 * p)) * this.pulses[c][p];
             transparency = 1; // pulses[c][p];
           }
           // if current choir/part is highlighted
-          else if (c == current.choir && (current.part == "all" || p == current.part)) {
+          else if (c == this.choir && (this.voicePart == "all" || p == this.voicePart)) {
             saturation = 80;
             lightness = 67 - (3 * p);
             transparency = 1;
@@ -240,7 +299,7 @@ export class MusicCanvas extends HTMLCanvasElement {
           //   saturation = 80;
           //   transparency = 1;
           // }
-          else if (current.bar === 0 || current.bar > 138) {
+          else if (this.bar === 0 || this.bar > 138) {
             saturation = 50;
             lightness = 67 - (3 * p);
             transparency = 1;
@@ -259,7 +318,7 @@ export class MusicCanvas extends HTMLCanvasElement {
   }
 
   // BUG: what happens if you click in the canvas padding?
-  getMousePos(evt: MouseEvent): Position {
+  #getMousePos(evt: MouseEvent): Position {
     // if (!this.config) return { choir: 0, part: 0, bar: 0 };
 
     const rect = this.getBoundingClientRect();
@@ -272,8 +331,8 @@ export class MusicCanvas extends HTMLCanvasElement {
   }
 
   // TODO: combine canvasClicked and Hovered?
-  canvasClicked(e: MouseEvent) {
-    const pos: Position = this.getMousePos(e);
+  #canvasClicked(e: MouseEvent) {
+    const pos: Position = this.#getMousePos(e);
     const myEvent = new CustomEvent("music-canvas-click", {
       detail: {
         position: pos
@@ -285,8 +344,8 @@ export class MusicCanvas extends HTMLCanvasElement {
     this.dispatchEvent(myEvent);
   }
 
-  canvasHovered(e: MouseEvent) {
-    const pos: Position = this.getMousePos(e);
+  #canvasHovered(e: MouseEvent) {
+    const pos: Position = this.#getMousePos(e);
     const myEvent = new CustomEvent("music-canvas-hover", {
       detail: {
         position: pos
@@ -299,7 +358,7 @@ export class MusicCanvas extends HTMLCanvasElement {
   }
 
   // TODO: Not convinced the Maths for getTouchPos() is right...
-  getTouchPos(evt: TouchEvent): Position {
+  #getTouchPos(evt: TouchEvent): Position {
     // if (!this.config) return { choir: 0, part: 0, bar: 0 };
 
     var rect = this.getBoundingClientRect();
@@ -314,18 +373,18 @@ export class MusicCanvas extends HTMLCanvasElement {
 
   // BUG: on mobile, touch to move bar to half-way and play
   // and it starts from bar 0.
-  touchStarted(evt: TouchEvent) {
-    const pos: Position = this.getTouchPos(evt);
+  #touchStarted(evt: TouchEvent) {
+    const pos: Position = this.#getTouchPos(evt);
 
     console.log("Touch started at", pos);
 
     this.addEventListener("touchmove", (evt) => {
-      const pos = this.getTouchPos(evt);
+      const pos = this.#getTouchPos(evt);
 
       console.log("Touch moved at", pos);
     });
     this.addEventListener("touchend", () => {
-      const pos = this.getTouchPos(evt);
+      const pos = this.#getTouchPos(evt);
 
       console.log("Touch ended at", pos);
     });

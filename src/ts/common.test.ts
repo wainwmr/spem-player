@@ -1,5 +1,21 @@
-// import { expect, test } from 'vitest'
-// import { Ensemble } from './common'
+import { expect, test } from 'vitest';
+import { toNum } from './common';
+
+test("toNum", () => {
+  expect(toNum(1)).toBeTypeOf('number');
+  expect(toNum("1")).toBeTypeOf('number');
+  expect(toNum(0, true)).toBe(0);
+  expect(toNum(0.2, true)).toBe(0);
+  expect(toNum(0.2, false)).toBe(0.2);
+  expect(toNum(-1, true)).toBe(-1);
+  expect(toNum("1", true)).toBe(1);
+  expect(toNum("1.2", false)).toBe(1.2);
+  expect(toNum("1.2", true)).toBe(1);
+  expect(toNum("1.2", true, 7)).toBe(1);
+  expect(toNum("7.2", false, 7)).toBe(7);
+  expect(toNum("7.2", true, 7)).toBe(7);
+  expect(toNum("10.999999958333332", true)).toBe(11);
+});
 
 // const e = new Ensemble(1, ["s", "a", "t", "b"], ["modern", "early"]);
 // const e2 = new Ensemble(1, ["s", "a", "t", "b"]);

@@ -1,7 +1,7 @@
 
 import './src/scss/style.scss';
 
-import { PartType, State, colors, loadColors, config } from "./src/ts/common";
+import { PartType, State, loadColors, config, toNum, HDSQTIME } from "./src/ts/common";
 
 import { MusicCanvas } from "./src/ts/musicCanvas";
 import { AudioControls } from "./src/ts/audioControls";
@@ -86,6 +86,11 @@ async function setChoir(c: number, forceChange = false) {
 
   // Update the score for this choir
   score.setAttribute("choir", String(current.choir));
+
+  // Update the canvas
+  canvas.setAttribute("choir", String(current.choir));
+
+  canvas.draw();
 }
 
 function setPart(p: PartType) {
@@ -99,14 +104,17 @@ function setPart(p: PartType) {
 
   // Update the score
   score.setAttribute("part", String(current.part));
+
+  // Update the canvas
+  canvas.setAttribute("part", String(current.part));
+
+  canvas.draw();
 }
 
 
 // where b = 0 to 139
-function setBar(b: number, changedChoirs = false) {
-  if (b == current.bar && !changedChoirs) {
-    return;
-  }
+function setBar(b: number) {
+  b = toNum(b, false);
   if (b > 139) {
     controls.pause();
     b = 0;
@@ -121,6 +129,11 @@ function setBar(b: number, changedChoirs = false) {
 
   // Highlight the bar on the score
   score.setAttribute("bar", String(b));
+
+  // Update the canvas
+  canvas.setAttribute("bar", String(b));
+
+  canvas.draw();
 }
 
 function parseURL() {
@@ -165,31 +178,6 @@ function parseURL() {
   }
 }
 
-let oldTimeStamp: number = 0;
-let fps = 0;
-
-function playLoop(timestamp) {
-
-  // Calculate the frames per second
-  const secondsPassed = (timestamp - oldTimeStamp) / 1000;
-  oldTimeStamp = timestamp;
-  fps = Math.round(1 / secondsPassed);
-
-  // Calculate which bar we are on based on the audio position
-  setBar(controls.current.bar);
-  canvas.draw(current, fps);
-
-  if (current.bar >= 140) {
-    setBar(0);
-    controls.pause();
-    // audio.currentTime = 0;
-  }
-  else if (controls.isPlaying()) {
-    window.requestAnimationFrame(playLoop);
-  }
-}
-
-
 // -----------------------------------------------------
 // Field events (chaning choir, part or bar)
 // -----------------------------------------------------
@@ -197,19 +185,10 @@ function playLoop(timestamp) {
 function handleControlChange(e: CustomEvent) {
   const pos = e.detail.position;
   setChoir(Number(pos.choir));
-  setPart(pos.part == "all" ? 0 : Number(pos.part));
+  setPart(pos.part == "all" ? "all" : Number(pos.part));
   setBar(Number(pos.bar));
 
-  // update the audio location 
-  // HACK: this can't be the right place for this next line!
-  // audio.currentTime = current.bar * config.tempo;
-
-  pauseAndRepaint(false);
-}
-
-function pauseAndRepaint(load = true) {
-  controls.setAttribute("status", "paused");
-  canvas.draw(current, fps);
+  canvas.draw();
 }
 
 // -----------------------------------------------------
@@ -232,12 +211,10 @@ function keyboardTapped(e) {
       case 'ArrowRight':
         controls.pause();
         setBar(canvas.seek(current, +1));
-        pauseAndRepaint();
         break;
       case 'ArrowLeft':
         controls.pause();
         setBar(canvas.seek(current, -1));
-        pauseAndRepaint();
         break;
       default:
         break;
@@ -258,7 +235,6 @@ function keyboardTapped(e) {
     case 'Digit7':
     case 'Digit8':
       setChoir(e.key - 1);
-      pauseAndRepaint();
       break;
     case 'KeyS':
     case 'KeyA':
@@ -266,7 +242,6 @@ function keyboardTapped(e) {
     case 'KeyR':
     case 'KeyB':
       setPart("satrb".indexOf(e.key));
-      pauseAndRepaint();
       break;
     case 'KeyM':
       toggleScore();
@@ -284,34 +259,28 @@ function keyboardTapped(e) {
       break;
     case 'ArrowRight':
       controls.pause();
-      setBar(current.bar + 1);
-      pauseAndRepaint();
+      setBar(Math.floor(current.bar + HDSQTIME) + 1);
       e.preventDefault();
       break;
     case 'ArrowLeft':
       controls.pause();
-      setBar(current.bar - 1);
-      pauseAndRepaint();
+      setBar(Math.floor(current.bar + HDSQTIME) - 1);
       e.preventDefault();
       break;
     case 'ArrowDown':
       setChoir(current.choir >= config.choirs - 1 ? 0 : current.choir + 1);
-      pauseAndRepaint();
       break;
     case 'ArrowUp':
       setChoir(current.choir <= 0 ? config.choirs - 1 : current.choir - 1);
-      pauseAndRepaint();
       break;
     case 'KeyX':
       setPart("all");
-      pauseAndRepaint();
       break;
     default:
       console.log("key pressed: ", e.code);
   }
 
 }
-
 
 function showHelp(show = true) {
   if (show) {
@@ -331,7 +300,6 @@ function toggleDark() {
     document.body.classList.toggle("dark-theme");
   }
   loadColors();
-  pauseAndRepaint();
 }
 
 function toggleScore(forceEarly = false) {
@@ -358,7 +326,6 @@ function handleCanvasClick(e: CustomEvent) {
   setPart(pos.part);
   setBar(pos.bar);
 
-  pauseAndRepaint();
   controls.pause();
 }
 
@@ -393,26 +360,21 @@ window.addEventListener("load", async () => {
 
   // read choir, part and bar from the URL
   parseURL();
-  pauseAndRepaint();
 
-  controls.addEventListener("audio-controls-playing", () => {
-    playLoop(0);
-  });
-  // controls.addEventListener("audio-controls-pause", controls.pause);
-  controls.addEventListener("audio-controls-change", handleControlChange as (e: Event) => void);
+  controls.addEventListener("audio-controls-changed", handleControlChange as (e: Event) => void);
+  canvas.addEventListener("music-canvas-click", handleCanvasClick as (e: Event) => void);
+  canvas.addEventListener("music-canvas-hover", handleCanvasHover as (e: Event) => void);
+
   document.addEventListener("keydown", keyboardTapped);
   info.addEventListener("click", () => showHelp(true));
   backdrop.addEventListener("click", () => showHelp(false));
   darkswitch.addEventListener("click", () => toggleDark());
   scoreswitch.addEventListener("click", () => toggleScore());
-  canvas.addEventListener("music-canvas-click", handleCanvasClick as (e: Event) => void);
-  canvas.addEventListener("music-canvas-hover", handleCanvasHover as (e: Event) => void);
 
   // watch for change in user's preference of color scheme
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     toggleDark();
     loadColors();
-    pauseAndRepaint();
   });
 
   // Next line not really necessary, but will make it look clearer on browser resize

@@ -46,9 +46,12 @@ export type Config = {
 }
 
 // All the colors are defined in the style sheet
-export var colors: Colors = loadColors();
+export var colors: Colors;
 export function loadColors(): Colors {
   var style = getComputedStyle(document.body);
+  if (style.getPropertyValue('--color-background').length == 0) {
+    console.log("ARGH: where are my styles?");
+  }
   colors = {
     background: style.getPropertyValue('--color-background'),
     highlight: style.getPropertyValue('--color-highlight'),
@@ -67,3 +70,12 @@ export function loadColors(): Colors {
   };
   return colors;
 }
+
+export const HDSQTIME = 0.05; // HACK: needs to be time of a 64th note
+
+export function toNum(s: string | number, integer: boolean = true, max?: number) {
+  var nums: number = Number(s);
+  if (max) nums = Math.min(Math.max(0, nums), max);
+  return integer ? Math.floor(nums + HDSQTIME) : nums;
+}
+
