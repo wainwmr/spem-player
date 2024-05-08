@@ -300,10 +300,12 @@ function toggleDark() {
     document.body.classList.toggle("dark-theme");
   }
   loadColors();
+  canvas.draw();
 }
 
 function toggleScore(forceEarly = false) {
   if (current.period === "modern" || forceEarly) {
+    console.log("Toggle SCORE");
     current.period = "early";
     score.setAttribute("score-type", "early");
   }

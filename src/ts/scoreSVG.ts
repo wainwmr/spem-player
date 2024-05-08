@@ -43,7 +43,7 @@ export class ScoreSVG extends HTMLDivElement {
       case "bar":
         this.setBar(newValue);
         break;
-      case "scoreType":
+      case "score-type":
         this.setScoreType(newValue);
         break;
       default:
@@ -66,10 +66,7 @@ export class ScoreSVG extends HTMLDivElement {
   //   setBar(scorebars.indexOf(result));
   // }
 
-  async setChoir(c: string | number) {
-    this.choir = toNum(c, true, config.choirs - 1);
-
-    // load the correct score for this choir
+  async #loadScore() {
     const filename = config.svg_prefix + this.scoreType + "/Choir " + (this.choir + 1) + ".svg";
     console.log("ScoreSVG: fetching", filename);
     await fetch(filename)
@@ -79,7 +76,13 @@ export class ScoreSVG extends HTMLDivElement {
       })
       .catch(console.error.bind(console));
     this.svg = document.querySelector("#score svg");
+  }
 
+  async setChoir(c: string | number) {
+    this.choir = toNum(c, true, config.choirs - 1);
+
+    // load the correct score for this choir
+    this.#loadScore();
 
     // set the border color to match
     this.style.borderColor = `hsla(${colors.choir[this.choir]}, 80%, 55%, 1)`;
@@ -169,6 +172,7 @@ export class ScoreSVG extends HTMLDivElement {
     else {
       this.scorebars = scorebars_early;
     }
+    this.#loadScore();
   }
 }
 
