@@ -1,4 +1,4 @@
-import { Position, Colors, config } from "./ensemble";
+import { Position, colors, config } from "./common";
 
 // TODO: don't need setupLilypondParse to be exported, do we?
 import { setupLilypondParser, processLilypond, dict, ranges } from "./lily";
@@ -15,12 +15,6 @@ export class MusicCanvas extends HTMLCanvasElement {
   choirHeight: number = 0;
   partHeight: number = 0;
   pulses: number[][] = [];
-  color: Colors = {
-    background: "#111111",
-    highlight: "#333333",
-    scoreHighlight: "#555555",
-    choir: [] // Choir color hues
-  };
   dict: Dictionary[][] = [];  // HACK: bad name and data type
   ranges: Range[][][] = []; // HACK: bad data type
   source: string | null = null;
@@ -163,7 +157,7 @@ export class MusicCanvas extends HTMLCanvasElement {
     const ctx = this.getContext("2d");
     if (ctx == null) return;
 
-    ctx.fillStyle = this.color.background;
+    ctx.fillStyle = colors.background;
     ctx.fillRect(0, 0, this.width, this.height);
 
     // Draw FPS number to the screen
@@ -180,7 +174,7 @@ export class MusicCanvas extends HTMLCanvasElement {
       ctx.moveTo(this.canvasPadding + (current.bar * this.barWidth), this.canvasPadding);
       ctx.lineTo(this.canvasPadding + (current.bar * this.barWidth), this.height - this.canvasPadding);
       ctx.lineWidth = this.barWidth * 1.4;
-      ctx.strokeStyle = this.color.highlight;
+      ctx.strokeStyle = colors.highlight;
       ctx.lineCap = "square";
       ctx.stroke();
       ctx.restore();
@@ -202,7 +196,7 @@ export class MusicCanvas extends HTMLCanvasElement {
     ctx.moveTo(this.canvasPadding + this.barWidth, startY + (this.partHeight / 2));
     ctx.lineTo(this.canvasPadding + (140 * this.barWidth) - this.barWidth, startY + (this.partHeight / 2));
     ctx.lineWidth = width;
-    ctx.strokeStyle = this.color.highlight;
+    ctx.strokeStyle = colors.highlight;
     ctx.lineCap = "round";
     ctx.stroke();
     ctx.restore();
@@ -257,7 +251,7 @@ export class MusicCanvas extends HTMLCanvasElement {
             transparency = 0.5;
           }
 
-          ctx.strokeStyle = `hsla(${this.color.choir[c]}, ${saturation}%, ${lightness}%, ${transparency})`;
+          ctx.strokeStyle = `hsla(${colors.choir[c]}, ${saturation}%, ${lightness}%, ${transparency})`;
           ctx.stroke();
         });
       }

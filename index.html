@@ -13,6 +13,7 @@
     <!-- <script src="https://unpkg.com/ohm-js@17/dist/ohm.min.js"></script> -->
     <script src="src/ts/music-classes.ts" type="module"></script>
     <script src="src/ts/musicCanvas.ts" type="module" defer></script>
+    <script src="src/ts/scoreSVG.ts" type="module" defer></script>
     <script src="src/ts/audioControls.ts" type="module" defer></script>
     <script src="src/ts/lily.ts" type="module" defer></script>
     <script src="index.ts" type="module" defer></script>
@@ -112,7 +113,7 @@
             <p class="copyright">© 2024, Mark Wainwright</p>
         </div>
 
-        <div id="score">
+        <div id="score" is="score-svg">
         </div>
 
         <canvas id="canvas" is="music-canvas" config="/spem.json" autofocus>

@@ -1,17 +1,16 @@
 
 import './src/scss/style.scss';
 
-// TODO: bar positions should come from model
-import { scorebars_modern, scorebars_early } from "./src/ts/barlines";
-
-import { PartType, State, Colors, config } from "./src/ts/ensemble";
+import { PartType, State, colors, loadColors, config } from "./src/ts/common";
 
 import { MusicCanvas } from "./src/ts/musicCanvas";
 import { AudioControls } from "./src/ts/audioControls";
+import { ScoreSVG } from "./src/ts/scoreSVG";
 
 const canvas = document.getElementById("canvas") as MusicCanvas;
 const controls = document.getElementById("audio-controls") as AudioControls;
-const score = document.getElementById("score") as HTMLDivElement;
+const score = document.getElementById("score") as ScoreSVG;
+
 const statusarea = document.getElementById('statusarea') as HTMLDivElement;
 const choiroutput = document.getElementById('choir-output') as HTMLSpanElement;
 const partoutput = document.getElementById('part-output') as HTMLSpanElement;
@@ -20,7 +19,6 @@ const info = document.getElementById('info') as HTMLSpanElement;
 const help = document.getElementById('help') as HTMLDivElement;
 const backdrop = document.getElementById('backdrop') as HTMLDivElement;
 type SvgInHtml = HTMLElement & SVGElement;
-const spinner = document.getElementById('spinner') as SvgInHtml;
 const darkswitch = document.getElementById('darkswitch') as SvgInHtml;
 const scoreswitch = document.getElementById('scoreswitch') as SvgInHtml;
 
@@ -33,10 +31,6 @@ var current: State = {
   status: "paused"
 }
 
-var scorebars = (current.period == "early" ? scorebars_early : scorebars_modern);
-
-var svg; // the actual SVG
-
 const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
 if (prefersDarkScheme.matches) {
   document.body.classList.add('dark-theme');
@@ -46,26 +40,7 @@ if (prefersDarkScheme.matches) {
   current.viewmode = "light";
 }
 
-// All the colors are defined in the style sheet
-var colors: Colors;
-function loadColors() {
-  var style = getComputedStyle(document.body);
-  colors = {
-    background: style.getPropertyValue('--color-background'),
-    highlight: style.getPropertyValue('--color-highlight'),
-    scoreHighlight: style.getPropertyValue('--color-score-highlight'),
-    choir: [
-      Number(style.getPropertyValue('--color-c1')),
-      Number(style.getPropertyValue('--color-c2')),
-      Number(style.getPropertyValue('--color-c3')),
-      Number(style.getPropertyValue('--color-c4')),
-      Number(style.getPropertyValue('--color-c5')),
-      Number(style.getPropertyValue('--color-c6')),
-      Number(style.getPropertyValue('--color-c7')),
-      Number(style.getPropertyValue('--color-c8'))
-    ]
-  };
-}
+
 
 // TODO: click on score should send you to bar.  And part?
 // TODO: Change dark mode to moon/sun icons
@@ -109,21 +84,8 @@ async function setChoir(c: number, forceChange = false) {
   // Update the input field
   controls.setAttribute("choir", String(current.choir));
 
-  // load the correct score for this choir
-  const filename = config.svg_prefix + current.period + "/Choir " + (current.choir + 1) + ".svg";
-  console.log("fetching", filename);
-  await fetch(filename)
-    .then(r => r.text())
-    .then(text => {
-      score.innerHTML = text;
-    })
-    .catch(console.error.bind(console));
-
-  // set the border color to match
-  score.style.borderColor = `hsla(${colors.choir[current.choir]}, 80%, 55%, 1)`;
-
-  // scroll the score to match the new choir (with instant scrolling)
-  setBar(current.bar, true);
+  // Update the score for this choir
+  score.setAttribute("choir", String(current.choir));
 }
 
 function setPart(p: PartType) {
@@ -134,10 +96,11 @@ function setPart(p: PartType) {
 
   // Update the input field
   controls.setAttribute("part", String(current.part));
+
+  // Update the score
+  score.setAttribute("part", String(current.part));
 }
 
-
-var previousBarHighlight;
 
 // where b = 0 to 139
 function setBar(b: number, changedChoirs = false) {
@@ -145,7 +108,7 @@ function setBar(b: number, changedChoirs = false) {
     return;
   }
   if (b > 139) {
-    controls.setAttribute("status", "paused");
+    controls.pause();
     b = 0;
   }
   else if (b < 0) {
@@ -153,55 +116,11 @@ function setBar(b: number, changedChoirs = false) {
   }
   current.bar = b;
 
-  const intbar = Math.floor(current.bar);
-
   // update the input field
-  controls.setAttribute("bar", String(intbar));
+  controls.setAttribute("bar", String(b));
 
-  svg = document.querySelector("#score svg");
-
-  if (previousBarHighlight != undefined) {
-    if (svg.contains(previousBarHighlight)) {
-      svg.removeChild(previousBarHighlight);
-    }
-  }
-
-  // Highlight the current bar on the score
-  if (intbar > 0 && intbar < 139) {
-    var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-    newElement.setAttribute("x", String(scorebars[current.choir][intbar - 1]));
-    newElement.setAttribute("y", "0");
-    const bw = (intbar >= 138 ? svg.getBBox().width - scorebars[current.choir][137] : scorebars[current.choir][intbar] - scorebars[current.choir][intbar - 1]);
-    newElement.setAttribute("width", String(bw));
-    newElement.setAttribute("height", String(svg.getBBox().height * 2));  // HACK: why times two???
-    newElement.style.fill = colors.scoreHighlight; //Set stroke colour
-    newElement.style.fillOpacity = "0.1";
-    newElement.style.strokeWidth = "5px"; //Set stroke width
-    svg.appendChild(newElement);
-    previousBarHighlight = newElement;
-  }
-
-
-  // scroll the the right place
-  var pos = getScrollPosition(intbar);
-  score.scrollTo({
-    top: 0,
-    left: pos,
-    behavior: changedChoirs ? "instant" : "smooth"
-  });
-}
-
-function getScrollPosition(bar) {
-  if (svg == null) {
-    return 0;
-  }
-  var idealBarPos = 0.25;
-  var frameWidth = score.offsetWidth; // the width of the visible score on the screen
-  var scoreWidth = svg.getBoundingClientRect().width; // the total width of the score
-  var svgWidth = svg.getBBox().width; // the width of the score in SVG unit
-  var pos = scorebars[current.choir][bar - 1] * scoreWidth / svgWidth; // current % along the score
-  pos -= idealBarPos * frameWidth;
-  return pos;
+  // Highlight the bar on the score
+  score.setAttribute("bar", String(b));
 }
 
 function parseURL() {
@@ -256,7 +175,7 @@ function playLoop(timestamp) {
   oldTimeStamp = timestamp;
   fps = Math.round(1 / secondsPassed);
 
-  // Calculate which bar we are on 
+  // Calculate which bar we are on based on the audio position
   setBar(controls.current.bar);
   canvas.draw(current, fps);
 
@@ -338,7 +257,7 @@ function keyboardTapped(e) {
     case 'Digit6':
     case 'Digit7':
     case 'Digit8':
-      setChoir(e.key);
+      setChoir(e.key - 1);
       pauseAndRepaint();
       break;
     case 'KeyS':
@@ -418,14 +337,12 @@ function toggleDark() {
 function toggleScore(forceEarly = false) {
   if (current.period === "modern" || forceEarly) {
     current.period = "early";
-    scorebars = scorebars_early;
+    score.setAttribute("score-type", "early");
   }
   else {
     current.period = "modern";
-    scorebars = scorebars_modern;
+    score.setAttribute("score-type", "modern");
   }
-  setChoir(current.choir, true);
-  pauseAndRepaint();
 }
 
 
@@ -467,15 +384,12 @@ function handleCanvasHover(e: CustomEvent) {
 
 window.addEventListener("load", async () => {
 
+  loadColors();
+
   // On mobiles, 100vh sometimes is the total vertical space
   // of the browser, but we don't want to include the browser's
   // header and footer in that, so calculate using visible vertical space.
   setVH();
-
-  loadColors();
-
-  // canvas = new CanvasView() as CanvasView;
-  canvas.color = colors;
 
   // read choir, part and bar from the URL
   parseURL();

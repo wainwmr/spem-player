@@ -1,4 +1,4 @@
-import { Position, State, config } from "./ensemble";
+import { Position, State, config } from "./common";
 
 type SvgInHtml = HTMLElement & SVGElement;
 
@@ -154,30 +154,54 @@ export class AudioControls extends HTMLDivElement {
   async attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if (oldValue == newValue) return;
 
-    console.log(`AudioControls: ${name} changed from ${oldValue} to ${newValue}`);
     switch (name) {
       case "choir":
-        this.current.choir = Number(newValue);
-        this.choirselect.value = newValue;
-        if (this.isPlaying()) this.play();
+        this.setChoir(newValue);
         break;
       case "part":
-        this.current.part = newValue == "all" ? "all" : Number(newValue);
-        this.partselect.value = newValue;
-        if (this.isPlaying()) this.play();
+        this.setPart(newValue);
         break;
       case "bar":
-        this.current.bar = Number(newValue);
-        if (!this.isPlaying) {
-          this.audio.currentTime = this.current.bar * config.tempo;
-        }
-        this.barinput.value = newValue;
+        this.setBar(newValue);
         break;
       default:
         console.log("AudioControls: bad attribute: " + newValue);
         break;
     }
   }
+
+  setChoir(newValue: string) {
+    const intchoir = Number(newValue);
+    if (intchoir === this.current.choir) return;
+    console.log(`AudioControls: changing choir to ${newValue}`);
+
+    this.current.choir = Number(newValue);
+    this.choirselect.value = newValue;
+    if (this.isPlaying()) this.play();
+  }
+
+  setPart(newValue: string) {
+    const intpart = Number(newValue);
+    if ((newValue == "all" && this.current.part == "all") || intpart === this.current.part) return;
+    console.log(`AudioControls: changing part to ${newValue}`);
+
+    this.current.part = newValue == "all" ? "all" : intpart;
+    this.partselect.value = newValue;
+    if (this.isPlaying()) this.play();
+
+  }
+
+  setBar(newValue: string) {
+    const intbar = Number(newValue);
+    if (intbar === this.current.bar) return;
+    console.log(`AudioControls: changing bar to ${newValue}`);
+
+    this.current.bar = intbar;
+    if (!this.isPlaying) {
+      this.audio.currentTime = this.current.bar * config.tempo;
+    }
+    this.barinput.value = newValue;
+}
 }
 
 
