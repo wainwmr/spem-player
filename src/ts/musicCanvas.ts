@@ -126,8 +126,8 @@ export class MusicCanvas extends HTMLCanvasElement {
   #calculateCanvasSize() {
     if (config == null) return;
 
-    this.width = this.clientWidth * 20;
-    this.height = 300 * 4;
+    this.width = this.clientWidth * 4;
+    this.height = this.clientHeight * 2;
 
     this.barWidth = (this.width - (2 * this.canvasPadding)) / 140;
     this.choirHeight = (this.height - (2 * this.canvasPadding)) / config.choirs;
