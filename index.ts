@@ -1,7 +1,6 @@
-
 import './src/scss/style.scss';
 
-import { PartType, State, loadColors, config, toNum, HDSQTIME } from "./src/ts/common";
+import { PartType, State, loadColors, colors, config, toNum, HDSQTIME } from "./src/ts/common";
 
 import { MusicCanvas } from "./src/ts/musicCanvas";
 import { AudioControls } from "./src/ts/audioControls";
@@ -90,8 +89,6 @@ async function setChoir(c: number, forceChange = false) {
 
   // Update the canvas
   canvas.setAttribute("choir", String(current.choir));
-
-  canvas.draw();
 }
 
 function setPart(p: PartType) {
@@ -108,8 +105,6 @@ function setPart(p: PartType) {
 
   // Update the canvas
   canvas.setAttribute("part", String(current.part));
-
-  canvas.draw();
 }
 
 
@@ -133,8 +128,6 @@ function setBar(b: number) {
 
   // Update the canvas
   canvas.setAttribute("bar", String(b));
-
-  canvas.draw();
 }
 
 function parseURL() {
@@ -188,8 +181,6 @@ function handleControlChange(e: CustomEvent) {
   setChoir(Number(pos.choir));
   setPart(pos.part == "all" ? "all" : Number(pos.part));
   setBar(Number(pos.bar));
-
-  canvas.draw();
 }
 
 // -----------------------------------------------------
@@ -301,7 +292,6 @@ function toggleDark() {
     document.body.classList.toggle("dark-theme");
   }
   loadColors();
-  canvas.draw();
 }
 
 function toggleScore(forceEarly = false) {
@@ -328,8 +318,14 @@ function handleCanvasClick(e: CustomEvent) {
   setChoir(pos.choir);
   setPart(pos.part);
   setBar(pos.bar);
+}
 
-  controls.pause();
+function handleAudioPlaying() {
+  canvas.setAttribute("playing", "true");
+}
+
+function handleAudioPaused() {
+  canvas.setAttribute("playing", "false");
 }
 
 var intId;
@@ -352,9 +348,13 @@ function handleCanvasHover(e: CustomEvent) {
 // Setup page
 // -----------------------------------------------------
 
-window.addEventListener("load", async () => {
+window.addEventListener("load", init);
+
+function init(): void {
+  console.log("Here I am again");
 
   loadColors();
+  console.log(colors);
 
   // On mobiles, 100vh sometimes is the total vertical space
   // of the browser, but we don't want to include the browser's
@@ -365,6 +365,8 @@ window.addEventListener("load", async () => {
   parseURL();
 
   controls.addEventListener("audio-controls-changed", handleControlChange as (e: Event) => void);
+  controls.addEventListener("audio-controls-playing", handleAudioPlaying as (e: Event) => void);
+  controls.addEventListener("audio-controls-paused", handleAudioPaused as (e: Event) => void);
   canvas.addEventListener("music-canvas-click", handleCanvasClick as (e: Event) => void);
   canvas.addEventListener("music-canvas-hover", handleCanvasHover as (e: Event) => void);
 
@@ -383,4 +385,4 @@ window.addEventListener("load", async () => {
   // Next line not really necessary, but will make it look clearer on browser resize
   // window.addEventListener("resize", () => {calculateCanvasSize(); draw(); });
   window.addEventListener('resize', () => setVH());
-});
+}

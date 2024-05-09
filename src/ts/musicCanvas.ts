@@ -44,7 +44,7 @@ export class MusicCanvas extends HTMLCanvasElement {
   adoptedCallback() {
     console.log("MusicCanvas moved to new page.");
   }
-
+  
   async attributeChangedCallback(name: string, _oldValue: string, newValue: string) {
     switch (name) {
       case "choir":
@@ -91,6 +91,7 @@ export class MusicCanvas extends HTMLCanvasElement {
   setPlaying(playing: string | boolean) {
     if ((typeof playing == "string" && playing == "true") || playing) {
       this.playing = true;
+      this.play();
     }
     else {
       this.playing = false;
@@ -127,7 +128,7 @@ export class MusicCanvas extends HTMLCanvasElement {
     if (config == null) return;
 
     this.width = this.clientWidth * 4;
-    this.height = this.clientHeight * 2;
+    this.height = 300 * 2;
 
     this.barWidth = (this.width - (2 * this.canvasPadding)) / 140;
     this.choirHeight = (this.height - (2 * this.canvasPadding)) / config.choirs;
@@ -184,6 +185,21 @@ export class MusicCanvas extends HTMLCanvasElement {
   //     window.requestAnimationFrame(this.playLoop.bind(this));
   //   }
   // }
+
+  play() {
+    const self = this;
+    function loop() {
+      self.draw();
+
+      if (self.playing) {
+        window.requestAnimationFrame(loop);
+        // setTimeout(frame, config.tempo / 10);
+      }
+    }
+    window.requestAnimationFrame(loop);
+    // setTimeout(frame, config.tempo / 10);
+
+  }
 
 
   draw() {
@@ -391,4 +407,4 @@ export class MusicCanvas extends HTMLCanvasElement {
   }
 }
 
-customElements.define("music-canvas", MusicCanvas, { extends: "canvas" });
+window.customElements.define("music-canvas", MusicCanvas, { extends: "canvas" });
