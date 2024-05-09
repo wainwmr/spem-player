@@ -46,13 +46,24 @@ export type Config = {
 }
 
 // All the colors are defined in the style sheet
-export var colors: Colors;
-export function loadColors(): Colors {
+// export var colors = loadColors();
+const defaultColors: Colors = {
+  background: "hsl(210, 65%, 100%);",
+  highlight: "hsl(210, 65%, 90%);",
+  scoreHighlight: "hsl(210, 65%, 90%);",
+  choir: [ 360 ]
+};
+var loadedColors: Colors;
+
+
+export function colors(reload = false): Colors {
+  if (!reload && loadedColors) return loadedColors;  // no need to reload if we already have the colors
   var style = getComputedStyle(document.body);
-  if (style.getPropertyValue('--color-background').length == 0) {
-    console.log("ARGH: where are my styles?");
+  if (!style || style.getPropertyValue('--color-background').length == 0) {
+    console.log("ARGH");
+    return defaultColors;
   }
-  colors = {
+  loadedColors = {
     background: style.getPropertyValue('--color-background'),
     highlight: style.getPropertyValue('--color-highlight'),
     scoreHighlight: style.getPropertyValue('--color-score-highlight'),
@@ -68,7 +79,7 @@ export function loadColors(): Colors {
       Number(style.getPropertyValue('--color-c8'))
     ]
   };
-  return colors;
+  return loadedColors;
 }
 
 export const HDSQTIME = 0.05; // HACK: needs to be time of a 64th note

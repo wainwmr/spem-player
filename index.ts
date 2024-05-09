@@ -1,6 +1,6 @@
 import './src/scss/style.scss';
 
-import { PartType, State, loadColors, colors, config, toNum, HDSQTIME } from "./src/ts/common";
+import { PartType, State, colors, config, toNum, HDSQTIME } from "./src/ts/common";
 
 import { MusicCanvas } from "./src/ts/musicCanvas";
 import { AudioControls } from "./src/ts/audioControls";
@@ -30,14 +30,6 @@ var current: State = {
   status: "paused"
 }
 
-const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-if (prefersDarkScheme.matches) {
-  document.body.classList.add('dark-theme');
-  current.viewmode = "dark";
-} else {
-  document.body.classList.remove('dark-theme');
-  current.viewmode = "light";
-}
 
 
 
@@ -168,7 +160,7 @@ function parseURL() {
     document.body.classList.add("dark-theme");
     document.body.classList.remove("light-theme");
     current.viewmode = "dark";
-    loadColors();
+    colors(true);
   }
 }
 
@@ -291,7 +283,8 @@ function toggleDark() {
   } else {
     document.body.classList.toggle("dark-theme");
   }
-  loadColors();
+  colors(true); // reload the colors from the stylesheet
+  canvas.draw();
 }
 
 function toggleScore(forceEarly = false) {
@@ -351,15 +344,12 @@ function handleCanvasHover(e: CustomEvent) {
 window.addEventListener("load", init);
 
 function init(): void {
-  console.log("Here I am again");
-
-  loadColors();
-  console.log(colors);
 
   // On mobiles, 100vh sometimes is the total vertical space
   // of the browser, but we don't want to include the browser's
   // header and footer in that, so calculate using visible vertical space.
   setVH();
+  setColorScheme();
 
   // read choir, part and bar from the URL
   parseURL();
@@ -378,11 +368,23 @@ function init(): void {
 
   // watch for change in user's preference of color scheme
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    toggleDark();
-    loadColors();
+    setColorScheme();
   });
-
-  // Next line not really necessary, but will make it look clearer on browser resize
-  // window.addEventListener("resize", () => {calculateCanvasSize(); draw(); });
   window.addEventListener('resize', () => setVH());
+}
+
+var prefersDarkScheme;
+function setColorScheme() {
+  prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+  if (prefersDarkScheme.matches) {
+    console.log("preferred color scheme is dark");
+    document.body.classList.add('dark-theme');
+    current.viewmode = "dark";
+  } else {
+    console.log("preferred color scheme is light");
+    document.body.classList.remove('dark-theme');
+    current.viewmode = "light";
+  }
+  colors(true);
+  canvas.draw();
 }

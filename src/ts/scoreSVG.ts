@@ -85,7 +85,7 @@ export class ScoreSVG extends HTMLDivElement {
     this.#loadScore();
 
     // set the border color to match
-    this.style.borderColor = `hsla(${colors.choir[this.choir]}, 80%, 55%, 1)`;
+    this.style.borderColor = `hsla(${colors().choir[this.choir]}, 80%, 55%, 1)`;
 
     // Highlight and scroll to the current bar
     const intbar = Math.floor(this.bar);
@@ -132,7 +132,7 @@ export class ScoreSVG extends HTMLDivElement {
       const bw = (intbar >= 138 ? this.svg.getBBox().width - this.scorebars[this.choir][137] : this.scorebars[this.choir][intbar] - this.scorebars[this.choir][intbar - 1]);
       newElement.setAttribute("width", String(bw));
       newElement.setAttribute("height", String(this.svg.getBBox().height * 2));  // HACK: why times two???
-      newElement.style.fill = colors.scoreHighlight; //Set stroke colour
+      newElement.style.fill = colors().scoreHighlight; //Set stroke colour
       newElement.style.fillOpacity = "0.1";
       newElement.style.strokeWidth = "5px"; //Set stroke width
       this.svg.appendChild(newElement);

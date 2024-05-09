@@ -59,13 +59,6 @@ export class MusicCanvas extends HTMLCanvasElement {
       case "playing":
         this.setPlaying(newValue);
         break;
-      // case "config":
-      //   const response = await fetch(newValue);
-      //   const names = await response.json();
-      //   this.config = names;
-      //   console.log("MusicCanvas: config: ", this.config);
-      //   this.#init();
-      //   break;
       default:
         break;
     }
@@ -100,7 +93,7 @@ export class MusicCanvas extends HTMLCanvasElement {
 
   async #init() {
     if (dict.length != 0) {
-      console.log("MusicCanvas: Already initialise. Nothing to do.");
+      console.log("MusicCanvas: Already initialised. Nothing to do.");
       return;
     }
     this.#calculateCanvasSize();
@@ -133,7 +126,7 @@ export class MusicCanvas extends HTMLCanvasElement {
     this.barWidth = (this.width - (2 * this.canvasPadding)) / 140;
     this.choirHeight = (this.height - (2 * this.canvasPadding)) / config.choirs;
     this.partHeight = this.choirHeight / config.parts.length;
-    console.log("MusicCanvas: calculated bar choir and part sizes:", this.barWidth, this.choirHeight, this.partHeight);
+    // console.log("MusicCanvas: calculated bar choir and part sizes:", this.barWidth, this.choirHeight, this.partHeight);
   };
 
   #showLoadingOnCanvas() {
@@ -232,7 +225,7 @@ export class MusicCanvas extends HTMLCanvasElement {
     const ctx = this.getContext("2d");
     if (ctx == null) return;
 
-    ctx.fillStyle = colors.background;
+    ctx.fillStyle = colors().background;
     ctx.fillRect(0, 0, this.width, this.height);
 
     // Draw FPS number to the screen
@@ -249,7 +242,7 @@ export class MusicCanvas extends HTMLCanvasElement {
       ctx.moveTo(this.canvasPadding + (this.bar * this.barWidth), this.canvasPadding);
       ctx.lineTo(this.canvasPadding + (this.bar * this.barWidth), this.height - this.canvasPadding);
       ctx.lineWidth = this.barWidth * 1.4;
-      ctx.strokeStyle = colors.highlight;
+      ctx.strokeStyle = colors().highlight;
       ctx.lineCap = "square";
       ctx.stroke();
       ctx.restore();
@@ -271,7 +264,7 @@ export class MusicCanvas extends HTMLCanvasElement {
     ctx.moveTo(this.canvasPadding + this.barWidth, startY + (this.partHeight / 2));
     ctx.lineTo(this.canvasPadding + (140 * this.barWidth) - this.barWidth, startY + (this.partHeight / 2));
     ctx.lineWidth = width;
-    ctx.strokeStyle = colors.highlight;
+    ctx.strokeStyle = colors().highlight;
     ctx.lineCap = "round";
     ctx.stroke();
     ctx.restore();
@@ -326,7 +319,7 @@ export class MusicCanvas extends HTMLCanvasElement {
             transparency = 0.5;
           }
 
-          ctx.strokeStyle = `hsla(${colors.choir[c]}, ${saturation}%, ${lightness}%, ${transparency})`;
+          ctx.strokeStyle = `hsla(${colors().choir[c]}, ${saturation}%, ${lightness}%, ${transparency})`;
           ctx.stroke();
         });
       }
