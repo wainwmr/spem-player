@@ -82,7 +82,7 @@ export class ScoreSVG extends HTMLDivElement {
     this.choir = toNum(c, true, config.choirs - 1);
 
     // load the correct score for this choir
-    this.#loadScore();
+    await this.#loadScore();
 
     // set the border color to match
     this.style.borderColor = `hsla(${colors().choir[this.choir]}, 80%, 55%, 1)`;
