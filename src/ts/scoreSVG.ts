@@ -99,9 +99,7 @@ export class ScoreSVG extends HTMLDivElement {
 
   previousBarHighlight: SVGRectElement | null = null;
   setBar(b: string | number) {
-    // const hackint = Number(b) + 0.01; // HACK: 0.01 needs to be a hemidemisemiquaver length of time
-    // console.log("ScoreSVG: setting bar to", b, hackint);
-    const intbar = toNum(b, true, 139); // HACK: 139 
+    const intbar = toNum(b, true);
     if (intbar == this.bar) {
       return;
     }
@@ -144,6 +142,7 @@ export class ScoreSVG extends HTMLDivElement {
     if (this.svg == null) {
       return 0;
     }
+    intbar = Math.min(intbar, this.scorebars[this.choir].length - 1);
     var idealBarPos = 0.25;
     var frameWidth = this.offsetWidth; // the width of the visible score on the screen
     var scoreWidth = this.svg.getBoundingClientRect().width; // the total width of the score

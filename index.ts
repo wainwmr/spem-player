@@ -103,7 +103,7 @@ function setPart(p: PartType) {
 // where b = 0 to 139
 function setBar(b: number) {
   b = toNum(b, false);
-  if (b > 139) {
+  if (b > 140) {
     controls.pause();
     b = 0;
   }
