@@ -366,37 +366,44 @@ export class MusicCanvas extends HTMLCanvasElement {
     this.dispatchEvent(myEvent);
   }
 
-  // TODO: Not convinced the Maths for getTouchPos() is right...
   #getTouchPos(evt: TouchEvent): Position {
-    // if (!this.config) return { choir: 0, part: 0, bar: 0 };
-
     var rect = this.getBoundingClientRect();
-    var choir = Math.ceil(config.choirs * ((evt.targetTouches[0].clientY - rect.top - (this.canvasPadding)) /
-      (this.clientHeight - (2 * this.canvasPadding))));
-    choir = Math.min(Math.max(1, choir), config.choirs);
-    var bar = Math.round(140 * ((evt.targetTouches[0].clientX - rect.left - (this.canvasPadding)) /
-      (this.clientWidth - (2 * this.canvasPadding))));
-    bar = Math.min(Math.max(0, bar), 139); // must be from 0 to 139
-    return { choir: choir, part: "all", bar: bar };
+
+    const y = ((evt.targetTouches[0].clientY - rect.top - this.canvasPadding) * config.choirs) / (rect.height - (2 * this.canvasPadding));
+    return {
+      choir: Math.min(config.choirs - 1, Math.max(0, Math.floor(y))),
+      part: "all",
+      bar: Math.floor((evt.targetTouches[0].clientX - rect.left - this.canvasPadding) * 140 / rect.width)
+    };
   }
 
-  // BUG: on mobile, touch to move bar to half-way and play
-  // and it starts from bar 0.
   #touchStarted(evt: TouchEvent) {
     const pos: Position = this.#getTouchPos(evt);
 
     console.log("Touch started at", pos);
+    this.choir = pos.choir;
+    this.voicePart = "all";
+    this.bar = pos.bar;
+    this.draw();
 
     this.addEventListener("touchmove", (evt) => {
       const pos = this.#getTouchPos(evt);
 
       console.log("Touch moved at", pos);
-    });
+      this.choir = pos.choir;
+      this.voicePart = "all";
+      this.bar = pos.bar;
+      this.draw();
+      });
     this.addEventListener("touchend", () => {
       const pos = this.#getTouchPos(evt);
 
       console.log("Touch ended at", pos);
-    });
+      this.choir = pos.choir;
+      this.voicePart = "all";
+      this.bar = pos.bar;
+      this.draw();
+      });
   }
 }
 
