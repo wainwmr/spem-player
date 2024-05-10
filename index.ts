@@ -301,10 +301,12 @@ function handleCanvasClick(e: CustomEvent) {
 
 function handleAudioPlaying() {
   canvas.setAttribute("playing", "true");
+  score.setAttribute("playing", "true");
 }
 
 function handleAudioPaused() {
   canvas.setAttribute("playing", "false");
+  score.setAttribute("playing", "false");
 }
 
 var intId;

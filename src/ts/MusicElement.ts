@@ -55,7 +55,7 @@ export class MusicElement extends HTMLDivElement {
   }
 
   setBar(b: string | number) {
-    this.bar = toNum(b, false, 139); // HACK: 139
+    this.bar = toNum(b, false); 
   }
 
   setPlaying(playing: string | boolean) {

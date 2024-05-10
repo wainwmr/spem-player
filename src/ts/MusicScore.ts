@@ -1,12 +1,12 @@
 
 // TODO: bar positions should come from model
 import { scorebars_modern, scorebars_early } from "./barlines";
-import { config, colors } from "./common";
+import { config, colors, HDSQTIME } from "./common";
 import { MusicElement } from "./MusicElement";
 
 
 export class MusicScore extends MusicElement {
-  static observedAttributes = [ "choir", "part", "bar", "playing", "score-type" ];
+  static observedAttributes = ["choir", "part", "bar", "playing", "score-type"];
 
   svg: SVGGraphicsElement | null = null;
 
@@ -14,10 +14,32 @@ export class MusicScore extends MusicElement {
 
   scorebars = (this.scoreType == "early" ? scorebars_early : scorebars_modern);
 
+  highlightBar: SVGRectElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect')
+  highlightPosition: SVGRectElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect')
 
   constructor() {
     super();
   };
+
+  async connectedCallback() {
+    super.connectedCallback();
+
+    this.highlightPosition.setAttribute("x", "0");
+    this.highlightPosition.setAttribute("y", "0");
+    this.highlightPosition.setAttribute("width", "7");  // HACK: hard-coded!
+    this.highlightPosition.setAttribute("height", "200");  // HACK: need to calc actual height of SVG
+    this.highlightPosition.style.fill = colors().scoreHighlight; //Set stroke colour
+    this.highlightPosition.style.fillOpacity = "0.1";
+    this.highlightPosition.style.strokeWidth = "5px"; //Set stroke width
+
+    this.highlightBar.setAttribute("x", "0");
+    this.highlightBar.setAttribute("y", "0");
+    this.highlightBar.setAttribute("width", "0");
+    this.highlightBar.setAttribute("height", "200");  // HACK: need to calc actual height of SVG
+    this.highlightBar.style.fill = colors().scoreHighlight; //Set stroke colour
+    this.highlightBar.style.fillOpacity = "0.1";
+    this.highlightBar.style.strokeWidth = "5px"; //Set stroke width
+  }
 
   async attributeChangedCallback(name: string, _oldValue: string, newValue: string) {
     if (name == "score-type") {
@@ -41,6 +63,7 @@ export class MusicScore extends MusicElement {
   //   setBar(scorebars.indexOf(result));
   // }
 
+
   async #loadScore() {
     const filename = config.svg_prefix + this.scoreType + "/Choir " + (this.choir + 1) + ".svg";
     console.log("MusicScore: fetching", filename);
@@ -51,6 +74,11 @@ export class MusicScore extends MusicElement {
       })
       .catch(console.error.bind(console));
     this.svg = document.querySelector("#music-score svg");
+
+    if (this.svg) {
+      this.svg.prepend(this.highlightPosition);
+      this.svg.prepend(this.highlightBar);
+    }
   }
 
   async setChoir(c: string | number) {
@@ -63,95 +91,65 @@ export class MusicScore extends MusicElement {
     this.style.borderColor = `hsla(${colors().choir[this.choir]}, 80%, 55%, 1)`;
 
     // Highlight and scroll to the current bar
-    const intbar = Math.floor(this.bar);
-    this.highlightBar(intbar);
-    this.scrollToPosition(intbar, "instant");
+    this.highlight()
+    this.scrollSmooth();
   }
 
-  previousBarHighlight: SVGRectElement | null = null;
   setBar(b: string | number) {
     super.setBar(b);
-    const intbar = Math.floor(this.bar);
 
-    // scroll the the right place
-    this.scrollToPosition(intbar, "smooth");
-
-    // highlight the current bar
-    this.highlightBar(intbar);
+    // scroll smootlhy and highlight the current position
+    this.highlight();
+    this.scrollSmooth();
   }
 
-  scrollToPosition2(intbar: number, type: "instant" | "smooth") {
+  scrollSmooth() {
     if (this.svg == null) {
       return 0;
     }
-    intbar = Math.min(intbar, this.scorebars[this.choir].length - 1);
-    var idealBarPos = 0.25;
-    var frameWidth = this.offsetWidth; // the width of the visible score on the screen
-    var scoreWidth = this.svg.getBoundingClientRect().width; // the total width of the score
-    var svgWidth = this.svg.getBBox().width; // the width of the score in SVG unit
-    var pos = this.scorebars[this.choir][intbar - 1] * scoreWidth / svgWidth; // current % along the score
-    pos -= idealBarPos * frameWidth;
+    var intbar = Math.floor(this.bar + HDSQTIME);
+    // we can't scroll past the last bar for this choir
+    intbar = Math.min(intbar, this.scorebars[this.choir].length);
+    const idealBarPercentage = 0.25;
+    const frameWidth = this.offsetWidth; // the width of the visible score on the screen
+    const scoreWidth = this.svg.getBoundingClientRect().width; // the total width of the score
+    const svgWidth = this.svg.getBBox().width; // the width of the score in SVG unit
+    const barstartpct = intbar <= 0 ? 0 : this.scorebars[this.choir][intbar - 1] / svgWidth; // % along the score of this bar
+    const barendpct = intbar >= this.scorebars[this.choir].length ? 1 : this.scorebars[this.choir][intbar] / svgWidth; // % along the score of the next bar
+    const barcurrentpct = ((this.bar - intbar) * (barendpct - barstartpct)) + barstartpct; // % along the score of current position in the bar
+    const idealPos = (barcurrentpct * scoreWidth) - (idealBarPercentage * frameWidth);
 
     this.scrollTo({
       top: 0,
-      left: pos,
-      behavior: type
+      left: idealPos,
+      behavior: "instant"
     });
 
-  }
+    // set highlight the current position
+    if (this.bar >= 1) {
+      this.highlightPosition.setAttribute("x", String((barcurrentpct * svgWidth) - 2.5));
+    }
 
-
-  highlightPosition() {
-    // Remove any previous bar highlighting
-    if (this.previousBarHighlight != null) {
-      if (this.svg && this.svg.contains(this.previousBarHighlight)) {
-        this.svg.removeChild(this.previousBarHighlight);
-      }
+    // set the highlight for the current bar
+    const size = this.scorebars[this.choir].length;
+    if (intbar > 0 && intbar <= size) {
+      const bw = (intbar >= size ? 
+        this.svg.getBBox().width - this.scorebars[this.choir][size - 1] : 
+        this.scorebars[this.choir][intbar] - this.scorebars[this.choir][intbar - 1]);
+        this.highlightBar.setAttribute("x", String(this.scorebars[this.choir][intbar - 1]));
+        this.highlightBar.setAttribute("width", String(bw));
     }
   }
 
-  highlightBar(intbar: number) {
-    // Remove any previous bar highlighting
-    if (this.previousBarHighlight != null) {
-      if (this.svg && this.svg.contains(this.previousBarHighlight)) {
-        this.svg.removeChild(this.previousBarHighlight);
-      }
+  highlight() {
+    if (this.playing) {
+      this.highlightPosition.style.fillOpacity = this.bar > 1 ? "0.1" : "0";
+      this.highlightBar.style.fillOpacity = "0";
     }
-
-    // Highlight the current bar on the score
-    if (this.svg && intbar > 0 && intbar < 139) {
-      var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
-      newElement.setAttribute("x", String(this.scorebars[this.choir][intbar - 1]));
-      newElement.setAttribute("y", "0");
-      const bw = (intbar >= 138 ? this.svg.getBBox().width - this.scorebars[this.choir][137] : this.scorebars[this.choir][intbar] - this.scorebars[this.choir][intbar - 1]);
-      newElement.setAttribute("width", String(bw));
-      newElement.setAttribute("height", String(this.svg.getBBox().height * 2));  // HACK: why times two???
-      newElement.style.fill = colors().scoreHighlight; //Set stroke colour
-      newElement.style.fillOpacity = "0.1";
-      newElement.style.strokeWidth = "5px"; //Set stroke width
-      this.svg.appendChild(newElement);
-      this.previousBarHighlight = newElement;
+    else {
+      this.highlightBar.style.fillOpacity = "0.1";
+      this.highlightPosition.style.fillOpacity = "0";
     }
-  }
-
-  scrollToPosition(intbar: number, type: "instant" | "smooth") {
-    if (this.svg == null) {
-      return 0;
-    }
-    intbar = Math.min(intbar, this.scorebars[this.choir].length - 1);
-    var idealBarPos = 0.25;
-    var frameWidth = this.offsetWidth; // the width of the visible score on the screen
-    var scoreWidth = this.svg.getBoundingClientRect().width; // the total width of the score
-    var svgWidth = this.svg.getBBox().width; // the width of the score in SVG unit
-    var pos = this.scorebars[this.choir][intbar - 1] * scoreWidth / svgWidth; // current % along the score
-    pos -= idealBarPos * frameWidth;
-
-    this.scrollTo({
-      top: 0,
-      left: pos,
-      behavior: type
-    });
-
   }
 
   setScoreType(s: string) {
