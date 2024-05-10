@@ -1,15 +1,13 @@
 import { PartType, Position, colors, config, toNum } from "./common";
 
 // TODO: don't need setupLilypondParse to be exported, do we?
-import { setupLilypondParser, processLilypond, dict, ranges } from "./lily";
-
-import { Dictionary, Range } from "./lily";
+import { Dictionary, Range, setupLilypondParser, processLilypond, dict, ranges } from "./lily";
 
 export class MusicCanvas extends HTMLCanvasElement {
   // TODO: MusicCanvas should have its own playloop, not use index.ts to control it.
   // TODO: MusicCanvas needs state for { choir, part, bar, playing? }
 
-  static observedAttributes = ["choir", "part", "bar", "playing"];
+  static observedAttributes = [ "choir", "part", "bar", "playing" ];
 
   choir: number = 0;
   voicePart: PartType = "all";
@@ -66,6 +64,7 @@ export class MusicCanvas extends HTMLCanvasElement {
 
   setChoir(c: string | number) {
     this.choir = toNum(c, true, config.choirs - 1);
+    this.draw();
   }
 
   setPart(p: string | PartType) {
@@ -75,14 +74,16 @@ export class MusicCanvas extends HTMLCanvasElement {
     else {
       this.voicePart = toNum(p, true, config.parts.length - 1);
     }
+    this.draw();
   }
 
   setBar(b: string | number) {
     this.bar = toNum(b, false, 139); // HACK: 139
+    this.draw();
   }
 
   setPlaying(playing: string | boolean) {
-    if ((typeof playing == "string" && playing == "true") || playing) {
+    if ((typeof playing == "string" && playing == "true") || playing == true) {
       this.playing = true;
       this.play();
     }
@@ -163,22 +164,6 @@ export class MusicCanvas extends HTMLCanvasElement {
   oldTimeStamp: number = 0;
   fps: number = 0;
 
-  // playLoop(timestamp: number) {
-
-  //   // Calculate the frames per second
-  //   const secondsPassed = (timestamp - this.oldTimeStamp) / 1000;
-  //   this.oldTimeStamp = timestamp;
-  //   this.fps = Math.round(1 / secondsPassed);
-
-  //   // Calculate which bar we are on based on the audio position
-  //   this.setBar(this.bar);
-  //   this.#draw(this.fps);
-
-  //   if (this.playing) {
-  //     window.requestAnimationFrame(this.playLoop.bind(this));
-  //   }
-  // }
-
   play() {
     const self = this;
     function loop() {
@@ -201,18 +186,20 @@ export class MusicCanvas extends HTMLCanvasElement {
       return;
     }
 
-    const now: number = Date.now();
-    const secondsPassed = (now - this.oldTimeStamp) / 1000;
-    if (secondsPassed < 0.01) return; // HACK: throttle
-    this.oldTimeStamp = now;
-    const fps = Math.round(1 / secondsPassed);
+    // Calculate frames per second
+    var fps = 0;
+    if (this.playing) {
+      const now: number = Date.now();
+      const secondsPassed = (now - this.oldTimeStamp) / 1000;
+      if (secondsPassed < 0.01) return; // HACK: throttle
+      this.oldTimeStamp = now;
+      fps = secondsPassed === 0 ? 0 : Math.round(1 / secondsPassed);
+    }
 
 
-    // find who has a note that starts in this current quaver (16th of a bar)
+    // If there are notes playing, pulse the color's lightness for that voice part
     const quant = Math.floor(this.bar * 16) / 16;
     const notes = this.dict[quant];
-
-    // 
     if (notes != undefined && notes.length > 0) {
       for (var n of notes) {
         if (n.n.duration != null) {
@@ -229,7 +216,7 @@ export class MusicCanvas extends HTMLCanvasElement {
     ctx.fillRect(0, 0, this.width, this.height);
 
     // Draw FPS number to the screen
-    if (!isNaN(fps)) {
+    if (fps) {
       ctx.font = '25px Arial';
       ctx.fillStyle = '#CCC';
       ctx.fillText("FPS: " + fps, 10, this.height - 30);
@@ -378,6 +365,7 @@ export class MusicCanvas extends HTMLCanvasElement {
   }
 
   #touchStarted(evt: TouchEvent) {
+    evt.preventDefault();
     const pos: Position = this.#getTouchPos(evt);
 
     console.log("Touch started at", pos);
@@ -399,9 +387,9 @@ export class MusicCanvas extends HTMLCanvasElement {
       const pos = this.#getTouchPos(evt);
 
       console.log("Touch ended at", pos);
-      this.choir = pos.choir;
-      this.voicePart = "all";
-      this.bar = pos.bar;
+      this.setAttribute("choir", String(pos.choir));
+      this.setAttribute("part", "all");
+      this.setAttribute("bar", String(pos.bar));
       this.draw();
       });
   }
