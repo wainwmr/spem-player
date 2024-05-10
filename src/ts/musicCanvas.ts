@@ -82,8 +82,13 @@ export class MusicCanvas extends MusicElement {
   #calculateCanvasSize() {
     if (this.canvas == null) return;
 
-    this.canvas.width = this.clientWidth;
-    this.canvas.height = 300 * 2;
+    // this.canvas.width = this.clientWidth;
+    // this.canvas.height = 300 * 2;
+    this.canvas.width = 4000;
+    this.canvas.height = 1000;
+
+    this.canvas.style.width = "100%";
+    this.canvas.style.height = "100%";
 
     this.barWidth = (this.canvas.width - (2 * this.canvasPadding)) / 140;
     this.choirHeight = (this.canvas.height - (2 * this.canvasPadding)) / config.choirs;
