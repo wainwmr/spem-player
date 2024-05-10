@@ -145,10 +145,12 @@ export class MusicScore extends MusicElement {
     if (this.playing) {
       this.highlightPosition.style.fillOpacity = this.bar > 1 ? "0.1" : "0";
       this.highlightBar.style.fillOpacity = "0";
+      this.style.overflow = 'hidden'; // hide the scroll bar while playing
     }
     else {
       this.highlightBar.style.fillOpacity = "0.1";
       this.highlightPosition.style.fillOpacity = "0";
+      this.style.overflow = 'auto';
     }
   }
 
