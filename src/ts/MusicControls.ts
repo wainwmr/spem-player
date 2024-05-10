@@ -1,8 +1,9 @@
-import { config, MusicElement } from "./common";
+import { config } from "./common";
+import { MusicElement } from "./MusicElement";
 
 type SvgInHtml = HTMLElement & SVGElement;
 
-export class AudioControls extends MusicElement {
+export class MusicControls extends MusicElement {
   static observedAttributes = [ "choir", "part", "bar" ];
 
   audio = new Audio();
@@ -111,7 +112,7 @@ export class AudioControls extends MusicElement {
 
   setChoir(c: string | number) {
     super.setChoir(c);
-    console.log(`AudioControls: changing choir to ${this.choir}`);
+    console.log(`MusicControls: changing choir to ${this.choir}`);
 
     this.choirselect.value = String(this.choir);
     if (this.isPlaying()) this.play();
@@ -119,7 +120,7 @@ export class AudioControls extends MusicElement {
 
   setPart(p: string | number) {
     super.setPart(p);
-    console.log(`AudioControls: changing part to ${this.part}`);
+    console.log(`MusicControls: changing part to ${this.part}`);
 
     this.partselect.value = String(p);
     if (this.isPlaying()) this.play();
@@ -129,7 +130,7 @@ export class AudioControls extends MusicElement {
     const intbar = Number(b);
     if (intbar === this.bar) return;
     super.setBar(b);
-    console.log(`AudioControls: changing bar to ${b}`);
+    console.log(`MusicControls: changing bar to ${b}`);
 
     this.bar = intbar;
     this.audio.currentTime = this.bar * config.tempo;
@@ -137,4 +138,4 @@ export class AudioControls extends MusicElement {
   }
 }
 
-AudioControls.define("audio-controls");
+MusicControls.define("music-controls");

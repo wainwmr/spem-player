@@ -2,13 +2,13 @@ import './src/scss/style.scss';
 
 import { PartType, State, colors, config, toNum, HDSQTIME } from "./src/ts/common";
 
-import { MusicCanvas } from "./src/ts/musicCanvas";
-import { AudioControls } from "./src/ts/audioControls";
-import { ScoreSVG } from "./src/ts/scoreSVG";
+import { MusicCanvas } from "./src/ts/MusicCanvas";
+import { MusicControls } from "./src/ts/MusicControls";
+import { MusicScore } from "./src/ts/MusicScore";
 
-const canvas = document.getElementById("canvas") as MusicCanvas;
-const controls = document.getElementById("audio-controls") as AudioControls;
-const score = document.getElementById("score") as ScoreSVG;
+const canvas = document.getElementById("music-canvas") as MusicCanvas;
+const controls = document.getElementById("music-controls") as MusicControls;
+const score = document.getElementById("music-score") as MusicScore;
 
 const statusarea = document.getElementById('statusarea') as HTMLDivElement;
 const choiroutput = document.getElementById('choir-output') as HTMLSpanElement;
@@ -30,13 +30,9 @@ var current: State = {
   status: "paused"
 }
 
-
-
-
 // TODO: click on score should send you to bar.  And part?
 // TODO: Change dark mode to moon/sun icons
 // TODO: Visual effect for false relations
-// TODO: switching dark mode should not stop play
 // TODO: Better font/graphic for Spem Player title
 // BUG: can scroll up and down a tiny bit in score
 // BUG: [Violation] Forced reflow while executing JavaScript took 36ms  (this doesn't happen when you have already manually adjusted the height of the score - something to do with the flex: 1 after the reload?)
@@ -51,21 +47,6 @@ var current: State = {
 // TODO: index.html should not have part and choir names hard-coded.  Should come from config instead.
 // TODO: Get AudioControls to generate Choirs and Parts from config (rather than hard-coded in index.html
 
-// var pt;
-// function scoreClicked(e) {
-//   console.log("score clicked");
-//   pt.x = e.clientX;
-//   pt.y = e.clientY;
-
-//   // The cursor point, translated into svg coordinates
-//   var cursorpt = pt.matrixTransform(svg.getScreenCTM().inverse());
-//   console.log("(" + cursorpt.x + ", " + cursorpt.y + ")");
-
-//   var result = scorebars.find(x => x > cursorpt.x);
-//   console.log(scorebars.indexOf(result));
-//   setBar(scorebars.indexOf(result));
-// }
-
 async function setChoir(c: number, forceChange = false) {
   if (current.choir == c && !forceChange) {
     return;
@@ -73,13 +54,16 @@ async function setChoir(c: number, forceChange = false) {
   current.choir = Math.min(Math.max(0, c), config.choirs - 1);
 
   // Update the input field
-  controls.setAttribute("choir", String(current.choir));
-
+  // controls.setAttribute("choir", String(current.choir));
+  controls.setChoir(current.choir);
+  
   // Update the score for this choir
-  score.setAttribute("choir", String(current.choir));
-
+  // score.setAttribute("choir", String(current.choir));
+  score.setChoir(current.choir);
+  
   // Update the canvas
-  canvas.setAttribute("choir", String(current.choir));
+  // canvas.setAttribute("choir", String(current.choir));
+  canvas.setChoir(current.choir);
 }
 
 function setPart(p: PartType) {
@@ -112,13 +96,16 @@ function setBar(b: number) {
   current.bar = b;
 
   // update the input field
-  controls.setAttribute("bar", String(b));
-
+  // controls.setAttribute("bar", String(b));
+  controls.setBar(b);
+  
   // Highlight the bar on the score
-  score.setAttribute("bar", String(b));
-
+  // score.setAttribute("bar", String(b));
+  score.setBar(b);
+  
   // Update the canvas
-  canvas.setAttribute("bar", String(b));
+  // canvas.setAttribute("bar", String(b));
+  canvas.setBar(b);
 }
 
 function parseURL() {

@@ -184,7 +184,7 @@ header {
     }
 }
 
-#score {
+#music-score {
     resize: vertical;
     background-color: whitesmoke;
     overflow: auto;
@@ -203,7 +203,7 @@ header {
 
 }
 
-#canvas {
+#music-canvas {
     flex-grow: 1;
     cursor: crosshair;
     width: 100%;
@@ -223,7 +223,7 @@ header {
     flex-wrap: wrap;
     align-items: center;
 
-    #audio-controls{
+    #music-controls{
         display: flex;
  
         #playpausebutton {

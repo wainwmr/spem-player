@@ -16,9 +16,9 @@
     <script src="src/ts/common.ts" type="module"></script>
     <script src="src/ts/music-classes.ts" type="module"></script>
     <script src="src/ts/lily.ts" type="module"></script>
-    <script src="src/ts/musicCanvas.ts" type="module"></script>
-    <script src="src/ts/scoreSVG.ts" type="module"></script>
-    <script src="src/ts/audioControls.ts" type="module"></script>
+    <script src="src/ts/MusicCanvas.ts" type="module"></script>
+    <script src="src/ts/MusicScore.ts" type="module"></script>
+    <script src="src/ts/MusicControls.ts" type="module"></script>
     <script defer src="index.ts" type="module"></script>
 
 </head>
@@ -116,14 +116,14 @@
             <p class="copyright">© 2024, Mark Wainwright</p>
         </div>
 
-        <div id="score" is="score-svg">
+        <div id="music-score" is="music-score">
         </div>
 
-        <div id="canvas" is="music-canvas" autofocus>
+        <div id="music-canvas" is="music-canvas" autofocus>
         </div>
 
         <div class="footer">
-            <div id="audio-controls" is="audio-controls">
+            <div id="music-controls" is="music-controls">
                 <div id="playpausebutton" tabindex="0">
                     <svg id="spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                         <circle class="path" fill="none" stroke-width="10" stroke-linecap="round" cx="50" cy="50"
