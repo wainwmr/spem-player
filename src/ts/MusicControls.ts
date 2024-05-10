@@ -4,13 +4,14 @@ import { MusicElement } from "./MusicElement";
 type SvgInHtml = HTMLElement & SVGElement;
 
 export class MusicControls extends MusicElement {
-  static observedAttributes = [ "choir", "part", "bar" ];
+  static observedAttributes = ["choir", "part", "bar"];
 
   audio = new Audio();
 
-  choirselect = document.getElementById('choir-select') as HTMLSelectElement;
-  partselect = document.getElementById('part-select') as HTMLSelectElement;
-  barinput = document.getElementById('bar-field') as HTMLInputElement;
+  choirselect: HTMLSelectElement | null = null;
+  partselect: HTMLSelectElement | null = null;
+  barinput: HTMLInputElement | null = null;
+
   playpausebutton = document.getElementById('playpausebutton') as HTMLDivElement;
   playpauseicon = document.getElementById('playpauseicon') as HTMLSpanElement;
   spinner = document.getElementById('spinner') as SvgInHtml;
@@ -20,10 +21,62 @@ export class MusicControls extends MusicElement {
 
     this.playpausebutton.addEventListener('click', this.playpause.bind(this));
 
-    [this.choirselect,
-    this.partselect,
-    this.barinput].forEach(el => el.addEventListener('change', this.#handleControlsChanged.bind(this)));
   };
+
+  async connectedCallback(): Promise<void> {
+    super.connectedCallback();
+
+    // Build the choirs drop-down list
+    var label = document.createElement("label");
+    label.appendChild(document.createTextNode("Choir"));
+    this.choirselect = document.createElement("select");
+    this.choirselect.setAttribute("name", "choir");
+    this.choirselect.setAttribute("id", "choir-select");
+    for (var c = 0; c < config.choirs; c++) {
+      const opt = document.createElement("option");
+      opt.setAttribute("value", String(c));
+      opt.appendChild(document.createTextNode(String(c + 1)))
+      this.choirselect.append(opt);
+    }
+    label.append(this.choirselect);
+    this.append(label);
+
+    // Build the parts drop-down list
+    label = document.createElement("label");
+    label.appendChild(document.createTextNode("Part"));
+    this.partselect = document.createElement("select");
+    this.partselect.setAttribute("name", "part");
+    this.partselect.setAttribute("id", "part-select");
+    const opt = document.createElement("option");
+    opt.setAttribute("value", "all");
+    opt.appendChild(document.createTextNode("All"));
+    this.partselect.append(opt);
+    for (var p = 0; p < config.parts.length; p++) {
+      const opt = document.createElement("option");
+      opt.setAttribute("value", String(p));
+      opt.appendChild(document.createTextNode(config.parts[p]))
+      this.partselect.append(opt);
+    }
+    label.append(this.partselect);
+    this.append(label);
+
+    // Build the bar input field
+    label = document.createElement("label");
+    label.appendChild(document.createTextNode("Bar"));
+    this.barinput = document.createElement("input");
+    this.barinput.setAttribute("name", "bar");
+    this.barinput.setAttribute("type", "number");
+    this.barinput.setAttribute("id", "bar-field");
+    this.barinput.setAttribute("value", "0");
+    this.barinput.setAttribute("min", "0");
+    this.barinput.setAttribute("max", "138"); // HACK : 138
+    label.append(this.barinput);
+    this.append(label);
+
+    this.choirselect.addEventListener("change", this.#handleControlsChanged.bind(this));
+    this.partselect.addEventListener("change", this.#handleControlsChanged.bind(this));
+    this.barinput.addEventListener("change", this.#handleControlsChanged.bind(this));
+  }
 
   playpause() {
     if (!this.playing) {
@@ -80,7 +133,7 @@ export class MusicControls extends MusicElement {
     function loop() {
       self.bar = self.audio.currentTime / config.tempo;
       const intbar = Math.floor(self.bar);
-      if (Number(self.barinput.value) != intbar) {
+      if (self.barinput && Number(self.barinput.value) != intbar) {
         self.barinput.value = String(intbar);
       }
       self.fireEvent('audio-controls-changed');
@@ -104,6 +157,7 @@ export class MusicControls extends MusicElement {
   }
 
   #handleControlsChanged() {
+    if (!this.barinput || !this.partselect || !this.choirselect) return;
     this.choir = Number(this.choirselect.value);
     this.voicePart = this.partselect.value == "all" ? "all" : Number(this.partselect.value);
     this.bar = Number(this.barinput.value);
@@ -111,6 +165,7 @@ export class MusicControls extends MusicElement {
   }
 
   setChoir(c: string | number) {
+    if (!this.choirselect) return;
     super.setChoir(c);
     console.log(`MusicControls: changing choir to ${this.choir}`);
 
@@ -119,14 +174,16 @@ export class MusicControls extends MusicElement {
   }
 
   setPart(p: string | number) {
+    if (!this.partselect) return;
     super.setPart(p);
     console.log(`MusicControls: changing part to ${this.part}`);
-
+    
     this.partselect.value = String(p);
     if (this.isPlaying()) this.play();
   }
-
+  
   setBar(b: string | number) {
+    if (!this.barinput) return;
     const intbar = Number(b);
     if (intbar === this.bar) return;
     super.setBar(b);

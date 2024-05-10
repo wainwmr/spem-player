@@ -299,8 +299,7 @@ header {
             color: var(--color-text);
 
             input,
-            select,
-            #bar-field {
+            select {
                 box-sizing: border-box;
                 border: 2px solid var(--color-border);
                 height: 2rem;
@@ -310,10 +309,6 @@ header {
                 font-size: 1.2rem;
             }
         }
-    }
-
-    .partcontrol {
-        flex-basis: 6rem;
     }
 
     .statusspacer {
