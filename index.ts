@@ -4,7 +4,7 @@ import { PartType, State, colors, config, toNum, HDSQTIME } from "./src/ts/commo
 
 import { MusicCanvas } from "./src/ts/MusicCanvas";
 import { MusicControls } from "./src/ts/MusicControls";
-import { MusicScore } from "./src/ts/MusicScore";
+import { MusicScore } from "./src/ts/MusScore";
 
 const canvas = document.getElementById("music-canvas") as MusicCanvas;
 const controls = document.getElementById("music-controls") as MusicControls;
