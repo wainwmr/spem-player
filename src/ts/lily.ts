@@ -2,6 +2,7 @@
 
 import * as ohm from 'ohm-js';
 import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
+import { config } from './common';
 
 const lyURL = '/ohmjs/ly-grammar.ohm';
 
@@ -14,7 +15,7 @@ export type Dictionary = {
 export const dict: Dictionary[][] = [];
 
 // a dictionary to hold the muic in the lilypond input file
-export var scores: { [id: string]: Component[]} = {};
+export var scores: { [id: string]: Component[] } = {};
 
 // -----------------------------------------------------
 // Set up Lilypond parser
@@ -24,7 +25,7 @@ var lyGrammar: ohm.Grammar, semantics: ohm.Semantics;
 
 export var lilypondVersion: string;
 
-export async function setupLilypondParser() {
+async function setupLilypondParser() {
 
   // Load the OHM grammar for Lilypond 
   const promise = await fetch(lyURL);
@@ -125,9 +126,13 @@ export type Range = {
   from: number;
   to: number;
 }
-export var ranges:Range[][][] = [];
+export var ranges: Range[][][] = [];
 
 export async function processLilypond(lilypondfile: string) {
+
+  if (semantics == null) {
+    setupLilypondParser();
+  }
 
   // Load the Spem lilypond file
   const promise = await fetch(lilypondfile);
@@ -141,30 +146,27 @@ export async function processLilypond(lilypondfile: string) {
 
   semantics(result).parse();
 
-  const choirs = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
-  const parts = ["Soprano", "Alto", "Tenor", "Baritone", "Bass"];
+  function romanise(num: number) {
+    var lookup: { [index: string]: number } = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 }, roman = '', i;
+    for (i in lookup) {
+      while (num >= lookup[i]) {
+        roman += i;
+        num -= lookup[i];
+      }
+    }
+    return roman;
+  }
 
   // Read lilypond input into dict{ position -> [ {choir, part, note}], ... }
   // Read lilypond into ranges[choir][part] = [ {from, to}, ... ]
-  for (var choir = 0; choir < 8; choir++) {
+  for (var choir = 0; choir < config.choirs; choir++) {
     ranges[choir] = [];
-    for (var part = 0; part < 5; part++) {
+    for (var part = 0; part < config.parts.length; part++) {
       ranges[choir][part] = [];
-      var key = "notes" + choirs[choir] + parts[part];
+      var key = "notes" + romanise(choir+1) + config.parts[part];
       var lilypond = scores[key];
 
       // console.log(lilypond.map(x => (typeof x == "undefined") ? "?" : x.toString()).join(" "));
-
-      // Pretty print where we don't show repeated durations
-      // TODO: Move this functionality inside classes/Component
-      // var str = [];
-      // var lastlen;
-      // for (var c of lilypond) {
-      //   // console.log(lastlen, c.duration.sfths);
-      //   str.push(c.toString(lastlen !== c.duration.sfths));
-      //   lastlen = c.duration.sfths;
-      // }
-      // console.log(str.join(" "));
 
       var from = undefined;
 

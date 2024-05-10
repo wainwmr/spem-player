@@ -1,19 +1,17 @@
 import { PartType, Position, colors, config, toNum } from "./common";
 
-// TODO: don't need setupLilypondParse to be exported, do we?
-import { Dictionary, Range, setupLilypondParser, processLilypond, dict, ranges } from "./lily";
+import { Dictionary, Range, processLilypond, dict, ranges } from "./lily";
 
 export class MusicCanvas extends HTMLCanvasElement {
-  // TODO: MusicCanvas should have its own playloop, not use index.ts to control it.
-  // TODO: MusicCanvas needs state for { choir, part, bar, playing? }
-
   static observedAttributes = [ "choir", "part", "bar", "playing" ];
 
+  // state
   choir: number = 0;
   voicePart: PartType = "all";
   bar: number = 0;
   playing: boolean = false;
 
+  // private 
   canvasPadding: number = 5;  // padding in px of the canvas
   barWidth: number = 0;
   choirHeight: number = 0;
@@ -100,7 +98,6 @@ export class MusicCanvas extends HTMLCanvasElement {
     this.#calculateCanvasSize();
     this.#showLoadingOnCanvas();
 
-    await setupLilypondParser();
     await processLilypond(config.lilypond);
 
     this.dict = dict;
