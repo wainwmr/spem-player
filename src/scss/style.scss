@@ -207,6 +207,7 @@ header {
     flex-grow: 1;
     cursor: crosshair;
     width: 100%;
+    overflow: auto;
 }
 
 // BUG: looks ugly when Bar wraps to next line

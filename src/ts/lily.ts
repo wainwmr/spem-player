@@ -131,7 +131,7 @@ export var ranges: Range[][][] = [];
 export async function processLilypond(lilypondfile: string) {
 
   if (semantics == null) {
-    setupLilypondParser();
+    await setupLilypondParser();
   }
 
   // Load the Spem lilypond file

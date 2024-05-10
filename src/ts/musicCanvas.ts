@@ -1,17 +1,12 @@
-import { PartType, Position, colors, config, toNum } from "./common";
+import { PartType, Position, colors, config, MusicElement } from "./common";
 
 import { Dictionary, Range, processLilypond, dict, ranges } from "./lily";
 
-export class MusicCanvas extends HTMLCanvasElement {
+export class MusicCanvas extends MusicElement {
   static observedAttributes = [ "choir", "part", "bar", "playing" ];
 
-  // state
-  choir: number = 0;
-  voicePart: PartType = "all";
-  bar: number = 0;
-  playing: boolean = false;
+  canvas: HTMLCanvasElement | null = null;
 
-  // private 
   canvasPadding: number = 5;  // padding in px of the canvas
   barWidth: number = 0;
   choirHeight: number = 0;
@@ -23,83 +18,52 @@ export class MusicCanvas extends HTMLCanvasElement {
 
   constructor() {
     super();
-    this.addEventListener('click', this.#canvasClicked.bind(this));
-    this.addEventListener('mousemove', this.#canvasHovered.bind(this), false);
-    this.addEventListener('touchstart', this.#touchStarted.bind(this), { passive: false });
   };
 
   async connectedCallback() {
-    console.log("MusicCanvas added to page.");
+    super.connectedCallback();
     await this.#init();
   }
 
-  disconnectedCallback() {
-    console.log("MusicCanvas removed from page.");
-  }
-
-  adoptedCallback() {
-    console.log("MusicCanvas moved to new page.");
-  }
-  
-  async attributeChangedCallback(name: string, _oldValue: string, newValue: string) {
-    switch (name) {
-      case "choir":
-        this.setChoir(newValue);
-        break;
-      case "part":
-        this.setPart(newValue);
-        break;
-      case "bar":
-        this.setBar(newValue);
-        break;
-      case "playing":
-        this.setPlaying(newValue);
-        break;
-      default:
-        break;
-    }
-  }
-
   setChoir(c: string | number) {
-    this.choir = toNum(c, true, config.choirs - 1);
+    super.setChoir(c);
     this.draw();
   }
 
   setPart(p: string | PartType) {
-    if (typeof p == 'string' && p == 'all') {
-      this.voicePart = "all";
-    }
-    else {
-      this.voicePart = toNum(p, true, config.parts.length - 1);
-    }
+    super.setPart(p);
     this.draw();
   }
 
   setBar(b: string | number) {
-    this.bar = toNum(b, false, 139); // HACK: 139
+    super.setBar(b);
     this.draw();
   }
 
   setPlaying(playing: string | boolean) {
-    if ((typeof playing == "string" && playing == "true") || playing == true) {
-      this.playing = true;
-      this.play();
-    }
-    else {
-      this.playing = false;
-    }
+    super.setPlaying(playing);
+    if (this.playing) this.play();
   }
 
   async #init() {
-    if (dict.length != 0) {
+    if (this.canvas != null) {
       console.log("MusicCanvas: Already initialised. Nothing to do.");
       return;
     }
+
+    this.canvas = document.createElement("canvas");
+    this.append(this.canvas);
+
+    this.canvas.addEventListener('click', this.#canvasClicked.bind(this));
+    this.canvas.addEventListener('mousemove', this.#canvasHovered.bind(this), false);
+    this.canvas.addEventListener('touchstart', this.#touchStarted.bind(this), { passive: false });
+
     this.#calculateCanvasSize();
     this.#showLoadingOnCanvas();
 
     await processLilypond(config.lilypond);
 
+    // HACK: can't these just be returned from processLilypond()?
     this.dict = dict;
     this.ranges = ranges;
 
@@ -116,25 +80,27 @@ export class MusicCanvas extends HTMLCanvasElement {
   }
 
   #calculateCanvasSize() {
-    if (config == null) return;
+    if (this.canvas == null) return;
 
-    this.width = this.clientWidth * 4;
-    this.height = 300 * 2;
+    this.canvas.width = this.clientWidth;
+    this.canvas.height = 300 * 2;
 
-    this.barWidth = (this.width - (2 * this.canvasPadding)) / 140;
-    this.choirHeight = (this.height - (2 * this.canvasPadding)) / config.choirs;
+    this.barWidth = (this.canvas.width - (2 * this.canvasPadding)) / 140;
+    this.choirHeight = (this.canvas.height - (2 * this.canvasPadding)) / config.choirs;
     this.partHeight = this.choirHeight / config.parts.length;
     // console.log("MusicCanvas: calculated bar choir and part sizes:", this.barWidth, this.choirHeight, this.partHeight);
   };
 
   #showLoadingOnCanvas() {
-    const ctx = this.getContext("2d");
+    if (this.canvas == null) return;
+
+    const ctx = this.canvas.getContext("2d");
     if (ctx != null) {
       ctx.save();
       ctx.font = "30px Arial";
       ctx.fillStyle = "white";
-      ctx.scale(this.width / this.height, 1);
-      ctx.fillText(`Loading...`, 0, this.height / 2);
+      ctx.scale(this.canvas.width / this.canvas.height, 1);
+      ctx.fillText(`Loading...`, 0, this.canvas.height / 2);
       ctx.restore();
     }
   }
@@ -158,9 +124,6 @@ export class MusicCanvas extends HTMLCanvasElement {
     return intbar;
   }
 
-  oldTimeStamp: number = 0;
-  fps: number = 0;
-
   play() {
     const self = this;
     function loop() {
@@ -176,8 +139,10 @@ export class MusicCanvas extends HTMLCanvasElement {
 
   }
 
-
+  oldTimeStamp: number = 0;
   draw() {
+    if (!this.canvas) return;
+
     if (ranges.length === 0 || dict.length === 0) {
       console.log("MusicCanvas: not ready to draw!");
       return;
@@ -206,17 +171,17 @@ export class MusicCanvas extends HTMLCanvasElement {
     }
 
     // Blank out the whole canvas
-    const ctx = this.getContext("2d");
+    const ctx = this.canvas.getContext("2d");
     if (ctx == null) return;
 
     ctx.fillStyle = colors().background;
-    ctx.fillRect(0, 0, this.width, this.height);
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Draw FPS number to the screen
     if (fps) {
       ctx.font = '25px Arial';
       ctx.fillStyle = '#CCC';
-      ctx.fillText("FPS: " + fps, 10, this.height - 30);
+      ctx.fillText("FPS: " + fps, 10, this.canvas.height - 30);
     }
 
     // Draw bar highlight
@@ -224,7 +189,7 @@ export class MusicCanvas extends HTMLCanvasElement {
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(this.canvasPadding + (this.bar * this.barWidth), this.canvasPadding);
-      ctx.lineTo(this.canvasPadding + (this.bar * this.barWidth), this.height - this.canvasPadding);
+      ctx.lineTo(this.canvasPadding + (this.bar * this.barWidth), this.canvas.height - this.canvasPadding);
       ctx.lineWidth = this.barWidth * 1.4;
       ctx.strokeStyle = colors().highlight;
       ctx.lineCap = "square";
@@ -311,85 +276,65 @@ export class MusicCanvas extends HTMLCanvasElement {
   }
 
   // BUG: what happens if you click in the canvas padding?
-  #getMousePos(evt: MouseEvent): Position {
+  #getMousePos(e: MouseEvent): Position {
     // if (!this.config) return { choir: 0, part: 0, bar: 0 };
 
     const rect = this.getBoundingClientRect();
-    const y = ((evt.offsetY - this.canvasPadding) * config.choirs) / (rect.height - (2 * this.canvasPadding));
+    const y = ((e.offsetY - this.canvasPadding) * config.choirs) / (rect.height - (2 * this.canvasPadding));
     return {
       choir: Math.min(config.choirs - 1, Math.max(0, Math.floor(y))),
       part: Math.floor((y % 1) * config.parts.length),
-      bar: Math.floor((evt.offsetX * 140) / rect.width)
+      bar: Math.floor((e.offsetX * 140) / rect.width)
     };
+  }
+
+  #moveToPosition(pos: Position) {
+    this.choir = pos.choir;
+    this.voicePart = pos.part;
+    this.bar = pos.bar;
   }
 
   // TODO: combine canvasClicked and Hovered?
   #canvasClicked(e: MouseEvent) {
-    const pos: Position = this.#getMousePos(e);
-    const myEvent = new CustomEvent("music-canvas-click", {
-      detail: {
-        position: pos
-      },
-      bubbles: true,
-      cancelable: true,
-      composed: false,
-    });
-    this.dispatchEvent(myEvent);
+    this.#moveToPosition(this.#getMousePos(e));
+    this.fireEvent("music-canvas-click");
   }
 
   #canvasHovered(e: MouseEvent) {
     const pos: Position = this.#getMousePos(e);
-    const myEvent = new CustomEvent("music-canvas-hover", {
-      detail: {
-        position: pos
-      },
-      bubbles: true,
-      cancelable: true,
-      composed: false,
-    });
-    this.dispatchEvent(myEvent);
+    this.fireEvent("music-canvas-hover", pos);
   }
 
-  #getTouchPos(evt: TouchEvent): Position {
+  #getTouchPos(e: TouchEvent): Position {
     var rect = this.getBoundingClientRect();
 
-    const y = ((evt.targetTouches[0].clientY - rect.top - this.canvasPadding) * config.choirs) / (rect.height - (2 * this.canvasPadding));
+    const y = ((e.targetTouches[0].clientY - rect.top - this.canvasPadding) * config.choirs) / (rect.height - (2 * this.canvasPadding));
     return {
       choir: Math.min(config.choirs - 1, Math.max(0, Math.floor(y))),
       part: "all",
-      bar: Math.floor((evt.targetTouches[0].clientX - rect.left - this.canvasPadding) * 140 / rect.width)
+      bar: Math.floor((e.targetTouches[0].clientX - rect.left - this.canvasPadding) * 140 / rect.width)
     };
   }
 
-  #touchStarted(evt: TouchEvent) {
-    evt.preventDefault();
-    const pos: Position = this.#getTouchPos(evt);
-
-    console.log("Touch started at", pos);
-    this.choir = pos.choir;
-    this.voicePart = "all";
-    this.bar = pos.bar;
+  #touchStarted(e: TouchEvent) {
+    e.preventDefault();
+    this.#moveToPosition(this.#getTouchPos(e));
+    this.fireEvent("music-canvas-touchstart");
     this.draw();
-
-    this.addEventListener("touchmove", (evt) => {
-      const pos = this.#getTouchPos(evt);
-
-      console.log("Touch moved at", pos);
-      this.choir = pos.choir;
-      this.voicePart = "all";
-      this.bar = pos.bar;
+    
+    this.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+      this.#moveToPosition(this.#getTouchPos(e));
+      this.fireEvent("music-canvas-touchmove");
       this.draw();
       });
     this.addEventListener("touchend", () => {
-      const pos = this.#getTouchPos(evt);
-
-      console.log("Touch ended at", pos);
-      this.setAttribute("choir", String(pos.choir));
-      this.setAttribute("part", "all");
-      this.setAttribute("bar", String(pos.bar));
+      e.preventDefault();
+      this.#moveToPosition(this.#getTouchPos(e));
+      this.fireEvent("music-canvas-touchend");
       this.draw();
       });
   }
 }
 
-window.customElements.define("music-canvas", MusicCanvas, { extends: "canvas" });
+MusicCanvas.define("music-canvas");

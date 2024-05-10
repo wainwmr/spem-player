@@ -1,16 +1,13 @@
 
 // TODO: bar positions should come from model
 import { scorebars_modern, scorebars_early } from "./barlines";
-import { PartType, config, colors, toNum } from "./common";
+import { config, colors, MusicElement } from "./common";
 
-export class ScoreSVG extends HTMLDivElement {
-  static observedAttributes = ["choir", "part", "bar", "score-type"];
+export class ScoreSVG extends MusicElement {
+  static observedAttributes = [ "choir", "part", "bar", "playing", "score-type" ];
 
   svg: SVGGraphicsElement | null = null;
 
-  choir: number = 0;
-  bar: number = 0;
-  voicePart: PartType = "all";
   scoreType: string = "modern";
 
   scorebars = (this.scoreType == "early" ? scorebars_early : scorebars_modern);
@@ -20,35 +17,11 @@ export class ScoreSVG extends HTMLDivElement {
     super();
   };
 
-  async connectedCallback() {
-    console.log("ScoreSVG added to page.");
-  }
-
-  disconnectedCallback() {
-    console.log("ScoreSVG removed from page.");
-  }
-
-  adoptedCallback() {
-    console.log("ScoreSVG moved to new page.");
-  }
-
   async attributeChangedCallback(name: string, _oldValue: string, newValue: string) {
-    switch (name) {
-      case "choir":
-        this.setChoir(newValue);
-        break;
-      case "part":
-        this.setPart(newValue);
-        break;
-      case "bar":
-        this.setBar(newValue);
-        break;
-      case "score-type":
-        this.setScoreType(newValue);
-        break;
-      default:
-        break;
+    if (name == "score-type") {
+      this.setScoreType(newValue);
     }
+    super.attributeChangedCallback(name, _oldValue, newValue);
   }
 
   // var pt;
@@ -79,7 +52,7 @@ export class ScoreSVG extends HTMLDivElement {
   }
 
   async setChoir(c: string | number) {
-    this.choir = toNum(c, true, config.choirs - 1);
+    super.setChoir(c);
 
     // load the correct score for this choir
     await this.#loadScore();
@@ -93,19 +66,10 @@ export class ScoreSVG extends HTMLDivElement {
     this.scrollToPosition(intbar, "instant");
   }
 
-  setPart(p: string | number) {
-    this.voicePart = toNum(p, true, config.parts.length - 1);
-  }
-
   previousBarHighlight: SVGRectElement | null = null;
   setBar(b: string | number) {
-    const intbar = toNum(b, true);
-    if (intbar == this.bar) {
-      return;
-    }
-    this.bar = intbar;
-
-    this.svg = document.querySelector("#score svg");
+    super.setBar(b);
+    const intbar = Math.floor(this.bar);
 
     // highlight the current bar
     this.highlightBar(intbar);
@@ -175,4 +139,4 @@ export class ScoreSVG extends HTMLDivElement {
   }
 }
 
-customElements.define("score-svg", ScoreSVG, { extends: "div" });
+ScoreSVG.define("score-svg");

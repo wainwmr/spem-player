@@ -66,7 +66,6 @@ var current: State = {
 //   setBar(scorebars.indexOf(result));
 // }
 
-// where c = 1 to number of choirs  TODO: Need to zero index choir
 async function setChoir(c: number, forceChange = false) {
   if (current.choir == c && !forceChange) {
     return;
@@ -357,7 +356,9 @@ function init(): void {
   controls.addEventListener("audio-controls-changed", handleControlChange as (e: Event) => void);
   controls.addEventListener("audio-controls-playing", handleAudioPlaying as (e: Event) => void);
   controls.addEventListener("audio-controls-paused", handleAudioPaused as (e: Event) => void);
+
   canvas.addEventListener("music-canvas-click", handleCanvasClick as (e: Event) => void);
+  canvas.addEventListener("music-canvas-touchend", handleCanvasClick as (e: Event) => void);
   canvas.addEventListener("music-canvas-hover", handleCanvasHover as (e: Event) => void);
 
   document.addEventListener("keydown", keyboardTapped);
