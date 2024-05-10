@@ -43,14 +43,14 @@ export class MusicScore extends MusicElement {
 
   async #loadScore() {
     const filename = config.svg_prefix + this.scoreType + "/Choir " + (this.choir + 1) + ".svg";
-    console.log("ScoreSVG: fetching", filename);
+    console.log("MusicScore: fetching", filename);
     await fetch(filename)
       .then(r => r.text())
       .then(text => {
         this.innerHTML = text;
       })
       .catch(console.error.bind(console));
-    this.svg = document.querySelector("#score svg");
+    this.svg = document.querySelector("#music-score svg");
   }
 
   async setChoir(c: string | number) {
