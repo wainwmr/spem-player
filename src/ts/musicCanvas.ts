@@ -327,15 +327,14 @@ export class MusicCanvas extends MusicElement {
     this.fireEvent("music-canvas-touchstart");
     this.draw();
     
-    this.addEventListener("touchmove", (e) => {
-      e.preventDefault();
-      this.#moveToPosition(this.#getTouchPos(e));
+    this.addEventListener("touchmove", (evt: TouchEvent) => {
+      evt.preventDefault();
+      this.#moveToPosition(this.#getTouchPos(evt));
       this.fireEvent("music-canvas-touchmove");
       this.draw();
       });
-    this.addEventListener("touchend", () => {
-      e.preventDefault();
-      this.#moveToPosition(this.#getTouchPos(e));
+    this.addEventListener("touchend", (evt: TouchEvent) => {
+      evt.preventDefault();
       this.fireEvent("music-canvas-touchend");
       this.draw();
       });

@@ -358,7 +358,8 @@ function init(): void {
   controls.addEventListener("audio-controls-paused", handleAudioPaused as (e: Event) => void);
 
   canvas.addEventListener("music-canvas-click", handleCanvasClick as (e: Event) => void);
-  canvas.addEventListener("music-canvas-touchend", handleCanvasClick as (e: Event) => void);
+  canvas.addEventListener("music-canvas-touchstart", handleCanvasClick as (e: Event) => void);
+  canvas.addEventListener("music-canvas-touchmove", handleCanvasClick as (e: Event) => void);
   canvas.addEventListener("music-canvas-hover", handleCanvasHover as (e: Event) => void);
 
   document.addEventListener("keydown", keyboardTapped);
