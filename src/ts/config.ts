@@ -1,3 +1,5 @@
+import spem from '../lilypond/spem.ly?raw'
+
 export default {
   "choirs": 8,
   "parts": ["Soprano", "Alto", "Tenor", "Baritone", "Bass"],
@@ -5,5 +7,5 @@ export default {
   "audio_prefix": "/audio/",
   "tempo": 4 * 60 / 62,  // (minim = 62) === (tempo = 4 * 0.9677)
   "svg_prefix": "/svg/",
-  "lilypond": "/lilypond/spem notes.ly"
+  "lilypond": spem
 }

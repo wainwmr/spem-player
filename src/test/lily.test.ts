@@ -2,25 +2,8 @@ import { processLilypond, ranges, dict, exportedForTesting } from '../ts/lily';
 const { semantics, romanise, setupLilypondParser } = exportedForTesting;
 import * as ohm from 'ohm-js';
 import lyGrammar from '../ohmjs/ly-grammar.ohm-bundle';
-import createFetchMock from 'vitest-fetch-mock';
-
-import { promises as fs } from 'fs';
-
-
-// Mock the fetch calls
-async function getTextFile(path: string): Promise<string> {
-  return await fs.readFile(path, 'utf-8');
-}
-const spemnotes = await getTextFile('/Users/mark/github/spem-player/public/lilypond/spem notes.ly');
-const fetchMocker = createFetchMock(vi);
-fetchMocker.enableMocks();
 
 describe("lilypond parsing tests", () => {
-  beforeEach(() => {
-    // @ts-ignore
-    fetch.resetMocks();
-  })
-
 
   it("romanise", () => {
     expect(romanise(1)).toBe("I");
@@ -52,21 +35,17 @@ describe("lilypond parsing tests", () => {
     expect(a.message).contain("sop987");
   });
 
-  it("setupLilypondParser", async () => {
-    await setupLilypondParser();
-    expect(semantics).toBeTruthy();
-    console.log(semantics.length);
-    // const result = processLilypond(ly);
-    // expect(result).toReturn();
-
+  it("setupLilypondParser", () => {
+    var s = setupLilypondParser();
+    expect(s).toBeTruthy();
+    expect(dict.length).toBe(0);
+    expect(ranges.length).toBe(0);
   });
 
-  it("processLilypond", async () => {
-    // @ts-ignore
-    fetch.mockResponseOnce(spemnotes);
+  it("processLilypond", () => {
 
     //assert on the response
-    await processLilypond("any");
+    processLilypond();
     expect(dict.length).toBe(139); // bars including bar zero
     expect(ranges.length).toBe(8); // choirs
     for (var c = 0; c < 8; c++) {
@@ -76,10 +55,6 @@ describe("lilypond parsing tests", () => {
         expect(last.to).toBe(139);
       }
     }
-
-
-    // await expect(processLilypond("bad")).rejects.toThrow("bad");
-    // await expect(processLilypond("./lily.test.ts")).rejects.toThrow("bad");
   });
 
 

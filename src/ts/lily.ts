@@ -3,7 +3,6 @@ import lyGrammar from '../ohmjs/ly-grammar.ohm-bundle';
 import * as ohm from 'ohm-js';
 import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
 
-
 // Make an dictionary of music positions (hemidemisemiquavers/128) to array of notes {choir, part, note}
 export type Dictionary = {
   "c": number;
@@ -19,7 +18,7 @@ export var scores: { [id: string]: Component[] } = {};
 // Set up Lilypond parser
 // -----------------------------------------------------
 
-var semantics: ohm.Semantics = await setupLilypondParser();
+var semantics: ohm.Semantics = setupLilypondParser();
 
 var lilypondVersion: string;
 
@@ -35,9 +34,9 @@ function romanise(num: number) {
 }
 
 
-async function setupLilypondParser() {
+function setupLilypondParser(): ohm.Semantics {
 
-  var semantics = lyGrammar.createSemantics();
+  var s = lyGrammar.createSemantics();
 
   // If lilypond input has no duration, use lastDuration; use lastNote if note name is missing
   var lastNote: Note, lastDuration: Duration;
@@ -54,7 +53,7 @@ async function setupLilypondParser() {
   }
 
 
-  semantics.addOperation('parse', {
+  s.addOperation('parse', {
     Version(_, _2, v, _3) {
       lilypondVersion = v.sourceString;
     },
@@ -122,8 +121,7 @@ async function setupLilypondParser() {
       return children.map(c => c.parse());
     }
   });
-
-  return semantics;
+  return s;
 }
 
 // Array of choir, part and 
@@ -139,19 +137,14 @@ async function getFile(filename: string): Promise<string> {
   return text;
 }
 
-export async function processLilypond(lilypondfile: string) {
+export function processLilypond() {
 
   if (!semantics) {
-    semantics = await setupLilypondParser();
+    semantics = setupLilypondParser();
   }
 
-  // Load the Spem lilypond file
-  const spemly = await (getFile(lilypondfile));
-  // const promise = await fetch(lilypondfile);
-  // const spemly = await promise.text();
-
-  // Parse it
-  const result = lyGrammar.match(spemly);
+  // Parse lilypond from the ohm grammar
+  const result = lyGrammar.match(config.lilypond);
   if (!result.succeeded()) {
     console.error('Bad Lilypond ' + result.message);
   }
