@@ -281,10 +281,12 @@ function toggleScore(forceEarly = false) {
     console.log("Toggle SCORE");
     current.period = "early";
     score.setAttribute("score-type", "early");
+    document.body.style.setProperty('--font', "Quintessential");
   }
   else {
     current.period = "modern";
     score.setAttribute("score-type", "modern");
+    document.body.style.setProperty('--font', "Alegreya");
   }
 }
 

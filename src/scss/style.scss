@@ -53,6 +53,7 @@ body {
     --color-c6: 150;
     --color-c7: 190;
     --color-c8: 220;
+    --font: Alegreya;
 }
 
 body {
@@ -199,6 +200,10 @@ header {
 
     svg {
         height: 100%;
+
+        text {
+            font-family: var(--font), serif;
+        }
     }
 
 }
