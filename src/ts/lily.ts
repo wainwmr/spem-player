@@ -1,10 +1,5 @@
-/* eslint-disable no-unused-vars */
 import config from "./config";
-
-// import lilypond from '../ohmjs/ly-grammar.ohm';
 import lyGrammar from '../ohmjs/ly-grammar.ohm-bundle';
-// const lyURL = '/ohmjs/ly-grammar.ohm';
-
 import * as ohm from 'ohm-js';
 import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
 
@@ -24,9 +19,9 @@ export var scores: { [id: string]: Component[] } = {};
 // Set up Lilypond parser
 // -----------------------------------------------------
 
-export var semantics: ohm.Semantics;
+var semantics: ohm.Semantics = await setupLilypondParser();
 
-export var lilypondVersion: string;
+var lilypondVersion: string;
 
 function romanise(num: number) {
   var lookup: { [index: string]: number } = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 }, roman = '', i;
@@ -42,7 +37,7 @@ function romanise(num: number) {
 
 async function setupLilypondParser() {
 
-  semantics = lyGrammar.createSemantics();
+  var semantics = lyGrammar.createSemantics();
 
   // If lilypond input has no duration, use lastDuration; use lastNote if note name is missing
   var lastNote: Note, lastDuration: Duration;
@@ -128,6 +123,7 @@ async function setupLilypondParser() {
     }
   });
 
+  return semantics;
 }
 
 // Array of choir, part and 
@@ -137,15 +133,22 @@ export type Range = {
 }
 export var ranges: Range[][][] = [];
 
+async function getFile(filename: string): Promise<string> {
+  const promise = await fetch(filename);
+  const text = await promise.text();
+  return text;
+}
+
 export async function processLilypond(lilypondfile: string) {
 
-  if (semantics == null) {
-    await setupLilypondParser();
+  if (!semantics) {
+    semantics = await setupLilypondParser();
   }
 
   // Load the Spem lilypond file
-  const promise = await fetch(lilypondfile);
-  const spemly = await promise.text();
+  const spemly = await (getFile(lilypondfile));
+  // const promise = await fetch(lilypondfile);
+  // const spemly = await promise.text();
 
   // Parse it
   const result = lyGrammar.match(spemly);
@@ -202,6 +205,6 @@ export async function processLilypond(lilypondfile: string) {
 }
 
 export const exportedForTesting = {
-  romanise, setupLilypondParser
+  semantics, romanise, setupLilypondParser, getFile
 }
 

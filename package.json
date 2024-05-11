@@ -18,7 +18,8 @@
     "eslint": "^8.57.0",
     "typescript": "^5.4.5",
     "vite": "^5.2.10",
-    "vitest": "^1.5.3"
+    "vitest": "^1.5.3",
+    "vitest-fetch-mock": "^0.2.2"
   },
   "scripts": {
     "dev": "vite --host",
