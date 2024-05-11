@@ -1,10 +1,13 @@
 /* eslint-disable no-unused-vars */
 import config from "./config";
 
+// import lilypond from '../ohmjs/ly-grammar.ohm';
+import lyGrammar from '../ohmjs/ly-grammar.ohm-bundle';
+// const lyURL = '/ohmjs/ly-grammar.ohm';
+
 import * as ohm from 'ohm-js';
 import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
 
-const lyURL = '/ohmjs/ly-grammar.ohm';
 
 // Make an dictionary of music positions (hemidemisemiquavers/128) to array of notes {choir, part, note}
 export type Dictionary = {
@@ -21,18 +24,24 @@ export var scores: { [id: string]: Component[] } = {};
 // Set up Lilypond parser
 // -----------------------------------------------------
 
-var lyGrammar: ohm.Grammar, semantics: ohm.Semantics;
+export var semantics: ohm.Semantics;
 
 export var lilypondVersion: string;
 
+function romanise(num: number) {
+  var lookup: { [index: string]: number } = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 }, roman = '', i;
+  for (i in lookup) {
+    while (num >= lookup[i]) {
+      roman += i;
+      num -= lookup[i];
+    }
+  }
+  return roman;
+}
+
+
 async function setupLilypondParser() {
 
-  // Load the OHM grammar for Lilypond 
-  const promise = await fetch(lyURL);
-  const grammarString = await promise.text();
-  lyGrammar = ohm.grammar(grammarString);
-
-  // Create a parse for Lilypond
   semantics = lyGrammar.createSemantics();
 
   // If lilypond input has no duration, use lastDuration; use lastNote if note name is missing
@@ -146,17 +155,6 @@ export async function processLilypond(lilypondfile: string) {
 
   semantics(result).parse();
 
-  function romanise(num: number) {
-    var lookup: { [index: string]: number } = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 }, roman = '', i;
-    for (i in lookup) {
-      while (num >= lookup[i]) {
-        roman += i;
-        num -= lookup[i];
-      }
-    }
-    return roman;
-  }
-
   // Read lilypond input into dict{ position -> [ {choir, part, note}], ... }
   // Read lilypond into ranges[choir][part] = [ {from, to}, ... ]
   for (var choir = 0; choir < config.choirs; choir++) {
@@ -202,3 +200,8 @@ export async function processLilypond(lilypondfile: string) {
     }
   }
 }
+
+export const exportedForTesting = {
+  romanise, setupLilypondParser
+}
+

@@ -6,3 +6,4 @@ dist
 *.pdf
 # Local Netlify folder
 .netlify
+coverage
