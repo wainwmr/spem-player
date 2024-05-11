@@ -194,5 +194,3 @@ export class MusicControls extends MusicElement {
     this.barinput.value = String(this.bar);
   }
 }
-
-MusicControls.define("music-controls");

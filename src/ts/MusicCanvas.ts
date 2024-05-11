@@ -4,7 +4,7 @@ import { MusicElement } from "./MusicElement";
 import { Dictionary, Range, processLilypond, dict, ranges } from "./lily";
 
 export class MusicCanvas extends MusicElement {
-  static observedAttributes = [ "choir", "part", "bar", "playing" ];
+  static observedAttributes = ["choir", "part", "bar", "playing"];
 
   canvas: HTMLCanvasElement | null = null;
 
@@ -327,19 +327,17 @@ export class MusicCanvas extends MusicElement {
     this.#moveToPosition(this.#getTouchPos(e));
     this.fireEvent("music-canvas-touchstart");
     this.draw();
-    
+
     this.addEventListener("touchmove", (evt: TouchEvent) => {
       evt.preventDefault();
       this.#moveToPosition(this.#getTouchPos(evt));
       this.fireEvent("music-canvas-touchmove");
       this.draw();
-      });
+    });
     this.addEventListener("touchend", (evt: TouchEvent) => {
       evt.preventDefault();
       this.fireEvent("music-canvas-touchend");
       this.draw();
-      });
+    });
   }
 }
-
-MusicCanvas.define("music-canvas");

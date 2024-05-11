@@ -3,17 +3,20 @@ import './src/scss/style.scss';
 import { PartType, State, colors, config, toNum, HDSQTIME } from "./src/ts/common";
 
 import { MusicCanvas } from "./src/ts/MusicCanvas";
+import { MusicCanvasWatcher } from "./src/ts/MusicCanvasWatcher";
 import { MusicControls } from "./src/ts/MusicControls";
 import { MusicScore } from "./src/ts/MusicScore";
 
+MusicCanvas.define("music-canvas");
+MusicCanvasWatcher.define("music-canvas-watcher");
+MusicControls.define("music-controls");
+MusicScore.define("music-score");
+
 const canvas = document.getElementById("music-canvas") as MusicCanvas;
+const canvasWatcher = document.getElementById("music-canvas-watcher") as MusicCanvasWatcher;
 const controls = document.getElementById("music-controls") as MusicControls;
 const score = document.getElementById("music-score") as MusicScore;
 
-const statusarea = document.getElementById('statusarea') as HTMLDivElement;
-const choiroutput = document.getElementById('choir-output') as HTMLSpanElement;
-const partoutput = document.getElementById('part-output') as HTMLSpanElement;
-const baroutput = document.getElementById('bar-output') as HTMLSpanElement;
 const info = document.getElementById('info') as HTMLSpanElement;
 const help = document.getElementById('help') as HTMLDivElement;
 const backdrop = document.getElementById('backdrop') as HTMLDivElement;
@@ -44,7 +47,6 @@ var current: State = {
 // BUG: Bass in choir 7 between bars 50 and 68 - rests not showing correctly.
 // BUG: Tenor in choir 4 bar 22. Audio has c natural.  Score has c sharp.
 // BUG: Soprano in choir 1 bar 13.  Breve or Longa?
-// TODO: index.html should not have part and choir names hard-coded.  Should come from config instead.
 
 async function setChoir(c: number, forceChange = false) {
   if (current.choir == c && !forceChange) {
@@ -308,22 +310,6 @@ function handleAudioPaused() {
   score.setAttribute("playing", "false");
 }
 
-var intId;
-function handleCanvasHover(e: CustomEvent) {
-  const pos = e.detail.position;
-
-  choiroutput.textContent = "Choir " + (pos.choir + 1);
-  if (pos.part != 'all') {
-    partoutput.textContent = config.parts[pos.part];
-  }
-  baroutput.textContent = "Bar " + Math.floor(pos.bar);
-  statusarea.classList.remove("hide");
-  clearInterval(intId);
-  intId = setInterval(function () {
-    statusarea.classList.add("hide");
-  }, 1500);
-}
-
 // -----------------------------------------------------
 // Setup page
 // -----------------------------------------------------
@@ -348,7 +334,6 @@ function init(): void {
   canvas.addEventListener("music-canvas-click", handleCanvasClick as (e: Event) => void);
   canvas.addEventListener("music-canvas-touchstart", handleCanvasClick as (e: Event) => void);
   canvas.addEventListener("music-canvas-touchmove", handleCanvasClick as (e: Event) => void);
-  canvas.addEventListener("music-canvas-hover", handleCanvasHover as (e: Event) => void);
 
   document.addEventListener("keydown", keyboardTapped);
   info.addEventListener("click", () => showHelp(true));

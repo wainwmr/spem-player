@@ -170,5 +170,3 @@ export class MusicScore extends MusicElement {
     this.#loadScore();
   }
 }
-
-MusicScore.define("music-score");
