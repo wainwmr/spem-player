@@ -1,6 +1,8 @@
 import './src/scss/style.scss';
 
-import { PartType, State, colors, config, toNum, HDSQTIME } from "./src/ts/common";
+import config from "./src/ts/config"
+
+import { PartType, State, colors, toNum, HDSQTIME } from "./src/ts/common";
 
 import { MusicCanvas } from "./src/ts/MusicCanvas";
 import { MusicCanvasWatcher } from "./src/ts/MusicCanvasWatcher";

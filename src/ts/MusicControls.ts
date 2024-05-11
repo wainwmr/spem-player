@@ -1,4 +1,4 @@
-import { config } from "./common";
+import config from "./config";
 import { MusicElement } from "./MusicElement";
 
 type SvgInHtml = HTMLElement & SVGElement;

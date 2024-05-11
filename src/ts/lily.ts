@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
+import config from "./config";
 
 import * as ohm from 'ohm-js';
 import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
-import { config } from './common';
 
 const lyURL = '/ohmjs/ly-grammar.ohm';
 

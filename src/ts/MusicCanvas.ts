@@ -1,4 +1,5 @@
-import { PartType, Position, colors, config } from "./common";
+import config from "./config";
+import { PartType, Position, colors } from "./common";
 import { MusicElement } from "./MusicElement";
 
 import { Dictionary, Range, processLilypond, dict, ranges } from "./lily";

@@ -1,7 +1,8 @@
+import config from "./config";
+import { colors, HDSQTIME } from "./common";
 
 // TODO: bar positions should come from model
 import { scorebars_modern, scorebars_early } from "./barlines";
-import { config, colors, HDSQTIME } from "./common";
 import { MusicElement } from "./MusicElement";
 
 

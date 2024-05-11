@@ -1,4 +1,5 @@
-import { PartType, Position, config, toNum } from "./common";
+import config from "./config";
+import { PartType, Position, toNum } from "./common";
 
 export class MusicElement extends HTMLDivElement {
 
