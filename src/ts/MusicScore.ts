@@ -1,8 +1,6 @@
 import config from "./config";
 import { colors, HDSQTIME } from "./common";
 
-// TODO: bar positions should come from model
-import { scorebars_modern, scorebars_early } from "./barlines";
 import { MusicElement } from "./MusicElement";
 
 
@@ -13,7 +11,7 @@ export class MusicScore extends MusicElement {
 
   scoreType: string = "modern";
 
-  scorebars = (this.scoreType == "early" ? scorebars_early : scorebars_modern);
+  bars: number[] = [];
 
   highlightBar: SVGRectElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect')
   highlightPosition: SVGRectElement = document.createElementNS("http://www.w3.org/2000/svg", 'rect')
@@ -59,9 +57,9 @@ export class MusicScore extends MusicElement {
   //   var cursorpt = pt.matrixTransform(svg.getScreenCTM().inverse());
   //   console.log("(" + cursorpt.x + ", " + cursorpt.y + ")");
 
-  //   var result = scorebars.find(x => x > cursorpt.x);
-  //   console.log(scorebars.indexOf(result));
-  //   setBar(scorebars.indexOf(result));
+  //   var result = bars.find(x => x > cursorpt.x);
+  //   console.log(bars.indexOf(result));
+  //   setBar(bars.indexOf(result));
   // }
 
 
@@ -76,10 +74,17 @@ export class MusicScore extends MusicElement {
       .catch(console.error.bind(console));
     this.svg = document.querySelector("#music-score svg");
 
-    if (this.svg) {
-      this.svg.prepend(this.highlightPosition);
-      this.svg.prepend(this.highlightBar);
+    if (!this.svg) {
+      console.error("Could not load score " + filename);
+      return;
     }
+
+    this.svg.prepend(this.highlightPosition);
+    this.svg.prepend(this.highlightBar);
+
+    // determine what the bar positions are for this score
+    this.bars = MusicScore.getBars(this.svg);
+    console.log(this.bars);
   }
 
   async setChoir(c: string | number) {
@@ -110,13 +115,13 @@ export class MusicScore extends MusicElement {
     }
     var intbar = Math.floor(this.bar + HDSQTIME);
     // we can't scroll past the last bar for this choir
-    intbar = Math.min(intbar, this.scorebars[this.choir].length);
+    intbar = Math.min(intbar, this.bars.length);
     const idealBarPercentage = 0.25;
     const frameWidth = this.offsetWidth; // the width of the visible score on the screen
     const scoreWidth = this.svg.getBoundingClientRect().width; // the total width of the score
     const svgWidth = this.svg.getBBox().width; // the width of the score in SVG unit
-    const barstartpct = intbar <= 0 ? 0 : this.scorebars[this.choir][intbar - 1] / svgWidth; // % along the score of this bar
-    const barendpct = intbar >= this.scorebars[this.choir].length ? 1 : this.scorebars[this.choir][intbar] / svgWidth; // % along the score of the next bar
+    const barstartpct = intbar <= 0 ? 0 : this.bars[intbar - 1] / svgWidth; // % along the score of this bar
+    const barendpct = intbar >= this.bars.length ? 1 : this.bars[intbar] / svgWidth; // % along the score of the next bar
     const barcurrentpct = ((this.bar - intbar) * (barendpct - barstartpct)) + barstartpct; // % along the score of current position in the bar
     const idealPos = (barcurrentpct * scoreWidth) - (idealBarPercentage * frameWidth);
 
@@ -132,14 +137,21 @@ export class MusicScore extends MusicElement {
     }
 
     // set the highlight for the current bar
-    const size = this.scorebars[this.choir].length;
-    if (intbar > 0 && intbar <= size) {
-      const bw = (intbar >= size ? 
-        this.svg.getBBox().width - this.scorebars[this.choir][size - 1] : 
-        this.scorebars[this.choir][intbar] - this.scorebars[this.choir][intbar - 1]);
-        this.highlightBar.setAttribute("x", String(this.scorebars[this.choir][intbar - 1]));
-        this.highlightBar.setAttribute("width", String(bw));
+    var left = 0, width = 0;
+    if (intbar < 1) {
+      left = 0;
+      width = 0;
     }
+    else if (intbar >= 138) {
+      left = this.bars[137];
+      width = this.bars[138] - left;
+    }
+    else {
+      left = this.bars[intbar - 1];
+      width = this.bars[intbar] - left;
+    }
+    this.highlightBar.setAttribute("x", String(left));
+    this.highlightBar.setAttribute("width", String(isNaN(width) ? this.svg.getBBox().width : width));
   }
 
   highlight() {
@@ -160,14 +172,36 @@ export class MusicScore extends MusicElement {
     if (config.scores.indexOf(s) < 0) {
       this.scoreType = config.scores[0];
     }
-
-    // HACK: Ugh
-    if (this.scoreType === "modern") {
-      this.scorebars = scorebars_modern;
-    }
-    else {
-      this.scorebars = scorebars_early;
-    }
     this.#loadScore();
+  }
+
+  // Lilypond (currently) outputs SVG with bar numbers looking as follows.  The x position
+  // of the translate is the beginning of each bar as long as the <tspan> contains a number
+  // rather than lyrics.  Also, a pain in the arse: the tenor clef contains a <tspan>8</tspan>
+  // underneath the treble clef, so we don't want that.
+  //
+  // <g transform="translate(164.5950, 2.8265)">
+  //   <text font-family="serif" font-size="1.7461" text-anchor="start" fill="currentColor">
+  //     <tspan>9</tspan>
+  //   </text>
+  // </g>
+  static getBars(svg: SVGGraphicsElement) {
+    var bars: number[] = [...svg.querySelectorAll('tspan')]    // get all the tspans the SVG element
+      .filter(tspan => !isNaN(Number(tspan.innerHTML)))     // keep only those containing a bar number 
+      .map(tspan => {
+        // e.g. transform = "translate(137.1800, 2.8299)"
+        if (!tspan.parentElement || !tspan.parentElement.parentElement) return 0;
+        const translate = tspan.parentElement.parentElement.getAttribute("transform");
+        if (!translate) return 0;
+        const commaPos = translate.indexOf(",")
+        const x = Number(translate.substring(10, commaPos))
+        return x
+      })
+      .sort((a, b) => a - b) // sort numerically
+      .filter(bar => bar > 5);  // any supposed bars that are too close to the beginning 
+    // of the score are probably part of the tenor clef and not proper bar numbers
+    bars.unshift(0);  // Add the initial bar line                              
+    bars.push(svg.getBBox().width); // Add the final bar line
+    return bars;
   }
 }

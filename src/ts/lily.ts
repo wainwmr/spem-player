@@ -2,6 +2,8 @@ import config from "./config";
 import lyGrammar from '../ohmjs/ly-grammar.ohm-bundle';
 import * as ohm from 'ohm-js';
 import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
+import spem from '../lilypond/spem.ly?raw'
+
 
 // Make an dictionary of music positions (hemidemisemiquavers/128) to array of notes {choir, part, note}
 export type Dictionary = {
@@ -144,7 +146,7 @@ export function processLilypond() {
   }
 
   // Parse lilypond from the ohm grammar
-  const result = lyGrammar.match(config.lilypond);
+  const result = lyGrammar.match(spem);
   if (!result.succeeded()) {
     console.error('Bad Lilypond ' + result.message);
   }
