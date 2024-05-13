@@ -14,10 +14,10 @@ MusicCanvasWatcher.define("music-canvas-watcher");
 MusicControls.define("music-controls");
 MusicScore.define("music-score");
 
-const canvas = document.getElementById("music-canvas") as MusicCanvas;
-const canvasWatcher = document.getElementById("music-canvas-watcher") as MusicCanvasWatcher;
-const controls = document.getElementById("music-controls") as MusicControls;
-const score = document.getElementById("music-score") as MusicScore;
+const canvas = document.querySelector("music-canvas") as MusicCanvas;
+const canvasWatcher = document.querySelector("music-canvas-watcher") as MusicCanvasWatcher;
+const controls = document.querySelector("music-controls") as MusicControls;
+const score = document.querySelector("music-score") as MusicScore;
 
 const info = document.getElementById('info') as HTMLSpanElement;
 const help = document.getElementById('help') as HTMLDivElement;
@@ -261,7 +261,7 @@ function showHelp(show = true) {
 }
 
 function toggleDark() {
-  if (prefersDarkScheme.matches) {
+  if (prefersDarkScheme) {
     document.body.classList.toggle("light-theme");
   } else {
     document.body.classList.toggle("dark-theme");
@@ -346,10 +346,11 @@ function init(): void {
   window.addEventListener('resize', () => setVH());
 }
 
-var prefersDarkScheme;
+var prefersDarkScheme: boolean;
 function setColorScheme() {
-  prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-  if (prefersDarkScheme.matches) {
+  var mediaMatch = window.matchMedia('(prefers-color-scheme: dark)');
+  prefersDarkScheme = mediaMatch.matches;
+  if (prefersDarkScheme) {
     console.log("preferred color scheme is dark");
     document.body.classList.add('dark-theme');
     current.viewmode = "dark";

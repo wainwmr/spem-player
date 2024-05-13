@@ -63,7 +63,7 @@ export class MusicCanvas extends MusicElement {
     this.#calculateCanvasSize();
     this.#showLoadingOnCanvas();
 
-    await processLilypond(config.lilypond);
+    processLilypond();
 
     // HACK: can't these just be returned from processLilypond()?
     this.dict = dict;

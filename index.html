@@ -10,16 +10,17 @@
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="manifest" href="site.webmanifest">
     <style src="src/scss/style.scss"></style>
-    <style>@import url('https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Quintessential&display=swap');</style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Quintessential&display=swap');
+    </style>
 
-    <!-- <script src="https://unpkg.com/ohm-js@17/dist/ohm.min.js"></script> -->
-    <script src="//unpkg.com/@ungap/custom-elements"></script>
+    <!-- <script src="//unpkg.com/@ungap/custom-elements"></script> -->
     <script src="src/ts/common.ts" type="module"></script>
     <script src="src/ts/music-classes.ts" type="module"></script>
     <script src="src/ts/lily.ts" type="module"></script>
-    <script src="src/ts/MusicCanvas.ts" type="module"></script>
-    <script src="src/ts/MusicControls.ts" type="module"></script>
-    <script src="src/ts/MusicScore.ts" type="module"></script>
+    <script defer src="src/ts/MusicCanvas.ts" type="module"></script>
+    <script defer src="src/ts/MusicControls.ts" type="module"></script>
+    <script defer src="src/ts/MusicScore.ts" type="module"></script>
     <script defer src="index.ts" type="module"></script>
 
 </head>
@@ -117,14 +118,12 @@
             <p class="copyright">© 2024, Mark Wainwright</p>
         </div>
 
-        <div id="music-score" is="music-score">
-        </div>
+        <music-score></music-score>
 
-        <div id="music-canvas" is="music-canvas" autofocus>
-        </div>
+        <music-canvas></music-canvas>
 
         <div class="footer">
-            <div id="music-controls" is="music-controls">
+            <music-controls>
                 <div id="playpausebutton" tabindex="0">
                     <svg id="spinner" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                         <circle class="path" fill="none" stroke-width="10" stroke-linecap="round" cx="50" cy="50"
@@ -133,12 +132,11 @@
                     </svg>
                     <span id="playpauseicon" class="button paused control"></span>
                 </div>
-            </div>
+            </music-controls>
 
             <div class="statusspacer"></div>
 
-            <div id="statusarea" class="hide" is="music-canvas-watcher">
-            </div>
+            <music-canvas-watcher class="hide"></music-canvas-watcher>
 
         </div>
 

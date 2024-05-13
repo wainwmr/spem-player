@@ -90,7 +90,7 @@ export class MusicScore extends MusicElement {
     .catch(console.error.bind(console));
     var endtime = performance.now()
     console.log("SVG load time", endtime - starttime);
-    this.svg = document.querySelector("#music-score svg");
+    this.svg = document.querySelector("music-score svg");
 
     if (!this.svg) {
       console.error("Could not load score for choir " + (this.choir + 1));

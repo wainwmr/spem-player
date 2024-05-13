@@ -1,7 +1,7 @@
 import config from "./config";
 import { PartType, Position, toNum } from "./common";
 
-export class MusicElement extends HTMLDivElement {
+export class MusicElement extends HTMLElement {
 
   // state
   choir: number = 0;
@@ -85,7 +85,8 @@ export class MusicElement extends HTMLDivElement {
 
   static define(tag: string) {
     try {
-      window.customElements.define(tag, this, { extends: "div" });
+      window.customElements.define(tag, this);
+      // window.customElements.define(tag, this, { extends: "div" });
     } catch (err) {
       console.log(`Unable to (re)define ${tag}`);
     }
