@@ -19,7 +19,6 @@ export class MusicControls extends MusicElement {
   constructor() {
     super();
 
-    this.playpausebutton.addEventListener('click', this.playpause.bind(this));
 
   };
 
@@ -76,6 +75,10 @@ export class MusicControls extends MusicElement {
     this.choirselect.addEventListener("change", this.#handleControlsChanged.bind(this));
     this.partselect.addEventListener("change", this.#handleControlsChanged.bind(this));
     this.barinput.addEventListener("change", this.#handleControlsChanged.bind(this));
+
+    // HACK: play/pause/loading button should be dynamically generated in this method
+    if (this.playpausebutton) this.playpausebutton.addEventListener('click', this.playpause.bind(this));
+
   }
 
   playpause() {

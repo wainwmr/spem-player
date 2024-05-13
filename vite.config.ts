@@ -4,6 +4,7 @@ import { defineConfig } from "vite"
 export default defineConfig ({
   assetsInclude: ['**/*.ohm', '**/*.ly'],
   test: {
-    globals: true
+    globals: true,
+    environment: 'jsdom'
   }
 })
