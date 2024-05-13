@@ -1,25 +1,6 @@
 import { MusicControls } from '../ts/MusicControls';
 import config from '../ts/config'
 
-// mock HTMLMediaElement
-class MockHTMLMediaElement {
-  playCalled: boolean;
-  pauseCalled: boolean;
-  constructor() {
-    console.log('Micky mocky media constructor')
-    this.playCalled = false;
-    this.pauseCalled = false;
-  }
-
-  play() {
-    this.playCalled = true;
-  }
-
-  pause() {
-    this.pauseCalled = true;
-  }
-}
-
 function waitForEvent(element: HTMLElement, eventName: string, handler: (event: Event) => Promise<any>): Promise<any> {
   return new Promise<any>((resolve, reject) => {
     const eventListener = async (event: Event) => {
@@ -124,19 +105,20 @@ describe("MusicControls custom element", () => {
   
 
   // // https://www.the-koi.com/projects/vitest-how-to-assert-events/
-  // it("play and pause work", async () => {
-  //   const mockAudioElement = new MockHTMLMediaElement();
-  //   // @ts-ignore
-  //   vi.spyOn(window, 'HTMLMediaElement').mockImplementation(() => mockAudioElement);
+  it("play and pause work", async () => {
+    vi.spyOn(HTMLMediaElement.prototype, "load").mockReturnThis()
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockReturnThis();
 
-  //   document.body.innerHTML = `<music-controls></music-controls>`
-  //   const elem = document.querySelector('music-controls') as MusicControls;
-  //   elem.addEventListener("music-controls-loading", handleAudioStarted);
-  //   const waitingForPlay = waitForEvent(elem, "music-controls-playing", handleAudioStarted);
-  //   elem?.playpause();
-  //   const result = await waitingForPlay;
-  //   expect(result).toBe(true); // Asserting the result
-  // });
+    document.body.innerHTML = `<music-controls></music-controls>`
+    const elem = document.querySelector('music-controls') as MusicControls;
+    elem.addEventListener("music-controls-loading", handleAudioStarted);
+    const waitingForPlay = waitForEvent(elem, "music-controls-playing", handleAudioStarted);
+    elem?.playpause();
+    const result = await waitingForPlay;
+    expect(result).toBe(true); // Asserting the result
+    expect(HTMLMediaElement.prototype.load).toHaveBeenCalledOnce();
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce();
+  });
 
 
 
