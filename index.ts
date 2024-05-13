@@ -57,16 +57,13 @@ async function setChoir(c: number, forceChange = false) {
   current.choir = Math.min(Math.max(0, c), config.choirs - 1);
 
   // Update the input field
-  // controls.setAttribute("choir", String(current.choir));
-  controls.setChoir(current.choir);
+  controls.setAttribute("choir", String(current.choir));
   
   // Update the score for this choir
-  // score.setAttribute("choir", String(current.choir));
-  score.setChoir(current.choir);
+  score.setAttribute("choir", String(current.choir));
   
   // Update the canvas
-  // canvas.setAttribute("choir", String(current.choir));
-  canvas.setChoir(current.choir);
+  canvas.setAttribute("choir", String(current.choir));
 }
 
 function setPart(p: PartType) {
@@ -99,16 +96,13 @@ function setBar(b: number) {
   current.bar = b;
 
   // update the input field
-  // controls.setAttribute("bar", String(b));
-  controls.setBar(b);
+  controls.setAttribute("bar", String(b));
   
   // Highlight the bar on the score
-  // score.setAttribute("bar", String(b));
-  score.setBar(b);
+  score.setAttribute("bar", String(b));
   
   // Update the canvas
-  // canvas.setAttribute("bar", String(b));
-  canvas.setBar(b);
+  canvas.setAttribute("bar", String(b));
 }
 
 function parseURL() {
@@ -365,5 +359,5 @@ function setColorScheme() {
     current.viewmode = "light";
   }
   colors(true);
-  canvas.draw();
+  // canvas.draw();
 }

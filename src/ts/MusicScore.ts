@@ -3,6 +3,17 @@ import { colors, HDSQTIME } from "./common";
 
 import { MusicElement } from "./MusicElement";
 
+// HACKy alternative
+// import spem1 from '../svg/modern/Choir 1.svg?raw';
+// import spem2 from '../svg/modern/Choir 2.svg?raw';
+// import spem3 from '../svg/modern/Choir 3.svg?raw';
+// import spem4 from '../svg/modern/Choir 4.svg?raw';
+// import spem5 from '../svg/modern/Choir 5.svg?raw';
+// import spem6 from '../svg/modern/Choir 6.svg?raw';
+// import spem7 from '../svg/modern/Choir 7.svg?raw';
+// import spem8 from '../svg/modern/Choir 8.svg?raw';
+// const spem: any[] = [ spem1, spem2, spem3, spem4, spem5, spem6, spem7, spem8 ]
+
 
 export class MusicScore extends MusicElement {
   static observedAttributes = ["choir", "part", "bar", "playing", "score-type"];
@@ -44,7 +55,9 @@ export class MusicScore extends MusicElement {
     if (name == "score-type") {
       this.setScoreType(newValue);
     }
-    super.attributeChangedCallback(name, _oldValue, newValue);
+    else {
+      super.attributeChangedCallback(name, _oldValue, newValue);
+    }
   }
 
   // var pt;
@@ -64,18 +77,23 @@ export class MusicScore extends MusicElement {
 
 
   async #loadScore() {
+    // this.innerHTML = spem[this.choir];
+
     const filename = config.svg_prefix + this.scoreType + "/Choir " + (this.choir + 1) + ".svg";
     console.log("MusicScore: fetching", filename);
+    var starttime = performance.now()
     await fetch(filename)
-      .then(r => r.text())
-      .then(text => {
-        this.innerHTML = text;
-      })
-      .catch(console.error.bind(console));
+    .then(r => r.text())
+    .then(text => {
+      this.innerHTML = text;
+    })
+    .catch(console.error.bind(console));
+    var endtime = performance.now()
+    console.log("SVG load time", endtime - starttime);
     this.svg = document.querySelector("#music-score svg");
 
     if (!this.svg) {
-      console.error("Could not load score " + filename);
+      console.error("Could not load score for choir " + (this.choir + 1));
       return;
     }
 
@@ -83,8 +101,10 @@ export class MusicScore extends MusicElement {
     this.svg.prepend(this.highlightBar);
 
     // determine what the bar positions are for this score
+    var starttime = performance.now()
     this.bars = MusicScore.getBars(this.svg);
-    console.log(this.bars);
+    var endtime = performance.now();
+    console.log("getBars() time taken:", endtime - starttime);
   }
 
   async setChoir(c: string | number) {
