@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg id="spinner" width="800px" height="800px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <circle class="path" stroke="red" fill="white" stroke-width="3" stroke-linecap="round" cx="12" cy="12" r="7">
+  </circle>
+</svg>

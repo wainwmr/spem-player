@@ -325,9 +325,9 @@ function init(): void {
   // read choir, part and bar from the URL
   parseURL();
 
-  controls.addEventListener("audio-controls-changed", handleControlChange as (e: Event) => void);
-  controls.addEventListener("audio-controls-playing", handleAudioPlaying as (e: Event) => void);
-  controls.addEventListener("audio-controls-paused", handleAudioPaused as (e: Event) => void);
+  controls.addEventListener("music-controls-changed", handleControlChange as (e: Event) => void);
+  controls.addEventListener("music-controls-playing", handleAudioPlaying as (e: Event) => void);
+  controls.addEventListener("music-controls-paused", handleAudioPaused as (e: Event) => void);
 
   canvas.addEventListener("music-canvas-click", handleCanvasClick as (e: Event) => void);
   canvas.addEventListener("music-canvas-touchstart", handleCanvasClick as (e: Event) => void);

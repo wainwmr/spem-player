@@ -56,7 +56,7 @@ export class MusicElement extends HTMLElement {
   }
 
   setBar(b: string | number) {
-    this.bar = toNum(b, false); 
+    this.bar = toNum(b, false);
   }
 
   setPlaying(playing: string | boolean) {
@@ -91,5 +91,6 @@ export class MusicElement extends HTMLElement {
       console.log(`Unable to (re)define ${tag}`);
     }
   }
+
 
 }

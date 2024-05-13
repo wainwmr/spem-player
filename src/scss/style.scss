@@ -1,5 +1,5 @@
 // for the spinner while audio is loading
-$offset: 100;
+$offset: 24;
 $duration: 1.4s;
 
 html {
@@ -272,26 +272,31 @@ music-canvas {
                 colors ($duration*4) ease-in-out infinite;
             }
 
-            .button {
-                border: 0;
-                padding: 0;
-                box-sizing: border-box;
-                width: 0;
+            svg {
                 height: 2rem;
-            
-                border-color: transparent transparent transparent #202020;
-                transition: 100ms all ease;
-            
-                // when playing, show the pause symbol
-                border-style: double;
-                border-width: 0 0 0 1.8rem;
-            
-                // when paused, show the play symbol
-                &.paused {
-                    border-style: solid;
-                    border-width: 1rem 0 1rem 1.8rem;
-                }                
+                width: 2rem;
             }
+
+            // .button {
+            //     border: 0;
+            //     padding: 0;
+            //     box-sizing: border-box;
+            //     width: 0;
+            //     height: 2rem;
+            
+            //     border-color: transparent transparent transparent #202020;
+            //     transition: 100ms all ease;
+            
+            //     // when playing, show the pause symbol
+            //     border-style: double;
+            //     border-width: 0 0 0 1.8rem;
+            
+            //     // when paused, show the play symbol
+            //     &.paused {
+            //         border-style: solid;
+            //         border-width: 1rem 0 1rem 1.8rem;
+            //     }                
+            // }
             
         }    
 
