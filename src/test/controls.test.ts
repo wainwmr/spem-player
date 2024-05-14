@@ -1,6 +1,9 @@
 import { MusicControls } from '../ts/MusicControls';
 import config from '../ts/config'
 
+
+// A helper function that allows us to detect events on element
+// of type eventName have been fired
 function waitForEvent(element: HTMLElement, eventName: string, handler: (event: Event) => Promise<any>): Promise<any> {
   return new Promise<any>((resolve, reject) => {
     const eventListener = async (event: Event) => {
@@ -78,11 +81,11 @@ describe("MusicControls custom element", () => {
     const spinner = document.getElementById("spinner");
     expect(spinner, document.body.innerHTML).not.toBeNull();
     expect(spinner?.style.display, document.body.innerHTML).toBe("none");
-    
+
     const play = document.getElementById("play");
     expect(play, document.body.innerHTML).not.toBeNull();
     expect(play?.style.display, document.body.innerHTML).toBe("block");
-    
+
     const pause = document.getElementById("pause");
     expect(pause, document.body.innerHTML).not.toBeNull();
     expect(pause?.style.display, document.body.innerHTML).toBe("none");
@@ -95,29 +98,44 @@ describe("MusicControls custom element", () => {
       try {
         // Perform assertions
         expect((event as CustomEvent).detail).not.toBeNull;
-  
+
         resolve(true); // Resolve if assertions pass
       } catch (error) {
         reject(error); // Reject if an assertion fails
       }
     });
   };
-  
+
 
   // // https://www.the-koi.com/projects/vitest-how-to-assert-events/
-  it("play and pause work", async () => {
+  it("play and pause buttons starts/stop media and fires the correct events", async () => {
+    // mock the Media element so we know if it's being played
     vi.spyOn(HTMLMediaElement.prototype, "load").mockReturnThis()
     vi.spyOn(HTMLMediaElement.prototype, "play").mockReturnThis();
+    vi.spyOn(HTMLMediaElement.prototype, "pause").mockReturnThis();
 
     document.body.innerHTML = `<music-controls></music-controls>`
     const elem = document.querySelector('music-controls') as MusicControls;
-    elem.addEventListener("music-controls-loading", handleAudioStarted);
+    // set up the listeners for loading and playing
+    const waitingforLoad = waitForEvent(elem, "music-controls-loading", handleAudioStarted);
     const waitingForPlay = waitForEvent(elem, "music-controls-playing", handleAudioStarted);
+    // 'press' the play button
     elem?.playpause();
-    const result = await waitingForPlay;
-    expect(result).toBe(true); // Asserting the result
+    // Wait for the loading and playing events to be fired
+    const playResult = await Promise.all([waitingforLoad, waitingForPlay]);
+    expect(playResult).toStrictEqual([true, true]); // Asserting the result
     expect(HTMLMediaElement.prototype.load).toHaveBeenCalledOnce();
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce();
+
+    // set up the listeners for paused event
+    const waitingforPause = waitForEvent(elem, "music-controls-paused", handleAudioStarted);
+    // 'press' the pause button
+    elem?.playpause();
+    // Wait for the loading and playing events to be fired
+    const pauseResult = await waitingforPause;
+    expect(pauseResult).toBe(true); 
+    expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledOnce();
+
   });
 
 
