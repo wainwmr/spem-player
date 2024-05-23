@@ -263,7 +263,8 @@ describe("MusicControls custom element", () => {
     const elem = document.querySelector('music-controls') as MusicControls;
     const waitingForPlay = waitForEvent(elem, "music-controls-playing", handleAudioStarted);
     
-    elem.play();
+    elem.setAttribute("playing", "true");
+    // elem.play();
     var playResult = await waitingForPlay;
     expect(playResult).toStrictEqual(true);
     expect(elem.isPlaying()).toBe(true);

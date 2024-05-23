@@ -6,7 +6,7 @@ import pauseSVG from "../icons/pause.svg?raw";
 import playSVG from "../icons/play.svg?raw";
 
 export class MusicControls extends MusicElement {
-  static observedAttributes = ["choir", "part", "bar"];
+  static observedAttributes = [ "choir", "part", "bar", "playing" ];
 
   audio = new Audio();
 
@@ -219,9 +219,20 @@ export class MusicControls extends MusicElement {
     if (intbar === this.bar) return;
     super.setBar(b);
     console.log(`MusicControls: changing bar to ${b}`);
-
+    
     this.bar = intbar;
     this.audio.currentTime = this.bar * config.tempo;
     this.barinput.value = String(this.bar);
+  }
+  
+  setPlaying(playing: string | boolean) {
+    super.setPlaying(playing);
+    console.log(`MusicControls: changing playing to ${this.playing}`);
+    if (this.playing) {
+      this.play();
+    }
+    else {
+      this.pause();
+    }
   }
 }
