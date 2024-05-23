@@ -1,7 +1,7 @@
 \version "2.24.3" 
 
 \include "spem layout.ly"
-\include "../spem notes.ly"
+\include "../spem.ly"
 \include "../spem words.ly"
 
 \score {
