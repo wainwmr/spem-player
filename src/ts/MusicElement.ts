@@ -49,20 +49,23 @@ export class MusicElement extends HTMLElement {
 
   setChoir(c: string | number) {
     this.choir = toNum(c, true, config.choirs - 1);
+    this.fireEvent('music-controls-changed');
   }
 
   setPart(p: string | number) {
     this.voicePart = typeof p == 'string' && p == 'all' ? 'all' : toNum(p, true, config.parts.length - 1);
+    this.fireEvent('music-controls-changed');
   }
 
   setBar(b: string | number) {
     this.bar = toNum(b, false);
+    this.fireEvent('music-controls-changed');
   }
 
   setPlaying(playing: string | boolean) {
     this.playing = typeof playing == 'string' && playing == 'true' || playing == true;
+    this.fireEvent('music-controls-changed');
   }
-
 
   isPlaying(): boolean {
     return this.playing;
@@ -80,6 +83,7 @@ export class MusicElement extends HTMLElement {
       cancelable: true,
       composed: false
     });
+    console.log("pos: ", position);
     this.dispatchEvent(myEvent);
   }
 

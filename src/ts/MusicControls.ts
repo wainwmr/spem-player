@@ -119,7 +119,9 @@ export class MusicControls extends MusicElement {
 
   // Returns true if the filename of the current audio source the same as that of the new (input) filename?
   isSameAudio(file: string): boolean {
-    return (file.split("/").pop() == this.audio.currentSrc.split("/").pop());
+    const thisfn = this.audio.src.split("/").pop();
+    const thatfn = file.split("/").pop();
+    return thisfn == thatfn;
   }
 
   getMP3filename() {
