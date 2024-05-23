@@ -1,10 +1,9 @@
 import config from "./config";
 import { MusicElement } from "./MusicElement";
+
 import loadingSVG from "../icons/loading.svg?raw";
 import pauseSVG from "../icons/pause.svg?raw";
 import playSVG from "../icons/play.svg?raw";
-
-type SvgInHtml = HTMLElement & SVGElement;
 
 export class MusicControls extends MusicElement {
   static observedAttributes = ["choir", "part", "bar"];
@@ -27,13 +26,7 @@ export class MusicControls extends MusicElement {
   async connectedCallback(): Promise<void> {
     super.connectedCallback();
 
-    // playpausebutton = document.getElementById('playpausebutton') as HTMLDivElement;
-    // playpauseicon = document.getElementById('playpauseicon') as HTMLSpanElement;
-    // spinner = document.getElementById('spinner') as SvgInHtml;
-  
-  
-
-    // Build a DIV with the spinner SVG icon
+    // Build a DIV with the play, pause and loading SVG icons
     this.playpausebutton = document.createElement("div");
     this.playpausebutton.setAttribute("id", "playpausebutton");
     this.playpausebutton.setAttribute("tabindex", "0");
@@ -52,9 +45,7 @@ export class MusicControls extends MusicElement {
       this.svgPlay.style.display = "block";
       this.playpausebutton.append(this.svgPlay);
     }
-
     this.append(this.playpausebutton);
-
 
     // Build the choirs drop-down list
     var label = document.createElement("label");
@@ -103,34 +94,18 @@ export class MusicControls extends MusicElement {
     label.append(this.barinput);
     this.append(label);
 
-    // MusicElement.waitForEvent(this.choirselect, "change", this.#handleControlsChanged.bind(this));
-    // MusicElement.waitForEvent(this.partselect, "change", this.#handleControlsChanged.bind(this));
-    // MusicElement.waitForEvent(this.barinput, "change", this.#handleControlsChanged.bind(this));
     this.choirselect.addEventListener("change", this.#handleControlsChanged.bind(this));
     this.partselect.addEventListener("change", this.#handleControlsChanged.bind(this));
     this.barinput.addEventListener("change", this.#handleControlsChanged.bind(this));
-
-    // HACK: play/pause/loading button should be dynamically generated in this method
     if (this.playpausebutton) this.playpausebutton.addEventListener('click', this.playpause.bind(this));
-
   }
 
   async #handleControlsChanged() {
-    console.log("hello");
     if (!this.barinput || !this.partselect || !this.choirselect) return;
     this.choir = Number(this.choirselect.value);
     this.voicePart = this.partselect.value == "all" ? "all" : Number(this.partselect.value);
     this.bar = Number(this.barinput.value);
     this.fireEvent('music-controls-changed');
-
-    return new Promise((resolve, reject) => {
-      try {
-        // Perform assertions
-        resolve(true); // Resolve if assertions pass
-      } catch (error) {
-        reject(error); // Reject if an assertion fails
-      }
-    });
   }
 
   playpause() {
@@ -187,7 +162,7 @@ export class MusicControls extends MusicElement {
       this.svgPause.style.display = "block";
       this.svgLoading.style.display = "none";
     }
-  this.fireEvent('music-controls-playing');
+    this.fireEvent('music-controls-playing');
 
     const self = this;
     function loop() {
@@ -214,7 +189,7 @@ export class MusicControls extends MusicElement {
       this.svgPause.style.display = "none";
       this.svgLoading.style.display = "none";
     }
-  this.audio.pause();
+    this.audio.pause();
     this.fireEvent('music-controls-paused');
   }
 
@@ -231,11 +206,11 @@ export class MusicControls extends MusicElement {
     if (!this.partselect) return;
     super.setPart(p);
     console.log(`MusicControls: changing part to ${this.part}`);
-    
+
     this.partselect.value = String(p);
     if (this.isPlaying()) this.play();
   }
-  
+
   setBar(b: string | number) {
     if (!this.barinput) return;
     const intbar = Number(b);

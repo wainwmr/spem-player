@@ -120,7 +120,6 @@ describe("MusicControls custom element", () => {
     const play = document.getElementById("play");
     const pause = document.getElementById("pause");
 
-
     // set up the listeners for loading and playing
     const waitingforLoad = waitForEvent(elem, "music-controls-loading", handleAudioStarted);
     const waitingForPlay = waitForEvent(elem, "music-controls-playing", handleAudioStarted);
@@ -129,8 +128,10 @@ describe("MusicControls custom element", () => {
     // Wait for the loading and playing events to be fired
     const playResult = await Promise.all([waitingforLoad, waitingForPlay]);
     expect(playResult).toStrictEqual([true, true]); // Asserting the result
+    // Media event functions should have been called
     expect(HTMLMediaElement.prototype.load).toHaveBeenCalledOnce();
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce();
+    // Correct icon should be shown
     expect(spinner?.style.display, document.body.innerHTML).toBe("none");
     expect(play?.style.display, document.body.innerHTML).toBe("none");
     expect(pause?.style.display, document.body.innerHTML).toBe("block");
@@ -142,8 +143,10 @@ describe("MusicControls custom element", () => {
     elem?.playpause();
     // Wait for the loading and playing events to be fired
     const pauseResult = await waitingforPause;
-    expect(pauseResult).toBe(true); 
+    expect(pauseResult).toBe(true);
+    // Media event function should have been called
     expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledOnce();
+    // Correct icon should be shown
     expect(spinner?.style.display, document.body.innerHTML).toBe("none");
     expect(play?.style.display, document.body.innerHTML).toBe("block");
     expect(pause?.style.display, document.body.innerHTML).toBe("none");
