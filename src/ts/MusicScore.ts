@@ -222,7 +222,7 @@ export class MusicScore extends MusicElement {
         return x
       })
       .sort((a, b) => a - b) // sort numerically
-      .filter(bar => bar > 5);  // any supposed bars that are too close to the beginning 
+      .filter(bar => bar > 6);  // any supposed bars that are too close to the beginning 
     // of the score are probably part of the tenor clef and not proper bar numbers
     bars.unshift(0);  // Add the initial bar line                              
     bars.push(this.svgWidth); // Add the final bar line
