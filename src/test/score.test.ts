@@ -1,4 +1,5 @@
 import { MusicScore } from '../ts/MusicScore';
+import config from '../ts/config';
 
 // A helper function that allows us to detect events on element
 // of type eventName have been fired
@@ -78,12 +79,95 @@ describe("MusicScore custom element", () => {
     const svg = document.querySelector("svg");
     expect(svg).not.toBeNull();
 
+    const hPos = document.querySelector("svg rect[id='hPos']") as SVGRectElement;
+    expect(hPos).not.toBeNull();  // highlight has been added
+    expect(hPos?.style.fillOpacity).toBe("0"); // but currently invisible
+
+    const hBar = document.querySelector("svg rect[id='hBar']") as SVGRectElement;
+    expect(hBar).not.toBeNull();  // highlight has been added
+    expect(hBar?.getAttribute("width")).toBe("0"); // but currently invisible
+
   });
 
-  // it("Another", () => {
-  //   const elem = document.querySelector("music-score");
-  //   expect(elem).not.toBeNull();
-  // });
+  it("Check all scores have the same number of bars", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+
+    // @ts-ignore
+    elem.scrollTo = vi.fn();  // jsdom doesn't seem to implement HTMLElement.scrollTo()
+
+    for (var c = 0; c < config.choirs; c++) {
+      // wait for score to be loaded
+      const waitingForLoaded = waitForEvent(elem, "music-score-loaded", handleScoreLoaded, 0, null, 0);
+      elem?.setAttribute("choir", String(c));
+      const loadResult = await waitingForLoaded;
+      expect(loadResult).toStrictEqual(true);
+      
+      const svg = document.querySelector("svg");
+      expect(svg).not.toBeNull();
+
+      expect(elem.bars.length).toBe(139);
+      expect(elem.bars[0]).toBe(0);
+      expect(elem.bars[138]).toBe(elem.svgWidth);
+    }
+
+  });
+
+  it("Changing bar sets the highlight correctly", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+
+    // @ts-ignore
+    elem.scrollTo = vi.fn();  // jsdom doesn't seem to implement HTMLElement.scrollTo()
+
+    // wait for score to be loaded
+    const waitingForLoaded = waitForEvent(elem, "music-score-loaded", handleScoreLoaded, 0, null, 0);
+    elem?.setAttribute("choir", "0");
+    const loadResult = await waitingForLoaded;
+    expect(loadResult).toStrictEqual(true);
+
+    const svg = document.querySelector("svg");
+    expect(svg).not.toBeNull();
+
+    elem.setAttribute("bar", "40");
+    expect(elem.highlightBar.getAttribute("width")).not.toBe("0");
+    expect(elem.highlightBar.style.fillOpacity).not.toBe("0");
+    expect(elem.highlightBar.getAttribute("x")).toBe(String(elem.bars[39]));
+  });
+
+  it("Changing score type works", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+
+    // @ts-ignore
+    elem.scrollTo = vi.fn();  // jsdom doesn't seem to implement HTMLElement.scrollTo()
+
+    // wait for score to be loaded
+    elem?.setAttribute("choir", "0");
+    const waitingForLoaded = waitForEvent(elem, "music-score-loaded", handleScoreLoaded, 0, null, 0);
+    elem.setAttribute("score-type", "early");
+    const loadResult = await waitingForLoaded;
+    expect(loadResult).toStrictEqual(true);
+
+    const svg = document.querySelector("svg");
+    expect(svg).not.toBeNull();
+
+  });
+
+  it("Changing score type to a bad one works", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+
+    // @ts-ignore
+    elem.scrollTo = vi.fn();  // jsdom doesn't seem to implement HTMLElement.scrollTo()
+
+    // wait for score to be loaded
+    elem?.setAttribute("choir", "0");
+    const waitingForLoaded = waitForEvent(elem, "music-score-loaded", handleScoreLoaded, 0, null, 0);
+    elem.setAttribute("score-type", "frog");
+    const loadResult = await waitingForLoaded;
+    expect(loadResult).toStrictEqual(true);
+
+    const svg = document.querySelector("svg");
+    expect(svg).not.toBeNull();
+
+  });
 
 
 

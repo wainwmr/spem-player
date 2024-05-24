@@ -50,7 +50,6 @@ var current: State = {
 // BUG: Tenor in choir 4 bar 22. Audio has c natural.  Score has c sharp.
 // BUG: Soprano in choir 1 bar 13.  Breve or Longa?
 // BUG: Choir 3, Baritone, bar 24: Written as D but audio sings a C.
-// BUG: Choir 4, Bar 1 .  Highlight goes up to tenor clef.
 
 async function setChoir(c: number, forceChange = false) {
   if (current.choir == c && !forceChange) {

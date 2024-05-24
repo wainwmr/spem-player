@@ -29,14 +29,15 @@ export class MusicScore extends MusicElement {
     this.highlightPosition.setAttribute("width", "7");  // HACK: hard-coded!
     this.highlightPosition.setAttribute("height", "200");  // HACK: need to calc actual height of SVG
     this.highlightPosition.style.fill = colors().scoreHighlight; //Set stroke colour
-    this.highlightPosition.style.fillOpacity = "0.1";
+    this.highlightPosition.style.fillOpacity = "0";  // initially invisible
     this.highlightPosition.style.strokeWidth = "5px"; //Set stroke width
 
+    this.highlightBar.setAttribute("id", "hBar");
     this.highlightBar.setAttribute("x", "0");
     this.highlightBar.setAttribute("width", "0");
     this.highlightBar.setAttribute("height", "200");  // HACK: need to calc actual height of SVG
     this.highlightBar.style.fill = colors().scoreHighlight; //Set stroke colour
-    this.highlightBar.style.fillOpacity = "0.1";
+    this.highlightBar.style.fillOpacity = "0";  // initially invisible
     this.highlightBar.style.strokeWidth = "5px"; //Set stroke width
   }
 
