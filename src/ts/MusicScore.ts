@@ -134,6 +134,12 @@ export class MusicScore extends MusicElement {
     this.scrollSmooth();
   }
 
+  setPlaying(p: string | boolean) {
+    super.setPlaying(p);
+
+    this.highlight();
+  }
+
   scrollSmooth() {
     if (this.svg == null) {
       return 0;

@@ -169,15 +169,30 @@ describe("MusicScore custom element", () => {
 
   });
 
+  it("When playing, highlight bar disappears and position highligt shows", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+
+    // @ts-ignore
+    elem.scrollTo = vi.fn();  // jsdom doesn't seem to implement HTMLElement.scrollTo()
+
+    // wait for score to be loaded
+    const waitingForLoaded = waitForEvent(elem, "music-score-loaded", handleScoreLoaded, 0, null, 0);
+    elem?.setAttribute("choir", "0");
+    elem.setAttribute("bar", "77");
+    const loadResult = await waitingForLoaded;
+    expect(loadResult).toStrictEqual(true);
+
+    expect(elem.highlightBar.style.fillOpacity).not.toBe("0");
+    expect(elem.highlightPosition.style.fillOpacity).toBe("0");
+
+    elem.setAttribute("playing", "true");
+
+    expect(elem.highlightBar.style.fillOpacity).toBe("0");
+    expect(elem.highlightPosition.style.fillOpacity).not.toBe("0");
 
 
-  // it("Check highlighted bar has been created but is not visible", () => {
-  //   const elem = document.querySelector("music-score");
-  //   expect(elem).not.toBeNull();
+  });
 
-  //   const hPos = document.getElementById("hPos");
-  //   expect(hPos).not.toBeNull();
-  // });
 });
 
 
