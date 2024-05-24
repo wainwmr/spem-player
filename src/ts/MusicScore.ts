@@ -3,22 +3,11 @@ import { colors, HDSQTIME } from "./common";
 
 import { MusicElement } from "./MusicElement";
 
-// HACKy alternative
-// import spem1 from '../svg/modern/Choir 1.svg?raw';
-// import spem2 from '../svg/modern/Choir 2.svg?raw';
-// import spem3 from '../svg/modern/Choir 3.svg?raw';
-// import spem4 from '../svg/modern/Choir 4.svg?raw';
-// import spem5 from '../svg/modern/Choir 5.svg?raw';
-// import spem6 from '../svg/modern/Choir 6.svg?raw';
-// import spem7 from '../svg/modern/Choir 7.svg?raw';
-// import spem8 from '../svg/modern/Choir 8.svg?raw';
-// const spem: any[] = [ spem1, spem2, spem3, spem4, spem5, spem6, spem7, spem8 ]
-
-
 export class MusicScore extends MusicElement {
   static observedAttributes = ["choir", "part", "bar", "playing", "score-type"];
 
   svg: SVGGraphicsElement | null = null;
+  svgWidth: number = 0;
 
   scoreType: string = "modern";
 
@@ -34,6 +23,7 @@ export class MusicScore extends MusicElement {
   async connectedCallback() {
     super.connectedCallback();
 
+    this.highlightPosition.setAttribute("id", "hPos");
     this.highlightPosition.setAttribute("x", "0");
     this.highlightPosition.setAttribute("y", "0");
     this.highlightPosition.setAttribute("width", "7");  // HACK: hard-coded!
@@ -43,7 +33,6 @@ export class MusicScore extends MusicElement {
     this.highlightPosition.style.strokeWidth = "5px"; //Set stroke width
 
     this.highlightBar.setAttribute("x", "0");
-    this.highlightBar.setAttribute("y", "0");
     this.highlightBar.setAttribute("width", "0");
     this.highlightBar.setAttribute("height", "200");  // HACK: need to calc actual height of SVG
     this.highlightBar.style.fill = colors().scoreHighlight; //Set stroke colour
@@ -75,19 +64,28 @@ export class MusicScore extends MusicElement {
   //   setBar(bars.indexOf(result));
   // }
 
+  #loadSvg = async (): Promise<string | null> => {
+    try {
+      const cname = "Choir " + (this.choir + 1);
+      const svgModule = await import(`../scores/${this.scoreType}/${cname}.svg?raw`);
+      this.fireEvent("music-score-loaded");
+      return svgModule.default;
+    } catch (error) {
+      console.error(`Error loading SVG: ${error}`);
+      return null;
+    }
+  };
 
   async #loadScore() {
-    // this.innerHTML = spem[this.choir];
-
     const filename = config.svg_prefix + this.scoreType + "/Choir " + (this.choir + 1) + ".svg";
     console.log("MusicScore: fetching", filename);
     var starttime = performance.now()
-    await fetch(filename)
-    .then(r => r.text())
-    .then(text => {
-      this.innerHTML = text;
-    })
-    .catch(console.error.bind(console));
+
+    const svgComp = await this.#loadSvg();
+    if (svgComp) {
+      this.innerHTML = svgComp;
+    }
+
     var endtime = performance.now()
     console.log("SVG load time", endtime - starttime);
     this.svg = document.querySelector("music-score svg");
@@ -97,12 +95,18 @@ export class MusicScore extends MusicElement {
       return;
     }
 
+    var viewBoxString = this.svg.getAttribute('viewBox');
+    this.svgWidth = Number(viewBoxString?.split(" ")[2]);
+    console.log("viewbox", this.svgWidth); // Example output: "0 0 65415 41616"
+
+
+
     this.svg.prepend(this.highlightPosition);
     this.svg.prepend(this.highlightBar);
 
     // determine what the bar positions are for this score
     var starttime = performance.now()
-    this.bars = MusicScore.getBars(this.svg);
+    this.bars = this.getBars();
     var endtime = performance.now();
     console.log("getBars() time taken:", endtime - starttime);
   }
@@ -139,9 +143,8 @@ export class MusicScore extends MusicElement {
     const idealBarPercentage = 0.25;
     const frameWidth = this.offsetWidth; // the width of the visible score on the screen
     const scoreWidth = this.svg.getBoundingClientRect().width; // the total width of the score
-    const svgWidth = this.svg.getBBox().width; // the width of the score in SVG unit
-    const barstartpct = intbar <= 0 ? 0 : this.bars[intbar - 1] / svgWidth; // % along the score of this bar
-    const barendpct = intbar >= this.bars.length ? 1 : this.bars[intbar] / svgWidth; // % along the score of the next bar
+    const barstartpct = intbar <= 0 ? 0 : this.bars[intbar - 1] / this.svgWidth; // % along the score of this bar
+    const barendpct = intbar >= this.bars.length ? 1 : this.bars[intbar] / this.svgWidth; // % along the score of the next bar
     const barcurrentpct = ((this.bar - intbar) * (barendpct - barstartpct)) + barstartpct; // % along the score of current position in the bar
     const idealPos = (barcurrentpct * scoreWidth) - (idealBarPercentage * frameWidth);
 
@@ -153,7 +156,7 @@ export class MusicScore extends MusicElement {
 
     // set highlight the current position
     if (this.bar >= 1) {
-      this.highlightPosition.setAttribute("x", String((barcurrentpct * svgWidth) - 2.5));
+      this.highlightPosition.setAttribute("x", String((barcurrentpct * this.svgWidth) - 2.5));
     }
 
     // set the highlight for the current bar
@@ -171,7 +174,7 @@ export class MusicScore extends MusicElement {
       width = this.bars[intbar] - left;
     }
     this.highlightBar.setAttribute("x", String(left));
-    this.highlightBar.setAttribute("width", String(isNaN(width) ? this.svg.getBBox().width : width));
+    this.highlightBar.setAttribute("width", String(isNaN(width) ? this.svgWidth : width));
   }
 
   highlight() {
@@ -187,12 +190,12 @@ export class MusicScore extends MusicElement {
     }
   }
 
-  setScoreType(s: string) {
+  async setScoreType(s: string) {
     this.scoreType = s;
     if (config.scores.indexOf(s) < 0) {
       this.scoreType = config.scores[0];
     }
-    this.#loadScore();
+    await this.#loadScore();
   }
 
   // Lilypond (currently) outputs SVG with bar numbers looking as follows.  The x position
@@ -205,8 +208,9 @@ export class MusicScore extends MusicElement {
   //     <tspan>9</tspan>
   //   </text>
   // </g>
-  static getBars(svg: SVGGraphicsElement) {
-    var bars: number[] = [...svg.querySelectorAll('tspan')]    // get all the tspans the SVG element
+  getBars() {
+    if (!this.svg) return [];
+    var bars: number[] = [...this.svg.querySelectorAll('tspan')]    // get all the tspans the SVG element
       .filter(tspan => !isNaN(Number(tspan.innerHTML)))     // keep only those containing a bar number 
       .map(tspan => {
         // e.g. transform = "translate(137.1800, 2.8299)"
@@ -221,7 +225,7 @@ export class MusicScore extends MusicElement {
       .filter(bar => bar > 5);  // any supposed bars that are too close to the beginning 
     // of the score are probably part of the tenor clef and not proper bar numbers
     bars.unshift(0);  // Add the initial bar line                              
-    bars.push(svg.getBBox().width); // Add the final bar line
+    bars.push(this.svgWidth); // Add the final bar line
     return bars;
   }
 }
