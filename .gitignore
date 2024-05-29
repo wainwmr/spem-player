@@ -1,3 +1,9 @@
 .DS_Store
+.vscode
 node_modules
+dist
 *.ipynb
+*.pdf
+# Local Netlify folder
+.netlify
+coverage

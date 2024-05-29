@@ -1,0 +1,9 @@
+{
+  "choirs": 8,
+  "parts": [ "Soprano", "Alto", "Tenor", "Baritone", "Bass" ],
+  "scores": [ "modern", "early" ],
+  "audio_prefix": "/audio/",
+  "tempo": 3.870967741935484,
+  "svg_prefix": "/svg/",
+  "lilypond": "/lilypond/spem notes.ly"
+}

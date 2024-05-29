@@ -1,0 +1,50 @@
+Lilypond { 
+
+	File = (Clause)*
+    Clause = RelativeClause | Version
+	
+    Version = "\\version" "\"" (digit | ".")* "\""
+    
+    RelativeClause = (variable "=")? ("\\relative" note?)? "{" Music "}"
+    
+    Music = ( Component | command) *
+
+    comment = "%" (~"\n" any)* ("\n" | end)
+    space += comment
+    
+    Component = note --note
+    		| repeatedNote -- repeatedNote
+		    | rest --rest
+		    | barline -- barline
+            
+    command = "\\" (~"\n" any)* ("\n" | end)
+    
+    barline = "|"
+    
+	note = noteName accidental? octave? durationScaled? expression? slur?
+	noteName = "a" | "b" | "c" | "d" | "e" | "f" | "g"
+    
+    repeatedNote = durationScaled slur?
+    
+    accidental = "is" -- sharp 
+    			| "es" -- flat
+    
+    rest = restName durationScaled?
+    restName = "r" -- rest 
+    		| "R" -- wholeBarRest
+    
+    octave = octaveUp | octaveDown
+    octaveUp = "'"+
+    octaveDown = ","+
+    
+    fraction = #(digit+ ("/" digit+)?)
+    
+    durationScaled = duration ("*" fraction)?
+    duration = ("\\longa" | "\\breve" | "64" | "32" | "16" | "8" | "4" | "2" | "1") "."*
+    
+    expression = ("^" | "_")? (("-" ("+" | "^" | "-" | "!" | ">" | "." | "_")) | ("\\" letter+))
+    
+    slur = "~"
+    
+    variable = letter+
+}
