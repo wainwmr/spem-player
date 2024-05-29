@@ -83,7 +83,6 @@ export class MusicElement extends HTMLElement {
       cancelable: true,
       composed: false
     });
-    console.log("pos: ", position);
     this.dispatchEvent(myEvent);
   }
 

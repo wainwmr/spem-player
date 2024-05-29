@@ -325,7 +325,7 @@ music-canvas {
         flex-grow: 1;
     }
 
-    #statusarea {
+    music-canvas-watcher {
         flex-basis: 5rem;
         display: flex;
         flex-direction: column;
