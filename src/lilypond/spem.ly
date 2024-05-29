@@ -1957,7 +1957,7 @@ notesIVTenor = \relative c {
   c e1 d2 
   d2. c4 b1 
   b2. g4 b4. c8 d1 %tie
-   cis2 d1 
+   c2 d1 
   r2 d g,4 b4. c8 d4 
   r2 e a,4 c c2 
   r4 f, c'2 bes4 d2 g,4 

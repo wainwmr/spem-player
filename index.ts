@@ -46,7 +46,6 @@ var current: State = {
 // TODO: CMD-B to type in bar number
 // TODO: highlight part on score?
 // TODO: Add lyrics to footer
-// BUG: Tenor in choir 4 bar 22. Audio has c natural.  Score has c sharp.
 // BUG: Soprano in choir 1 bar 13.  Breve or Longa?
 // BUG: Choir 3, Baritone, bar 24: Written as D but audio sings a C.
 
