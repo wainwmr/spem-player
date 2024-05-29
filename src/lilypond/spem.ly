@@ -3748,7 +3748,7 @@ notesVIIBass = \relative c {
    a2 c c
   g2 g4 g d'2 c
   b4 g2. d'2 r2
-  r\breve*19
+  R\breve*19
 
   %69
   \barNumberCheck #69
