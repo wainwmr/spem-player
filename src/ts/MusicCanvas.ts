@@ -185,11 +185,11 @@ export class MusicCanvas extends MusicElement {
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Draw FPS number to the screen
-    if (fps) {
-      ctx.font = '25px Arial';
-      ctx.fillStyle = '#CCC';
-      ctx.fillText("FPS: " + fps, 10, this.canvas.height - 30);
-    }
+    // if (fps) {
+    //   ctx.font = '25px Arial';
+    //   ctx.fillStyle = '#CCC';
+    //   ctx.fillText("FPS: " + fps, 10, this.canvas.height - 30);
+    // }
 
     // Draw bar highlight
     if (this.bar > 0 && this.bar <= 139) {
