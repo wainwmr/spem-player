@@ -1,6 +1,6 @@
 \version "2.24.3" 
 
-\include "spem layout.ly"
+\include "layout.ly"
 \include "../spem.ly"
 \include "../spem words.ly"
 
@@ -13,40 +13,40 @@
           \remove Note_heads_engraver
           \consists Completion_heads_engraver
       }
-      { \clef "treble" \notesVIIISoprano }
-      \addlyrics \wordsVIIISoprano
+      { \clef "treble" \notesISoprano }
+      \addlyrics \wordsISoprano
     >>
     <<
       \new Voice \with {
           \remove Note_heads_engraver
           \consists Completion_heads_engraver
       }
-      { \clef "treble" \notesVIIIAlto }
-      \addlyrics \wordsVIIIAlto
+      { \clef "treble" \notesIAlto }
+      \addlyrics \wordsIAlto
     >>
     <<
       \new Voice \with {
           \remove Note_heads_engraver
           \consists Completion_heads_engraver
       }
-      { \clef "treble_8" \notesVIIITenor }
-      \addlyrics \wordsVIIITenor
+      { \clef "treble_8" \notesITenor }
+      \addlyrics \wordsITenor
     >>
     <<
       \new Voice \with {
           \remove Note_heads_engraver
           \consists Completion_heads_engraver
       }
-      { \clef "bass" \notesVIIIBaritone }
-      \addlyrics \wordsVIIIBaritone
+      { \clef "bass" \notesIBaritone }
+      \addlyrics \wordsIBaritone
     >>
     <<
       \new Voice \with {
           \remove Note_heads_engraver
           \consists Completion_heads_engraver
       }
-      { \clef "bass" \notesVIIIBass }
-      \addlyrics \wordsVIIIBass
+      { \clef "bass" \notesIBass }
+      \addlyrics \wordsIBass
     >>
   >>
 }

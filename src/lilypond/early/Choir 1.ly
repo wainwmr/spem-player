@@ -1,49 +1,51 @@
 \version "2.24.3" 
 
-\include "spem layout.ly"
+\include "layout.ly"
 \include "../spem.ly"
 \include "../spem words.ly"
 
 \score {
 
   <<
+    % \new StaffGroup = choirStaff <<
       \override Score.BarNumber.break-visibility = ##(#f #t #t)
       <<
         \new Voice {
           \clef "mensural-c1"  
-          \notesIIISoprano
+          \notesISoprano
         }
-        \addlyrics { \wordsIIISoprano }
+        \addlyrics { \wordsISoprano }
       >>
       <<
         \new Voice {
           \clef "mensural-c2"  
-          \notesIIIAlto
+          \notesIAlto
         }
-        \addlyrics \wordsIIIAlto
+        \addlyrics \wordsIAlto
       >>
       <<
         \new Voice {
           \clef "mensural-c3"  
-          \notesIIITenor
+          \notesITenor
         }
-        \addlyrics \wordsIIITenor
+        \addlyrics \wordsITenor
       >>
       <<
         \new Voice {
           \clef "mensural-f"
-          \notesIIIBaritone
+          \notesIBaritone
         }
-        \addlyrics \wordsIIIBaritone
+        \addlyrics \wordsIBaritone
       >>
       <<
         \new Voice {
           \clef "mensural-f"
-          \notesIIIBass
+          \notesIBass
         }
-        \addlyrics \wordsIIIBass
+        \addlyrics \wordsIBass
       >>
     >>
+  % >>
   \layout {
     \override Staff.Accidental.alteration-glyph-name-alist = #standard-alteration-glyph-name-alist
   }

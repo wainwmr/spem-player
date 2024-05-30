@@ -3,17 +3,12 @@
 \pointAndClickOff
 
 \paper {
-  paper-width = 5200\mm
-  paper-height = 110\mm
+  page-breaking = #ly:one-line-breaking
+  paper-height = 85\mm
   top-margin = 0
   bottom-margin = 0
   left-margin = 0
   right-margin = 0
-  indent = 0
-  system-count = #1
-  ragged-right = ##f
-  ragged-bottom = ##t
-  print-page-number = ##f
 }
 
 \header { tagline = ##f }

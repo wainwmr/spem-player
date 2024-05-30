@@ -1,6 +1,6 @@
 \version "2.24.3" 
 
-\include "spem layout.ly"
+\include "layout.ly"
 \include "../spem.ly"
 \include "../spem words.ly"
 
@@ -13,40 +13,40 @@
           \remove Note_heads_engraver
           \consists Completion_heads_engraver
       }
-      { \clef "treble" \notesIVSoprano }
-      \addlyrics \wordsIVSoprano
+      { \clef "treble" \notesVIISoprano }
+      \addlyrics \wordsVIISoprano
     >>
     <<
       \new Voice \with {
           \remove Note_heads_engraver
           \consists Completion_heads_engraver
       }
-      { \clef "treble" \notesIVAlto }
-      \addlyrics \wordsIVAlto
+      { \clef "treble" \notesVIIAlto }
+      \addlyrics \wordsVIIAlto
     >>
     <<
       \new Voice \with {
           \remove Note_heads_engraver
           \consists Completion_heads_engraver
       }
-      { \clef "treble_8" \notesIVTenor }
-      \addlyrics \wordsIVTenor
+      { \clef "treble_8" \notesVIITenor }
+      \addlyrics \wordsVIITenor
     >>
     <<
       \new Voice \with {
           \remove Note_heads_engraver
           \consists Completion_heads_engraver
       }
-      { \clef "bass" \notesIVBaritone }
-      \addlyrics \wordsIVBaritone
+      { \clef "bass" \notesVIIBaritone }
+      \addlyrics \wordsVIIBaritone
     >>
     <<
       \new Voice \with {
           \remove Note_heads_engraver
           \consists Completion_heads_engraver
       }
-      { \clef "bass" \notesIVBass }
-      \addlyrics \wordsIVBass
+      { \clef "bass" \notesVIIBass }
+      \addlyrics \wordsVIIBass
     >>
   >>
 }

@@ -27,6 +27,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
+    "build:scores": "bash ./buildAllScores.sh",
     "preview": "vite preview",
     "ohm": "npx ohm generateBundles --withTypes src/ohmjs/ly-grammar.ohm",
     "test:ui": "vitest --ui",

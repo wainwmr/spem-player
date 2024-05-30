@@ -1,6 +1,6 @@
 \version "2.24.3" 
 
-\include "spem layout.ly"
+\include "layout.ly"
 \include "../spem.ly"
 \include "../spem words.ly"
 
@@ -11,37 +11,37 @@
       <<
         \new Voice {
           \clef "mensural-c1"  
-          \notesVIIISoprano
+          \notesIIISoprano
         }
-        \addlyrics { \wordsVIIISoprano }
+        \addlyrics { \wordsIIISoprano }
       >>
       <<
         \new Voice {
           \clef "mensural-c2"  
-          \notesVIIIAlto
+          \notesIIIAlto
         }
-        \addlyrics \wordsVIIIAlto
+        \addlyrics \wordsIIIAlto
       >>
       <<
         \new Voice {
           \clef "mensural-c3"  
-          \notesVIIITenor
+          \notesIIITenor
         }
-        \addlyrics \wordsVIIITenor
+        \addlyrics \wordsIIITenor
       >>
       <<
         \new Voice {
           \clef "mensural-f"
-          \notesVIIIBaritone
+          \notesIIIBaritone
         }
-        \addlyrics \wordsVIIIBaritone
+        \addlyrics \wordsIIIBaritone
       >>
       <<
         \new Voice {
           \clef "mensural-f"
-          \notesVIIIBass
+          \notesIIIBass
         }
-        \addlyrics \wordsVIIIBass
+        \addlyrics \wordsIIIBass
       >>
     >>
   \layout {
