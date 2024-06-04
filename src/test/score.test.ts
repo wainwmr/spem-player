@@ -193,6 +193,34 @@ describe("MusicScore custom element", () => {
 
   });
 
+  it("Changing score type results in different highlited bar", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+
+    // @ts-ignore
+    elem.scrollTo = vi.fn();  // jsdom doesn't seem to implement HTMLElement.scrollTo()
+
+    // wait for score to be loaded
+    var waitingForLoaded = waitForEvent(elem, "music-score-loaded", handleScoreLoaded, 0, null, 0);
+    elem?.setAttribute("choir", "4");
+    elem.setAttribute("bar", "40");
+    var loadResult = await waitingForLoaded;
+    expect(loadResult).toStrictEqual(true);
+
+    // get the highlight bar start position
+    const startpos = elem.highlightBar.getAttribute("x");
+    const width = elem.highlightBar.getAttribute("width");
+
+    // wait for score to be loaded
+    waitingForLoaded = waitForEvent(elem, "music-score-loaded", handleScoreLoaded, 0, null, 0);
+    elem.setAttribute("score-type", "early");
+    loadResult = await waitingForLoaded;
+    expect(loadResult).toStrictEqual(true);
+
+    expect(elem.highlightBar.getAttribute("x")).not.toBe(startpos); // highlight bar x pos has changed
+    expect(elem.highlightBar.getAttribute("width")).not.toBe(width); // highlight bar width has changed
+
+  }, 9999999);
+
 });
 
 

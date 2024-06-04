@@ -110,6 +110,10 @@ export class MusicScore extends MusicElement {
     this.bars = this.getBars();
     var endtime = performance.now();
     console.log("getBars() time taken:", endtime - starttime);
+
+    // Highlight and scroll to the current bar
+    this.highlight()
+    this.scrollSmooth();
   }
 
   async setChoir(c: string | number) {
@@ -120,10 +124,6 @@ export class MusicScore extends MusicElement {
 
     // set the border color to match
     this.style.borderColor = `hsla(${colors().choir[this.choir]}, 80%, 55%, 1)`;
-
-    // Highlight and scroll to the current bar
-    this.highlight()
-    this.scrollSmooth();
   }
 
   setBar(b: string | number) {

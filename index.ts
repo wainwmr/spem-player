@@ -47,7 +47,6 @@ var current: State = {
 // TODO: highlight part on score?
 // TODO: Add lyrics to footer
 // BUG: Soprano in choir 1 bar 13.  Breve or Longa?
-// BUG: when switching music types, bars do not align correctly.
 
 async function setChoir(c: number, forceChange = false) {
   if (current.choir == c && !forceChange) {
