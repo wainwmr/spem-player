@@ -1,30 +1,26 @@
 import { MusicCanvas } from '../ts/MusicCanvas';
 import config from '../ts/config';
 
+MusicCanvas.define("music-canvas");
+
+var canvas: MusicCanvas | null;
 describe("MusicCanvas custom element", () => {
 
   beforeAll(() => {
-    MusicCanvas.define("music-canvas");
-
-    // vi.spyOn(HTMLElement.prototype, "scrollTo").mockReturnValue();
-
+    document.body.innerHTML = `<music-canvas></music-canvas>`
+    canvas = document.querySelector("music-canvas");
   });
 
   afterAll(() => {
     vi.clearAllMocks();
   });
 
-  var elem: MusicCanvas | null;
-  beforeEach(() => {
-    document.body.innerHTML = `<music-canvas></music-canvas>`
-    elem = document.querySelector("music-canvas");
-  });
   
-  it("Check that the element contains a canvas", async () => {
-    expect(elem).not.toBeNull();
-    console.log(elem?.innerHTML);
+  it("Check that the canvasent contains a canvas", async () => {
+    expect(canvas).not.toBeNull();
+    console.log(canvas?.innerHTML);
 
-    expect(elem?.querySelector("canvas")).not.toBe(null);
+    expect(canvas?.querySelector("canvas")).not.toBe(null);
 
   });
 

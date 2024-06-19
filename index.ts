@@ -323,6 +323,8 @@ function init(): void {
   // read choir, part and bar from the URL
   parseURL();
 
+  score.addEventListener("music-score-click", handleControlChange as (e: Event) => void);
+
   controls.addEventListener("music-controls-changed", handleControlChange as (e: Event) => void);
   controls.addEventListener("music-controls-playing", handleAudioPlaying as (e: Event) => void);
   controls.addEventListener("music-controls-paused", handleAudioPaused as (e: Event) => void);

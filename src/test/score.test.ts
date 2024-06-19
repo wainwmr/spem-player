@@ -219,7 +219,7 @@ describe("MusicScore custom element", () => {
     expect(elem.highlightBar.getAttribute("x")).not.toBe(startpos); // highlight bar x pos has changed
     expect(elem.highlightBar.getAttribute("width")).not.toBe(width); // highlight bar width has changed
 
-  }, 9999999);
+  });
 
 });
 

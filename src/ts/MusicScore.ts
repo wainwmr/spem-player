@@ -39,6 +39,8 @@ export class MusicScore extends MusicElement {
     this.highlightBar.style.fill = colors().scoreHighlight; //Set stroke colour
     this.highlightBar.style.fillOpacity = "0";  // initially invisible
     this.highlightBar.style.strokeWidth = "5px"; //Set stroke width
+
+    this.addEventListener("click", this.scoreClicked);
   }
 
   async attributeChangedCallback(name: string, _oldValue: string, newValue: string) {
@@ -50,20 +52,24 @@ export class MusicScore extends MusicElement {
     }
   }
 
-  // var pt;
-  // function scoreClicked(e) {
-  //   console.log("score clicked");
-  //   pt.x = e.clientX;
-  //   pt.y = e.clientY;
+  scoreClicked(e: MouseEvent) {
+    if (!this.svg) return;
 
-  //   // The cursor point, translated into svg coordinates
-  //   var cursorpt = pt.matrixTransform(svg.getScreenCTM().inverse());
-  //   console.log("(" + cursorpt.x + ", " + cursorpt.y + ")");
+    var pt: DOMPoint = new DOMPoint(e.clientX, e.clientY);
+    console.log("score clicked", pt);
 
-  //   var result = bars.find(x => x > cursorpt.x);
-  //   console.log(bars.indexOf(result));
-  //   setBar(bars.indexOf(result));
-  // }
+    // The cursor point, translated into svg coordinates
+    const m = this.svg.getScreenCTM();
+    var cursorpt = pt.matrixTransform(m?.inverse());
+    console.log("clicked at (" + cursorpt.x + ", " + cursorpt.y + ")");
+
+    var result = this.bars.find(x => x > cursorpt.x);
+    if (result) {
+      console.log("selected bar", this.bars.indexOf(result));
+      this.setBar(this.bars.indexOf(result));
+      this.fireEvent("music-score-click");
+    }
+  }
 
   #loadSvg = async (): Promise<string | null> => {
     try {
@@ -99,8 +105,6 @@ export class MusicScore extends MusicElement {
     var viewBoxString = this.svg.getAttribute('viewBox');
     this.svgWidth = Number(viewBoxString?.split(" ")[2]);
     console.log("viewbox", this.svgWidth); // Example output: "0 0 65415 41616"
-
-
 
     this.svg.prepend(this.highlightPosition);
     this.svg.prepend(this.highlightBar);
