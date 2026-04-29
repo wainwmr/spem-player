@@ -14,7 +14,7 @@ Upstream repository: `wainwmr/spem-player` (Mark Wainwright). Forked to `wainwri
 - **Testing:** Vitest 3 with jsdom, coverage via `@vitest/coverage-v8`
 - **Parser:** Ohm.js for LilyPond grammar parsing
 - **Build scripts:** Bash (`buildScore.sh`, `buildAllScores.sh`) invoking LilyPond to generate SVG scores
-- **Deployment:** Netlify (build command `npm run build`, publish directory `dist`)
+- **Deployment:** Netlify (build command `npm run build`, publish directory `dist`). Automated deploy on merge to `main`. Live at [www.spemplayer.net](https://www.spemplayer.net).
 
 ## Architecture
 

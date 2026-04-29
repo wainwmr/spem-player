@@ -104,4 +104,8 @@ The project is configured for Netlify. `netlify.toml` specifies:
 - Build command: `npm run build`
 - Publish directory: `dist`
 
+Deployment is automated: merging to `main` triggers a Netlify build and deploy.
+
+**Live site:** [www.spemplayer.net](https://www.spemplayer.net)
+
 Ensure SVG scores are up to date before deploying, as the build pipeline does not invoke LilyPond automatically.

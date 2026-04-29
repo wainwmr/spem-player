@@ -1,4 +1,4 @@
-# example netlify.toml
+# Netlify configuration for spem-player
 [build]
   command = "npm run build"
   functions = "netlify/functions"
