@@ -83,6 +83,10 @@ Tests live in `src/test/` and use Vitest with jsdom. Global test APIs are enable
 
 Active work on bugs, hacks, and technical debt is managed via `TECH_DEBT.md` in the project root. See that document for the current phase, next item, and resumption instructions.
 
+### Session Startup
+
+Run `python discover.py` at the start of each session to catch new TODO / BUG / HACK markers added by other contributors. The script scans source files, updates line numbers for moved markers, flags edited text, and appends any genuinely new items to `BUGS.md`.
+
 ## Session Notes
 
 No active session.

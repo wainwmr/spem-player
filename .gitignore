@@ -9,4 +9,5 @@ dist
 coverage
 temp/*
 publish.py
+discover.py
 

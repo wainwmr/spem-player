@@ -49,6 +49,8 @@ BUGS.md will contain one section per item, using a definition-list format (avoid
 - **Recommended fix**: (populated in Specification)
 - **Test plan**: (populated in Specification)
 - **Dependencies**: (populated in Specification)
+- **Closed**: YYYY-MM-DD (when the item was resolved; leave blank until done)
+- **Resolution**: Brief note or PR/commit reference (e.g., "Fixed in PR #52", "Won't fix: deprecated")
 - **Notes**: (free form)
 ```
 

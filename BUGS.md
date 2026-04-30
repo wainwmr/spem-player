@@ -34,7 +34,7 @@ Process document: `TECH_DEBT.md`
 
 - **Type**: TODO
 - **Area**: UI
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P3
 - **Difficulty**: XS
 - **Source file**: `index.ts`
@@ -43,10 +43,10 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: "TODO: Change dark mode to moon/sun icons"
 - **Description**: Replace the current dark mode toggle icon with moon/sun icons for clearer visual affordance.
 - **PD required**: none
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: Pure design task. SVG assets needed.
+- **Recommended fix**: Create or source two minimal SVG icons (sun for light mode, moon for dark). Replace the current toggle button content in `index.html` with an `<svg>` element whose `href` or inner markup swaps based on `document.documentElement.classList.contains('dark')`. Update the click handler in `index.ts` to toggle the icon alongside the theme. Add `aria-label="Toggle dark mode"` and `role="img"`.
+- **Test plan**: Playwright visual regression: screenshot the header in both modes and assert the correct icon is rendered. Assert `aria-label` is present.
+- **Dependencies**: None
+- **Notes**: Pure design task. Keep SVGs under 1KB each.
 
 ### TODO-UI-003
 
@@ -70,7 +70,7 @@ Process document: `TECH_DEBT.md`
 
 - **Type**: TODO
 - **Area**: UI
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P3
 - **Difficulty**: XS
 - **Source file**: `index.ts`
@@ -79,10 +79,10 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: "TODO: Better font/graphic for Spem Player title"
 - **Description**: Improve the title graphic or font used for "Spem Player" in the header.
 - **PD required**: none
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: Pure design task.
+- **Recommended fix**: Source a suitable web font (e.g., Cormorant Garamond or EB Garamond for historical resonance) and self-host a WOFF2 subset containing only "Spem Player". Replace the `<h1>` text with a styled `<span>` using the font. Use `font-display: swap` to prevent layout shift.
+- **Test plan**: Lighthouse audit to confirm LCP is not regressed. Visual check at multiple viewport widths.
+- **Dependencies**: None
+- **Notes**: Alternatively, use an SVG text lockup if font loading is problematic.
 
 ### BUG-SCORE-001
 
@@ -124,7 +124,7 @@ Process document: `TECH_DEBT.md`
 
 - **Type**: TODO
 - **Area**: BUILD
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P3
 - **Difficulty**: L
 - **Source file**: `index.ts`
@@ -133,16 +133,16 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: `TODO: build: minimse SVGs using <use> and <defs> elements`
 - **Description**: Post-process the LilyPond-generated SVGs to deduplicate repeated elements (clefs, noteheads, etc.) using SVG `<use>` and `<defs>`, reducing file size and network transfer.
 - **PD required**: spike
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: Requires understanding LilyPond SVG output structure. May be complex due to LilyPond's use of transforms and unique IDs.
+- **Recommended fix**: Treat as a spike. Write a Node.js script (`scripts/dedupe-svgs.js`) that parses LilyPond SVGs with `cheerio` or `jsdom`, identifies repeated `<path>` elements by `d` attribute, moves them into a shared `<defs>` block, and replaces occurrences with `<use href="#id">`. Run it on one choir SVG and measure size reduction. If reduction is <20% or transforms break rendering, abandon as not worth the complexity.
+- **Test plan**: Compare `du -b` before and after. Render before/after in a headless browser and pixel-diff to verify no visual regression.
+- **Dependencies**: None
+- **Notes**: LilyPond applies unique transforms to nearly every element, so deduplication may be ineffective. The spike should be time-boxed to 2 hours.
 
 ### TODO-BUILD-002
 
 - **Type**: TODO
 - **Area**: BUILD
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P2
 - **Difficulty**: M
 - **Source file**: `index.ts`
@@ -151,16 +151,16 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: "TODO: build: generate SVG from lilypond as part of build process"
 - **Description**: Integrate LilyPond SVG generation into the Vite build pipeline so `npm run build` automatically regenerates scores from source, rather than requiring a separate manual step.
 - **PD required**: none
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: LilyPond must be available at build time. On Windows, the sed command in buildScore.sh uses macOS syntax and needs cross-platform handling.
+- **Recommended fix**: Create a Node.js pre-build script (`scripts/build-scores.js`) that runs `lilypond --svg` for each score and strips `height`/`width` attributes using a cross-platform regex instead of `sed`. Wire it into `vite.config.ts` via the `buildStart` hook or as an `npm run prebuild` step called before Vite. Cache outputs by comparing `.ly` file mtimes to avoid unnecessary rebuilds.
+- **Test plan**: Delete `src/scores/` and run `npm run build`; assert SVGs are regenerated. Verify the build fails gracefully with a clear error if LilyPond is not on PATH.
+- **Dependencies**: None
+- **Notes**: The existing `buildAllScores.sh` can be ported almost verbatim to Node.js. Mark has already installed LilyPond 2.24.4 locally.
 
 ### TODO-UI-005
 
 - **Type**: TODO
 - **Area**: UI
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P2
 - **Difficulty**: XS
 - **Source file**: `index.ts`
@@ -169,10 +169,10 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: "TODO: CMD-B to type in bar number"
 - **Description**: Add a keyboard shortcut (Cmd/Ctrl+B) that opens a prompt or input field allowing the user to type a bar number and jump directly to it.
 - **PD required**: none
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: Similar to existing keyboard shortcuts in index.ts. Should respect focus guards (not active when input focused).
+- **Recommended fix**: Add a `case 'b':` (with `e.ctrlKey || e.metaKey`) to `keyboardTapped()` in `index.ts`. Guard with the existing `isComposing` and input-focus checks. Use `window.prompt('Jump to bar (0–139):')`, validate with `Number.isInteger()` and range check against `config.maxBar`, then dispatch a `music-controls-changed` event with the new bar. Close prompt on `Escape` or invalid input.
+- **Test plan**: Add tests in `src/test/keyboard.test.ts`: (1) Ctrl+B opens prompt mock, (2) valid bar number dispatches event, (3) out-of-range input is rejected, (4) prompt is blocked when an input is focused.
+- **Dependencies**: None
+- **Notes**: Ensure the prompt does not steal focus from the audio playback context.
 
 ### TODO-UI-006
 
@@ -250,7 +250,7 @@ Process document: `TECH_DEBT.md`
 
 - **Type**: BUG
 - **Area**: UI
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P3
 - **Difficulty**: XS
 - **Source file**: `src/scss/style.scss`
@@ -258,10 +258,10 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: "BUG: looks ugly when Bar wraps to next line"
 - **Description**: The footer uses flex-wrap: wrap. On narrow viewports the Bar label and input in music-controls wrap to a second line, breaking the intended single-row footer layout.
 - **PD required**: repro
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: Cosmetic only. Affects mobile or very narrow desktop windows.
+- **Recommended fix**: Add `white-space: nowrap` to the `.bar-control` wrapper in `style.scss`. If the footer becomes horizontally scrollable on very narrow screens, add `flex-shrink: 0` to the label and `min-width: 0` to the input container.
+- **Test plan**: Playwright: render at 375px and 320px widths. Assert the Bar label and input remain on a single line. Assert no horizontal scrollbar appears in the footer.
+- **Dependencies**: None
+- **Notes**: One-line CSS fix. Check that `nowrap` does not clip the input on the smallest supported viewport.
 
 ### HACK-LILY-001
 
@@ -285,7 +285,7 @@ Process document: `TECH_DEBT.md`
 
 - **Type**: TODO
 - **Area**: CONFIG
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P2
 - **Difficulty**: S
 - **Source file**: `src/ts/common.ts`
@@ -294,10 +294,10 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: "TODO: Need to use config to load the hues for each choir"
 - **Description**: Choir colour hues are currently loaded from CSS custom properties (`--color-c1` to `--color-c8`). The comment suggests moving hue definitions into `config.ts` so they are centralised and theming is data-driven.
 - **PD required**: none
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: Would decouple colour logic from CSS and make dynamic theme changes easier.
+- **Recommended fix**: Add a `choirHues: number[]` array to `config.ts` (8 values, 0–360). Update `common.ts` `colors()` to read `config.choirHues` instead of CSS custom properties. Keep CSS custom properties as a runtime override for advanced theming, but default to config values when CSS variables are missing.
+- **Test plan**: Test `colors()` returns expected HSL strings for all 8 choirs when CSS custom properties are absent. Test that CSS custom properties still override config when present.
+- **Dependencies**: None
+- **Notes**: Resolves the root cause of HACK-CONFIG-002 (ARGH console log) because `colors()` will no longer depend on stylesheet load timing.
 
 ### HACK-CONFIG-001
 
@@ -321,7 +321,7 @@ Process document: `TECH_DEBT.md`
 
 - **Type**: HACK
 - **Area**: CONFIG
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P2
 - **Difficulty**: XS
 - **Source file**: `src/ts/common.ts`
@@ -330,10 +330,10 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: `console.log("ARGH")`
 - **Description**: When CSS custom properties are not available (e.g., in jsdom tests or before stylesheet loads), `colors()` logs "ARGH" and returns default colours. This debug statement pollutes test output and browser consoles. It should be removed or replaced with a proper warning.
 - **PD required**: none
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: Visible in every test run that instantiates MusicScore or MusicCanvas (dozens of "ARGH" lines).
+- **Recommended fix**: Delete the `console.log("ARGH")` line in `common.ts` `colors()`. If a warning is genuinely needed for missing CSS custom properties, replace it with a single-fire `console.warn` guarded by `typeof window !== 'undefined' && process.env.NODE_ENV !== 'test'`.
+- **Test plan**: Run `npm run coverage` and assert zero "ARGH" strings in stdout/stderr. Verify `colors()` still returns sensible defaults when called in jsdom (where CSS variables are absent).
+- **Dependencies**: None
+- **Notes**: This is a one-line deletion. If TODO-CONFIG-001 is implemented first, this hack becomes moot because `colors()` will source from config.
 
 ### BUG-CONFIG-001
 
@@ -411,7 +411,7 @@ Process document: `TECH_DEBT.md`
 
 - **Type**: HACK
 - **Area**: CANVAS
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P3
 - **Difficulty**: XS
 - **Source file**: `src/ts/MusicCanvas.ts`
@@ -420,10 +420,10 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: "HACK: throttle"
 - **Description**: The draw() loop uses a crude throttle (`secondsPassed < 0.01 return`) to limit frame rate. requestAnimationFrame already fires at display refresh rate; the throttle adds unnecessary complexity and can cause frame drops.
 - **PD required**: none
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: Either remove the throttle entirely and let requestAnimationFrame handle timing, or replace with proper delta-time based animation.
+- **Recommended fix**: Remove the `if (secondsPassed < 0.01) return` guard in `MusicCanvas.draw()`. `requestAnimationFrame` already caps at display refresh rate. If profiling reveals frame drops on low-end hardware, reintroduce delta-time smoothing instead of a crude throttle.
+- **Test plan**: Profile `draw()` call frequency during playback using `performance.now()` in a test stub. Assert it is called at roughly 60fps (±5fps). Assert canvas animation remains smooth after removal.
+- **Dependencies**: None
+- **Notes**: Deletion is the correct first step. Only add complexity back if there is measurable evidence of a problem.
 
 ### BUG-CANVAS-002
 
@@ -447,7 +447,7 @@ Process document: `TECH_DEBT.md`
 
 - **Type**: TODO
 - **Area**: CANVAS
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P3
 - **Difficulty**: XS
 - **Source file**: `src/ts/MusicCanvas.ts`
@@ -456,16 +456,16 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: "TODO: combine canvasClicked and Hovered?"
 - **Description**: `canvasClicked` and `canvasHovered` share logic (`getMousePos`, `moveToPosition`). They could be refactored into a single handler or a shared helper to reduce duplication.
 - **PD required**: none
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: Straightforward refactoring. Ensure event-specific behaviour (fireEvent vs setAttribute) is preserved.
+- **Recommended fix**: Extract shared logic into a private `#updateFromMouse(event: MouseEvent, action: 'click' | 'hover')` method in `MusicCanvas.ts`. It computes `{choir, part, bar}` from `getMousePos()`, validates bounds, and returns the position. `canvasClicked` calls it with `'click'` and dispatches `music-canvas-click`. `canvasHovered` calls it with `'hover'` and updates `music-canvas-watcher` attributes.
+- **Test plan**: Refactor and verify all existing canvas tests pass. Add a unit test for `#updateFromMouse` simulating a click at a known coordinate and asserting the correct position object is returned.
+- **Dependencies**: None
+- **Notes**: Keep the public method signatures unchanged to avoid breaking callers.
 
 ### HACK-UI-001
 
 - **Type**: HACK
 - **Area**: UI
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P2
 - **Difficulty**: XS
 - **Source file**: `src/ts/MusicControls.ts`
@@ -474,10 +474,10 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: "HACK : 138"
 - **Description**: The bar input field has its max attribute hard-coded to 138. Config defines 140 bars (0-139), so the maximum should be 139 and derived from config to avoid drift.
 - **PD required**: none
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: Simple fix: use config to calculate max bar number dynamically.
+- **Recommended fix**: In `MusicControls.ts`, replace `this.barinput.setAttribute("max", "138")` with `this.barinput.setAttribute("max", String(config.barno[0].length - 1))` (or expose `config.maxBar = 139`). Ensure the min attribute is set to `"0"` explicitly.
+- **Test plan**: Unit test that `barinput.max === "139"` after construction. Test that entering 139 is accepted and 140 is rejected by the browser's native range validation.
+- **Dependencies**: None
+- **Notes**: One-line change. Best done alongside any other MusicControls refactors to avoid churn.
 
 ### HACK-SCORE-001
 
@@ -537,7 +537,7 @@ Process document: `TECH_DEBT.md`
 
 - **Type**: HACK
 - **Area**: TEST
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P3
 - **Difficulty**: XS
 - **Source file**: `src/test/score.test.ts`
@@ -546,16 +546,16 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: "HACK: duplicated with controls.test.ts"
 - **Description**: The `waitForEvent` helper function is duplicated between `score.test.ts` and `controls.test.ts`. It should be extracted to a shared test utility module.
 - **PD required**: none
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: Also reduces test boilerplate for future tests that need event assertion.
+- **Recommended fix**: Create `src/test/helpers.ts`, move `waitForEvent` there, and update imports in `score.test.ts` and `controls.test.ts` to `import { waitForEvent } from './helpers'`. If other shared utilities exist (e.g., DOM setup helpers), move them too.
+- **Test plan**: Run full test suite. Verify `score.test.ts` and `controls.test.ts` still pass. Add a trivial test in `helpers.test.ts` that asserts `waitForEvent` resolves when the event fires.
+- **Dependencies**: None
+- **Notes**: Future test files should import shared utilities from `helpers.ts` rather than duplicating them.
 
 ### TODO-BUILD-003
 
 - **Type**: TODO
 - **Area**: BUILD
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P3
 - **Difficulty**: XS
 - **Source file**: `index.html`
@@ -564,16 +564,16 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: "TODO: Needs auto-increasing version somehow"
 - **Description**: The version string in index.html is hard-coded. It should be injected automatically from package.json during build to prevent version drift (already noted as BUILD-001).
 - **PD required**: none
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
+- **Recommended fix**: Add `define: { __APP_VERSION__: JSON.stringify(process.env.npm_package_version) }` to `vite.config.ts`. Replace the hard-coded version in `index.html` with `<script>document.getElementById('version').textContent = __APP_VERSION__;</script>` (or use a build-time HTML plugin). Delete the TODO comment in `index.ts`.
+- **Test plan**: Run `npm run build` and assert `dist/index.html` contains the version string from `package.json`. Test that `__APP_VERSION__` is defined in the built bundle.
 - **Dependencies**: BUILD-001
-- **Notes**: BUILD.md already suggests using a Vite `define` block with `process.env.npm_package_version`.
+- **Notes**: Resolving BUILD-001 closes this item automatically.
 
 ### BUILD-001
 
 - **Type**: BUILD
 - **Area**: BUILD
-- **Status**: assessed
+- **Status**: specified
 - **Priority**: P3
 - **Difficulty**: XS
 - **Source file**: `package.json` / `index.html`
@@ -582,7 +582,7 @@ Process document: `TECH_DEBT.md`
 - **Raw text**: (documented in AGENTS.md and BUILD.md) "package.json declares version 2.0.0; index.html displays 2.1.0"
 - **Description**: Version number is manually maintained in two places (package.json and index.html) and has drifted (2.0.0 vs 2.1.0). Should be auto-injected during build.
 - **PD required**: none
-- **Recommended fix**: (pending Specification)
-- **Test plan**: (pending Specification)
-- **Dependencies**: (pending Specification)
-- **Notes**: BUILD.md already suggests a Vite define block approach. Resolving this also closes TODO-BUILD-003.
+- **Recommended fix**: Add `define: { __APP_VERSION__: JSON.stringify(process.env.npm_package_version) }` to `vite.config.ts`. Replace the hard-coded version span in `index.html` with a `<span id="version"></span>` and a small inline script that sets `textContent = __APP_VERSION__`. Remove the TODO-BUILD-003 comment from `index.ts`.
+- **Test plan**: Run `npm run build` and assert `dist/index.html` contains the exact version string from `package.json`. Add a Playwright test that reads `#version` textContent and asserts it matches a semver regex.
+- **Dependencies**: None
+- **Notes**: Resolving this closes TODO-BUILD-003. Align package.json and index.html version strings as part of the same commit.
