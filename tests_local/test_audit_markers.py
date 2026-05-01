@@ -290,3 +290,26 @@ class TestMain:
 
         captured = capsys.readouterr()
         assert "1 ok" in captured.out or "0 mapped, 1 ok" in captured.out
+
+    def test_only_board_issues_are_candidates(self, capsys, tmp_path, monkeypatch):
+        """Verify that off-board repo issues are not suggested as candidates."""
+        monkeypatch.setattr(audit_markers, "REGISTRY_PATH", tmp_path / "registry.json")
+        audit_markers.save_registry({"markers": {}})
+
+        markers = [
+            {"file": "src/ts/foo.ts", "line": 1, "type": "TODO", "raw": "TODO: xyz123orphanmatch"},
+        ]
+
+        # Only board issues are returned — none match this marker
+        board_issues = [
+            {"number": 1, "title": "completely unrelated topic abc456"},
+        ]
+
+        with patch.object(audit_markers, "get_git_files", return_value=["src/ts/foo.ts"]):
+            with patch.object(audit_markers, "discover_markers", return_value=markers):
+                with patch.object(audit_markers, "fetch_board_issues", return_value=board_issues):
+                    with patch("argparse.ArgumentParser.parse_args", return_value=argparse.Namespace(interactive=False, prune=False, strict=False)):
+                        assert audit_markers.main() == 1
+
+        captured = capsys.readouterr()
+        assert "(no candidates found)" in captured.out
