@@ -256,20 +256,37 @@ def save_registry(registry: dict) -> None:
         json.dump(registry, f, indent=2, sort_keys=True)
 
 
-def fetch_all_issues() -> list[dict]:
-    """Fetch all issues from the repository."""
-    out = run([
-        "gh", "issue", "list",
-        "--repo", f"{OWNER}/{REPO}",
-        "--state", "all",
-        "--limit", "1000",
-        "--json", "number,title,body",
-    ])
-    return json.loads(out)
+def fetch_board_issues() -> list[dict]:
+    """Fetch issues linked to the project board.
+
+    Returns only issues that are actually on the board, ignoring orphaned
+    repo issues created by failed discover.py runs.
+    """
+    result = subprocess.run(
+        ["gh", "project", "item-list", PROJECT_NUMBER,
+         "--owner", OWNER, "--limit", "200", "--format", "json"],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to fetch board items: {result.stderr}")
+
+    raw = result.stdout
+    if raw.startswith("\ufeff"):
+        raw = raw[1:]
+    data = json.loads(raw)
+
+    issues = []
+    for item in data.get("items", []):
+        content = item.get("content", {})
+        num = content.get("number")
+        title = content.get("title")
+        if num and title:
+            issues.append({"number": num, "title": title})
+    return issues
 
 
 def find_candidates(marker: dict, issues: list[dict], top_n: int = 3) -> list[dict]:
-    """Return the top N candidate issues for a marker based on title similarity."""
+    """Return the top N candidate board issues for a marker based on title similarity."""
     marker_text = normalise(strip_prefix(marker["raw"]))
     scored = []
     for issue in issues:
@@ -399,7 +416,7 @@ def main() -> int:
     candidates_map = {}
     if unknown:
         try:
-            issues = fetch_all_issues()
+            issues = fetch_board_issues()
         except RuntimeError as e:
             print(f"Warning: could not fetch issues: {e}")
             issues = []

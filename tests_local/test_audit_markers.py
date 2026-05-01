@@ -183,7 +183,7 @@ class TestMain:
 
         with patch.object(audit_markers, "get_git_files", return_value=["src/ts/foo.ts"]):
             with patch.object(audit_markers, "discover_markers", return_value=markers):
-                with patch.object(audit_markers, "fetch_all_issues", return_value=[]):
+                with patch.object(audit_markers, "fetch_board_issues", return_value=[]):
                     with patch("argparse.ArgumentParser.parse_args", return_value=argparse.Namespace(interactive=False, prune=False, strict=False)):
                         assert audit_markers.main() == 1
 
