@@ -168,6 +168,65 @@ class TestMain:
         assert any(c[0:2] == ["git", "fetch"] for c in call_sequence)
         assert any(c[0:2] == ["git", "rebase"] for c in call_sequence)
 
+    def test_stashed_changes_skip_push_by_default(self):
+        call_sequence = []
+
+        def mock_run(cmd, **kwargs):
+            call_sequence.append(cmd)
+            stdout_map = {
+                ("git", "branch", "--show-current"): "main\n",
+                ("git", "status", "--porcelain"): " M file.txt\n",
+                ("git", "fetch", "upstream"): "",
+                ("git", "fetch", "origin"): "",
+                ("git", "log", "--oneline", "HEAD..upstream/dev"): "",
+                ("git", "rev-list", "--left-right", "origin/main...main"): "",
+                ("git", "stash", "push"): "stash@{0}\n",
+                ("git", "rebase", "upstream/dev"): "",
+                ("git", "stash", "pop"): "",
+            }
+            key = tuple(cmd)
+            return MagicMock(returncode=0, stdout=stdout_map.get(key, ""), stderr="")
+
+        with patch("sync_upstream.subprocess.run", side_effect=mock_run):
+            with patch("sync_upstream.verify_remotes"):
+                with patch("sync_upstream.verify_gh_auth"):
+                    with patch("argparse.ArgumentParser.parse_args", return_value=argparse.Namespace(push=False, base="upstream/dev")):
+                        sync_upstream.main()
+
+        push_calls = [c for c in call_sequence if c[0:2] == ["git", "push"]]
+        assert len(push_calls) == 0, "Push should be skipped when changes were stashed"
+        stash_pop_calls = [c for c in call_sequence if c[0:2] == ["git", "stash"]]
+        assert len(stash_pop_calls) == 1
+
+    def test_stashed_changes_push_with_force_flag(self):
+        call_sequence = []
+
+        def mock_run(cmd, **kwargs):
+            call_sequence.append(cmd)
+            stdout_map = {
+                ("git", "branch", "--show-current"): "main\n",
+                ("git", "status", "--porcelain"): " M file.txt\n",
+                ("git", "fetch", "upstream"): "",
+                ("git", "fetch", "origin"): "",
+                ("git", "log", "--oneline", "HEAD..upstream/dev"): "",
+                ("git", "rev-list", "--left-right", "origin/main...main"): "",
+                ("git", "stash", "push"): "stash@{0}\n",
+                ("git", "rebase", "upstream/dev"): "",
+                ("git", "push", "origin", "main"): "",
+                ("git", "stash", "pop"): "",
+            }
+            key = tuple(cmd)
+            return MagicMock(returncode=0, stdout=stdout_map.get(key, ""), stderr="")
+
+        with patch("sync_upstream.subprocess.run", side_effect=mock_run):
+            with patch("sync_upstream.verify_remotes"):
+                with patch("sync_upstream.verify_gh_auth"):
+                    with patch("argparse.ArgumentParser.parse_args", return_value=argparse.Namespace(push=True, base="upstream/dev")):
+                        sync_upstream.main()
+
+        push_calls = [c for c in call_sequence if c[0:2] == ["git", "push"]]
+        assert len(push_calls) == 1, "Push should happen with --push even when stash was used"
+
     def test_rebase_failure_exits_with_stash_intact(self):
         with patch("sync_upstream.verify_gh_auth"):
             with patch("sync_upstream.verify_remotes"):
