@@ -116,7 +116,15 @@ def main() -> int:
     print(f"  Issue: {url}")
 
     print("Adding to project board...")
-    proj_item = add_to_project(url)
+    try:
+        proj_item = add_to_project(url)
+    except RuntimeError as e:
+        print(f"  FAILED to add to project board: {e}")
+        print(f"\nIssue was created but is NOT on the board.")
+        print(f"Add manually:")
+        print(f"  gh project item-add {PROJECT_NUMBER} --owner {OWNER} --url {url}")
+        return 1
+
     item_id = proj_item["id"]
     print(f"  Board item: {item_id}")
 
