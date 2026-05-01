@@ -30,3 +30,4 @@ jobs:
           python-version: '3.12'
       - run: pip install pytest
       - run: pytest tests_local/ -v
+      - run: python scripts/audit_markers.py --strict

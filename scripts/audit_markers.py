@@ -80,6 +80,7 @@ AREA_MAP = [
 
 OWNER = "wainwmr"
 REPO = "spem-player"
+PROJECT_NUMBER = "2"
 
 REGISTRY_PATH = Path(__file__).parent / "marker_registry.json"
 
