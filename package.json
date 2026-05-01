@@ -39,6 +39,7 @@
     "lint:fix": "eslint . --fix",
     "test:ui": "vitest --ui",
     "test": "vitest",
+    "test:scripts": "pytest tests_local/ -v",
     "coverage": "vitest run --coverage"
   },
   "author": "Mark Wainwright",
