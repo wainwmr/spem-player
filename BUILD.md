@@ -69,7 +69,7 @@ sed -i -E '1,1s/ height="[0-9.]+[a-zA-Z]*"//g; 1,1s/ width="[0-9.]+[a-zA-Z]*"//g
 
 ## Testing
 
-Run tests in watch mode:
+Run application tests in watch mode:
 
 ```console
 npm test
@@ -85,6 +85,12 @@ Open the Vitest UI:
 
 ```console
 npm run test:ui
+```
+
+Run Python helper script tests:
+
+```console
+npm run test:scripts
 ```
 
 ## Build Notes

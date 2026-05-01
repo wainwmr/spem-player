@@ -21,7 +21,7 @@ Without this step, any test importing `src/ohmjs/ly-grammar.ohm-bundle` will fai
 
 ## Running Tests
 
-Watch mode:
+Vitest watch mode:
 
 ```console
 npm test
@@ -37,6 +37,12 @@ Vitest UI:
 
 ```console
 npm run test:ui
+```
+
+Python script tests:
+
+```console
+npm run test:scripts
 ```
 
 ## Test File Location and Naming
@@ -64,7 +70,11 @@ Coverage reports are written to the `coverage/` directory. This directory is git
 
 ## Local Tooling Tests
 
-Python helper scripts in `scripts/` (`discover.py`, `sync_upstream.py`,
-`ticket.py`) have their own test suite in `tests_local/`. These tests
+Python helper scripts in `scripts/` (`audit_markers.py`, `sync_upstream.py`,
+`ticket.py`, etc.) have their own test suite in `tests_local/`. These tests
 use `pytest` and `unittest.mock` to mock `subprocess` calls. They are separate
-from the Vitest suite and are not tracked in git.
+from the Vitest suite and run via:
+
+```console
+npm run test:scripts
+```
