@@ -1,0 +1,115 @@
+{
+  "Area": {
+    "options": {
+      "Canvas": {
+        "color": "GRAY",
+        "description": ""
+      },
+      "Config": {
+        "color": "GRAY",
+        "description": ""
+      },
+      "Controls": {
+        "color": "GRAY",
+        "description": ""
+      },
+      "Lily": {
+        "color": "GRAY",
+        "description": ""
+      },
+      "Other": {
+        "color": "GRAY",
+        "description": ""
+      },
+      "Score": {
+        "color": "GRAY",
+        "description": ""
+      },
+      "Test": {
+        "color": "GRAY",
+        "description": ""
+      },
+      "Tooling": {
+        "color": "GRAY",
+        "description": ""
+      },
+      "UI": {
+        "color": "GRAY",
+        "description": ""
+      }
+    }
+  },
+  "Assignees": {},
+  "Difficulty": {
+    "options": {
+      "L": {
+        "color": "RED",
+        "description": ""
+      },
+      "M": {
+        "color": "ORANGE",
+        "description": ""
+      },
+      "S": {
+        "color": "YELLOW",
+        "description": ""
+      },
+      "XS": {
+        "color": "GREEN",
+        "description": ""
+      }
+    }
+  },
+  "Labels": {},
+  "Linked pull requests": {},
+  "Milestone": {},
+  "Parent issue": {},
+  "Repository": {},
+  "Reviewers": {},
+  "Status": {
+    "options": {
+      "Done": {
+        "color": "GRAY",
+        "description": "Entry: On Main; running in production"
+      },
+      "In Progress": {
+        "color": "YELLOW",
+        "description": "Entry: coding started, branch created. Exit: code complete, tests pass, committed to dev (or PR issued to dev)."
+      },
+      "Ready for Main": {
+        "color": "PURPLE",
+        "description": "Entry: Committed to dev.; awaiting final check before main merge. Exit: Merged to main."
+      },
+      "Specified": {
+        "color": "GRAY",
+        "description": "Entry: Assessed; recommended fix exists or reproduction/test plan defined. Exit: Developer pulls it."
+      },
+      "Todo": {
+        "color": "GREEN",
+        "description": "Entry: New TODO/BUG/HACK reported. Exit: Type, Area, Priority, Difficulty defined. Description is clear enough to act on."
+      }
+    }
+  },
+  "Sub-issues progress": {},
+  "Title": {},
+  "Type": {
+    "options": {
+      "bug": {
+        "color": "RED",
+        "description": ""
+      },
+      "build": {
+        "color": "PINK",
+        "description": ""
+      },
+      "hack": {
+        "color": "PURPLE",
+        "description": ""
+      },
+      "todo": {
+        "color": "BLUE",
+        "description": ""
+      }
+    }
+  }
+}

@@ -8,5 +8,5 @@ dist
 .netlify
 coverage
 temp/*
-publish.py
+scripts/publish.py.ARCHIVED
 
