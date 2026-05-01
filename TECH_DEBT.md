@@ -1,18 +1,13 @@
-# Plan: Bugs, Hacks, and Technical Debt Remediation
+# Technical Debt Methodology
 
 ## Context
 
-The Spem Player codebase contains scattered TODOs, BUGs, HACKs, and ARGHs across TypeScript, SCSS, HTML, and build scripts. AGENTS.md and BUILD.md also document known issues and version drift. There is no central register. This plan establishes a systematic, multi-phase process to inventory, assess, specify, and schedule remediation work, culminating in an implementation roadmap aligned with Mark Wainwright's preference for incremental, stable changes.
-
-**Selected approach**: Option A — Full Five-Phase Process.
+The Spem Player codebase contains scattered TODOs, BUGs, HACKs, and ARGHs across TypeScript, SCSS, HTML, and build scripts. This document describes the systematic methodology used to inventory, assess, specify, and schedule remediation work. The methodology was applied to establish the **Spem Player** GitHub Project board, which is now the canonical register of all items. This document remains as reference material for the naming convention, tools, and best practices.
 
 ## Deliverables
 
-1. `BUGS.md` in the project root: the canonical register of all items.
-2. `TECH_DEBT.md` in the project root: this process document, promoted from `.kimi/plans/` so Mark can read and edit it as work progresses.
-3. Updated `AGENTS.md`: cross-references and refreshed Known Issues section. Must include a pointer to `TECH_DEBT.md` under a new `## Process` subsection.
-4. Updated `session_notes.md`: status after every phase, sub-phase, and interruption.
-5. This plan file: retained in `.kimi/plans/` for audit trail; canonical copy lives in `TECH_DEBT.md`.
+- The **Spem Player** GitHub Project board (`https://github.com/users/wainwmr/projects/2`):
+  the canonical register of all items. `BUGS.md` is archived.
 
 ## Naming Convention
 
@@ -28,9 +23,9 @@ Every item receives a unique identifier:
 
 Example: `BUG-SCORE-001` for the scroll-up issue in `index.ts`.
 
-## BUGS.md Schema
+## Issue Schema
 
-BUGS.md will contain one section per item, using a definition-list format (avoids markdownlint MD060 table errors):
+Board items are represented as GitHub issues. The body follows a definition-list format:
 
 ```markdown
 ### BUG-SCORE-001
@@ -49,6 +44,8 @@ BUGS.md will contain one section per item, using a definition-list format (avoid
 - **Recommended fix**: (populated in Specification)
 - **Test plan**: (populated in Specification)
 - **Dependencies**: (populated in Specification)
+- **Closed**: YYYY-MM-DD (when the item was resolved; leave blank until done)
+- **Resolution**: Brief note or PR/commit reference (e.g., "Fixed in PR #52", "Won't fix: deprecated")
 - **Notes**: (free form)
 ```
 
@@ -58,31 +55,19 @@ Status values: `discovered`, `assessed`, `specified`, `ready`, `in-progress`, `d
 
 ## Tools and Capabilities
 
-### Available now
-
 - **Diagnostics MCP**: VS Code workspace diagnostics via `get_all_diagnostics`, `get_errors`, `get_warnings`, `get_info`.
-- **Semantic Scholar MCP**: Academic paper search.
 - **OpenAlex MCP**: Academic works search (email configured: `akw37@bath.ac.uk`).
 - **Playwright**: Chromium, Firefox, WebKit installed at `C:\Users\Andrew\AppData\Local\ms-playwright\`. Use for headless DOM inspection, CSS debugging, and reproduction of layout or interaction bugs.
 - **Git**: Full git history available; `git blame`, `git log -S`, and credential fill tested.
 - **Vitest + jsdom**: Existing test suite (37 tests, 8 files). `canvas` package available for Canvas API tests.
 - **Vite dev server**: `npm run dev` for live reproduction.
 - **Node / npm**: Standard build and test toolchain.
-
-### Already installed (do not reinstall)
-
 - **Ohm language support for VS Code**: Syntax highlighting for `.ohm` grammar files.
-- **markdownlint VS Code extension**: Ensures `.md` files meet lint rules (the user skill already forbids pipe tables).
-
-After every markdown file edit, run `get_all_diagnostics` and inspect the VS Code Problems tab for lint errors. Fix them before proceeding.
-
-### Useful additions
-
-- **LilyPond local install**: Required if regenerating SVG scores from source. Currently handled by shell scripts, but a local install enables verification during assessment and testing. Install immediately after plan approval if not already present.
+- **LilyPond local install**: Required if regenerating SVG scores from source. Currently handled by shell scripts, but a local install enables verification during assessment and testing.
 
 ## Phase 1: Discovery (Inventory)
 
-**Goal**: Produce a complete, unfiltered list of every item that indicates work is needed.
+**Goal**: Produce/maintain a complete, unfiltered list of every item that indicates work is needed.
 
 **Activities**:
 
@@ -92,8 +77,12 @@ After every markdown file edit, run `get_all_diagnostics` and inspect the VS Cod
 2. Cross-reference with `AGENTS.md` Known Issues and `BUILD.md` Build Notes to capture issues documented there but not inline (e.g. version drift, `getBarFromTime` boundary failure).
 3. Record file path, line number, raw comment text, and surrounding context (5 lines).
 4. Run `git blame` or `git log -S` on each location to estimate the first commit where the marker appeared. Record the commit hash, date, and author.
-5. Create `BUGS.md` in the project root with a header and one section per item, assigning IDs and setting Status to `discovered`.
-6. Mark any already-resolved items (e.g. Space bar play/pause toggle, per `session_notes.md`) as `done` with a note.
+5. Create issues on the **Spem Player** GitHub Project board, assigning
+   IDs and setting Status to **Todo**.
+6. Mark any already-resolved items as **Done**.
+7. Run `python discover.py` at the start of each session to catch new
+   markers added by other contributors. The script scans source files
+   and creates new issues on the board in the **Todo** column.
 
 **Constraints**:
 
@@ -104,9 +93,8 @@ After every markdown file edit, run `get_all_diagnostics` and inspect the VS Cod
 **Output and resumability**:
 
 - After every item is documented, output a visible summary to the user before moving to the next item. The summary must include the item ID, file, line, and a one-line characterisation. Do not rely on Thinking blocks; the user cannot see them.
-- If interrupted, update `session_notes.md` with the last completed item ID and the next item to process. On resumption, read `session_notes.md` and `BUGS.md` to locate the restart point.
 
-**Checkpoint**: End of Phase 1. Update `session_notes.md` with item count and any patterns observed.
+**Checkpoint**: End of Phase 1. Update the user with item count and any patterns observed.
 
 ## Phase 2: Assessment (Triage)
 
@@ -114,7 +102,7 @@ After every markdown file edit, run `get_all_diagnostics` and inspect the VS Cod
 
 **Activities**:
 
-For each item in `BUGS.md`, in ID order (or grouped by file if more convenient):
+For each item on the board, in ID order (or grouped by file if more convenient):
 
 1. **Interpret the description**: Read the source code around the marker. Determine whether the comment is still accurate or stale.
 2. **Determine PD required**:
@@ -126,7 +114,7 @@ For each item in `BUGS.md`, in ID order (or grouped by file if more convenient):
    - `spike`: Need a time-boxed technical investigation.
 3. **Assign initial Priority** (P0–P3) based on user impact and frequency.
 4. **Assign initial Difficulty** (XS–XL) based on complexity and blast radius.
-5. **Update `BUGS.md`** with the above fields. Update Status to `assessed`.
+5. **Update the issue** with the above fields. Move Status to **Todo**.
 
 **Constraints**:
 
@@ -138,9 +126,8 @@ For each item in `BUGS.md`, in ID order (or grouped by file if more convenient):
 **Output and resumability**:
 
 - After each item is assessed, output a visible summary to the user: item ID, priority, difficulty, PD required, and a one-sentence rationale.
-- If interrupted, record the last completed ID in `session_notes.md`. On resumption, read `BUGS.md` and `session_notes.md` to restart at the correct item.
 
-**Checkpoint**: End of Phase 2. `BUGS.md` should show every item as `assessed`.
+**Checkpoint**: End of Phase 2. The board should show every item as **Todo**.
 
 ## Phase 3: Specification
 
@@ -160,7 +147,7 @@ Process items in priority order (P0 first, then P1, etc.):
    - Note risks or side effects.
    - Flag if the item should be grouped with others for an architectural change.
 3. Record dependencies between items (e.g. fixing `HACK-CANVAS-003` may unblock `BUG-CANVAS-005`).
-4. Update `BUGS.md` with `Recommended fix`, `Test plan`, and `Dependencies`. Update Status to `specified`.
+4. **Update the issue** with `Recommended fix`, `Test plan`, and `Dependencies`. Move Status to **Specified**.
 
 **Constraints**:
 
@@ -190,8 +177,8 @@ Process items in priority order (P0 first, then P1, etc.):
 4. **Architectural opportunities**: Flag any changes that address multiple items simultaneously (e.g. refactoring `processLilypond()` return type to eliminate three HACKs). Present these as explicit trade-offs against pure incrementalism.
 5. **Risk and rollback**: For each batch, note the risk level and how to roll back (git revert scope).
 6. **Update documentation**:
-   - Write the roadmap into `BUGS.md` under a new `## Implementation Roadmap` section.
-   - Update `AGENTS.md` Known Issues to reference `BUGS.md` and remove duplicated detail.
+   - Write the roadmap into the project board description or a pinned issue.
+   - Update `AGENTS.md` Known Issues to reference the board and remove duplicated detail.
    - Update `session_notes.md` with the plan summary.
 
 **Constraints**:
@@ -202,25 +189,16 @@ Process items in priority order (P0 first, then P1, etc.):
 **Output and resumability**:
 
 - After each batch is drafted, output a visible summary to the user before drafting the next.
-- If interrupted, record which batches are drafted and which remain in `session_notes.md`.
 
 **Checkpoint**: End of Phase 4. A documented roadmap exists and has been presented to the user for approval before any coding begins.
 
 ## General Best Practices Across All Phases
 
 1. **Visible output rule**: After every item or batch is processed, write a brief summary as visible text in the response before moving on. Thinking blocks are invisible; never use them as a substitute for user-facing status.
-2. **Documentation hygiene**: Update `session_notes.md` at the end of every turn or natural breakpoint. Update `BUGS.md` immediately after finishing any item's section.
-3. **Diagnostics discipline**: Run `get_all_diagnostics` after any file write (`BUGS.md`, `AGENTS.md`, `session_notes.md`, `TECH_DEBT.md`). Fix errors before proceeding.
+2. **Documentation hygiene**: Update the board immediately after finishing any item's section.
+3. **Diagnostics discipline**: Run `get_all_diagnostics` after any file write. Fix errors before proceeding.
 4. **Git archaeology**: Use `git log -S "marker text" --source --all -- <file>` or `git blame -L <line>,<line> <file>` to find first occurrence. Record the earliest commit hash and date.
 5. **Temporary files**: Any scratch files created for PD go in `temp/` and must be deleted before the phase concludes. Do not leave debris.
 6. **Devil's advocate**: At the start of each phase, briefly challenge the approach. Is the phase too large? Are we missing a category of debt? Is a batch proposal too risky?
 7. **No silent pivots**: If during Assessment or Specification the scope of an item turns out to be much larger than expected, report it immediately rather than silently upgrading its difficulty.
 8. **Mark's preferences**: Incremental over monolithic. Tests for new behaviour. No build pipeline breakage. Preserve existing user-facing behaviour unless the change is the point.
-9. **Session resumption**: If a new session begins, the startup checks must read `session_notes.md` and `BUGS.md` to determine the current phase and next item. `AGENTS.md` must be updated to point to `TECH_DEBT.md` so future agents know where the process lives.
-
-## Setup Step (execute immediately after plan approval)
-
-1. Check whether LilyPond is installed and on `PATH`. If not, install it. This is needed for build pipeline assessment and any future SVG regeneration.
-2. Copy this plan to `TECH_DEBT.md` in the project root.
-3. Update `AGENTS.md` with a `## Process` subsection pointing to `TECH_DEBT.md`.
-4. Update `session_notes.md` to record that Phase 1 is about to begin.

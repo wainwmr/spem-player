@@ -61,3 +61,10 @@ The application defines custom HTML elements (`music-canvas`, `music-score`, `mu
 ## Coverage Output
 
 Coverage reports are written to the `coverage/` directory. This directory is gitignored.
+
+## Local Tooling Tests
+
+Python helper scripts in the project root (`discover.py`, `publish.py`,
+`sync_upstream.py`) have their own test suite in `tests_local/`. These tests
+use `pytest` and `unittest.mock` to mock `subprocess` calls. They are separate
+from the Vitest suite and are not tracked in git.
