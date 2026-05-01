@@ -1,3 +1,165 @@
 {
-  "markers": {}
+  "markers": {
+    "066415": {
+      "file": "src/ts/MusicCanvas.ts",
+      "status": "mapped",
+      "text": "throttle",
+      "ticket": 108,
+      "type": "HACK"
+    },
+    "0b9c48": {
+      "file": "src/scss/style.scss",
+      "status": "mapped",
+      "text": "looks ugly when Bar wraps to next line",
+      "ticket": 99,
+      "type": "BUG"
+    },
+    "13d695": {
+      "file": "src/ts/MusicCanvas.ts",
+      "status": "mapped",
+      "text": "can't these just be returned from processLilypond()?",
+      "ticket": 107,
+      "type": "HACK"
+    },
+    "29bd34": {
+      "file": "src/ts/MusicCanvas.ts",
+      "status": "mapped",
+      "text": "bad data type",
+      "ticket": 106,
+      "type": "HACK"
+    },
+    "2da12a": {
+      "file": "index.ts",
+      "status": "mapped",
+      "text": "loop() never finishes after playing to the end of spem",
+      "ticket": 98,
+      "type": "BUG"
+    },
+    "308b1a": {
+      "file": "index.ts",
+      "status": "mapped",
+      "text": "Change dark mode to moon/sun icons",
+      "ticket": 88,
+      "type": "TODO"
+    },
+    "3d7178": {
+      "file": "index.ts",
+      "status": "mapped",
+      "text": "Visual effect for false relations",
+      "ticket": 89,
+      "type": "TODO"
+    },
+    "415983": {
+      "file": "index.ts",
+      "status": "mapped",
+      "text": "Better font/graphic for Spem Player title",
+      "ticket": 90,
+      "type": "TODO"
+    },
+    "423fcf": {
+      "file": "index.ts",
+      "status": "mapped",
+      "text": "build: minimse SVGs using <use> and <defs> elements",
+      "ticket": 93,
+      "type": "TODO"
+    },
+    "757b3c": {
+      "file": "index.ts",
+      "status": "mapped",
+      "text": "CMD-B to type in bar number",
+      "ticket": 95,
+      "type": "TODO"
+    },
+    "76dbff": {
+      "file": "src/ts/lily.ts",
+      "status": "mapped",
+      "text": "we're ignoring the denominator altogether. Let's hope it's not there",
+      "ticket": 100,
+      "type": "HACK"
+    },
+    "7ecf00": {
+      "file": "src/ts/common.ts",
+      "status": "mapped",
+      "text": "needs to be time of a 64th note",
+      "ticket": 102,
+      "type": "HACK"
+    },
+    "9c32f4": {
+      "file": "src/ts/common.ts",
+      "status": "mapped",
+      "text": "Need to use config to load the hues for each choir",
+      "ticket": 101,
+      "type": "TODO"
+    },
+    "a14d59": {
+      "file": "src/ts/common.ts",
+      "status": "mapped",
+      "text": "console.log(\"ARGH\")",
+      "ticket": 103,
+      "type": "ARGH"
+    },
+    "adaf87": {
+      "file": "index.ts",
+      "status": "mapped",
+      "text": "[Violation] Forced reflow while executing JavaScript took 36ms (this doesn't happen when you have already manually adjusted the height of the score - something to do with the flex: 1 after the reload?)",
+      "ticket": 92,
+      "type": "BUG"
+    },
+    "c3ac0e": {
+      "file": "src/ts/MusicCanvas.ts",
+      "status": "mapped",
+      "text": "bad name and data type",
+      "ticket": 105,
+      "type": "HACK"
+    },
+    "c3f3ac": {
+      "file": "index.ts",
+      "status": "mapped",
+      "text": "highlight part on score?",
+      "ticket": 96,
+      "type": "TODO"
+    },
+    "c82417": {
+      "file": "index.ts",
+      "status": "mapped",
+      "text": "Add lyrics to footer",
+      "ticket": 97,
+      "type": "TODO"
+    },
+    "decab7": {
+      "file": "src/test/score.test.ts",
+      "status": "mapped",
+      "text": "duplicated with controls.test.ts",
+      "ticket": 115,
+      "type": "HACK"
+    },
+    "dee966": {
+      "file": "index.ts",
+      "status": "mapped",
+      "text": "build: generate SVG from lilypond as part of build process",
+      "ticket": 94,
+      "type": "TODO"
+    },
+    "e45428": {
+      "file": "src/ts/MusicCanvas.ts",
+      "status": "mapped",
+      "text": "combine canvasClicked and Hovered?",
+      "ticket": 110,
+      "type": "TODO"
+    },
+    "ee8b66": {
+      "file": "src/ts/MusicCanvas.ts",
+      "status": "mapped",
+      "text": "what happens if you click in the canvas padding?",
+      "ticket": 109,
+      "type": "BUG"
+    },
+    "fbde99": {
+      "file": "index.ts",
+      "status": "mapped",
+      "text": "can scroll up and down a tiny bit in score",
+      "ticket": 91,
+      "type": "BUG"
+    }
+  }
 }
