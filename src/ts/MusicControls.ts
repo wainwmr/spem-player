@@ -219,7 +219,17 @@ export class MusicControls extends MusicElement {
       this.audio.currentTime = getTimeFromBar(this.bar, this.recording);
     }
 
-    await this.audio.play();
+    try {
+      await this.audio.play();
+    } catch {
+      if (this.svgPlay && this.svgLoading && this.svgPause) {
+        this.svgPlay.style.display = "block";
+        this.svgPause.style.display = "none";
+        this.svgLoading.style.display = "none";
+      }
+      this.playing = false;
+      return;
+    }
 
     this.playing = true;
     if (this.svgPlay && this.svgLoading && this.svgPause) {
