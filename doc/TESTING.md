@@ -58,7 +58,7 @@ Coverage reports are written to the `coverage/` directory. This directory is git
 
 End-to-end tests run in a real browser using Playwright. They live in `e2e/` and follow the naming convention `*.spec.ts`.
 
-### Prerequisites
+### E2E Prerequisites
 
 The production build must exist before e2e tests run:
 
@@ -86,7 +86,7 @@ View the last HTML report:
 npm run test:e2e:report
 ```
 
-### Key Dependencies
+### E2E Key Dependencies
 
 - `@playwright/test`: test runner and browser automation
 - `chromium`: browser under test (installed via `npx playwright install chromium`)

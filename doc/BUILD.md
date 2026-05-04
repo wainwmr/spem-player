@@ -89,6 +89,12 @@ Open the Vitest UI:
 npm run test:ui
 ```
 
+Run end-to-end tests in a real browser:
+
+```console
+npm run test:e2e
+```
+
 ## Build Notes
 
 ### Version Synchronisation

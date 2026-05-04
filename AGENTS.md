@@ -67,6 +67,8 @@ State changes flow through `index.ts` helper functions (`setChoir()`, `setPart()
 - `npm run test:e2e:ui`: Playwright interactive UI mode
 - `npm run test:e2e:report`: Show last Playwright HTML report
 
+**Playwright setup:** `@playwright/test` is installed via npm, but browser binaries must be downloaded separately. Run `npx playwright install chromium` after `npm install` to fetch the Chromium binary. Playwright caches browsers in `%LOCALAPPDATA%\ms-playwright` (Windows).
+
 The LilyPond build scripts (`build/buildScore.sh`, `build/buildAllScores.sh`) run `lilypond --svg` and strip `height` and `width` attributes from the first line of each SVG. The `sed` command uses macOS-style `-i ''` syntax.
 
 ## Testing Conventions
