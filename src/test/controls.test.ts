@@ -1,4 +1,4 @@
-import { MusicControls } from "../ts/MusicControls";
+﻿import { MusicControls } from "../ts/MusicControls";
 import config from "../ts/config";
 import { processLilypond, barCount } from "../ts/lily";
 
@@ -377,6 +377,7 @@ describe("MusicControls custom element", () => {
     expect(changeResult).toBe(true);
   });
 
+
   it("adds control class to all interactive elements (#182)", () => {
     expect(
       document.getElementById("playpausebutton")?.classList.contains("control")
@@ -447,5 +448,94 @@ describe("MusicControls custom element", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(elem.bar).toBe(0);
     expect(bar.value).toBe("0");
+
+  it("calling play() while already playing does not start a duplicate rAF loop", async () => {
+    const elem = document.querySelector("music-controls") as MusicControls;
+
+    // Capture all requestAnimationFrame callbacks
+    const rafCallbacks: Array<(time: number) => void> = [];
+    const originalRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = (callback: (time: number) => void) => {
+      rafCallbacks.push(callback);
+      return rafCallbacks.length;
+    };
+
+    // Start playback (schedules the first loop)
+    const waitingForPlay = waitForEvent(
+      elem,
+      "music-controls-playing",
+      handleAudioStarted
+    );
+    elem.setAttribute("playing", "true");
+    await waitingForPlay;
+
+    // Call play() again, as setChoir/setPart/setRecording would
+    await elem.play();
+
+    // Count music-controls-changed events when running captured callbacks
+    let _eventCount = 0;
+    const countListener = () => {
+      _eventCount++;
+    };
+    elem.addEventListener("music-controls-changed", countListener);
+
+    // Run each captured callback once
+    rafCallbacks.forEach((cb) => cb(0));
+
+    // Before the fix: two loops fire, so two events
+    // After the fix: one loop fires, so one event
+    expect(_eventCount).toBe(1);
+
+    // Cleanup
+    elem.removeEventListener("music-controls-changed", countListener);
+    window.requestAnimationFrame = originalRAF;
+  });
+
+  it("pausing after duplicate play() clears all loops without zombies", async () => {
+    const elem = document.querySelector("music-controls") as MusicControls;
+
+    const rafCallbacks: Array<(time: number) => void> = [];
+    const originalRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = (callback: (time: number) => void) => {
+      rafCallbacks.push(callback);
+      return rafCallbacks.length;
+    };
+
+    // Start playback and duplicate the loop
+    const waitingForPlay = waitForEvent(
+      elem,
+      "music-controls-playing",
+      handleAudioStarted
+    );
+    elem.setAttribute("playing", "true");
+    await waitingForPlay;
+    await elem.play();
+
+    // Pause
+    const waitingForPause = waitForEvent(
+      elem,
+      "music-controls-paused",
+      handleAudioStarted
+    );
+    elem.pause();
+    await waitingForPause;
+
+    // Run all captured callbacks that were scheduled before or during pause
+    const callbacksBeforeRun = rafCallbacks.length;
+    let _eventCount = 0;
+    const countListener = () => {
+      _eventCount++;
+    };
+    elem.addEventListener("music-controls-changed", countListener);
+    rafCallbacks.forEach((cb) => cb(0));
+
+    // After pause, no loop should reschedule itself, so the callback count
+    // should not grow beyond what existed before the run
+    expect(rafCallbacks.length).toBe(callbacksBeforeRun);
+    expect(elem.isPlaying()).toBe(false);
+
+    elem.removeEventListener("music-controls-changed", countListener);
+    window.requestAnimationFrame = originalRAF;
+
   });
 });
