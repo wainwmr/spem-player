@@ -448,6 +448,7 @@ describe("MusicControls custom element", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(elem.bar).toBe(0);
     expect(bar.value).toBe("0");
+  });
 
   it("calling play() while already playing does not start a duplicate rAF loop", async () => {
     const elem = document.querySelector("music-controls") as MusicControls;
