@@ -539,4 +539,27 @@ describe("MusicControls custom element", () => {
     window.requestAnimationFrame = originalRAF;
 
   });
+
+  it("play() rejection resets the button to the play icon", async () => {
+    const elem = document.querySelector("music-controls") as MusicControls;
+    const spinner = document.getElementById("spinner");
+    const play = document.getElementById("play");
+    const pause = document.getElementById("pause");
+
+    // Override the play mock to reject (autoplay blocked)
+    vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValueOnce(
+      new DOMException("NotAllowedError", "NotAllowedError")
+    );
+
+    // Call play() — the rejection is caught internally
+    await elem.play();
+
+    // After rejection: spinner hidden, play icon visible, pause hidden
+    expect(spinner?.style.display, document.body.innerHTML).toBe("none");
+    expect(play?.style.display, document.body.innerHTML).toBe("block");
+    expect(pause?.style.display, document.body.innerHTML).toBe("none");
+
+    // Internal state must be consistent
+    expect(elem.isPlaying()).toBe(false);
+  });
 });
