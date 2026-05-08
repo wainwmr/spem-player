@@ -377,7 +377,6 @@ describe("MusicControls custom element", () => {
     expect(changeResult).toBe(true);
   });
 
-<<<<<<< HEAD
   it("adds control class to all interactive elements (#182)", () => {
     expect(
       document.getElementById("playpausebutton")?.classList.contains("control")
