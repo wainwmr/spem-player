@@ -22,6 +22,8 @@ export class MusicControls extends MusicElement {
   svgPlay: SVGElement | null = null;
   svgPause: SVGElement | null = null;
 
+  #isLooping = false;
+
   constructor() {
     super();
   }
@@ -219,7 +221,17 @@ export class MusicControls extends MusicElement {
       this.audio.currentTime = getTimeFromBar(this.bar, this.recording);
     }
 
-    await this.audio.play();
+    try {
+      await this.audio.play();
+    } catch {
+      if (this.svgPlay && this.svgLoading && this.svgPause) {
+        this.svgPlay.style.display = "block";
+        this.svgPause.style.display = "none";
+        this.svgLoading.style.display = "none";
+      }
+      this.playing = false;
+      return;
+    }
 
     this.playing = true;
     if (this.svgPlay && this.svgLoading && this.svgPause) {
@@ -228,6 +240,9 @@ export class MusicControls extends MusicElement {
       this.svgLoading.style.display = "none";
     }
     this.fireEvent("music-controls-playing");
+
+    if (this.#isLooping) return;
+    this.#isLooping = true;
 
     const self = this;
 
@@ -242,6 +257,8 @@ export class MusicControls extends MusicElement {
 
       if (self.isPlaying()) {
         window.requestAnimationFrame(loop);
+      } else {
+        self.#isLooping = false;
       }
     }
     window.requestAnimationFrame(loop);
@@ -249,6 +266,7 @@ export class MusicControls extends MusicElement {
 
   pause() {
     this.playing = false;
+    this.#isLooping = false;
     if (this.svgPlay && this.svgLoading && this.svgPause) {
       this.svgPlay.style.display = "block";
       this.svgPause.style.display = "none";
