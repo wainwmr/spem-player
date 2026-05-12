@@ -4,7 +4,6 @@
 
 - Node.js and npm
 - LilyPond (only if regenerating SVG scores from source)
-- LilyPond (only if regenerating SVG scores from source)
 
 ## Install Dependencies
 
