@@ -67,8 +67,7 @@ Mark's kanban workflow with explicit entry and exit criteria:
 - `main` — production branch.
 - Feature branches are created from `origin/main`.
 
-**Branch naming convention:** `andrew/<ticket-number>-short-description`.
-This makes ownership clear and traces the branch back to its ticket.
+Name feature branches `authorname/NNN-short-description`, where `NNN` is the ticket number.
 
 **Do not use a fork.** Push feature branches directly to `wainwmr/spem-player`
 (Mark's repository). Pull requests are opened from branches inside the main
