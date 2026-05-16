@@ -8,7 +8,6 @@ dist
 .netlify
 coverage
 temp/*
-src/scores/**/*.svg
 src/scss/*.css
 src/scss/*.css.map
 publish.py
