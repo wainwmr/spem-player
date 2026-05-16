@@ -16,6 +16,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
       - run: npm ci
+      - run: npx knip
       - run: npm run format:check
       - run: npm run lint
       - run: npx tsc --noEmit

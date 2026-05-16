@@ -3,7 +3,6 @@
   "private": true,
   "version": "2.4.0",
   "description": "Helping singers learn Thomas Tallis Spem in alium",
-  "main": "src/index.js",
   "type": "module",
   "dependencies": {
     "ohm-js": "^17.2.1"
@@ -18,12 +17,12 @@
     "@vitest/ui": "^4.1.5",
     "autoprefixer": "^10.4.21",
     "canvas": "^3.2.0",
-    "clean-css-cli": "^5.6.3",
     "eslint": "^10.3.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.6.0",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
+    "knip": "^6.14.1",
     "lint-staged": "^17.0.4",
     "prettier": "^3.8.3",
     "sass-embedded": "^1.93.0",
@@ -31,8 +30,7 @@
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
     "vite-plugin-commonjs": "^0.10.4",
-    "vitest": "^4.1.5",
-    "vitest-fetch-mock": "^0.4.5"
+    "vitest": "^4.1.5"
   },
   "scripts": {
     "dev": "vite --host",
@@ -50,6 +48,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
+    "knip": "knip",
+    "lint-staged": "lint-staged",
     "ci": "npm run build && vitest --run && npm run test:e2e",
     "prepare": "husky"
   },
