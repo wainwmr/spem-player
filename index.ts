@@ -71,7 +71,6 @@ var current: State = {
 // TODO: Better font/graphic for Spem Player title
 // BUG: can scroll up and down a tiny bit in score
 // BUG: [Violation] Forced reflow while executing JavaScript took 36ms  (this doesn't happen when you have already manually adjusted the height of the score - something to do with the flex: 1 after the reload?)
-// TODO: build: minimse SVGs using <use> and <defs> elements
 // TODO: build: generate SVG from lilypond as part of build process
 // TODO: CMD-B to type in bar number
 // TODO: highlight part on score?
