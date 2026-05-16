@@ -29,7 +29,7 @@ npm run build
 
 This runs steps in sequence:
 
-1. `npm run prebuild` — generates SVG scores from LilyPond source (via `npm run build:scores`)
+1. `npm run prebuild` — generates SVG scores from LilyPond source if LilyPond is installed; skipped otherwise (uses committed SVGs)
 2. `npm run format:check` — verifies Prettier formatting
 3. `npm run lint` — ESLint check
 4. `npm run build:ohm` — generates the Ohm.js grammar bundle from `src/ohmjs/ly-grammar.ohm`
@@ -120,4 +120,4 @@ Deployment is automated: merging to `main` triggers a Netlify build and deploy.
 
 **Live site:** [www.spemplayer.net](https://www.spemplayer.net)
 
-Ensure LilyPond is installed before deploying, as `npm run build` invokes it automatically via the `prebuild` step.
+`npm run build` invokes LilyPond automatically via the `prebuild` step when available. In CI environments without LilyPond (including Netlify), the `prebuild` step skips gracefully and uses the committed SVGs in `src/scores/`.

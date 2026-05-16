@@ -36,10 +36,14 @@ function parseArgs() {
   return options;
 }
 
-function checkLilypond() {
+function checkLilypond(skipIfMissing) {
   try {
     execSync("lilypond --version", { stdio: "pipe" });
   } catch {
+    if (skipIfMissing) {
+      console.log("LilyPond not found. Skipping score build (using committed SVGs).");
+      process.exit(0);
+    }
     console.error("Error: lilypond is not installed or not on PATH.");
     console.error("Please install LilyPond before building scores.");
     process.exit(1);
@@ -92,7 +96,7 @@ function buildScore(ly, version, notation) {
 
 const options = parseArgs();
 
-checkLilypond();
+checkLilypond(options["skip-if-missing"]);
 
 const version = options.version || defaults.version;
 const notations = options.notation

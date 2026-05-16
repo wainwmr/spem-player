@@ -174,6 +174,29 @@ class TestBuildScores:
             f"Output: {result.stdout} {result.stderr}"
         )
 
+    def test_skips_gracefully_with_flag(self):
+        """With --skip-if-missing, script should exit 0 when lilypond is absent."""
+        env = os.environ.copy()
+        env["PATH"] = ""
+
+        result = subprocess.run(
+            ["node", str(BUILD_SCRIPT), "--skip-if-missing"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            cwd=REPO_ROOT,
+            env=env,
+        )
+
+        assert result.returncode == 0, (
+            f"Expected success with --skip-if-missing when lilypond is absent. "
+            f"stderr: {result.stderr}"
+        )
+        output = (result.stdout + result.stderr).lower()
+        assert "skipping" in output, (
+            f"Expected skip message. Output: {result.stdout} {result.stderr}"
+        )
+
     def test_does_not_build_oup(self, env_with_fake_lilypond, clean_scores):
         """Script should not generate OUP edition SVGs."""
         if SCORES_DIR.exists():
