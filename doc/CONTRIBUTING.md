@@ -228,6 +228,8 @@ The project uses an ESLint flat config (`eslint.config.js`) with `typescript-esl
 
 The project uses **Prettier** for automatic formatting. Run `npm run format` before committing, or configure your editor to format on save. The CI pipeline runs `npm run format:check` as part of the build gate.
 
+All `.md` files must pass `markdownlint-cli2` before a PR is opened. Run `npx markdownlint-cli2 <file>` after editing any markdown file.
+
 ### Component Conventions
 
 All UI components are native custom elements extending `MusicElement`.
@@ -255,6 +257,27 @@ When creating or modifying a component:
   Non-`main` branches append the branch name (e.g. `2.4.0-fix-123`).
 - **Local ignore rules** — personal patterns (IDE configs, local scripts) belong in
   `.git/info/exclude`, not `.gitignore`, to avoid polluting the shared ignore file.
+
+### Tracked Generated Files
+
+Two Ohm bundle files are committed to the repository (Mark's preference) but are
+regenerated locally during development:
+
+```text
+src/ohmjs/ly-grammar.ohm-bundle.js
+src/ohmjs/ly-grammar.ohm-bundle.d.ts
+```
+
+Set `--skip-worktree` on these files after cloning so local rebuilds do not appear
+in `git status`:
+
+```console
+git update-index --skip-worktree src/ohmjs/ly-grammar.ohm-bundle.js
+git update-index --skip-worktree src/ohmjs/ly-grammar.ohm-bundle.d.ts
+```
+
+Do not commit local versions of these files. If a rebase conflict touches them,
+accept the upstream version.
 
 ### Writing Tests
 
