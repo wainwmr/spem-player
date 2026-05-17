@@ -238,9 +238,13 @@ function setupLilypondParser(): ohm.Semantics {
 
       return new Duration(x.duration, x.dotted, m);
     },
-    fraction(a, _, _2) {
-      // HACK: we're ignoring the denominator altogether.  Let's hope it's not there
-      return parseInt(a.sourceString);
+    fraction(_a, _b, _c) {
+      const text = (this as unknown as ohm.Node).sourceString;
+      if (text.includes("/")) {
+        const [numStr, denStr] = text.split("/");
+        return parseInt(numStr) / parseInt(denStr);
+      }
+      return parseInt(text);
     },
     variable(v) {
       return v.sourceString;

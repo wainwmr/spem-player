@@ -40,6 +40,7 @@
     "prebuild": "node build/buildScores.mjs --skip-if-missing",
     "build:scores": "node build/buildScores.mjs",
     "build:ohm": "npx ohm generateBundles --withTypes src/ohmjs/ly-grammar.ohm",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "format": "prettier --write src/",
     "format:check": "prettier --check src/",
@@ -51,7 +52,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
-    "ci": "npm run build && vitest --run && npm run test:e2e",
+    "ci": "npm run typecheck && npm run build && vitest --run && npm run test:e2e",
     "prepare": "husky"
   },
   "lint-staged": {

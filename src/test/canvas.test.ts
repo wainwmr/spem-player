@@ -452,4 +452,25 @@ describe("MusicCanvas custom element", () => {
     expect(pos.choir).toBeGreaterThanOrEqual(0);
     expect(pos.choir).toBeLessThan(config.choirs[0].length);
   });
+
+  it("setPlaying(false) cancels pending playback animation frame", () => {
+    expect(canvas).not.toBeNull();
+
+    const originalCancel = window.cancelAnimationFrame;
+    const cancelledIds: number[] = [];
+    window.cancelAnimationFrame = (id: number) => {
+      cancelledIds.push(id);
+    };
+
+    // Start playback
+    canvas!.setPlaying(true);
+
+    // Stop playback
+    canvas!.setPlaying(false);
+
+    // Should have explicitly cancelled the animation frame
+    expect(cancelledIds.length).toBeGreaterThan(0);
+
+    window.cancelAnimationFrame = originalCancel;
+  });
 });

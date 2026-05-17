@@ -28,6 +28,8 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     exclude: ["e2e/**", "node_modules/**"],
+    maxWorkers: 4,
+    testTimeout: 10000,
     coverage: {
       exclude: [
         "**/*.svg",
