@@ -40,7 +40,6 @@ export class MusicCanvas extends MusicElement {
   fpsLastTime = 0;
   fpsValue = 0;
   shimmerLoopId: number = 0;
-  playbackLoopId: number = 0;
   oldTimeStamp: number = 0;
 
   // Base lightness for unselected parts in light mode.
@@ -92,7 +91,6 @@ export class MusicCanvas extends MusicElement {
 
   async connectedCallback() {
     super.connectedCallback();
-    this.setAttribute("tabindex", "-1");
     await this.#init();
   }
 
@@ -135,11 +133,7 @@ export class MusicCanvas extends MusicElement {
 
   setPlaying(playing: string | boolean) {
     super.setPlaying(playing);
-    if (this.playing) {
-      this.play();
-    } else {
-      cancelAnimationFrame(this.playbackLoopId);
-    }
+    if (this.playing) this.play();
   }
 
   async #init() {
@@ -257,10 +251,12 @@ export class MusicCanvas extends MusicElement {
       self.draw();
 
       if (self.playing) {
-        self.playbackLoopId = window.requestAnimationFrame(loop);
+        window.requestAnimationFrame(loop);
+        // setTimeout(frame, config.tempo / 10);
       }
     }
-    this.playbackLoopId = window.requestAnimationFrame(loop);
+    window.requestAnimationFrame(loop);
+    // setTimeout(frame, config.tempo / 10);
   }
 
   draw() {

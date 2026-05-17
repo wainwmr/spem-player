@@ -56,6 +56,10 @@
                 <span class="help-button">help</span>
                 <span class="tooltiptext">Display help information (<kbd>?</kbd>)</span>
             </span>
+            <span id="feedback-trigger" class="tooltip">
+                <span id="feedback-icon"></span>
+                <span class="tooltiptext">Send feedback (<kbd>F</kbd>)</span>
+            </span>
             <div class="header-spacer"></div>
             <span id="recordinglabel"></span>
             <span class="tooltip">
@@ -98,6 +102,7 @@
                         <kbd>M</kbd> - toggle between modern and early notation<br />
                         <kbd>D</kbd> - toggle between dark and light mode<br />
                         <kbd>Enter</kbd> / <kbd>Space</kbd> - start or stop<br />
+                        <kbd>F</kbd> - show <b>F</b>eedback panel<br />
                         <kbd>?</kbd> - show this help panel
                     </td>
                 </tr>
@@ -115,6 +120,44 @@
                 </div>
             </div>
         </div>
+
+        <div id="feedback-modal" role="dialog" aria-modal="true" aria-label="Send feedback">
+            <h2>Feedback</h2>
+            <form id="feedback-form" name="feedback-visible">
+                <div id="feedback-rating">
+                    <span class="feedback-rating-label">Rating (optional):</span>
+                    <div class="star-rating">
+                        <input type="radio" id="star5" name="rating" value="5" /><label for="star5" title="5 stars">5</label>
+                        <input type="radio" id="star4" name="rating" value="4" /><label for="star4" title="4 stars">4</label>
+                        <input type="radio" id="star3" name="rating" value="3" /><label for="star3" title="3 stars">3</label>
+                        <input type="radio" id="star2" name="rating" value="2" /><label for="star2" title="2 stars">2</label>
+                        <input type="radio" id="star1" name="rating" value="1" /><label for="star1" title="1 star">1</label>
+                    </div>
+                </div>
+                <textarea id="feedback-message" name="message" rows="4" placeholder="Tell us more..."></textarea>
+                <p class="feedback-context-note">Playback context (recording, choir, bar, etc.) and platform info are included automatically.</p>
+                <div class="feedback-footer">
+                    <div class="bmc-wrapper">
+                        <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
+                            data-name="bmc-button" data-slug="wainwmr" data-color="#133354" data-emoji="☕"
+                            data-font="Cookie" data-text="Buy me a coffee" data-outline-color="#ffffff"
+                            data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
+                    </div>
+                    <div class="feedback-actions">
+                        <button type="submit" id="feedback-submit">Send</button>
+                        <button type="button" id="feedback-cancel">Cancel</button>
+                    </div>
+                </div>
+            </form>
+            <div id="feedback-result" style="display: none;"></div>
+        </div>
+
+        <form name="feedback" netlify netlify-honeypot="bot-field" hidden>
+            <input type="hidden" name="bot-field" />
+            <input type="number" name="rating" />
+            <input type="hidden" name="context" />
+            <textarea name="message"></textarea>
+        </form>
 
         <div class="split-container">
             <music-score></music-score>

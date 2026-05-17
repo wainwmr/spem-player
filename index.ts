@@ -15,6 +15,7 @@ import { MusicScore } from "./src/ts/MusicScore";
 import recordingswitchSvg from "./src/icons/recordingswitch.svg?raw";
 import scoreswitchSvg from "./src/icons/scoreswitch.svg?raw";
 import darkswitchSvg from "./src/icons/darkswitch.svg?raw";
+import feedbackSvg from "./src/icons/feedback.svg?raw";
 
 MusicCanvas.define("music-canvas");
 MusicCanvasWatcher.define("music-canvas-watcher");
@@ -30,6 +31,14 @@ const controls = document.querySelector("music-controls") as MusicControls;
 const info = document.getElementById("info") as HTMLSpanElement;
 const help = document.getElementById("help") as HTMLDivElement;
 const backdrop = document.getElementById("backdrop") as HTMLDivElement;
+const feedbackTrigger = document.getElementById("feedback-trigger") as HTMLSpanElement;
+const feedbackIcon = document.getElementById("feedback-icon") as HTMLSpanElement;
+const feedbackModal = document.getElementById("feedback-modal") as HTMLDivElement;
+const feedbackCancel = document.getElementById("feedback-cancel") as HTMLButtonElement;
+const feedbackMessage = document.getElementById("feedback-message") as HTMLTextAreaElement;
+const feedbackResult = document.getElementById("feedback-result") as HTMLDivElement;
+const feedbackForm = document.getElementById("feedback-form") as HTMLFormElement;
+const hiddenFeedbackForm = document.querySelector('form[name="feedback"]') as HTMLFormElement;
 const darkswitch = document.getElementById("darkswitch") as HTMLElement;
 const scoreswitch = document.getElementById("scoreswitch") as HTMLElement;
 const recordingswitch = document.getElementById(
@@ -42,10 +51,9 @@ const recordinglabel = document.getElementById(
 recordingswitch.innerHTML = recordingswitchSvg;
 scoreswitch.innerHTML = scoreswitchSvg;
 darkswitch.innerHTML = darkswitchSvg;
-
-recordingswitch.setAttribute("tabindex", "-1");
-scoreswitch.setAttribute("tabindex", "-1");
-darkswitch.setAttribute("tabindex", "-1");
+if (feedbackIcon) {
+  feedbackIcon.innerHTML = feedbackSvg;
+}
 
 let isDragging = false;
 
@@ -224,11 +232,15 @@ function keyboardTapped(e: KeyboardEvent) {
   // don't handle keyboard events on the four control widgets
   // cos it messes with the UI interaction
   const classes = [...e.target.classList];
-  if (classes.includes("control") && !e.altKey) {
-    return;
+  const isInputLike =
+    e.target instanceof HTMLInputElement ||
+    e.target instanceof HTMLTextAreaElement ||
+    e.target instanceof HTMLSelectElement;
+  if (classes.includes("control") || isInputLike) {
+    if (e.code !== "Escape") return;
   }
   // don't handle keyboard events if composing text (chinese characters)
-  if (e.isComposing) {
+  if (e.isComposing || e.keyCode === 229) {
     return;
   }
   if (e.metaKey || e.ctrlKey) {
@@ -246,40 +258,11 @@ function keyboardTapped(e: KeyboardEvent) {
     }
     return;
   }
-  if (e.altKey && e.code === "KeyB") {
-    e.preventDefault();
-    const barInput = document.getElementById(
-      "bar-field"
-    ) as HTMLInputElement;
-    if (barInput) {
-      controls.pause();
-      const active = document.activeElement;
-      if (
-        active &&
-        active !== document.body &&
-        active !== document.documentElement
-      ) {
-        controls.setReturnFocus(active);
-      } else {
-        controls.setReturnFocus(null);
-      }
-      barInput.focus();
-      barInput.select();
-    }
-    return;
-  }
   if (e.code == "Enter") {
     controls.isPlaying() ? controls.pause() : controls.play();
     return;
   }
   if (e.code == "Space") {
-    if (
-      e.target instanceof HTMLInputElement ||
-      e.target instanceof HTMLTextAreaElement ||
-      e.target instanceof HTMLSelectElement
-    ) {
-      return;
-    }
     controls.isPlaying() ? controls.pause() : controls.play();
     e.preventDefault();
     return;
@@ -311,6 +294,10 @@ function keyboardTapped(e: KeyboardEvent) {
     case "KeyD":
       toggleDark();
       break;
+    case "KeyF":
+      e.preventDefault();
+      showFeedback();
+      break;
     case "Slash":
       if (e.shiftKey) {
         showHelp();
@@ -318,6 +305,7 @@ function keyboardTapped(e: KeyboardEvent) {
       break;
     case "Escape":
       showHelp(false);
+      showFeedback(false);
       break;
     case "ArrowRight":
       controls.pause();
@@ -357,6 +345,88 @@ function showHelp(show = true) {
   } else {
     backdrop.style.display = "none";
     help.style.display = "none";
+  }
+}
+
+function showFeedback(show = true) {
+  if (!feedbackModal) return;
+  if (show) {
+    backdrop.style.display = "block";
+    feedbackModal.style.display = "block";
+    updateFeedbackContext();
+    setTimeout(() => feedbackMessage?.focus(), 0);
+  } else {
+    backdrop.style.display = "none";
+    feedbackModal.style.display = "none";
+    resetFeedbackForm();
+  }
+}
+
+function resetFeedbackForm() {
+  if (feedbackForm) {
+    feedbackForm.style.display = "";
+    feedbackForm.reset();
+    syncFeedbackRating();
+    syncFeedbackMessage();
+  }
+  if (feedbackResult) {
+    feedbackResult.style.display = "none";
+    feedbackResult.textContent = "";
+  }
+}
+
+function showFeedbackResult(message: string) {
+  if (feedbackForm) feedbackForm.style.display = "none";
+  if (feedbackResult) {
+    feedbackResult.textContent = message;
+    feedbackResult.style.display = "flex";
+  }
+  setTimeout(() => showFeedback(false), 1500);
+}
+
+function updateFeedbackContext() {
+  if (!hiddenFeedbackForm) return;
+  const contextInput = hiddenFeedbackForm.querySelector<HTMLInputElement>(
+    'input[name="context"]'
+  );
+  if (!contextInput) return;
+  const context = {
+    recording: current.recording,
+    choir: current.choir,
+    part: current.part,
+    bar: current.bar,
+    viewmode: current.viewmode,
+    period: current.period,
+    status: current.status,
+    userAgent: navigator.userAgent,
+    viewport: `${window.innerWidth}x${window.innerHeight}`,
+  };
+  contextInput.value = JSON.stringify(context);
+}
+
+function syncFeedbackRating() {
+  if (!feedbackForm || !hiddenFeedbackForm) return;
+  const visible = feedbackForm.querySelector<HTMLInputElement>(
+    'input[name="rating"]:checked'
+  );
+  const hidden = hiddenFeedbackForm.querySelector<HTMLInputElement>(
+    'input[name="rating"]'
+  );
+  if (hidden) {
+    hidden.value = visible ? visible.value : "";
+  }
+}
+
+function syncFeedbackMessage() {
+  if (!feedbackForm || !hiddenFeedbackForm) return;
+  const visible = feedbackForm.querySelector<HTMLTextAreaElement>(
+    'textarea[name="message"]'
+  );
+  const hidden = hiddenFeedbackForm.querySelector<HTMLTextAreaElement>(
+    'textarea[name="message"]'
+  );
+  if (hidden && visible) {
+    hidden.value = visible.value;
   }
 }
 
@@ -480,10 +550,78 @@ function init(): void {
     keyboardTapped as (e: KeyboardEvent) => void
   );
   info.addEventListener("click", () => showHelp(true));
-  backdrop.addEventListener("click", () => showHelp(false));
+  backdrop.addEventListener("click", () => {
+    showHelp(false);
+    showFeedback(false);
+  });
   darkswitch.addEventListener("click", () => toggleDark());
   scoreswitch.addEventListener("click", () => toggleScore());
   recordingswitch.addEventListener("click", () => toggleRecording());
 
+  if (feedbackTrigger) {
+    feedbackTrigger.addEventListener("click", () => showFeedback(true));
+  }
+  if (feedbackCancel) {
+    feedbackCancel.addEventListener("click", () => showFeedback(false));
+  }
+  if (feedbackMessage) {
+    feedbackMessage.addEventListener("keydown", (e) => {
+      if (e.code === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        feedbackForm?.requestSubmit();
+      }
+    });
+  }
+  if (feedbackForm) {
+    feedbackForm.addEventListener("change", (e) => {
+      const target = e.target as HTMLElement;
+      if (target.getAttribute("name") === "rating") {
+        syncFeedbackRating();
+      }
+    });
+    feedbackForm.addEventListener("input", (e) => {
+      const target = e.target as HTMLElement;
+      if (target.getAttribute("name") === "message") {
+        syncFeedbackMessage();
+      }
+    });
+    feedbackForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      syncFeedbackRating();
+      syncFeedbackMessage();
+      updateFeedbackContext();
+      const rating =
+        hiddenFeedbackForm?.querySelector<HTMLInputElement>('input[name="rating"]')?.value ?? "";
+      const message =
+        hiddenFeedbackForm?.querySelector<HTMLTextAreaElement>('textarea[name="message"]')?.value ?? "";
+      const context =
+        hiddenFeedbackForm?.querySelector<HTMLInputElement>('input[name="context"]')?.value ?? "";
+      const data = new URLSearchParams({
+        "form-name": "feedback",
+        "bot-field": "",
+        rating,
+        message,
+        context,
+      });
+      fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: data.toString(),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error();
+          showFeedbackResult("Thank you");
+        })
+        .catch(() => showFeedbackResult("Couldn't send, please try later"));
+    });
+  }
+
   window.addEventListener("resize", () => setVH());
 }
+
+export const exportedForTesting = {
+  showFeedback,
+  updateFeedbackContext,
+  syncFeedbackRating,
+  syncFeedbackMessage,
+};
