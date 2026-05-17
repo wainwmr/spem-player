@@ -342,11 +342,11 @@ export class MusicCanvas extends MusicElement {
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(
-      this.canvasPadding + this.bar * this.barWidth,
+      this.canvasPadding + (this.bar + 0.5) * this.barWidth,
       this.canvasPadding
     );
     ctx.lineTo(
-      this.canvasPadding + this.bar * this.barWidth,
+      this.canvasPadding + (this.bar + 0.5) * this.barWidth,
       this.canvas!.height - this.canvasPadding
     );
     ctx.lineWidth = this.barWidth * 1.4;
