@@ -164,4 +164,38 @@ describe("lilypond parsing tests", () => {
     expect(frLocations[1].from).toBe(1.0);
     expect(frLocations[1].to).toBe(1.125);
   });
+
+  it("parses fraction with denominator 3/4", () => {
+    const s = setupLilypondParser();
+    const result = lyGrammar.match("3/4", "fraction");
+    expect(result.succeeded()).toBe(true);
+    const value = s(result).parse();
+    expect(value).toBe(0.75);
+  });
+
+  it("parses fraction with denominator 1/2", () => {
+    const s = setupLilypondParser();
+    const result = lyGrammar.match("1/2", "fraction");
+    expect(result.succeeded()).toBe(true);
+    const value = s(result).parse();
+    expect(value).toBe(0.5);
+  });
+
+  it("parses fraction without denominator", () => {
+    const s = setupLilypondParser();
+    const result = lyGrammar.match("2", "fraction");
+    expect(result.succeeded()).toBe(true);
+    const value = s(result).parse();
+    expect(value).toBe(2);
+  });
+
+  it("parses durationScaled with fraction multiplier", () => {
+    const s = setupLilypondParser();
+    const result = lyGrammar.match("4*3/4", "durationScaled");
+    expect(result.succeeded()).toBe(true);
+    const value = s(result).parse() as Duration;
+    expect(value).toBeInstanceOf(Duration);
+    expect(value.multiplier).toBe(0.75);
+    expect(value.sfths).toBe(12);
+  });
 });

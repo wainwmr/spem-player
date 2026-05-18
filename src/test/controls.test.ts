@@ -560,4 +560,48 @@ describe("MusicControls custom element", () => {
     // Internal state must be consistent
     expect(elem.isPlaying()).toBe(false);
   });
+
+  it("audio ended event stops playback and fires paused event", async () => {
+    const elem = document.querySelector("music-controls") as MusicControls;
+    const rafCallbacks: Array<(time: number) => void> = [];
+    const originalRAF = window.requestAnimationFrame;
+    window.requestAnimationFrame = (callback: (time: number) => void) => {
+      rafCallbacks.push(callback);
+      return rafCallbacks.length;
+    };
+
+    // Start playback
+    const waitingForPlay = waitForEvent(
+      elem,
+      "music-controls-playing",
+      handleAudioStarted
+    );
+    elem.setAttribute("playing", "true");
+    await waitingForPlay;
+
+    // Dispatch ended event
+    const waitingForPause = waitForEvent(
+      elem,
+      "music-controls-paused",
+      handleAudioStarted
+    );
+    elem.audio.dispatchEvent(new Event("ended"));
+    await waitingForPause;
+
+    // Run all captured callbacks
+    const callbacksBeforeRun = rafCallbacks.length;
+    let _eventCount = 0;
+    const countListener = () => {
+      _eventCount++;
+    };
+    elem.addEventListener("music-controls-changed", countListener);
+    rafCallbacks.forEach((cb) => cb(0));
+
+    // After ended, no loop should reschedule itself
+    expect(rafCallbacks.length).toBe(callbacksBeforeRun);
+    expect(elem.isPlaying()).toBe(false);
+
+    elem.removeEventListener("music-controls-changed", countListener);
+    window.requestAnimationFrame = originalRAF;
+  });
 });

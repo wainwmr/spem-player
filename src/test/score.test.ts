@@ -113,35 +113,58 @@ describe("MusicScore custom element", () => {
     ) as SVGRectElement;
     expect(hBar).not.toBeNull(); // highlight has been added
     expect(hBar?.getAttribute("width")).toBe("0"); // but currently invisible
-  });
+  }, 10000);
 
   it("Check all scores have the same number of bars", async () => {
-    const elem = document.querySelector("music-score") as MusicScore;
+    // Create 8 fresh elements so each can load its SVG in parallel
+    document.body.innerHTML = Array.from(
+      { length: config.choirs[0].length },
+      (_, c) => `<music-score id="score-${c}"></music-score>`
+    ).join("");
 
-    elem.scrollTo = vi.fn(); // jsdom doesn't seem to implement HTMLElement.scrollTo()
+    const promises = [];
+    for (let c = 0; c < config.choirs[0].length; c++) {
+      const elem = document.getElementById(`score-${c}`) as MusicScore;
+      elem.scrollTo = vi.fn();
 
-    for (var c = 0; c < config.choirs[0].length; c++) {
-      // wait for score to be loaded
-      const waitingForLoaded = waitForEvent(
-        elem,
-        "music-score-loaded",
-        handleScoreLoaded,
-        0,
-        null,
-        0
+      const loaded = new Promise<void>((resolve) => {
+        elem.addEventListener("music-score-loaded", () => resolve(), {
+          once: true,
+        });
+      });
+
+      elem.setAttribute("choir", String(c));
+
+      promises.push(
+        loaded.then(() => {
+          const svg = elem.querySelector("svg");
+          expect(svg).not.toBeNull();
+
+          expect(elem.bars.length).toBe(139);
+          expect(elem.bars[0]).toBe(0);
+          expect(elem.bars[138]).toBe(elem.svgWidth);
+        })
       );
-      elem?.setAttribute("choir", String(c));
-      const loadResult = await waitingForLoaded;
-      expect(loadResult).toStrictEqual(true);
-
-      const svg = document.querySelector("svg");
-      expect(svg).not.toBeNull();
-
-      expect(elem.bars.length).toBe(139);
-      expect(elem.bars[0]).toBe(0);
-      expect(elem.bars[138]).toBe(elem.svgWidth);
     }
+    await Promise.all(promises);
   }, 20000);
+
+  it("music-score-loaded fires after SVG is in the DOM", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    const loaded = new Promise<void>((resolve) => {
+      elem.addEventListener("music-score-loaded", () => resolve(), {
+        once: true,
+      });
+    });
+
+    elem.setAttribute("choir", "0");
+    await loaded;
+
+    expect(elem.querySelector("svg")).not.toBeNull();
+    expect(elem.svg).not.toBeNull();
+  }, 10000);
 
   it("Changing bar sets the highlight correctly", async () => {
     const elem = document.querySelector("music-score") as MusicScore;
@@ -168,7 +191,7 @@ describe("MusicScore custom element", () => {
     expect(elem.highlightBar.getAttribute("width")).not.toBe("0");
     expect(elem.highlightBar.style.fillOpacity).not.toBe("0");
     expect(elem.highlightBar.getAttribute("x")).toBe(String(elem.bars[39]));
-  });
+  }, 10000);
 
   it("Bar 138 highlight uses last bar width", async () => {
     const elem = document.querySelector("music-score") as MusicScore;

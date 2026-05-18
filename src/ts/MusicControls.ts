@@ -25,7 +25,10 @@ export class MusicControls extends MusicElement {
   svgPlay: SVGElement | null = null;
   svgPause: SVGElement | null = null;
 
+  returnFocusTarget: Element | null = null;
+
   #isLooping = false;
+  #loopId = 0;
 
   constructor() {
     super();
@@ -125,6 +128,19 @@ export class MusicControls extends MusicElement {
       this.#handleControlsChanged.bind(this)
     );
     this.barinput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        this.#handleControlsChanged();
+        if (document.activeElement === this.barinput) {
+          if (this.returnFocusTarget instanceof HTMLElement) {
+            const target = this.returnFocusTarget;
+            this.returnFocusTarget = null;
+            target.focus();
+          } else {
+            this.barinput?.blur();
+          }
+        }
+        return;
+      }
       const allowed = [
         "Backspace",
         "Delete",
@@ -133,7 +149,6 @@ export class MusicControls extends MusicElement {
         "ArrowUp",
         "ArrowDown",
         "Tab",
-        "Enter",
         "Escape",
         "Home",
         "End",
@@ -145,6 +160,12 @@ export class MusicControls extends MusicElement {
     });
     if (this.playpausebutton)
       this.playpausebutton.addEventListener("click", this.playpause.bind(this));
+
+    this.audio.addEventListener("ended", () => this.pause());
+  }
+
+  setReturnFocus(element: Element | null) {
+    this.returnFocusTarget = element;
   }
 
   async #handleControlsChanged() {
@@ -270,6 +291,7 @@ export class MusicControls extends MusicElement {
   pause() {
     this.playing = false;
     this.#isLooping = false;
+    window.cancelAnimationFrame(this.#loopId);
     if (this.svgPlay && this.svgLoading && this.svgPause) {
       this.svgPlay.style.display = "block";
       this.svgPause.style.display = "none";
