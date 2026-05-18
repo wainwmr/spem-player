@@ -64,6 +64,7 @@ Agent-critical notes:
 - `npm run build:ohm` is required before tests can run.
 - Playwright browser binaries are not auto-installed; run `npx playwright install chromium` after `npm install`.
 - `npm run build:scores` generates SVGs from LilyPond and post-processes them. Pass `--choir`, `--notation`, or `--version` flags to build a subset.
+- `npm run build` automatically invokes `build:scores` via the `prebuild` step before bundling.
 
 ## Testing Conventions
 
@@ -93,6 +94,17 @@ Not every GitHub issue is a board ticket. Issues that are not on the board
 (debris, hidden items, release PRs) should not be investigated or reported on
 unless explicitly requested. See `doc/CONTRIBUTING.md` for the full board
 workflow and ticket lifecycle.
+
+## Known Architectural Debt
+
+### `lily.ts` / `MusicCanvas.ts` global state coupling
+
+`lily.ts` exports mutable module-level variables `dict` and `ranges`.
+`MusicCanvas.ts` imports these variables and reads them after calling
+`processLilypond()`. This is not a circular import, but it creates a
+hidden runtime dependency. Future work should refactor `processLilypond()`
+to return these data structures rather than mutating global state.
+Tracked as [#178](https://github.com/wainwmr/spem-player/issues/178).
 
 ## Process
 

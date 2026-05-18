@@ -29,10 +29,11 @@ npm run build
 
 This runs steps in sequence:
 
-1. `npm run format:check` — verifies Prettier formatting
-2. `npm run lint` — ESLint check
-3. `npm run build:ohm` — generates the Ohm.js grammar bundle from `src/ohmjs/ly-grammar.ohm`
-4. `vite build` — production bundle into `dist/`
+1. `npm run prebuild` — generates SVG scores from LilyPond source if LilyPond is installed; skipped otherwise (uses committed SVGs)
+2. `npm run format:check` — verifies Prettier formatting
+3. `npm run lint` — ESLint check
+4. `npm run build:ohm` — generates the Ohm.js grammar bundle from `src/ohmjs/ly-grammar.ohm`
+5. `vite build` — production bundle into `dist/`
 
 ## Preview the Production Build
 
@@ -44,15 +45,16 @@ Serves the contents of `dist/` locally.
 
 ## Regenerate SVG Scores
 
-The SVG files in `src/scores/` are generated from LilyPond source files in `src/lilypond/`. If you modify the LilyPond sources, regenerate the scores before building.
+The SVG files in `src/scores/` are generated from LilyPond source files in `src/lilypond/`.
+`npm run build` automatically regenerates them via the `prebuild` step.
 
-Build all scores (default: Hugh Keyte, modern notation):
+To build scores manually:
 
 ```console
 npm run build:scores
 ```
 
-Build a single score:
+Build a single score or notation:
 
 ```console
 npm run build:scores -- --choir="I A"
@@ -118,4 +120,4 @@ Deployment is automated: merging to `main` triggers a Netlify build and deploy.
 
 **Live site:** [www.spemplayer.net](https://www.spemplayer.net)
 
-Ensure SVG scores are up to date before deploying, as the build pipeline does not invoke LilyPond automatically.
+`npm run build` invokes LilyPond automatically via the `prebuild` step when available. In CI environments without LilyPond (including Netlify), the `prebuild` step skips gracefully and uses the committed SVGs in `src/scores/`.
