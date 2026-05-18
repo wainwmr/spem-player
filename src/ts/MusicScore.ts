@@ -39,6 +39,7 @@ export class MusicScore extends MusicElement {
 
   async connectedCallback() {
     super.connectedCallback();
+    this.setAttribute("tabindex", "-1");
 
     this.highlightPosition.setAttribute("id", "hPos");
     this.highlightPosition.setAttribute("x", "0");
@@ -136,7 +137,6 @@ export class MusicScore extends MusicElement {
       const svgModule = await import(
         `../scores/Hugh Keyte/${this.scoreType}/Choir ${choirName}.svg?raw`
       );
-      this.fireEvent("music-score-loaded");
       return svgModule.default;
     } catch (error) {
       console.error(`Error loading SVG: ${error}`);
@@ -178,6 +178,7 @@ export class MusicScore extends MusicElement {
     // Highlight and scroll to the current bar
     this.highlight();
     this.scrollSmooth();
+    this.fireEvent("music-score-loaded");
   }
 
   async setChoir(c: string | number) {

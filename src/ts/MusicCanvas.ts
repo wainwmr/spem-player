@@ -92,6 +92,7 @@ export class MusicCanvas extends MusicElement {
 
   async connectedCallback() {
     super.connectedCallback();
+    this.setAttribute("tabindex", "-1");
     await this.#init();
   }
 

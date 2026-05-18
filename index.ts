@@ -43,6 +43,10 @@ recordingswitch.innerHTML = recordingswitchSvg;
 scoreswitch.innerHTML = scoreswitchSvg;
 darkswitch.innerHTML = darkswitchSvg;
 
+recordingswitch.setAttribute("tabindex", "-1");
+scoreswitch.setAttribute("tabindex", "-1");
+darkswitch.setAttribute("tabindex", "-1");
+
 let isDragging = false;
 
 var current: State = {
@@ -220,11 +224,11 @@ function keyboardTapped(e: KeyboardEvent) {
   // don't handle keyboard events on the four control widgets
   // cos it messes with the UI interaction
   const classes = [...e.target.classList];
-  if (classes.includes("control")) {
+  if (classes.includes("control") && !e.altKey) {
     return;
   }
   // don't handle keyboard events if composing text (chinese characters)
-  if (e.isComposing || e.keyCode === 229) {
+  if (e.isComposing) {
     return;
   }
   if (e.metaKey || e.ctrlKey) {
@@ -239,6 +243,28 @@ function keyboardTapped(e: KeyboardEvent) {
         break;
       default:
         break;
+    }
+    return;
+  }
+  if (e.altKey && e.code === "KeyB") {
+    e.preventDefault();
+    const barInput = document.getElementById(
+      "bar-field"
+    ) as HTMLInputElement;
+    if (barInput) {
+      controls.pause();
+      const active = document.activeElement;
+      if (
+        active &&
+        active !== document.body &&
+        active !== document.documentElement
+      ) {
+        controls.setReturnFocus(active);
+      } else {
+        controls.setReturnFocus(null);
+      }
+      barInput.focus();
+      barInput.select();
     }
     return;
   }
