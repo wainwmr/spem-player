@@ -26,7 +26,7 @@ describe("setBar boundary wrapping", () => {
         <div id="backdrop"></div>
         <header class="header">
           <span class="title">Spem Player</span>
-          <span id="info" class="tooltip"></span>
+          <span id="info" class="tooltip"><span id="help-icon"></span></span>
           <div class="header-spacer"></div>
           <span id="recordinglabel"></span>
           <span id="recordingswitch"></span>
