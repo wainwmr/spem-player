@@ -29,7 +29,7 @@
     "sass-embedded": "^1.93.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12",
+    "vite": "^8.0.13",
     "vite-plugin-commonjs": "^0.10.4",
     "vitest": "^4.1.5"
   },
