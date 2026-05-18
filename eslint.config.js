@@ -51,6 +51,7 @@ export default tseslint.config(
       'build/',
       'src/ohmjs/*.ohm-bundle.js',
       'src/ohmjs/*.ohm-bundle.d.ts',
+      '.dependency-cruiser.cjs',
     ],
   }
 )

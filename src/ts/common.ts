@@ -42,7 +42,6 @@ export type Config = {
 };
 
 // All the colors are defined in the style sheet
-// export var colors = loadColors();
 const defaultColors: Colors = {
   background: "hsl(210, 65%, 100%);",
   highlight: "hsl(210, 65%, 90%);",

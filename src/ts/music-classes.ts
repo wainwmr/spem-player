@@ -57,31 +57,6 @@ export class Duration {
     if (this.multiplier != 1) str += "*" + this.multiplier;
     return str; // + "(" + this.sfths + ")";
   }
-
-  // static getDValue(s, include = undefined) {
-  //   const ds= [];
-
-  //   if (include != undefined) {
-  //     ds.push(...Duration.getDValue(include));
-  //     s -= include;
-  //   }
-  //   // Convert to binary with high end bit first
-  //   const bin = (s >>> 0).toString(2).split("").reverse();
-  //   for (var i = 0; i < bin.length; i++) {
-  //     if (bin[i] == '1') {
-  //       ds.push(2 ** (6 - i));  // convert to d-value
-  //     }
-  //   }
-  //   return ds.map(x => x.toString()); // convert to strings
-  // }
-
-  // Given a multibar duration total, return the D-values for the remainder
-  // of the bar (first), the number of bars, and the D-Values for the start
-  // of the remaining bar
-  // static split(total, first) {
-  //   const x = total - first;
-  //   return [ Duration.getDValue(first), Math.floor(x / 128), Duration.getDValue(x % 128) ];
-  // }
 }
 
 export class Component {
@@ -107,8 +82,6 @@ export class Note extends Component {
   notename: string;
   accidental: string | null;
   octave: string | null;
-  // length: number; // in sixtyfourth notes (hemidemisemiquavers)
-  // duration;
   slur: string | null;
 
   constructor(
@@ -139,7 +112,6 @@ export class Note extends Component {
 
 export class Rest extends Component {
   restname: string;
-  // duration;
   constructor(restname: string, duration: Duration) {
     super(duration);
     this.restname = restname;

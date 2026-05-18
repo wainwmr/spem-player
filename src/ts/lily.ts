@@ -183,7 +183,6 @@ function setupLilypondParser(): ohm.Semantics {
     Include(_, _2, _filename, _3) {},
     RelativeClause(variable, _, _2, _3, _4, music, _6) {
       const v = variable.parse();
-      // const n = note.parse();
       if (v[0] != undefined) {
         scores[v[0]] = music.parse();
       }
@@ -193,12 +192,8 @@ function setupLilypondParser(): ohm.Semantics {
       const c = comp.parse();
       return c;
     },
-    command(_, _2) {
-      // const command = _2.sourceString;
-    },
-    BarCheck(_, _2, _3) {
-      // console.log("Bar check: " + _3.sourceString);
-    },
+    command(_, _2) {},
+    BarCheck(_, _2, _3) {},
     barline(_) {
       return new BarLine();
     },
@@ -264,12 +259,6 @@ export type Range = {
 export var ranges: Range[][][] = [];
 export var barCount: number = 0;
 
-async function getFile(filename: string): Promise<string> {
-  const promise = await fetch(filename);
-  const text = await promise.text();
-  return text;
-}
-
 // -----------------------------------------------------
 // Process the lilypond input file, creating two data structures:
 // dict[position] = [ {choir, part, note}, ... ]
@@ -300,8 +289,6 @@ export function processLilypond() {
 
       // get the lilypond for this choir and part
       var lilypond = scores[key];
-
-      // console.log(lilypond.map(x => (typeof x == "undefined") ? "?" : x.toString()).join(" "));
 
       var from = undefined;
 
@@ -363,7 +350,6 @@ export const exportedForTesting = {
   semantics,
   romanise,
   setupLilypondParser,
-  getFile,
   noteToPitchClass,
   detectFalseRelations,
 };

@@ -201,8 +201,6 @@ export class MusicCanvas extends MusicElement {
   #calculateCanvasSize() {
     if (this.canvas == null) return;
 
-    // this.canvas.width = this.clientWidth;
-    // this.canvas.height = 300 * 2;
     this.canvas.width = 4000;
     this.canvas.height = 1000;
 
@@ -213,7 +211,6 @@ export class MusicCanvas extends MusicElement {
     this.choirHeight =
       (this.canvas.height - 2 * this.canvasPadding) / config.choirs[0].length;
     this.partHeight = this.choirHeight / config.parts.length;
-    // console.log("MusicCanvas: calculated bar choir and part sizes:", this.barWidth, this.choirHeight, this.partHeight);
   }
 
   #showLoadingOnCanvas() {

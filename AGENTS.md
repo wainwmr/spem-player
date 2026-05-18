@@ -95,6 +95,17 @@ Not every GitHub issue is a board ticket. Issues that are not on the board
 unless explicitly requested. See `doc/CONTRIBUTING.md` for the full board
 workflow and ticket lifecycle.
 
+## Known Architectural Debt
+
+### `lily.ts` / `MusicCanvas.ts` global state coupling
+
+`lily.ts` exports mutable module-level variables `dict` and `ranges`.
+`MusicCanvas.ts` imports these variables and reads them after calling
+`processLilypond()`. This is not a circular import, but it creates a
+hidden runtime dependency. Future work should refactor `processLilypond()`
+to return these data structures rather than mutating global state.
+Tracked as [#178](https://github.com/wainwmr/spem-player/issues/178).
+
 ## Process
 
 Active work on bugs, hacks, and technical debt is managed via the
