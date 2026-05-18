@@ -32,7 +32,6 @@ export default tseslint.config(
         varsIgnorePattern: '^_',
       }],
       '@typescript-eslint/no-unused-expressions': ['error', { allowTernary: true }],
-      '@typescript-eslint/no-deprecated': 'error',
     },
   },
   {

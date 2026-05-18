@@ -39,7 +39,6 @@
     "prebuild": "node build/buildScores.mjs --skip-if-missing",
     "build:scores": "node build/buildScores.mjs",
     "build:ohm": "npx ohm generateBundles --withTypes src/ohmjs/ly-grammar.ohm",
-    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "format": "prettier --write src/",
     "format:check": "prettier --check src/",

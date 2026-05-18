@@ -526,3 +526,161 @@ kbd {
     transform: rotate(450deg);
   }
 }
+
+#feedback-trigger {
+  cursor: pointer;
+  margin-left: 6px;
+
+  svg path {
+    stroke: var(--color-title);
+  }
+}
+
+#feedback-modal {
+  display: none;
+  padding: 0 10px 10px;
+  border: 2px solid var(--color-border);
+  border-radius: 10px;
+  position: absolute;
+  top: 50px;
+  background: var(--color-background-lighter);
+  max-width: 80%;
+  left: 10%;
+  z-index: 12;
+  font-family: inherit;
+  font-size: 1rem;
+
+  label,
+  legend,
+  input,
+  select,
+  button {
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  h2 {
+    margin: 10px 0;
+    font-size: 1.2rem;
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 4px;
+  }
+
+  fieldset {
+    border: none;
+    padding: 0;
+    margin: 0 0 10px;
+
+    legend {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    label {
+      display: inline-block;
+      margin-right: 12px;
+      cursor: pointer;
+
+      input[type="radio"] {
+        margin-right: 4px;
+      }
+    }
+  }
+
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 2px solid var(--color-border);
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+
+  #feedback-rating {
+    margin-bottom: 1rem;
+  }
+
+  #feedback-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 140px;
+    font-size: 1.2rem;
+  }
+
+  .feedback-context-note {
+    font-size: 0.8rem;
+    margin: 6px 0;
+    opacity: 0.8;
+  }
+
+  .feedback-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+
+    .bmc-wrapper {
+      transform: scale(0.75);
+      transform-origin: left center;
+    }
+  }
+
+  .feedback-actions {
+    display: flex;
+    gap: 10px;
+
+    button {
+      padding: 6px 16px;
+      border: 2px solid var(--color-border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-family: inherit;
+
+      &[type="submit"] {
+        background: var(--color-active-button);
+        color: var(--color-background);
+      }
+
+      &[type="button"] {
+        background: transparent;
+        color: var(--color-background);
+      }
+
+      &:hover {
+        opacity: 0.85;
+      }
+    }
+  }
+}
+
+.star-rating {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  gap: 10px;
+
+  input {
+    display: none;
+  }
+
+  label {
+    cursor: pointer;
+    font-size: 2rem;
+    color: var(--color-background);
+    opacity: 0.4;
+
+    &::before {
+      content: "\2605";
+    }
+  }
+
+  input:checked ~ label,
+  label:hover,
+  label:hover ~ label {
+    opacity: 1;
+    color: hsl(38, 90%, 32%);
+  }
+}
