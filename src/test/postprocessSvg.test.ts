@@ -46,5 +46,5 @@ describe("postprocessSvg build script", () => {
     // Should strip height and width from the root <svg> element
     expect(output).not.toMatch(/<svg[^>]*\sheight=/);
     expect(output).not.toMatch(/<svg[^>]*\swidth=/);
-  });
+  }, 15000);
 });

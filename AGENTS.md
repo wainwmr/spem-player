@@ -64,6 +64,7 @@ Agent-critical notes:
 - `npm run build:ohm` is required before tests can run.
 - Playwright browser binaries are not auto-installed; run `npx playwright install chromium` after `npm install`.
 - `npm run build:scores` generates SVGs from LilyPond and post-processes them. Pass `--choir`, `--notation`, or `--version` flags to build a subset.
+- `npm run build` automatically invokes `build:scores` via the `prebuild` step before bundling.
 
 ## Testing Conventions
 
