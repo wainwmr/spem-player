@@ -11,7 +11,7 @@ temp/*
 src/scss/*.css
 src/scss/*.css.map
 publish.py
-test-results/
+playwright-output/
 playwright-report/
 playwright/.cache/
 
