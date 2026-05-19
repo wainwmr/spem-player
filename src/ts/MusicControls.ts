@@ -160,7 +160,7 @@ export class MusicControls extends MusicElement {
     } else {
       this.bar = Math.max(0, parsed);
       if (barCount > 0) {
-        this.bar = Math.min(this.bar, barCount - 1);
+        this.bar = Math.min(this.bar, barCount);
       }
     }
     this.barinput.value = String(this.bar);
