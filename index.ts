@@ -541,7 +541,7 @@ function init(): void {
     handleCanvasClick as (e: Event) => void
   );
   canvas.addEventListener(
-    "music-canvas-touchmove",
+    "music-canvas-touchend",
     handleCanvasClick as (e: Event) => void
   );
 
