@@ -115,6 +115,62 @@ describe("MusicScore custom element", () => {
     expect(hBar?.getAttribute("width")).toBe("0"); // but currently invisible
   });
 
+  it("highlightPosition width is proportional to svgWidth", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    const waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem?.setAttribute("choir", "0");
+    const loadResult = await waitingForLoaded;
+    expect(loadResult).toStrictEqual(true);
+
+    const width = elem.highlightPosition.getAttribute("width");
+    expect(width).not.toBe("7");
+    expect(width).not.toBe("0");
+    expect(Number(width)).toBeCloseTo(elem.svgWidth / 600, 0);
+  });
+
+  it("highlightPosition width changes with score type", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    var waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem?.setAttribute("choir", "0");
+    var loadResult = await waitingForLoaded;
+    expect(loadResult).toStrictEqual(true);
+
+    const modernWidth = elem.highlightPosition.getAttribute("width");
+
+    waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem.setAttribute("score-type", "early");
+    loadResult = await waitingForLoaded;
+    expect(loadResult).toStrictEqual(true);
+
+    const earlyWidth = elem.highlightPosition.getAttribute("width");
+    expect(earlyWidth).not.toBe(modernWidth);
+  }, 20000);
+
   it("Check all scores have the same number of bars", async () => {
     const elem = document.querySelector("music-score") as MusicScore;
 
