@@ -3,7 +3,34 @@
 ## Getting Started
 
 See `doc/BUILD.md` for development setup, prerequisites, and build commands.
-See `AGENTS.md` for architecture overview and agent-specific conventions.
+
+## Architecture
+
+The UI is built around five custom HTML elements extending `MusicElement`:
+
+- `music-score` (`src/ts/MusicScore.ts`) — SVG sheet music display, bar-position parsing, auto-scroll
+- `music-canvas` (`src/ts/MusicCanvas.ts`) — Canvas 2D overview of all 8 choirs × 5 parts × 140 bars
+- `music-controls` (`src/ts/MusicControls.ts`) — HTML5 Audio playback, choir/part/bar input widgets
+- `music-canvas-watcher` (`src/ts/MusicCanvasWatcher.ts`) — footer status line for hovered position
+- `music-element` (`src/ts/MusicElement.ts`) — abstract base class holding shared state and event dispatch
+
+The entry point is `index.ts`, which wires events between components and manages global state.
+
+### State
+
+The central `State` interface (`src/ts/common.ts`) tracks:
+
+- `recording` — `0` (ALC) or `1` (CotE)
+- `viewmode` — `"dark"` or `"light"`
+- `period` — `"modern"` or `"early"`
+- `choir` — 0 to 7
+- `part` — `"all"` or 0 to 4
+- `bar` — 0 to 139
+- `status` — `"playing"`, `"paused"`, or `"loading"`
+
+State changes flow through `index.ts` helpers (`setChoir()`, `setPart()`, `setBar()`), which set
+attributes on elements. Components react via `attributeChangedCallback` and fire custom events
+back to `index.ts`.
 
 ## Workflow
 
@@ -201,6 +228,8 @@ The project uses an ESLint flat config (`eslint.config.js`) with `typescript-esl
 
 The project uses **Prettier** for automatic formatting. Run `npm run format` before committing, or configure your editor to format on save. The CI pipeline runs `npm run format:check` as part of the build gate.
 
+All `.md` files must pass `markdownlint-cli2` before a PR is opened. Run `npx markdownlint-cli2 <file>` after editing any markdown file.
+
 ### Component Conventions
 
 All UI components are native custom elements extending `MusicElement`.
@@ -212,6 +241,43 @@ When creating or modifying a component:
 3. Implement `attributeChangedCallback` for reactive updates.
 4. Use `fireEvent()` to communicate state changes.
 5. Register the element via a static `define(tag)` method.
+
+### Key Conventions
+
+- **Bar numbering** — bars run 0–139 (140 total). Bar 0 is an intro bar; its beat count varies
+  by recording (`intro_beats` in `public/spem.json`).
+- **Time mapping** — `bartime` and `barno` arrays in `src/ts/config.ts` convert between real
+  audio time and bar numbers, accounting for tempo changes per recording.
+- **SVG bar detection** — `MusicScore.getBars()` parses `translate` attributes on `<g>` elements
+  containing numeric `<tspan>` text. Values near the left edge are filtered to avoid false matches
+  from tenor clef symbols.
+- **LilyPond parsing** — the Ohm grammar (`src/ohmjs/ly-grammar.ohm`) covers only the subset of
+  LilyPond syntax used by `spem.ly`. Do not assume it generalises to other LilyPond files.
+- **Version injection** — `package.json` version is injected into `index.html` at build time.
+  Non-`main` branches append the branch name (e.g. `2.4.0-fix-123`).
+- **Local ignore rules** — personal patterns (IDE configs, local scripts) belong in
+  `.git/info/exclude`, not `.gitignore`, to avoid polluting the shared ignore file.
+
+### Tracked Generated Files
+
+Two Ohm bundle files are committed to the repository (Mark's preference) but are
+regenerated locally during development:
+
+```text
+src/ohmjs/ly-grammar.ohm-bundle.js
+src/ohmjs/ly-grammar.ohm-bundle.d.ts
+```
+
+Set `--skip-worktree` on these files after cloning so local rebuilds do not appear
+in `git status`:
+
+```console
+git update-index --skip-worktree src/ohmjs/ly-grammar.ohm-bundle.js
+git update-index --skip-worktree src/ohmjs/ly-grammar.ohm-bundle.d.ts
+```
+
+Do not commit local versions of these files. If a rebase conflict touches them,
+accept the upstream version.
 
 ### Writing Tests
 
