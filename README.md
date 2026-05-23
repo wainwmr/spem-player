@@ -62,12 +62,25 @@ Shortcuts are ignored when focus is on an input field or `<select>` element.
 - Responsive layout for desktop and mobile
 - Splitter between score and canvas allows resizing
 
+## Source Layout
+
+- `index.html` / `index.ts` — single-page markup and application bootstrap
+- `src/ts/` — TypeScript source: custom elements, shared types, config, LilyPond parser
+- `src/scss/` — SCSS styles with dark/light theme variables
+- `src/ohmjs/` — Ohm.js grammar for LilyPond parsing
+- `src/lilypond/` — LilyPond source files (two editions: Hugh Keyte and OUP)
+- `src/scores/` — SVG scores generated from LilyPond
+- `src/test/` — unit and integration tests (Vitest)
+- `public/audio/` — MP3 recordings (ALC and CotE per-part tracks)
+- `public/spem.json` — runtime configuration (choir count, parts, tempo)
+- `build/` — build scripts (LilyPond invocation, SVG post-processing)
+- `doc/` — developer documentation
+
 ## For Developers
 
 - `doc/BUILD.md` — development setup, build commands, and deployment
 - `doc/TESTING.md` — running and writing tests
-- `doc/CONTRIBUTING.md` — contribution process, code style, and board workflow
-- `AGENTS.md` — architecture overview and conventions
+- `doc/CONTRIBUTING.md` — architecture overview, conventions, and contribution process
 
 ## Licence
 
