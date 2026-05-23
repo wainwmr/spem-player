@@ -52,6 +52,10 @@ This workflow is intentionally excluded from the PR gate. Playwright tests are s
 
 Dependabot PRs are subject to the same `ci.yml` checks and ruleset requirements as human-authored PRs.
 
+### `dependabot-auto-merge.yml`
+
+A separate workflow enables GitHub native auto-merge for Dependabot **patch** PRs once the `test` status check passes. Minor and major bumps remain open for manual review. This workflow runs only when the PR author is `dependabot[bot]` and inspects the update type via `dependabot/fetch-metadata` before enabling auto-merge.
+
 ## Node.js Version
 
 The Node.js version is pinned in `.nvmrc`. Both GitHub Actions workflows read this file via `node-version-file` in `actions/setup-node`. Netlify should be configured to use the same version.
