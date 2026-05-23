@@ -54,7 +54,7 @@
     "depcruise:graph": "depcruise src/ts/*.ts index.ts --output-type dot > dependency-graph.dot",
     "knip": "knip",
     "lint-staged": "lint-staged",
-    "ci": "npm run typecheck && npm run build && vitest --run && npm run test:e2e",
+    "ci": "npx knip && npm run format:check && npm run lint && npx tsc --noEmit && npm run build && npm run depcruise && npx vitest run",
     "prepare": "husky"
   },
   "lint-staged": {
