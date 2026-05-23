@@ -13,7 +13,6 @@ export type Dictionary = {
   p: number;
   n: Note;
 };
-export const dict: Dictionary[][] = [];
 
 export type ActiveNote = { c: number; p: number; n: Note };
 
@@ -25,7 +24,6 @@ export type FRlocation = {
   from: number;
   to: number;
 };
-export const frLocations: FRlocation[] = [];
 
 // a dictionary to hold the muic in the lilypond input file
 export var scores: { [id: string]: Component[] } = {};
@@ -85,8 +83,10 @@ export function noteToPitchClass(note: Note): number {
   return ((pc % 12) + 12) % 12;
 }
 
-export function detectFalseRelations(activeNotes: Map<number, ActiveNote[]>) {
-  frLocations.length = 0;
+export function detectFalseRelations(
+  activeNotes: Map<number, ActiveNote[]>
+): FRlocation[] {
+  const frLocations: FRlocation[] = [];
   const activeLocs = new Map<string, FRlocation>();
 
   const positions = Array.from(activeNotes.keys()).sort((a, b) => a - b);
@@ -160,6 +160,7 @@ export function detectFalseRelations(activeNotes: Map<number, ActiveNote[]>) {
   for (const loc of activeLocs.values()) {
     frLocations.push(loc);
   }
+  return frLocations;
 }
 
 function setupLilypondParser(): ohm.Semantics {
@@ -247,20 +248,31 @@ function setupLilypondParser(): ohm.Semantics {
   return s;
 }
 
-// Array of choir, part and
+// A continuous singing interval for one part: bar positions from start to end.
 export type Range = {
   from: number;
   to: number;
 };
-export var ranges: Range[][][] = [];
+
+// HACK: barCount is still exported as a module-level variable consumed by MusicControls.ts
+// and controls.test.ts. All other parsed data is returned from processLilypond(). See ticket #107 follow-on.
 export var barCount: number = 0;
 
+export type LilypondData = {
+  dict: Dictionary[][];
+  ranges: Range[][][];
+  barCount: number;
+  frLocations: FRlocation[];
+};
+
 // -----------------------------------------------------
-// Process the lilypond input file, creating two data structures:
-// dict[position] = [ {choir, part, note}, ... ]
-// ranges[choir (0 to 7)][part (0 to 4)] = [ {from, to}, ... ]
+// Process the lilypond input file and return a LilypondData object:
+//   dict[position] = [ {choir, part, note}, ... ]
+//   ranges[choir (0 to 7)][part (0 to 4)] = [ {from, to}, ... ]
+//   barCount — index of the last bar
+//   frLocations — false-relation positions for rendering
 // -----------------------------------------------------
-export function processLilypond() {
+export function processLilypond(): LilypondData {
   if (!semantics) {
     semantics = setupLilypondParser();
   }
@@ -268,13 +280,15 @@ export function processLilypond() {
   // Parse lilypond from the ohm grammar
   const result = lyGrammar.match(spem);
   if (result.failed()) {
-    console.error("Bad Lilypond " + result.message);
+    throw new Error("Lilypond parse failed: " + result.message);
   }
 
   semantics(result).parse();
 
+  const dict: Dictionary[][] = [];
+  const ranges: Range[][][] = [];
   const activeNotes = new Map<number, ActiveNote[]>();
-  barCount = 0;
+  let localBarCount = 0;
   for (let c = 0; c < config.choirs[0].length; c++) {
     const choir = config.choirs[0][c];
     ranges[c] = [];
@@ -288,8 +302,8 @@ export function processLilypond() {
 
       var from = undefined;
 
-      var pos = 1; // in hemidemisemiquavers (64ths)
-      const barsize = 128; // hemidemisemiquavers in a bar
+      var pos = 1; // fractional bar position (sfths / barsize)
+      const barsize = 128; // sfths (64th notes) per bar
       const step = 0.0625; // 1/16 bar
       for (var comp of lilypond) {
         if (comp instanceof Note) {
@@ -332,14 +346,16 @@ export function processLilypond() {
         ranges[c][p].push({ from: from, to: pos });
       }
 
-      if (pos > barCount) {
-        barCount = pos;
+      if (pos > localBarCount) {
+        localBarCount = pos;
       }
     }
   }
-  barCount = Math.floor(barCount);
+  localBarCount = Math.floor(localBarCount);
 
-  detectFalseRelations(activeNotes);
+  barCount = localBarCount; // side effect: keep global in sync for MusicControls.ts
+  const frLocations = detectFalseRelations(activeNotes);
+  return { dict, ranges, barCount: localBarCount, frLocations };
 }
 
 export const exportedForTesting = {

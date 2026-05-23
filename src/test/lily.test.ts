@@ -51,13 +51,10 @@ describe("lilypond parsing tests", () => {
   it("setupLilypondParser", () => {
     var s = setupLilypondParser();
     expect(s).toBeTruthy();
-    expect(dict.length).toBe(0);
-    expect(ranges.length).toBe(0);
   });
 
   it("processLilypond", () => {
-    //assert on the response
-    processLilypond();
+    const { dict, ranges } = processLilypond();
     expect(dict.length).toBe(139); // bars including bar zero
     expect(barCount).toBe(139);
     expect(ranges.length).toBe(8); // choirs
@@ -68,6 +65,31 @@ describe("lilypond parsing tests", () => {
         expect(last.to).toBe(139);
       }
     }
+  });
+
+  it("processLilypond() returns a result object with dict, ranges, barCount, frLocations", () => {
+    const result = processLilypond();
+    expect(result).toBeDefined();
+    expect(result.dict.length).toBeGreaterThan(0);
+    expect(result.ranges.length).toBe(8);
+    expect(result.barCount).toBeGreaterThan(0);
+    expect(result.frLocations.length).toBeGreaterThan(0);
+  });
+
+  it("processLilypond() throws on parse failure", () => {
+    const failedMatch = lyGrammar.match("sop987 = \\relative c'' { g2 f e d }"); // invalid: digits in var name
+    vi.spyOn(lyGrammar, "match").mockReturnValueOnce(failedMatch);
+    expect(() => processLilypond()).toThrow("Lilypond parse failed");
+    vi.restoreAllMocks();
+  });
+
+  it("processLilypond() is idempotent — repeated calls give same dict length", () => {
+    const result1 = processLilypond();
+    const result2 = processLilypond();
+    expect(result2.dict.length).toBe(result1.dict.length);
+    expect(result2.ranges.length).toBe(result1.ranges.length);
+    expect(result2.barCount).toBe(result1.barCount);
+    expect(result2.frLocations.length).toBe(result1.frLocations.length);
   });
 
   it("noteToPitchClass maps natural notes correctly", () => {
@@ -121,12 +143,12 @@ describe("lilypond parsing tests", () => {
       { c: 0, p: 0, n: new Note("f", null, null, new Duration("4"), null) },
       { c: 1, p: 0, n: new Note("f", "is", null, new Duration("4"), null) },
     ]);
-    detectFalseRelations(activeNotes);
-    expect(frLocations.length).toBe(2);
-    expect(frLocations[0].from).toBe(1.0);
-    expect(frLocations[0].to).toBe(1.0625);
-    expect(frLocations[0].c).toBe(0);
-    expect(frLocations[1].c).toBe(1);
+    const result = detectFalseRelations(activeNotes);
+    expect(result.length).toBe(2);
+    expect(result[0].from).toBe(1.0);
+    expect(result[0].to).toBe(1.0625);
+    expect(result[0].c).toBe(0);
+    expect(result[1].c).toBe(1);
   });
 
   it("detectFalseRelations ignores same-part clashes", () => {
@@ -135,8 +157,8 @@ describe("lilypond parsing tests", () => {
       { c: 0, p: 0, n: new Note("f", null, null, new Duration("4"), null) },
       { c: 0, p: 0, n: new Note("f", "is", null, new Duration("4"), null) },
     ]);
-    detectFalseRelations(activeNotes);
-    expect(frLocations.length).toBe(0);
+    const result = detectFalseRelations(activeNotes);
+    expect(result.length).toBe(0);
   });
 
   it("detectFalseRelations ignores different letters (even if semitone apart)", () => {
@@ -145,8 +167,8 @@ describe("lilypond parsing tests", () => {
       { c: 0, p: 0, n: new Note("e", null, null, new Duration("4"), null) },
       { c: 1, p: 0, n: new Note("f", null, null, new Duration("4"), null) },
     ]);
-    detectFalseRelations(activeNotes);
-    expect(frLocations.length).toBe(0);
+    const result = detectFalseRelations(activeNotes);
+    expect(result.length).toBe(0);
   });
 
   it("detectFalseRelations merges consecutive positions for same part", () => {
@@ -159,11 +181,11 @@ describe("lilypond parsing tests", () => {
       { c: 0, p: 0, n: new Note("b", "es", null, new Duration("4"), null) },
       { c: 1, p: 0, n: new Note("b", null, null, new Duration("4"), null) },
     ]);
-    detectFalseRelations(activeNotes);
-    expect(frLocations.length).toBe(2);
-    expect(frLocations[0].from).toBe(1.0);
-    expect(frLocations[0].to).toBe(1.125);
-    expect(frLocations[1].from).toBe(1.0);
-    expect(frLocations[1].to).toBe(1.125);
+    const result = detectFalseRelations(activeNotes);
+    expect(result.length).toBe(2);
+    expect(result[0].from).toBe(1.0);
+    expect(result[0].to).toBe(1.125);
+    expect(result[1].from).toBe(1.0);
+    expect(result[1].to).toBe(1.125);
   });
 });

@@ -5,15 +5,7 @@ import config from "./config";
 import { PartType, Position, colors } from "./common";
 import { MusicElement } from "./MusicElement";
 
-import {
-  Dictionary,
-  Range,
-  processLilypond,
-  dict,
-  ranges,
-  barCount,
-  frLocations,
-} from "./lily";
+import { Dictionary, Range, FRlocation, processLilypond } from "./lily";
 
 export class MusicCanvas extends MusicElement {
   static observedAttributes = ["choir", "part", "bar", "playing"];
@@ -31,6 +23,8 @@ export class MusicCanvas extends MusicElement {
   shimmerPhases: number[] = [];
   dict: Dictionary[][] = []; // HACK: bad name and data type
   ranges: Range[][][] = []; // HACK: bad data type
+  barCount: number = 0;
+  frLocations: FRlocation[] = [];
   source: string | null = null;
 
   isOnDevBranch =
@@ -166,11 +160,11 @@ export class MusicCanvas extends MusicElement {
     this.#calculateCanvasSize();
     this.#showLoadingOnCanvas();
 
-    processLilypond();
-
-    // HACK: can't these just be returned from processLilypond()?
-    this.dict = dict;
-    this.ranges = ranges;
+    const lilyData = processLilypond();
+    this.dict = lilyData.dict;
+    this.ranges = lilyData.ranges;
+    this.barCount = lilyData.barCount;
+    this.frLocations = lilyData.frLocations;
 
     // define array pulses[choir][part] to be min transparency which
     // will be pulsed when the choir is singing a note.
@@ -185,8 +179,10 @@ export class MusicCanvas extends MusicElement {
       }
     }
 
-    this.falseRelationPulses = new Array(frLocations.length).fill(0);
-    this.shimmerPhases = frLocations.map(() => Math.random() * Math.PI * 2);
+    this.falseRelationPulses = new Array(this.frLocations.length).fill(0);
+    this.shimmerPhases = this.frLocations.map(
+      () => Math.random() * Math.PI * 2
+    );
 
     this.draw();
     this.#startShimmerLoop();
@@ -233,7 +229,7 @@ export class MusicCanvas extends MusicElement {
     const singing = choirnotes.length != 0;
 
     // loop until we find a bar where choir is not doing what it's doing in currentBar
-    while (intbar + direction >= 0 && intbar + direction <= barCount) {
+    while (intbar + direction >= 0 && intbar + direction <= this.barCount) {
       intbar = intbar + direction;
       const newsinging =
         (this.dict[intbar] ?? []).filter((x) => x.c == pos.choir).length != 0;
@@ -258,7 +254,7 @@ export class MusicCanvas extends MusicElement {
 
   draw() {
     if (!this.canvas) return;
-    if (ranges.length === 0 || dict.length === 0) return;
+    if (this.ranges.length === 0 || this.dict.length === 0) return;
     if (!this.#shouldDraw()) return;
 
     this.#updatePulses();
@@ -317,8 +313,8 @@ export class MusicCanvas extends MusicElement {
     }
 
     // Pulse false relations
-    for (let i = 0; i < frLocations.length; i++) {
-      const loc = frLocations[i];
+    for (let i = 0; i < this.frLocations.length; i++) {
+      const loc = this.frLocations[i];
       if (
         this.bar >= loc.from &&
         this.bar < loc.from + MusicCanvas.FR_PULSE_FADE_BARS
@@ -338,7 +334,7 @@ export class MusicCanvas extends MusicElement {
   }
 
   #drawBarHighlight(ctx: CanvasRenderingContext2D) {
-    if (this.bar <= 0 || this.bar > barCount) return;
+    if (this.bar <= 0 || this.bar > this.barCount) return;
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(
@@ -426,7 +422,7 @@ export class MusicCanvas extends MusicElement {
             saturation = 80;
             lightness = MusicCanvas.SELECTED_BASE_LIGHTNESS - 3 * p;
             transparency = 1;
-          } else if (this.bar === 0 || this.bar > barCount) {
+          } else if (this.bar === 0 || this.bar > this.barCount) {
             saturation = 50;
             lightness = MusicCanvas.SELECTED_BASE_LIGHTNESS - 3 * p;
             transparency = 1;
@@ -462,8 +458,8 @@ export class MusicCanvas extends MusicElement {
 
   #drawFalseRelationHotspot(ctx: CanvasRenderingContext2D) {
     const shimmerTime = Date.now() / 1000;
-    for (let i = 0; i < frLocations.length; i++) {
-      const loc = frLocations[i];
+    for (let i = 0; i < this.frLocations.length; i++) {
+      const loc = this.frLocations[i];
       const cx = this.canvasPadding + ((loc.from + loc.to) / 2) * this.barWidth;
       const phase = this.shimmerPhases[i];
       const alpha =
@@ -501,11 +497,11 @@ export class MusicCanvas extends MusicElement {
   }
 
   #drawFalseRelationPulses(ctx: CanvasRenderingContext2D) {
-    for (let i = 0; i < frLocations.length; i++) {
+    for (let i = 0; i < this.frLocations.length; i++) {
       const pulse = this.falseRelationPulses[i];
       if (pulse <= 0) continue;
 
-      const loc = frLocations[i];
+      const loc = this.frLocations[i];
       const cx = this.canvasPadding + ((loc.from + loc.to) / 2) * this.barWidth;
 
       const startY =
