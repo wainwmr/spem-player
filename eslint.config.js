@@ -48,6 +48,7 @@ export default tseslint.config(
       'coverage/',
       '.netlify/',
       'build/',
+      'tests-local/',
       'src/ohmjs/*.ohm-bundle.js',
       'src/ohmjs/*.ohm-bundle.d.ts',
       '.dependency-cruiser.cjs',
