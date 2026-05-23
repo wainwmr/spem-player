@@ -3,15 +3,17 @@
 # SPDX-License-Identifier: MIT
 """Post-process LilyPond-generated SVGs.
 
-Parses \pointAndClickOn anchor tags to determine which voice part each
+Parses \\pointAndClickOn anchor tags to determine which voice part each
 graphical element belongs to, adds data-part="N" attributes, removes
-anchor wrappers, and strips height/width from the SVG root element.
+anchor wrappers, strips height/width from the SVG root element, and
+deduplicates repeated path shapes via <defs> and <use>.
 """
 
 import argparse
 import os
 import re
 import xml.dom.minidom as minidom
+from collections import defaultdict
 from urllib.parse import unquote
 
 DEFAULT_SPEM_PATH = "src/lilypond/Hugh Keyte/spem.ly"
@@ -48,6 +50,63 @@ def find_part_index(line_number: int, part_map: list[tuple[int, int, int]]) -> i
         if start <= line_number < end:
             return part_index
     return None
+
+
+def _non_transform_attrs(path: minidom.Element) -> dict[str, str]:
+    return {
+        path.attributes.item(i).name: path.attributes.item(i).value
+        for i in range(path.attributes.length)
+        if path.attributes.item(i).name not in ("d", "transform")
+    }
+
+
+def deduplicate_paths(doc: minidom.Document) -> None:
+    """Replace repeated <path> shapes with <defs>/<use> references.
+
+    Paths whose non-transform attributes differ across occurrences are left
+    unchanged (defensive skip for attribute collision).
+    """
+    all_paths = list(doc.getElementsByTagName("path"))
+
+    groups: dict[str, list[minidom.Element]] = defaultdict(list)
+    for path in all_paths:
+        d = path.getAttribute("d")
+        if d:
+            groups[d].append(path)
+
+    valid: dict[str, list[minidom.Element]] = {}
+    for d, paths in groups.items():
+        if len(paths) < 2:
+            continue
+        first_attrs = _non_transform_attrs(paths[0])
+        if any(_non_transform_attrs(p) != first_attrs for p in paths[1:]):
+            continue
+        valid[d] = paths
+
+    if not valid:
+        return
+
+    svg_elem = doc.documentElement
+    defs = doc.createElement("defs")
+    svg_elem.insertBefore(defs, svg_elem.firstChild)
+
+    for i, (d, paths) in enumerate(valid.items()):
+        def_id = f"spem-path-{i}"
+
+        def_path = doc.createElement("path")
+        def_path.setAttribute("id", def_id)
+        def_path.setAttribute("d", d)
+        for name, value in _non_transform_attrs(paths[0]).items():
+            def_path.setAttribute(name, value)
+        defs.appendChild(def_path)
+
+        for path in paths:
+            use = doc.createElement("use")
+            use.setAttribute("href", f"#{def_id}")
+            transform = path.getAttribute("transform")
+            if transform:
+                use.setAttribute("transform", transform)
+            path.parentNode.replaceChild(use, path)
 
 
 def postprocess_svg(svg_path: str, spem_ly_path: str, words_ly_path: str) -> None:
@@ -107,6 +166,8 @@ def postprocess_svg(svg_path: str, spem_ly_path: str, words_ly_path: str) -> Non
             svg_elem.removeAttribute("height")
         if svg_elem.hasAttribute("width"):
             svg_elem.removeAttribute("width")
+
+    deduplicate_paths(doc)
 
     with open(svg_path, "w", encoding="utf-8") as f:
         doc.documentElement.writexml(f)
