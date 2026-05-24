@@ -1,15 +1,6 @@
 import { MusicCanvas } from "../ts/MusicCanvas";
 import config from "../ts/config";
-import {
-  processLilypond,
-  dict,
-  ranges,
-  barCount,
-  frLocations,
-} from "../ts/lily";
-
 MusicCanvas.define("music-canvas");
-processLilypond();
 
 var canvas: MusicCanvas | null;
 describe("MusicCanvas custom element", () => {
@@ -37,14 +28,12 @@ describe("MusicCanvas custom element", () => {
   });
 
   it("draw() early returns when dict/ranges are empty", async () => {
-    const savedDict = dict.splice(0);
-    const savedRanges = ranges.splice(0);
+    // Note: this exercises the !this.canvas guard (element not in DOM), not the
+    // ranges.length === 0 guard. See refactor item 15 in wiki/refactor-lily.ts.md.
     const freshCanvas = document.createElement("music-canvas") as MusicCanvas;
-    document.body.appendChild(freshCanvas);
+    freshCanvas.dict = [];
+    freshCanvas.ranges = [];
     freshCanvas.draw();
-    document.body.removeChild(freshCanvas);
-    dict.push(...savedDict);
-    ranges.push(...savedRanges);
   });
 
   it("draw() executes during playback without throttling", () => {
@@ -96,14 +85,14 @@ describe("MusicCanvas custom element", () => {
 
   it("initialises shimmer phases for each FR location", () => {
     expect(canvas).not.toBeNull();
-    expect(canvas!.shimmerPhases.length).toBe(frLocations.length);
+    expect(canvas!.shimmerPhases.length).toBe(canvas!.frLocations.length);
     expect(canvas!.shimmerPhases[0]).toBeGreaterThanOrEqual(0);
     expect(canvas!.shimmerPhases[0]).toBeLessThan(Math.PI * 2);
   });
 
   it("draw() renders false-relation shimmer circles when frLocations are populated", async () => {
     expect(canvas).not.toBeNull();
-    expect(frLocations.length).toBeGreaterThan(0);
+    expect(canvas!.frLocations.length).toBeGreaterThan(0);
     canvas!.draw();
   });
 
@@ -115,8 +104,8 @@ describe("MusicCanvas custom element", () => {
 
   it("seek() clamps to upper bound when seeking forward from last bar", () => {
     expect(canvas).not.toBeNull();
-    const pos = { choir: 0, part: "all" as const, bar: barCount };
-    expect(canvas!.seek(pos, +1)).toBe(barCount);
+    const pos = { choir: 0, part: "all" as const, bar: canvas!.barCount };
+    expect(canvas!.seek(pos, +1)).toBe(canvas!.barCount);
   });
 
   it("seek() finds next section change forward from bar 1", () => {
@@ -124,25 +113,25 @@ describe("MusicCanvas custom element", () => {
     const pos = { choir: 0, part: "all" as const, bar: 1 };
     const result = canvas!.seek(pos, +1);
     expect(result).toBeGreaterThanOrEqual(0);
-    expect(result).toBeLessThanOrEqual(barCount);
+    expect(result).toBeLessThanOrEqual(canvas!.barCount);
   });
 
   it("seek() does not throw when dict[intbar] is undefined (#244)", () => {
     expect(canvas).not.toBeNull();
-    const saved = dict[2];
-    delete dict[2];
+    const saved = canvas!.dict[2];
+    delete canvas!.dict[2];
     const pos = { choir: 0, part: "all" as const, bar: 1 };
     expect(() => canvas!.seek(pos, +1)).not.toThrow();
-    dict[2] = saved;
+    canvas!.dict[2] = saved;
   });
 
   it("seek() backward from bar 1 with empty dict[0] returns 0 (#244)", () => {
     expect(canvas).not.toBeNull();
-    const saved = dict[0];
-    delete dict[0];
+    const saved = canvas!.dict[0];
+    delete canvas!.dict[0];
     const pos = { choir: 0, part: "all" as const, bar: 1 };
     expect(canvas!.seek(pos, -1)).toBe(0);
-    dict[0] = saved;
+    canvas!.dict[0] = saved;
   });
 
   it("canvas click fires music-canvas-click event", async () => {

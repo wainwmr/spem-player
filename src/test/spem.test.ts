@@ -1,7 +1,7 @@
-import { processLilypond, ranges, dict } from "../ts/lily";
+import { processLilypond } from "../ts/lily";
 
 describe("Check that spem notes looks good", () => {
-  processLilypond();
+  const { dict, ranges } = processLilypond();
 
   it("8 choir of 5 parts", async () => {
     expect(ranges.length).toBe(8); // choirs
