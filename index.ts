@@ -16,6 +16,7 @@ import recordingswitchSvg from "./src/icons/recordingswitch.svg?raw";
 import scoreswitchSvg from "./src/icons/scoreswitch.svg?raw";
 import darkswitchSvg from "./src/icons/darkswitch.svg?raw";
 import feedbackSvg from "./src/icons/feedback.svg?raw";
+import helpSvg from "./src/icons/help.svg?raw";
 
 MusicCanvas.define("music-canvas");
 MusicCanvasWatcher.define("music-canvas-watcher");
@@ -41,6 +42,7 @@ const feedbackForm = document.getElementById("feedback-form") as HTMLFormElement
 const hiddenFeedbackForm = document.querySelector('form[name="feedback"]') as HTMLFormElement;
 const darkswitch = document.getElementById("darkswitch") as HTMLElement;
 const scoreswitch = document.getElementById("scoreswitch") as HTMLElement;
+const helpIcon = document.getElementById("help-icon") as HTMLElement;
 const recordingswitch = document.getElementById(
   "recordingswitch"
 ) as HTMLElement;
@@ -48,12 +50,18 @@ const recordinglabel = document.getElementById(
   "recordinglabel"
 ) as HTMLSpanElement;
 
+helpIcon.innerHTML = helpSvg;
 recordingswitch.innerHTML = recordingswitchSvg;
 scoreswitch.innerHTML = scoreswitchSvg;
 darkswitch.innerHTML = darkswitchSvg;
 if (feedbackIcon) {
   feedbackIcon.innerHTML = feedbackSvg;
 }
+
+helpIcon.setAttribute("tabindex", "-1");
+recordingswitch.setAttribute("tabindex", "-1");
+scoreswitch.setAttribute("tabindex", "-1");
+darkswitch.setAttribute("tabindex", "-1");
 
 let isDragging = false;
 

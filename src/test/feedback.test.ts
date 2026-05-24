@@ -25,7 +25,7 @@ describe("Feedback modal", () => {
         <header class="header">
           <span class="title">Spem Player</span>
           <span id="info" class="tooltip">
-            <span class="help-button">help</span>
+            <span id="help-icon"></span>
             <span class="tooltiptext">Display help information</span>
           </span>
           <span id="feedback-trigger" class="tooltip">

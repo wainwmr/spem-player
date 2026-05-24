@@ -117,17 +117,14 @@ header {
     cursor: pointer;
     margin-left: 12px;
 
-    .help-button {
+    #help-icon {
       display: inline-block;
-      font-size: 0.8rem;
-      font-weight: bold;
-      font-variant: small-caps;
-      letter-spacing: 0.04em;
-      line-height: 1;
-      color: var(--color-background);
-      background: var(--color-title);
-      border-radius: 4px;
-      padding: 2px 4px;
+      vertical-align: middle;
+
+      path,
+      circle {
+        stroke: var(--color-title);
+      }
     }
   }
 
