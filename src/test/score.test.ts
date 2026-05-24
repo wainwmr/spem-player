@@ -137,6 +137,27 @@ describe("MusicScore custom element", () => {
     expect(Number(width)).toBeCloseTo(elem.svgWidth / 600, 0);
   });
 
+  it("mask rect width matches highlightPosition width", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    const waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem?.setAttribute("choir", "0");
+    await waitingForLoaded;
+
+    const indicatorWidth = elem.highlightPosition.getAttribute("width");
+    const maskRect = elem.highlightMask.children[0];
+    const maskWidth = maskRect.getAttribute("width");
+    expect(maskWidth).toBe(indicatorWidth);
+  });
+
   it("highlightPosition width changes with score type", async () => {
     const elem = document.querySelector("music-score") as MusicScore;
     elem.scrollTo = vi.fn();

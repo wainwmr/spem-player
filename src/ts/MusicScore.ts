@@ -209,6 +209,10 @@ export class MusicScore extends MusicElement {
 
     const indicatorWidth = this.svgWidth / 600;
     this.highlightPosition.setAttribute("width", String(indicatorWidth));
+    this.highlightMask.children[0].setAttribute(
+      "width",
+      String(indicatorWidth)
+    );
 
     // Highlight and scroll to the current bar
     this.highlight();
