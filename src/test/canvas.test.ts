@@ -127,6 +127,24 @@ describe("MusicCanvas custom element", () => {
     expect(result).toBeLessThanOrEqual(barCount);
   });
 
+  it("seek() does not throw when dict[intbar] is undefined (#244)", () => {
+    expect(canvas).not.toBeNull();
+    const saved = dict[2];
+    delete dict[2];
+    const pos = { choir: 0, part: "all" as const, bar: 1 };
+    expect(() => canvas!.seek(pos, +1)).not.toThrow();
+    dict[2] = saved;
+  });
+
+  it("seek() backward from bar 1 with empty dict[0] returns 0 (#244)", () => {
+    expect(canvas).not.toBeNull();
+    const saved = dict[0];
+    delete dict[0];
+    const pos = { choir: 0, part: "all" as const, bar: 1 };
+    expect(canvas!.seek(pos, -1)).toBe(0);
+    dict[0] = saved;
+  });
+
   it("canvas click fires music-canvas-click event", async () => {
     expect(canvas).not.toBeNull();
     const promise = new Promise<void>((resolve) => {
