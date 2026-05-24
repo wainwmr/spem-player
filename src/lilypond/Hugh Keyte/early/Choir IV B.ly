@@ -1,4 +1,4 @@
-\version "2.24.4" 
+\version "2.26.0" 
 
 \include "layout.ly"
 \include "../spem.ly"

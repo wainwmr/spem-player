@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Node.js and npm
-- LilyPond (only if regenerating SVG scores from source)
+- LilyPond 2.26.0 or later (only if regenerating SVG scores from source)
 
 ## Install Dependencies
 

@@ -33,6 +33,10 @@ def fake_lilypond():
     helper.write_text(
         'import sys, os\n'
         'args = sys.argv[1:]\n'
+        'if "--version" in args:\n'
+        '    version = os.environ.get("FAKE_LILYPOND_VERSION", "2.26.0")\n'
+        '    print(f"GNU LilyPond {version} (running Guile 3.0)")\n'
+        '    sys.exit(0)\n'
         'outdir = args[args.index("-o")+1] if "-o" in args else "."\n'
         'infile = args[-1]\n'
         'name = os.path.splitext(os.path.basename(infile))[0]\n'
@@ -53,6 +57,15 @@ def fake_lilypond():
         f'python "{helper}" %*\n',
         encoding="utf-8",
     )
+
+    # Unix shell script for macOS/Linux
+    sh = fake_dir / "lilypond"
+    sh.write_text(
+        f'#!/bin/sh\n'
+        f'python3 "{helper}" "$@"\n',
+        encoding="utf-8",
+    )
+    os.chmod(sh, 0o755)
 
     return fake_dir
 
@@ -158,8 +171,9 @@ class TestBuildScores:
         env = os.environ.copy()
         env["PATH"] = ""
 
+        node_path = shutil.which("node")
         result = subprocess.run(
-            ["node", str(BUILD_SCRIPT)],
+            [node_path, str(BUILD_SCRIPT)],
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -179,8 +193,9 @@ class TestBuildScores:
         env = os.environ.copy()
         env["PATH"] = ""
 
+        node_path = shutil.which("node")
         result = subprocess.run(
-            ["node", str(BUILD_SCRIPT), "--skip-if-missing"],
+            [node_path, str(BUILD_SCRIPT), "--skip-if-missing"],
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -197,39 +212,73 @@ class TestBuildScores:
             f"Expected skip message. Output: {result.stdout} {result.stderr}"
         )
 
+    def test_fails_when_lilypond_version_too_old(self, env_with_fake_lilypond, clean_scores):
+        """Script should exit with clear error if lilypond version < 2.26.0."""
+        env = env_with_fake_lilypond.copy()
+        env["FAKE_LILYPOND_VERSION"] = "2.24.4"
+
+        if SCORES_DIR.exists():
+            shutil.rmtree(SCORES_DIR)
+
+        node_path = shutil.which("node")
+        result = subprocess.run(
+            [node_path, str(BUILD_SCRIPT)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            cwd=REPO_ROOT,
+            env=env,
+        )
+
+        assert result.returncode != 0, "Expected failure when lilypond version is too old"
+        output = (result.stdout + result.stderr).lower()
+        assert "2.26.0" in output, (
+            f"Expected error message mentioning required version 2.26.0. "
+            f"Output: {result.stdout} {result.stderr}"
+        )
+
     def test_does_not_build_oup(self, env_with_fake_lilypond, clean_scores):
         """Script should not generate OUP edition SVGs."""
         if SCORES_DIR.exists():
             shutil.rmtree(SCORES_DIR)
 
-        # Also remove any pre-existing OUP scores so we can detect new ones
+        # Backup and restore OUP scores so the test is non-destructive
         oup_dir = REPO_ROOT / "src" / "scores" / "OUP"
+        oup_backup = REPO_ROOT / "src" / "scores" / ".test_backup_OUP"
         if oup_dir.exists():
+            shutil.copytree(oup_dir, oup_backup, dirs_exist_ok=True)
             shutil.rmtree(oup_dir)
 
-        # Clear log before run
-        if FAKE_LILYPOND_LOG.exists():
-            FAKE_LILYPOND_LOG.unlink()
+        try:
+            # Clear log before run
+            if FAKE_LILYPOND_LOG.exists():
+                FAKE_LILYPOND_LOG.unlink()
 
-        result = subprocess.run(
-            ["node", str(BUILD_SCRIPT)],
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            cwd=REPO_ROOT,
-            env=env_with_fake_lilypond,
-        )
-        assert result.returncode == 0
-
-        # Check that no lilypond invocations referenced OUP files
-        if FAKE_LILYPOND_LOG.exists():
-            invocations = FAKE_LILYPOND_LOG.read_text(encoding="utf-8").strip().splitlines()
-            oup_invocations = [line for line in invocations if "OUP" in line]
-            assert len(oup_invocations) == 0, (
-                f"OUP files should not be built, found {len(oup_invocations)} invocations"
+            result = subprocess.run(
+                ["node", str(BUILD_SCRIPT)],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                cwd=REPO_ROOT,
+                env=env_with_fake_lilypond,
             )
+            assert result.returncode == 0
 
-        # Also verify no OUP SVGs were created
-        if oup_dir.exists():
-            oup_svgs = list(oup_dir.glob("**/*.svg"))
-            assert len(oup_svgs) == 0, f"OUP SVGs should not be generated, found {len(oup_svgs)}"
+            # Check that no lilypond invocations referenced OUP files
+            if FAKE_LILYPOND_LOG.exists():
+                invocations = FAKE_LILYPOND_LOG.read_text(encoding="utf-8").strip().splitlines()
+                oup_invocations = [line for line in invocations if "OUP" in line]
+                assert len(oup_invocations) == 0, (
+                    f"OUP files should not be built, found {len(oup_invocations)} invocations"
+                )
+
+            # Also verify no OUP SVGs were created
+            if oup_dir.exists():
+                oup_svgs = list(oup_dir.glob("**/*.svg"))
+                assert len(oup_svgs) == 0, f"OUP SVGs should not be generated, found {len(oup_svgs)}"
+        finally:
+            if oup_backup.exists():
+                if oup_dir.exists():
+                    shutil.rmtree(oup_dir)
+                shutil.copytree(oup_backup, oup_dir, dirs_exist_ok=True)
+                shutil.rmtree(oup_backup)

@@ -38,9 +38,27 @@ function parseArgs() {
   return options;
 }
 
+function parseLilypondVersion(output) {
+  const match = output.match(/GNU LilyPond (\d+\.\d+\.\d+)/);
+  return match ? match[1] : null;
+}
+
+function compareVersions(a, b) {
+  const partsA = a.split(".").map(Number);
+  const partsB = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+    const numA = partsA[i] || 0;
+    const numB = partsB[i] || 0;
+    if (numA < numB) return -1;
+    if (numA > numB) return 1;
+  }
+  return 0;
+}
+
 function checkLilypond(skipIfMissing) {
+  let output;
   try {
-    execSync("lilypond --version", { stdio: "pipe" });
+    output = execSync("lilypond --version", { encoding: "utf-8", stdio: "pipe" });
   } catch {
     if (skipIfMissing) {
       console.log("LilyPond not found. Skipping score build (using committed SVGs).");
@@ -48,6 +66,16 @@ function checkLilypond(skipIfMissing) {
     }
     console.error("Error: lilypond is not installed or not on PATH.");
     console.error("Please install LilyPond before building scores.");
+    process.exit(1);
+  }
+
+  const version = parseLilypondVersion(output);
+  const minVersion = "2.26.0";
+  if (!version || compareVersions(version, minVersion) < 0) {
+    console.error(
+      `Error: LilyPond ${version || "unknown"} is installed, but ${minVersion} or later is required.`
+    );
+    console.error("Please upgrade LilyPond before building scores.");
     process.exit(1);
   }
 }

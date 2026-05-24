@@ -1,4 +1,4 @@
-\version "2.24.4"
+\version "2.26.0"
 
 leadMark = \markup {
   \with-dimensions #'(0 . 0) #'(0 . 0)
