@@ -30,6 +30,10 @@ export class MusicScore extends MusicElement {
     "http://www.w3.org/2000/svg",
     "rect"
   );
+  highlightMask: SVGMaskElement = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "mask"
+  );
   scrollArea: HTMLDivElement | null = null;
   clefOverlay: HTMLDivElement | null = null;
 
@@ -48,6 +52,28 @@ export class MusicScore extends MusicElement {
     this.highlightPosition.style.fill = colors().scoreHighlight;
     this.highlightPosition.style.fillOpacity = "0"; // initially invisible
     this.highlightPosition.style.strokeWidth = "5px"; //Set stroke width
+
+    this.highlightMask.setAttribute("id", "hPosMask");
+    this.highlightMask.setAttribute("maskUnits", "userSpaceOnUse");
+    const maskRect = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "rect"
+    );
+    maskRect.setAttribute("width", "7");
+    maskRect.setAttribute("height", "0");
+    maskRect.setAttribute("fill", "white");
+    const maskLine = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "line"
+    );
+    maskLine.setAttribute("y1", "0");
+    maskLine.setAttribute("y2", "0");
+    maskLine.setAttribute("stroke", "black");
+    maskLine.setAttribute("stroke-dasharray", "2 2");
+    maskLine.setAttribute("stroke-width", "0.75");
+    this.highlightMask.appendChild(maskRect);
+    this.highlightMask.appendChild(maskLine);
+    this.highlightPosition.setAttribute("mask", "url(#hPosMask)");
 
     this.highlightBar.setAttribute("id", "hBar");
     this.highlightBar.setAttribute("x", "0");
@@ -164,9 +190,15 @@ export class MusicScore extends MusicElement {
 
     this.highlightPosition.setAttribute("height", String(this.svgHeight));
     this.highlightBar.setAttribute("height", String(this.svgHeight));
+    this.highlightMask.children[0].setAttribute(
+      "height",
+      String(this.svgHeight)
+    );
+    this.highlightMask.children[1].setAttribute("y2", String(this.svgHeight));
     this.svg.prepend(this.highlightPosition);
     this.svg.prepend(this.highlightBar);
     this.svg.prepend(this.highlightPart);
+    this.svg.prepend(this.highlightMask);
 
     this.#updatePartHighlight();
 
@@ -177,6 +209,10 @@ export class MusicScore extends MusicElement {
 
     const indicatorWidth = this.svgWidth / 600;
     this.highlightPosition.setAttribute("width", String(indicatorWidth));
+    this.highlightMask.children[0].setAttribute(
+      "width",
+      String(indicatorWidth)
+    );
 
     // Highlight and scroll to the current bar
     this.highlight();
@@ -238,9 +274,16 @@ export class MusicScore extends MusicElement {
       const indicatorWidth = Number(
         this.highlightPosition.getAttribute("width") || "0"
       );
-      this.highlightPosition.setAttribute(
-        "x",
-        String(barcurrentpct * this.svgWidth - indicatorWidth / 2)
+      const xPos = barcurrentpct * this.svgWidth - indicatorWidth / 2;
+      this.highlightPosition.setAttribute("x", String(xPos));
+      this.highlightMask.children[0].setAttribute("x", String(xPos));
+      this.highlightMask.children[1].setAttribute(
+        "x1",
+        String(xPos + indicatorWidth / 2)
+      );
+      this.highlightMask.children[1].setAttribute(
+        "x2",
+        String(xPos + indicatorWidth / 2)
       );
     }
 
@@ -376,7 +419,9 @@ export class MusicScore extends MusicElement {
 
     const clone = this.svg.cloneNode(true) as SVGSVGElement;
     clone
-      .querySelectorAll("#hPos, #hBar, #hPart, #part-dim-style")
+      .querySelectorAll(
+        "#hPos, #hBar, #hPart, #part-dim-style, [id='hPosMask']"
+      )
       .forEach((el) => el.remove());
 
     const headerWidthSvg = 8;
