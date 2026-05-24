@@ -337,7 +337,7 @@ export function processLilypond() {
       }
     }
   }
-  barCount = Math.floor(barCount) - 1;
+  barCount = Math.floor(barCount);
 
   detectFalseRelations(activeNotes);
 }
