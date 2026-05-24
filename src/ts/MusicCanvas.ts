@@ -236,7 +236,7 @@ export class MusicCanvas extends MusicElement {
     while (intbar + direction >= 0 && intbar + direction <= barCount) {
       intbar = intbar + direction;
       const newsinging =
-        this.dict[intbar].filter((x) => x.c == pos.choir).length != 0;
+        (this.dict[intbar] ?? []).filter((x) => x.c == pos.choir).length != 0;
       if (singing !== newsinging) break;
     }
     return intbar;
