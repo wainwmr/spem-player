@@ -12,7 +12,7 @@ src/scss/*.css
 src/scss/*.css.map
 src/ohmjs/ly-grammar.ohm-bundle.*
 publish.py
-test-results/
+playwright-output/
 playwright-report/
 playwright/.cache/
 
