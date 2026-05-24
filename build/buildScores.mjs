@@ -8,7 +8,6 @@ import { existsSync, statSync } from "fs";
 import { globSync } from "fs";
 import { basename } from "path";
 
-const PYTHON_CMD = process.platform === "win32" ? "python" : "python3";
 
 const defaults = {
   version: "Hugh Keyte",
@@ -117,7 +116,7 @@ function buildScore(ly, version, notation) {
 
   console.log(`Post-processing ${svg}...`);
   try {
-    execSync(`${PYTHON_CMD} build/postprocessSvg.py "${svg}"`);
+    execSync(`node build/postprocessSvg.mjs "${svg}"`);
   } catch (error) {
     console.error(`\nError post-processing ${svg}:\n${error.message}`);
     process.exit(1);
