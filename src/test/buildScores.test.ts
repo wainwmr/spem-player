@@ -63,6 +63,7 @@ fs.writeFileSync(
 );
 
 const logFile = ${JSON.stringify(FAKE_LILYPOND_LOG)};
+fs.mkdirSync(path.dirname(logFile), { recursive: true });
 fs.appendFileSync(logFile, args.join(" ") + "\\n", "utf-8");
 `,
     "utf-8"
