@@ -27,13 +27,11 @@ This serves the application locally with hot module replacement. The `--host` fl
 npm run build
 ```
 
-This runs steps in sequence:
+This runs `vite build` to produce a production bundle into `dist/`.
 
-1. `npm run prebuild` — generates SVG scores from LilyPond source if LilyPond is installed; skipped otherwise (uses committed SVGs)
-2. `npm run format:check` — verifies Prettier formatting
-3. `npm run lint` — ESLint check
-4. `npm run build:ohm` — generates the Ohm.js grammar bundle from `src/ohmjs/ly-grammar.ohm`
-5. `vite build` — production bundle into `dist/`
+`npm run prebuild` runs automatically before `build` and generates the Ohm.js
+grammar bundle and SVG scores from LilyPond source. SVG generation is skipped
+if LilyPond is not installed (uses committed SVGs).
 
 ## Preview the Production Build
 
@@ -63,30 +61,45 @@ npm run build:scores -- --version="Hugh Keyte" --notation=early --choir="II B"
 
 This iterates over matching `Choir*.ly` files under `src/lilypond/` and runs `lilypond --svg` for each, then post-processes the generated SVG with `build/postprocessSvg.py`.
 
+## Quality Checks
+
+Run the full quality gate locally (formatting, lint, typecheck, dependency checks):
+
+```console
+npm run check
+```
+
+Fix formatting and lint issues automatically:
+
+```console
+npm run fix:format
+npm run fix:lint
+```
+
 ## Testing
 
-Run tests in watch mode:
+Run tests:
 
 ```console
 npm test
 ```
 
+Run tests in watch mode:
+
+```console
+npm run test:watch
+```
+
 Run tests once with coverage:
 
 ```console
-npm run coverage
-```
-
-Open the Vitest UI:
-
-```console
-npm run test:ui
+npm run test:coverage
 ```
 
 Run end-to-end tests in a real browser:
 
 ```console
-npm run test:e2e
+npm run e2e
 ```
 
 ## Build Notes
@@ -99,7 +112,7 @@ When releasing, update `package.json` only. The build will propagate the new ver
 
 ### Ohm Grammar
 
-`npm run build` regenerates `src/ohmjs/ly-grammar.ohm-bundle.js` from `src/ohmjs/ly-grammar.ohm` via `@ohm-js/cli`. If you modify the grammar, rebuild before testing or deploying.
+`npm run build:ohm` regenerates `src/ohmjs/ly-grammar.ohm-bundle.js` from `src/ohmjs/ly-grammar.ohm` via `@ohm-js/cli`. If you modify the grammar, rebuild before testing or deploying.
 
 ## Build Output
 

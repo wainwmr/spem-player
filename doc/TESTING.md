@@ -11,7 +11,9 @@ Tests use Vitest 3 with the jsdom environment. Configuration lives in `vite.conf
 
 ## Prerequisites
 
-The Ohm.js grammar bundle must be built before tests can run:
+The Ohm.js grammar bundle must be built before tests can run. `npm run check` and
+`npm run build` handle this automatically, but if you are running tests in
+isolation you may need:
 
 ```console
 npm run build:ohm
@@ -21,22 +23,22 @@ Without this step, any test importing `src/ohmjs/ly-grammar.ohm-bundle` will fai
 
 ## Running Tests
 
-Watch mode:
+Run tests once:
 
 ```console
 npm test
 ```
 
+Watch mode:
+
+```console
+npm run test:watch
+```
+
 Single run with coverage:
 
 ```console
-npm run coverage
-```
-
-Vitest UI:
-
-```console
-npm run test:ui
+npm run test:coverage
 ```
 
 ## Test File Location and Naming
@@ -71,19 +73,7 @@ npm run build
 Headless run:
 
 ```console
-npm run test:e2e
-```
-
-Interactive UI mode:
-
-```console
-npm run test:e2e:ui
-```
-
-View the last HTML report:
-
-```console
-npm run test:e2e:report
+npm run e2e
 ```
 
 ### E2E Key Dependencies
