@@ -209,7 +209,10 @@ describe("buildScores.mjs integration", () => {
         }
       );
 
-      expect(result.status).toBe(0);
+      expect(
+        result.status,
+        `stderr: ${result.stderr}\nstdout: ${result.stdout}`
+      ).toBe(0);
       expect(result.stderr).not.toContain("Error");
 
       expect(countSvgs(join(ws, "src", "scores", "Hugh Keyte", "early"))).toBe(
@@ -238,7 +241,10 @@ describe("buildScores.mjs integration", () => {
         env,
         encoding: "utf-8",
       });
-      expect(result1.status).toBe(0);
+      expect(
+        result1.status,
+        `stderr: ${result1.stderr}\nstdout: ${result1.stdout}`
+      ).toBe(0);
       const afterFirst = countScoreInvocations();
 
       // Second run
@@ -247,7 +253,10 @@ describe("buildScores.mjs integration", () => {
         env,
         encoding: "utf-8",
       });
-      expect(result2.status).toBe(0);
+      expect(
+        result2.status,
+        `stderr: ${result2.stderr}\nstdout: ${result2.stdout}`
+      ).toBe(0);
       const afterSecond = countScoreInvocations();
 
       expect(afterSecond).toBe(afterFirst);
@@ -336,7 +345,10 @@ describe("buildScores.mjs integration", () => {
           encoding: "utf-8",
         }
       );
-      expect(result.status).toBe(0);
+      expect(
+        result.status,
+        `stderr: ${result.stderr}\nstdout: ${result.stdout}`
+      ).toBe(0);
 
       if (existsSync(FAKE_LILYPOND_LOG)) {
         const invocations = readFileSync(FAKE_LILYPOND_LOG, "utf-8")
