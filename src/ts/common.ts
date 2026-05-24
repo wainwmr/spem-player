@@ -92,7 +92,7 @@ export function toNum(
 }
 
 export function getBarFromTime(t: number, v: number = 0) {
-  for (let index = 0; index < config.bartime[v].length; index++) {
+  for (let index = 0; index < config.bartime[v].length - 1; index++) {
     if (t > config.bartime[v][index] && t < config.bartime[v][index + 1]) {
       // calculate temp (bars per second)
       const currenttempo =
@@ -103,11 +103,15 @@ export function getBarFromTime(t: number, v: number = 0) {
       return b;
     }
   }
+  const lastIdx = config.bartime[v].length - 1;
+  if (t >= config.bartime[v][lastIdx]) {
+    return config.barno[v][lastIdx];
+  }
   return 0;
 }
 
 export function getTimeFromBar(b: number, v: number = 0) {
-  for (let index = 0; index < config.bartime[v].length; index++) {
+  for (let index = 0; index < config.barno[v].length - 1; index++) {
     if (b >= config.barno[v][index] && b < config.barno[v][index + 1]) {
       // calculate temp (bars per second)
       const currenttempo =
@@ -118,6 +122,10 @@ export function getTimeFromBar(b: number, v: number = 0) {
         config.bartime[v][index] + (b - config.barno[v][index]) / currenttempo
       );
     }
+  }
+  const lastIdx = config.barno[v].length - 1;
+  if (b >= config.barno[v][lastIdx]) {
+    return config.bartime[v][lastIdx];
   }
   return 0;
 }
