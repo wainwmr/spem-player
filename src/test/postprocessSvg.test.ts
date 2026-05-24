@@ -24,7 +24,7 @@ describe("postprocessSvg build script", () => {
 
   it("removes all anchor tags and adds data-part attributes", () => {
     execSync(
-      `node build/postprocessSvg.mjs "${tmpSvg}" --spem "${tmpSpem}" --words "${tmpWords}"`,
+      `python3 build/postprocessSvg.py "${tmpSvg}" --spem "${tmpSpem}" --words "${tmpWords}"`,
       { cwd: process.cwd(), encoding: "utf-8" }
     );
 

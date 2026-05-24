@@ -17,4 +17,3 @@ playwright-report/
 playwright/.cache/
 
 __pycache__/
-AGENTS.md
