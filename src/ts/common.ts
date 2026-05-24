@@ -102,9 +102,21 @@ export function toNum(
   return integer ? Math.floor(nums + HDSQTIME) : nums;
 }
 
+// Verify tempo mapping arrays have matching lengths
+for (let v = 0; v < config.bartime.length; v++) {
+  if (config.bartime[v].length !== config.barno[v].length) {
+    throw new Error(
+      `config.bartime[${v}] and config.barno[${v}] must have equal length`
+    );
+  }
+}
+
 export function getBarFromTime(t: number, v: number = 0) {
-  for (let index = 0; index < config.bartime[v].length - 1; index++) {
-    if (t > config.bartime[v][index] && t < config.bartime[v][index + 1]) {
+  const lastIdx = config.bartime[v].length - 1;
+  if (t <= config.bartime[v][0]) return config.barno[v][0];
+  if (t >= config.bartime[v][lastIdx]) return config.barno[v][lastIdx];
+  for (let index = 0; index < lastIdx; index++) {
+    if (t >= config.bartime[v][index] && t < config.bartime[v][index + 1]) {
       // calculate temp (bars per second)
       const currenttempo =
         (config.barno[v][index + 1] - config.barno[v][index]) /
@@ -114,15 +126,14 @@ export function getBarFromTime(t: number, v: number = 0) {
       return b;
     }
   }
-  const lastIdx = config.bartime[v].length - 1;
-  if (t >= config.bartime[v][lastIdx]) {
-    return config.barno[v][lastIdx];
-  }
   return 0;
 }
 
 export function getTimeFromBar(b: number, v: number = 0) {
-  for (let index = 0; index < config.barno[v].length - 1; index++) {
+  const lastIdx = config.barno[v].length - 1;
+  if (b <= config.barno[v][0]) return config.bartime[v][0];
+  if (b >= config.barno[v][lastIdx]) return config.bartime[v][lastIdx];
+  for (let index = 0; index < lastIdx; index++) {
     if (b >= config.barno[v][index] && b < config.barno[v][index + 1]) {
       // calculate temp (bars per second)
       const currenttempo =
@@ -133,10 +144,6 @@ export function getTimeFromBar(b: number, v: number = 0) {
         config.bartime[v][index] + (b - config.barno[v][index]) / currenttempo
       );
     }
-  }
-  const lastIdx = config.barno[v].length - 1;
-  if (b >= config.barno[v][lastIdx]) {
-    return config.bartime[v][lastIdx];
   }
   return 0;
 }
