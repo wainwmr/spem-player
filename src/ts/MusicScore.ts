@@ -43,7 +43,7 @@ export class MusicScore extends MusicElement {
     this.highlightPosition.setAttribute("id", "hPos");
     this.highlightPosition.setAttribute("x", "0");
     this.highlightPosition.setAttribute("y", "0");
-    this.highlightPosition.setAttribute("width", "7");
+    this.highlightPosition.setAttribute("width", "0");
     this.highlightPosition.setAttribute("height", "0"); // Will be set later when we know the height of the SVG
     this.highlightPosition.style.fill = colors().scoreHighlight;
     this.highlightPosition.style.fillOpacity = "0"; // initially invisible
@@ -175,6 +175,9 @@ export class MusicScore extends MusicElement {
     // determine what the bar positions are for this score
     this.bars = this.getBars();
 
+    const indicatorWidth = this.svgWidth / 600;
+    this.highlightPosition.setAttribute("width", String(indicatorWidth));
+
     // Highlight and scroll to the current bar
     this.highlight();
     this.scrollSmooth();
@@ -232,9 +235,12 @@ export class MusicScore extends MusicElement {
 
     // set highlight the current position
     if (this.bar >= 1) {
+      const indicatorWidth = Number(
+        this.highlightPosition.getAttribute("width") || "0"
+      );
       this.highlightPosition.setAttribute(
         "x",
-        String(barcurrentpct * this.svgWidth - 2.5)
+        String(barcurrentpct * this.svgWidth - indicatorWidth / 2)
       );
     }
 
