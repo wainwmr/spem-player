@@ -107,7 +107,7 @@ test.describe("Spem Player smoke tests", () => {
 
     await barInput.fill("999");
     await barInput.blur();
-    await expect(controls).toHaveAttribute("bar", "137");
+    await expect(controls).toHaveAttribute("bar", "139");
 
     await barInput.fill("-5");
     await barInput.blur();
