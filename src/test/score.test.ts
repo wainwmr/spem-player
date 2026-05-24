@@ -1,5 +1,11 @@
 import { MusicScore } from "../ts/MusicScore";
 import config from "../ts/config";
+import {
+  expectedBar,
+  expectedChoir,
+  expectedPart,
+  waitForEvent,
+} from "./helpers";
 
 // Polyfill DOMPoint for jsdom
 if (typeof DOMPoint === "undefined") {
@@ -14,38 +20,6 @@ if (typeof DOMPoint === "undefined") {
       return { x: this.x, y: this.y };
     }
   } as any;
-}
-
-// A helper function that allows us to detect events on element
-// of type eventName have been fired
-// HACK: duplicated with controls.test.ts
-var expectedBar: any;
-var expectedChoir: any;
-var expectedPart: any;
-function waitForEvent(
-  element: HTMLElement,
-  eventName: string,
-  handler: (event: Event) => Promise<any>,
-  c?: any,
-  p?: any,
-  b?: any
-): Promise<any> {
-  expectedChoir = c;
-  expectedPart = p;
-  expectedBar = b;
-  return new Promise<any>((resolve, reject) => {
-    const eventListener = async (event: Event) => {
-      try {
-        const result = await handler(event);
-        resolve(result); // Resolve with handler's result
-      } catch (error) {
-        reject(error); // Reject on error
-      } finally {
-        element.removeEventListener(eventName, eventListener, false);
-      }
-    };
-    element.addEventListener(eventName, eventListener, false);
-  });
 }
 
 describe("MusicScore custom element", () => {
@@ -72,7 +46,7 @@ describe("MusicScore custom element", () => {
         expect(d).not.toBeNull();
         if (expectedChoir) expect(d.position.choir).toBe(expectedChoir);
         if (expectedPart) expect(d.position.part).toBe(expectedPart);
-        if (expectedBar) expect(d.position.choir).toBe(expectedBar);
+        if (expectedBar) expect(d.position.bar).toBe(expectedBar);
 
         resolve(true); // Resolve if assertions pass
       } catch (error) {
@@ -135,6 +109,27 @@ describe("MusicScore custom element", () => {
     expect(width).not.toBe("7");
     expect(width).not.toBe("0");
     expect(Number(width)).toBeCloseTo(elem.svgWidth / 600, 0);
+  });
+
+  it("mask rect width matches highlightPosition width", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    const waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem?.setAttribute("choir", "0");
+    await waitingForLoaded;
+
+    const indicatorWidth = elem.highlightPosition.getAttribute("width");
+    const maskRect = elem.highlightMask.children[0];
+    const maskWidth = maskRect.getAttribute("width");
+    expect(maskWidth).toBe(indicatorWidth);
   });
 
   it("highlightPosition width changes with score type", async () => {
@@ -467,6 +462,7 @@ describe("MusicScore custom element", () => {
     expect(overlay).not.toBeNull();
     expect(overlay!.querySelector("#hPos")).toBeNull();
     expect(overlay!.querySelector("#hBar")).toBeNull();
+    expect(overlay!.querySelector("[id='hPosMask']")).toBeNull();
   });
 
   it("part highlight element exists after load", async () => {

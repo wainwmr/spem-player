@@ -1,5 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "project": ["src/**/*.ts", "*.ts"],
-  "ignoreDependencies": ["autoprefixer", "lint-staged"]
+  "project": ["src/**/*.ts", "build/**/*.mjs", "*.ts"],
+  "entry": ["src/**/*.ts", "build/**/*.mjs"],
+  "ignoreDependencies": ["autoprefixer", "lint-staged"],
+  "ignore": [".husky/**"]
 }

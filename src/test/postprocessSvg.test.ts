@@ -1,7 +1,7 @@
-import { execSync } from "child_process";
 import { mkdtempSync, copyFileSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { postprocessSvg } from "../../build/postprocessSvg.mjs";
 
 describe("postprocessSvg build script", () => {
   const tmpDir = mkdtempSync(join(tmpdir(), "spem-annotate-test-"));
@@ -23,10 +23,7 @@ describe("postprocessSvg build script", () => {
   });
 
   it("removes all anchor tags and adds data-part attributes", () => {
-    execSync(
-      `python3 build/postprocessSvg.py "${tmpSvg}" --spem "${tmpSpem}" --words "${tmpWords}"`,
-      { cwd: process.cwd(), encoding: "utf-8" }
-    );
+    postprocessSvg(tmpSvg, tmpSpem, tmpWords);
 
     const output = readFileSync(tmpSvg, "utf-8");
 

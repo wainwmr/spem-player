@@ -59,7 +59,7 @@ npm run build:scores -- --choir="I A"
 npm run build:scores -- --version="Hugh Keyte" --notation=early --choir="II B"
 ```
 
-This iterates over matching `Choir*.ly` files under `src/lilypond/` and runs `lilypond --svg` for each, then post-processes the generated SVG with `build/postprocessSvg.py`.
+This iterates over matching `Choir*.ly` files under `src/lilypond/` and runs `lilypond --svg` for each, then post-processes the generated SVG with `build/postprocessSvg.mjs`.
 
 ## Quality Checks
 
