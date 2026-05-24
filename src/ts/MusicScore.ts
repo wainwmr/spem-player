@@ -415,7 +415,9 @@ export class MusicScore extends MusicElement {
 
     const clone = this.svg.cloneNode(true) as SVGSVGElement;
     clone
-      .querySelectorAll("#hPos, #hBar, #hPart, #part-dim-style")
+      .querySelectorAll(
+        "#hPos, #hBar, #hPart, #part-dim-style, [id='hPosMask']"
+      )
       .forEach((el) => el.remove());
 
     const headerWidthSvg = 8;

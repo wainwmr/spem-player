@@ -467,6 +467,7 @@ describe("MusicScore custom element", () => {
     expect(overlay).not.toBeNull();
     expect(overlay!.querySelector("#hPos")).toBeNull();
     expect(overlay!.querySelector("#hBar")).toBeNull();
+    expect(overlay!.querySelector("[id='hPosMask']")).toBeNull();
   });
 
   it("part highlight element exists after load", async () => {
