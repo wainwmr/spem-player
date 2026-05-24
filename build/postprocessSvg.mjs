@@ -166,7 +166,14 @@ function deduplicatePaths(doc) {
  * @param {string} spemLyPath
  * @param {string} wordsLyPath
  */
-function postprocessSvg(svgPath, spemLyPath, wordsLyPath) {
+export function postprocessSvg(
+  svgPath,
+  spemLyPath = DEFAULT_SPEM_PATH,
+  wordsLyPath = null
+) {
+  if (!wordsLyPath) {
+    wordsLyPath = join(dirname(spemLyPath), "spem words.ly");
+  }
   const notePattern =
     /^(notes(?:I{1,3}|IV)[AB](Soprano|Alto|Tenor|Baritone|Bass))\s*=\s*\\relative/;
   const wordsPattern =
@@ -270,4 +277,6 @@ function main() {
   postprocessSvg(svgPath, spemPath, wordsLyPath);
 }
 
-main();
+if (import.meta.url === new URL(process.argv[1], "file://").href) {
+  main();
+}

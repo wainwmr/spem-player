@@ -7,6 +7,7 @@ import { execSync } from "child_process";
 import { existsSync, statSync } from "fs";
 import { globSync } from "fs";
 import { basename } from "path";
+import { postprocessSvg } from "./postprocessSvg.mjs";
 
 
 const defaults = {
@@ -116,7 +117,7 @@ function buildScore(ly, version, notation) {
 
   console.log(`Post-processing ${svg}...`);
   try {
-    execSync(`node build/postprocessSvg.mjs "${svg}"`);
+    postprocessSvg(svg);
   } catch (error) {
     console.error(`\nError post-processing ${svg}:\n${error.message}`);
     process.exit(1);
