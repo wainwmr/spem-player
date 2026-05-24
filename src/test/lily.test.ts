@@ -1,10 +1,7 @@
 import {
   processLilypond,
-  ranges,
-  dict,
   barCount,
   exportedForTesting,
-  frLocations,
   detectFalseRelations,
 } from "../ts/lily";
 import type { ActiveNote } from "../ts/lily";
