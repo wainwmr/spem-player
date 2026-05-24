@@ -2,6 +2,7 @@ import {
   processLilypond,
   ranges,
   dict,
+  barCount,
   exportedForTesting,
   frLocations,
   detectFalseRelations,
@@ -58,6 +59,7 @@ describe("lilypond parsing tests", () => {
     //assert on the response
     processLilypond();
     expect(dict.length).toBe(139); // bars including bar zero
+    expect(barCount).toBe(139);
     expect(ranges.length).toBe(8); // choirs
     for (var c = 0; c < 8; c++) {
       expect(ranges[c].length).toBe(5);

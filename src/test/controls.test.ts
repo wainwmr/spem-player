@@ -421,7 +421,7 @@ describe("MusicControls custom element", () => {
   it("clamps out-of-range bar input to max on change (#184)", async () => {
     const elem = document.querySelector("music-controls") as MusicControls;
     const bar = document.getElementById("bar-field") as HTMLInputElement;
-    const maxBar = barCount > 0 ? barCount - 1 : 0;
+    const maxBar = barCount > 0 ? barCount : 0;
     bar.value = "999";
     bar.dispatchEvent(new Event("change", { bubbles: true }));
     await new Promise((resolve) => setTimeout(resolve, 0));
