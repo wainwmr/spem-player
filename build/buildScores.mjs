@@ -4,8 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 import { execSync } from "child_process";
-import { existsSync, statSync, rmSync } from "fs";
-import { globSync } from "fs";
+import { existsSync, globSync, rmSync, statSync } from "fs";
 import { basename } from "path";
 import { postprocessSvg } from "./postprocessSvg.mjs";
 
@@ -80,20 +79,55 @@ function checkLilypond(skipIfMissing) {
   }
 }
 
-function needsRebuild(lyPath, svgPath) {
+// Over-approximation strategy for rebuild detection. We do not parse
+// `\include` directives; instead, an SVG is rebuilt when the MAX mtime
+// across two glob sets exceeds the SVG's mtime:
+//   - notation siblings (`<lyDir>/*.ly`): the choir's own file and the
+//     notation-specific layout.ly
+//   - edition-root includes (`<versionDir>/*.ly`): shared files like
+//     spem.ly, basic.ly, spem words.ly
+// Consequence: touching one choir's .ly rebuilds every score in that
+// notation (mild over-approximation; parser-free correctness for
+// includes). Touching a notation-specific layout rebuilds only that
+// notation. Touching an edition-root include rebuilds both notations.
+// Sibling notations are NOT coupled — modern/* changes do not
+// invalidate early/*.
+function maxLyMtimeFor(lyDir, versionDir) {
+  const lyFiles = [
+    ...globSync(`${lyDir}/*.ly`),
+    ...globSync(`${versionDir}/*.ly`),
+  ];
+  if (lyFiles.length === 0) {
+    throw new Error(
+      `buildScores: no .ly files found under ${lyDir} or ${versionDir}`
+    );
+  }
+  return Math.max(...lyFiles.map((p) => statSync(p).mtimeMs));
+}
+
+/**
+ * Decide whether an SVG needs rebuilding.
+ *
+ * @param {number} maxLyMtime - the precomputed max mtime of the .ly files
+ *   in scope for this SVG. Must be produced by `maxLyMtimeFor(lyDir,
+ *   versionDir)` where `lyDir` is the notation directory containing the
+ *   choir's `.ly` and `versionDir` is the edition root. Passing an
+ *   out-of-scope mtime (e.g. another notation's) silently violates the
+ *   over-approximation strategy described above `maxLyMtimeFor`.
+ * @param {string} svgPath - path to the candidate SVG.
+ */
+function needsRebuild(maxLyMtime, svgPath) {
   if (!existsSync(svgPath)) {
     return true;
   }
-  const lyStat = statSync(lyPath);
-  const svgStat = statSync(svgPath);
-  return lyStat.mtimeMs > svgStat.mtimeMs;
+  return maxLyMtime > statSync(svgPath).mtimeMs;
 }
 
-function buildScore(ly, version, notation) {
+function buildScore(ly, version, notation, maxLyMtime) {
   const choirName = basename(ly, ".ly");
   const svg = `src/scores/${version}/${notation}/${choirName}.svg`;
 
-  if (!needsRebuild(ly, svg)) {
+  if (!needsRebuild(maxLyMtime, svg)) {
     console.log(
       `Skipping ${choirName} (edition: ${version}, notation: ${notation}): SVG is up to date.`
     );
@@ -140,6 +174,7 @@ const notations = options.notation
 
 for (const notation of notations) {
   const lyDir = `src/lilypond/${version}/${notation}`;
+  const versionDir = `src/lilypond/${version}`;
   const pattern = options.choir
     ? `${lyDir}/Choir ${options.choir}.ly`
     : `${lyDir}/Choir*.ly`;
@@ -151,8 +186,17 @@ for (const notation of notations) {
     process.exit(1);
   }
 
+  // Compute max .ly mtime once per notation, not once per choir file.
+  let maxLyMtime;
+  try {
+    maxLyMtime = maxLyMtimeFor(lyDir, versionDir);
+  } catch (error) {
+    console.error(`\nError computing rebuild scope:\n${error.message}`);
+    process.exit(1);
+  }
+
   for (const ly of files.sort()) {
-    buildScore(ly, version, notation);
+    buildScore(ly, version, notation, maxLyMtime);
   }
 }
 
