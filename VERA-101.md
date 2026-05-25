@@ -252,3 +252,50 @@ direction, type-design-analyzer from the missing-`readonly` direction).
 Two agents also flagged the same "single source of truth claim is
 half-delivered" concern about the CSS-present branch. These two
 findings are the strongest signals.
+
+## Final status — Bob's verdicts
+
+Walked through with the user; Bob applied the four-axis triage
+(real defect / defensive nit / pre-existing / not applicable) per
+the updated `method-sub-vera-gate.md` step 4.
+
+- **101-01 — addressed** (commit `7fa7331`). Real defect, caused by
+  this diff. The minimal fix is the spread copy plus a regression
+  guard.
+- **101-02 — addressed** (commit `217093e`). Real defect (comment
+  vs code drift), caused by this diff. Soften the claim, restore
+  the TODO.
+- **101-03 — deferred to refactor report** (`refactor-common.ts.md`).
+  Pre-existing; `Number(getPropertyValue(...))` NaN path is not new.
+- **101-04 — deferred to refactor report**. Defensive nit; no current
+  manifestation. Would warrant a separate ticket if it ever bites.
+- **101-05 — deferred to refactor report**. Pre-existing (jsdom vs
+  production fallback path fidelity is an existing test-fidelity gap,
+  not introduced here).
+- **101-06 — rejected**. Pre-existing file convention; the user-skill
+  rule predates the convention spread. Bob's defence: changing the
+  two new test names while leaving the existing seven matches would
+  create inconsistency without improving comprehension. A separate
+  cleanup ticket covering all `(#NNN)` test names in the file is the
+  right scope.
+- **101-07 — addressed** (commit `16dac2d`). Real value, low cost,
+  on the new field — the JSDoc records the contract the new test
+  enforces.
+- **101-08 — deferred to refactor report**. Pre-existing
+  `Colors.choir: number[]` mutability; `readonly` tightening is a
+  type-design change for a follow-up.
+- **101-09 — deferred to refactor report**. Test ordering / cache
+  state risk is real but pre-existing (the `loadedColors` module
+  state predates the new test).
+- **101-10 — deferred to refactor report**. Length-vs-domain
+  assertion is a suggestion, not load-bearing.
+- **101-11 — rejected**. Bob's defence: identifying `config.choirHues`
+  by name in the prose is more informative than abstracting to "the
+  config field". The rename-rot risk is small; the comprehension
+  gain is concrete.
+- **101-12 — deferred to refactor report** (the finding itself
+  flagged "not introduced by this PR — do not action here").
+- **101-13 — deferred to refactor report**.
+
+Pre-existing items routed to `wiki/refactor-common.ts.md` so they
+do not disperse.
