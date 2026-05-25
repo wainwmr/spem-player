@@ -9,7 +9,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 ## Summary
 
-[Placeholder — finalised at close-out per method-sub-vera-gate.md step 7.]
+Four passes. Pass 1 surfaced 12 critical+important findings plus 6 suggestions; 7 were addressed in this cycle and 5 were deferred (board tickets [#368](https://github.com/wainwmr/spem-player/issues/368) for NaN semantics and [#369](https://github.com/wainwmr/spem-player/issues/369) for `v` type narrowing; `wiki/refactor-common.ts.md` items 15-17 for empty-array hardening, invalid-`v` error path, and the missing `TempoMap` pair type). Pass 2 caught a real one: the cycle-1 fix at 104-02 (replacing the silent `return 0` with `throw "...unreachable"`) inadvertently turned the deferred NaN issue (104-07) from benign-zero into a frozen `requestAnimationFrame` loop, so 104-19 was added and addressed with a `!Number.isFinite` guard. Pass 3 produced only one doc nit (104-26, comment overstatement of correctness for invalid `v`), addressed by tightening both unreachable comments. Pass 4 ran clean on a doc-only delta — useful evidence that doc-only re-runs can be safely skipped going forward, while the pass-2 reversal vindicated re-running diffs that change control flow. Outside the diff, a corrupted commit (since reset) appeared mid-gate from an unidentified workspace modification of `common.ts`; investigation is tracked under Workbench item [#246](https://github.com/wainwright1000/spem-tools/issues/246) with a 2026-06-01 review date.
 
 ## Findings
 
