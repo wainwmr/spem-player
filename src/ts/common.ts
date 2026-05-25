@@ -126,7 +126,9 @@ export function getBarFromTime(t: number, v: number = 0) {
       return b;
     }
   }
-  return 0;
+  // Unreachable: the two clamp guards above (t <= bartime[0] and t >= bartime[last])
+  // cover every input, and the loop covers every interior interval [bartime[i], bartime[i+1]).
+  throw new Error("getBarFromTime: unreachable");
 }
 
 export function getTimeFromBar(b: number, v: number = 0) {
@@ -145,5 +147,6 @@ export function getTimeFromBar(b: number, v: number = 0) {
       );
     }
   }
-  return 0;
+  // Unreachable: clamp guards above cover every input and the loop covers every interior interval.
+  throw new Error("getTimeFromBar: unreachable");
 }
