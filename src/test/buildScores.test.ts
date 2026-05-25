@@ -258,7 +258,7 @@ describe("buildScores.mjs integration", () => {
     }
   });
 
-  it("rebuilds when an include file is newer than the SVG", () => {
+  it("rebuilds all scores when a version-root include is newer (Vera 353-01)", () => {
     const ws = createWorkspace();
     try {
       if (existsSync(FAKE_LILYPOND_LOG)) {
@@ -267,7 +267,6 @@ describe("buildScores.mjs integration", () => {
 
       const script = join(ws, "build", "buildScores.mjs");
 
-      // First run
       const result1 = spawnSync(process.execPath, [script], {
         cwd: ws,
         env,
@@ -275,12 +274,15 @@ describe("buildScores.mjs integration", () => {
       });
       expect(result1.status).toBe(0);
       const afterFirst = countScoreInvocations();
+      // First run builds all 16 scores (8 early + 8 modern).
+      expect(afterFirst).toBe(16);
 
-      // Touch an include file (spem.ly in the parent version directory)
+      // Touch an edition-root include (spem.ly) two seconds in the future
+      // to avoid coarse-FS mtime resolution (FAT/exFAT: 2s).
       const includePath = join(ws, "src", "lilypond", "Hugh Keyte", "spem.ly");
-      utimesSync(includePath, new Date(), new Date());
+      const future = new Date(Date.now() + 2000);
+      utimesSync(includePath, future, future);
 
-      // Second run
       const result2 = spawnSync(process.execPath, [script], {
         cwd: ws,
         env,
@@ -288,8 +290,98 @@ describe("buildScores.mjs integration", () => {
       });
       expect(result2.status).toBe(0);
       const afterSecond = countScoreInvocations();
+      // Edition-root include affects both notations — all 16 rebuild.
+      expect(afterSecond).toBe(afterFirst + 16);
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+    }
+  }, 30000);
 
+  it("rebuilds the touched choir's notation when its own .ly is newer (Vera 353-11)", () => {
+    const ws = createWorkspace();
+    try {
+      if (existsSync(FAKE_LILYPOND_LOG)) {
+        rmSync(FAKE_LILYPOND_LOG);
+      }
+
+      const script = join(ws, "build", "buildScores.mjs");
+
+      const result1 = spawnSync(process.execPath, [script], {
+        cwd: ws,
+        env,
+        encoding: "utf-8",
+      });
+      expect(result1.status).toBe(0);
+      const afterFirst = countScoreInvocations();
+      expect(afterFirst).toBe(16);
+
+      // Touch a single choir .ly two seconds in the future.
+      const choirPath = join(
+        ws,
+        "src",
+        "lilypond",
+        "Hugh Keyte",
+        "early",
+        "Choir I A.ly"
+      );
+      const future = new Date(Date.now() + 2000);
+      utimesSync(choirPath, future, future);
+
+      const result2 = spawnSync(process.execPath, [script], {
+        cwd: ws,
+        env,
+        encoding: "utf-8",
+      });
+      expect(result2.status).toBe(0);
+      const afterSecond = countScoreInvocations();
+      // Over-approximation: touching one early/*.ly rebuilds all early
+      // scores (notation-level glob), but does NOT touch modern.
       expect(afterSecond).toBeGreaterThan(afterFirst);
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+    }
+  }, 30000);
+
+  it("does NOT rebuild a sibling notation when only one notation changes (Vera 353-07)", () => {
+    const ws = createWorkspace();
+    try {
+      if (existsSync(FAKE_LILYPOND_LOG)) {
+        rmSync(FAKE_LILYPOND_LOG);
+      }
+
+      const script = join(ws, "build", "buildScores.mjs");
+
+      const result1 = spawnSync(process.execPath, [script], {
+        cwd: ws,
+        env,
+        encoding: "utf-8",
+      });
+      expect(result1.status).toBe(0);
+      const afterFirst = countScoreInvocations();
+      expect(afterFirst).toBe(16);
+
+      // Touch a modern/.ly two seconds in the future.
+      const modernPath = join(
+        ws,
+        "src",
+        "lilypond",
+        "Hugh Keyte",
+        "modern",
+        "Choir I A.ly"
+      );
+      const future = new Date(Date.now() + 2000);
+      utimesSync(modernPath, future, future);
+
+      const result2 = spawnSync(process.execPath, [script], {
+        cwd: ws,
+        env,
+        encoding: "utf-8",
+      });
+      expect(result2.status).toBe(0);
+      const afterSecond = countScoreInvocations();
+      // Only the 8 modern scores should rebuild — early is untouched and
+      // shares no dependencies with modern/Choir I A.ly.
+      expect(afterSecond).toBe(afterFirst + 8);
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
