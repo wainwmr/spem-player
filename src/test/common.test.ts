@@ -32,6 +32,7 @@ describe("common", () => {
     expect(toNum("1.2", true)).toBe(1);
     expect(toNum("1.2", true, 7)).toBe(1);
     expect(toNum("7.2", false, 7)).toBe(7);
+    expect(toNum("7.2", true, 7)).toBe(7);
     expect(toNum("10.999999958333332", true)).toBe(11);
   });
 
