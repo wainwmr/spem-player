@@ -92,7 +92,7 @@ function nonTransformAttrs(path) {
  * unchanged (defensive skip for attribute collision).
  * @param {Document} doc
  */
-function deduplicatePaths(doc) {
+export function deduplicatePaths(doc) {
   const allPaths = Array.from(doc.getElementsByTagName("path"));
 
   /** @type {Map<string, Element[]>} */
