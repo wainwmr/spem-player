@@ -143,4 +143,55 @@ describe("common", () => {
     const result = colors(false);
     expect(result).toBeTypeOf("object");
   });
+
+  it("config.choirHues defines 8 hue values in the 0–360 range (#101)", () => {
+    expect(Array.isArray(config.choirHues)).toBe(true);
+    expect(config.choirHues).toHaveLength(8);
+    for (const hue of config.choirHues) {
+      expect(hue).toBeTypeOf("number");
+      expect(hue).toBeGreaterThanOrEqual(0);
+      expect(hue).toBeLessThanOrEqual(360);
+    }
+  });
+
+  it("colors() falls back to config.choirHues when CSS properties are absent (#101)", () => {
+    // Strip everything that the CSS-present branch would read so colors()
+    // takes the defaults path.
+    document.body.style.removeProperty("--color-background");
+    document.body.style.removeProperty("--color-highlight");
+    document.body.style.removeProperty("--color-score-highlight");
+    for (let i = 1; i <= 8; i++) {
+      document.body.style.removeProperty("--color-c" + i);
+    }
+    const result = colors(true);
+    expect(result.choir).toEqual(config.choirHues);
+  });
+
+  it("colors() fallback returns a copy, not the live config.choirHues array", () => {
+    // Guards against accidental reference aliasing: any caller that mutates
+    // colors().choir must not corrupt the config singleton.
+    document.body.style.removeProperty("--color-background");
+    document.body.style.removeProperty("--color-highlight");
+    document.body.style.removeProperty("--color-score-highlight");
+    for (let i = 1; i <= 8; i++) {
+      document.body.style.removeProperty("--color-c" + i);
+    }
+    const result = colors(true);
+    expect(result.choir).toEqual(config.choirHues);
+    expect(result.choir).not.toBe(config.choirHues);
+  });
+
+  it("colors() fallback returns a fresh choir array on every call", () => {
+    // Each fallback call must yield an independent array, so that a caller
+    // mutating colors().choir cannot corrupt a later fallback caller's view.
+    document.body.style.removeProperty("--color-background");
+    document.body.style.removeProperty("--color-highlight");
+    document.body.style.removeProperty("--color-score-highlight");
+    for (let i = 1; i <= 8; i++) {
+      document.body.style.removeProperty("--color-c" + i);
+    }
+    const a = colors(true);
+    const b = colors(true);
+    expect(a.choir).not.toBe(b.choir);
+  });
 });
