@@ -623,7 +623,6 @@ export class MusicCanvas extends MusicElement {
 
   #touchMoved(evt: TouchEvent) {
     evt.preventDefault();
-    this.#moveToPosition(this.#getTouchPos(evt));
     this.fireEvent("music-canvas-touchmove");
     this.draw();
   }
