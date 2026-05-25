@@ -119,7 +119,11 @@ function buildScore(ly, version, notation) {
   try {
     postprocessSvg(svg);
   } catch (error) {
-    rmSync(svg, { force: true });
+    try {
+      rmSync(svg, { force: true });
+    } catch {
+      // ignore cleanup failure
+    }
     console.error(`\nError post-processing ${svg}:\n${error.message}`);
     process.exit(1);
   }
