@@ -6,7 +6,7 @@
 import { execSync } from "child_process";
 import { existsSync, statSync, rmSync } from "fs";
 import { globSync } from "fs";
-import { basename } from "path";
+import { basename, dirname } from "path";
 import { postprocessSvg } from "./postprocessSvg.mjs";
 
 
@@ -84,9 +84,15 @@ function needsRebuild(lyPath, svgPath) {
   if (!existsSync(svgPath)) {
     return true;
   }
-  const lyStat = statSync(lyPath);
   const svgStat = statSync(svgPath);
-  return lyStat.mtimeMs > svgStat.mtimeMs;
+  const lyDir = dirname(lyPath);
+  const versionDir = dirname(lyDir);
+  const lyFiles = globSync(`${versionDir}/**/*.ly`);
+  const maxMtime = lyFiles.reduce(
+    (max, file) => Math.max(max, statSync(file).mtimeMs),
+    0
+  );
+  return maxMtime > svgStat.mtimeMs;
 }
 
 function buildScore(ly, version, notation) {

@@ -9,6 +9,7 @@ import {
   readdirSync,
   rmSync,
   statSync,
+  utimesSync,
   writeFileSync,
 } from "fs";
 import { tmpdir } from "os";
@@ -256,6 +257,43 @@ describe("buildScores.mjs integration", () => {
       rmSync(ws, { recursive: true, force: true });
     }
   });
+
+  it("rebuilds when an include file is newer than the SVG", () => {
+    const ws = createWorkspace();
+    try {
+      if (existsSync(FAKE_LILYPOND_LOG)) {
+        rmSync(FAKE_LILYPOND_LOG);
+      }
+
+      const script = join(ws, "build", "buildScores.mjs");
+
+      // First run
+      const result1 = spawnSync(process.execPath, [script], {
+        cwd: ws,
+        env,
+        encoding: "utf-8",
+      });
+      expect(result1.status).toBe(0);
+      const afterFirst = countScoreInvocations();
+
+      // Touch an include file (spem.ly in the parent version directory)
+      const includePath = join(ws, "src", "lilypond", "Hugh Keyte", "spem.ly");
+      utimesSync(includePath, new Date(), new Date());
+
+      // Second run
+      const result2 = spawnSync(process.execPath, [script], {
+        cwd: ws,
+        env,
+        encoding: "utf-8",
+      });
+      expect(result2.status).toBe(0);
+      const afterSecond = countScoreInvocations();
+
+      expect(afterSecond).toBeGreaterThan(afterFirst);
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+    }
+  }, 30000);
 
   it("fails gracefully without lilypond", () => {
     const envNoLilypond = {
