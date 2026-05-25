@@ -63,7 +63,7 @@ This iterates over matching `Choir*.ly` files under `src/lilypond/` and runs `li
 
 ## Quality Checks
 
-Run the full quality gate locally (formatting, lint, typecheck, dependency checks):
+Run the full quality gate locally (Ohm grammar bundle, unused-export check, formatting, lint, typecheck, dependency checks):
 
 ```console
 npm run check
@@ -102,6 +102,14 @@ Run end-to-end tests in a real browser:
 npm run e2e
 ```
 
+## CI Pipeline
+
+Run the full local CI pipeline (checks, build, and tests):
+
+```console
+npm run ci
+```
+
 ## Build Notes
 
 ### Version Injection
@@ -112,7 +120,7 @@ When releasing, update `package.json` only. The build will propagate the new ver
 
 ### Ohm Grammar
 
-`npm run build:ohm` regenerates `src/ohmjs/ly-grammar.ohm-bundle.js` from `src/ohmjs/ly-grammar.ohm` via `@ohm-js/cli`. If you modify the grammar, rebuild before testing or deploying.
+`npm run build:ohm` regenerates `src/ohmjs/ly-grammar.ohm-bundle.js` and `src/ohmjs/ly-grammar.ohm-bundle.d.ts` from `src/ohmjs/ly-grammar.ohm` via `@ohm-js/cli`. If you modify the grammar, rebuild before testing or deploying.
 
 ## Build Output
 
@@ -128,6 +136,7 @@ The project is configured for Netlify. `netlify.toml` specifies:
 
 - Build command: `npm run build`
 - Publish directory: `dist`
+- Functions directory: `netlify/functions`
 
 Deployment is automated: merging to `main` triggers a Netlify build and deploy.
 

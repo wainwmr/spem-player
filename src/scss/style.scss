@@ -175,7 +175,7 @@ header {
     width: 120px;
     top: 100%;
     left: 50%;
-    margin-left: -120px;
+    transform: translateX(-50%);
     background-color: var(--color-background-lighter);
     border: 2px solid var(--color-border);
 
