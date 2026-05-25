@@ -13,6 +13,12 @@ export default {
     ["I A", "I B", "II A", "II B", "III A", "III B", "IV A", "IV B"],
     ["1", "2", "3", "4", "5", "6", "7", "8"],
   ],
+  /**
+   * HSL hue (0-360) for each choir, one per `choirs[*]` entry.
+   * Index matches choir number; length must equal `choirs[0].length`.
+   * Mirrors `--color-c1`...`--color-c8` in `src/scss/style.scss`,
+   * which currently has to be kept in sync by hand.
+   */
   choirHues: [360, 320, 30, 50, 110, 150, 190, 220],
   intro_beats: [2, 4],
   barno: [
