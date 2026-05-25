@@ -159,6 +159,19 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Resolution:** addressed (commit d1674e8). Rephrased to "Never returns 0 as an out-of-range sentinel; clamps NaN/out-of-range to first bar".
 
+## Pass 3 findings (cycle 1, re-run after 104-19 fix)
+
+Four agents reported clean pass; one finding from silent-failure-hunter.
+
+### 104-26 — suggestion `// Unreachable: ... cover every input` comment overstates correctness for invalid `v`
+
+> **silent-failure-hunter, src/ts/common.ts:158 and :196:**
+> The comment above each `throw new Error("...unreachable")` claims the clamps + loop cover every input. Strictly true for any valid `v`; an out-of-range `v` (e.g. `2`) makes `config.bartime[v]` undefined, every comparison evaluates to `false`, the loop runs zero iterations, and control falls through to the throw. The underlying invalid-`v` concern is already deferred to ticket #369 (type narrowing) and refactor item 16. The comment should be tightened to match.
+
+**Bob's triage:** Doc accuracy. One-line fix. Address now.
+
+**Resolution:** addressed (commit 1015040). Tightened both unreachable comments — `getBarFromTime` now explicitly says "for any valid `v`", names the three guards (non-finite, lower clamp, upper clamp), and cross-references #369 for the type-narrowing fix; `getTimeFromBar` carries a short symmetric comment.
+
 ## Pass 2 suggestions (informational)
 
 - **104-22** *(silent-failure)* throw messages omit `t`/`v` values — debugging an "unreachable" stack trace would lack context. *Noted; deferred as a polish.*
