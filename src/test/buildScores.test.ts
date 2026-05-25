@@ -321,6 +321,42 @@ describe("buildScores.mjs integration", () => {
     }
   });
 
+  it("deletes SVG on post-processing failure", () => {
+    const ws = createWorkspace();
+    try {
+      // Replace postprocessSvg with a script that throws
+      const brokenPostprocess = `export function postprocessSvg(svgPath) { throw new Error("Simulated postprocess failure"); }`;
+      writeFileSync(
+        join(ws, "build", "postprocessSvg.mjs"),
+        brokenPostprocess,
+        "utf-8"
+      );
+
+      const result = spawnSync(
+        process.execPath,
+        [join(ws, "build", "buildScores.mjs")],
+        {
+          cwd: ws,
+          env,
+          encoding: "utf-8",
+        }
+      );
+
+      expect(result.status).not.toBe(0);
+      const svgPath = join(
+        ws,
+        "src",
+        "scores",
+        "Hugh Keyte",
+        "early",
+        "Choir I A.svg"
+      );
+      expect(existsSync(svgPath)).toBe(false);
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+    }
+  });
+
   it("does not build OUP", () => {
     const ws = createWorkspace();
     try {

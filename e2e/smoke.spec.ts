@@ -113,4 +113,26 @@ test.describe("Spem Player smoke tests", () => {
     await barInput.blur();
     await expect(controls).toHaveAttribute("bar", "0");
   });
+
+  test("initial scroll lands on the target bar (#92)", async ({ page }) => {
+    // Regression guard for #92: `MusicScore.#loadScore()` previously called
+    // `scrollSmooth()` synchronously after inserting the SVG, triggering a
+    // Chrome forced-reflow violation. The fix defers `scrollSmooth()` via
+    // `requestAnimationFrame`. This test guards the behavioural invariant
+    // — wherever the deferral lives, the score must end up scrolled to the
+    // target bar after the initial load. If a future change reverts the
+    // defer in a way that swallows the call (rAF callback never runs),
+    // the inner `.score-scroll-area` stays at scrollLeft 0 and this test
+    // fails.
+    await page.goto("/?bar=40");
+    const scrollArea = page.locator("music-score .score-scroll-area");
+    await expect(scrollArea).toBeVisible();
+    await expect
+      .poll(
+        async () =>
+          await scrollArea.evaluate((el) => (el as HTMLElement).scrollLeft),
+        { timeout: 2000 },
+      )
+      .toBeGreaterThan(0);
+  });
 });

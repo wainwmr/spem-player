@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /* eslint-env node */
 // Copyright (c) 2024-2026 Mark Wainwright
 // SPDX-License-Identifier: MIT
@@ -93,7 +92,7 @@ function nonTransformAttrs(path) {
  * unchanged (defensive skip for attribute collision).
  * @param {Document} doc
  */
-function deduplicatePaths(doc) {
+export function deduplicatePaths(doc) {
   const allPaths = Array.from(doc.getElementsByTagName("path"));
 
   /** @type {Map<string, Element[]>} */

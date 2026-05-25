@@ -2,7 +2,7 @@
 
 ## Framework and Configuration
 
-Tests use Vitest 3 with the jsdom environment. Configuration lives in `vite.config.ts`:
+Tests use Vitest 4 with the jsdom environment. Configuration lives in `vite.config.ts`:
 
 - `globals: true` (no need to import `describe`, `it`, `expect`)
 - `environment: 'jsdom'`
@@ -49,7 +49,6 @@ Tests live in `src/test/` and follow the naming convention `*.test.ts`.
 
 - `jsdom`: DOM implementation for Node.js
 - `canvas`: Node.js Canvas API implementation (required for `MusicCanvas` tests)
-- `vitest-fetch-mock`: Fetch mocking utility
 - `@vitest/coverage-v8`: Coverage reporting
 
 ## Coverage Output
@@ -79,5 +78,4 @@ npm run e2e
 ### E2E Key Dependencies
 
 - `@playwright/test`: test runner and browser automation
-- `chromium`: browser under test (installed via `npx playwright install chromium`)
-
+- `chromium`, `firefox`, `webkit`: browsers under test (installed via `npx playwright install chromium firefox webkit`)
