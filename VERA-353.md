@@ -2,7 +2,7 @@
 
 Mode: work
 Generated: 2026-05-25 14:45
-Last run:  2026-05-25 15:08
+Last run:  2026-05-25 15:28
 
 ## Findings
 
@@ -172,3 +172,38 @@ Status: addressed
 Notes: Consolidated to a single `import { existsSync, globSync, rmSync,
 statSync } from "fs";`. Pre-existing nit, fixed opportunistically as
 the import block was edited anyway.
+
+### 353-19 — [important] Self-rebuild test still uses loose toBeGreaterThan
+
+Agent: code-reviewer, pr-test-analyzer
+File: src/test/buildScores.test.ts:339
+Status: addressed
+Notes: Tightened to `toBe(afterFirst + 8)`. The test now pins both
+sides of the over-approximation: touching `early/Choir I A.ly` must
+rebuild all 8 early scores (the notation-level glob) and must not
+touch any of the 8 modern scores (sibling-notation isolation). A
+future refactor that narrows the glob to just the touched choir, or
+broadens it back to cross-notation, would fail this test.
+
+### 353-20 — [important] needsRebuild signature trusts caller for scoping
+
+Agent: type-design-analyzer
+File: build/buildScores.mjs:108
+Status: addressed
+Notes: JSDoc added to `needsRebuild` documenting that `maxLyMtime`
+must come from `maxLyMtimeFor(lyDir, versionDir)` matching the SVG's
+notation, and that passing an out-of-scope mtime silently violates
+the over-approximation strategy. The loop structure currently
+enforces correct pairing; the JSDoc surfaces the contract for any
+future caller.
+
+### 353-21 — [important] maxLyMtimeFor throws inconsistent with other error paths
+
+Agent: type-design-analyzer
+File: build/buildScores.mjs:179 (call site)
+Status: addressed
+Notes: Wrapped the `maxLyMtimeFor` call in `try/catch` with
+`console.error + process.exit(1)`, matching the existing error paths
+for `lilypond` invocation, post-processing, and empty pattern globs.
+The empty-glob case now produces a tidy one-line error rather than a
+raw Node stack trace.
