@@ -310,7 +310,7 @@ comment-analyzer). Two converged on a sub-finding of 101-01:
 
 Agents: pr-test-analyzer, silent-failure-hunter
 File: `src/ts/common.ts:50, 62`
-Status: open
+Status: addressed (commit `008057f`)
 Notes:
 
 The spread-copy fix at line 56 (`choir: [...config.choirHues]`)
