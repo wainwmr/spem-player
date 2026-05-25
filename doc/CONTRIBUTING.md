@@ -264,27 +264,6 @@ When creating or modifying a component:
 - **Local ignore rules** — personal patterns (IDE configs, local scripts) belong in
   `.git/info/exclude`, not `.gitignore`, to avoid polluting the shared ignore file.
 
-### Tracked Generated Files
-
-Two Ohm bundle files are committed to the repository (Mark's preference) but are
-regenerated locally during development:
-
-```text
-src/ohmjs/ly-grammar.ohm-bundle.js
-src/ohmjs/ly-grammar.ohm-bundle.d.ts
-```
-
-Set `--skip-worktree` on these files after cloning so local rebuilds do not appear
-in `git status`:
-
-```console
-git update-index --skip-worktree src/ohmjs/ly-grammar.ohm-bundle.js
-git update-index --skip-worktree src/ohmjs/ly-grammar.ohm-bundle.d.ts
-```
-
-Do not commit local versions of these files. If a rebase conflict touches them,
-accept the upstream version.
-
 ### Writing Tests
 
 Unit and integration tests use Vitest 3 with the jsdom environment. End-to-end
