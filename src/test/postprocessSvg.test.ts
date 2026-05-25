@@ -1,4 +1,10 @@
-import { mkdtempSync, copyFileSync, readFileSync, rmSync } from "fs";
+import {
+  mkdtempSync,
+  copyFileSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { postprocessSvg } from "../../build/postprocessSvg.mjs";
@@ -44,4 +50,39 @@ describe("postprocessSvg build script", () => {
     expect(output).not.toMatch(/<svg[^>]*\sheight=/);
     expect(output).not.toMatch(/<svg[^>]*\swidth=/);
   }, 15000);
+
+  it("handles malformed anchor hrefs gracefully", () => {
+    const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100" height="100">
+  <a xlink:href="textedit:///test%ZZ.ly:1:2:3">
+    <text>malformed</text>
+  </a>
+  <a xlink:href="textedit:///spem.ly:1:0:0">
+    <text>well-formed</text>
+  </a>
+</svg>`;
+
+    const spemLy = `\\notesSoprano = \\relative c' \\new Voice = "soprano" { c' }`;
+    const wordsLy = `\\wordsSoprano = \\lyricmode \\new Lyrics = "wordsSoprano" { la }`;
+
+    const tmpSvg = join(tmpDir, "malformed-test.svg");
+    const tmpSpem = join(tmpDir, "malformed-spem.ly");
+    const tmpWords = join(tmpDir, "malformed-spem words.ly");
+
+    writeFileSync(tmpSvg, svgContent, "utf-8");
+    writeFileSync(tmpSpem, spemLy, "utf-8");
+    writeFileSync(tmpWords, wordsLy, "utf-8");
+
+    expect(() => postprocessSvg(tmpSvg, tmpSpem, tmpWords)).not.toThrow();
+
+    const output = readFileSync(tmpSvg, "utf-8");
+
+    // Both anchors should be unwrapped
+    expect(output).not.toMatch(/<a\s/);
+    expect(output).not.toMatch(/<\/a>/);
+
+    // Malformed anchor should have no data-part; well-formed may or may not
+    // depending on whether the href matches a variable range.
+    // The key assertion is that processing completed without throwing.
+  });
 });
