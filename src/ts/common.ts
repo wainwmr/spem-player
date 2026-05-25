@@ -115,6 +115,21 @@ for (let v = 0; v < config.bartime.length; v++) {
   }
 }
 
+/**
+ * Convert an audio time (seconds) to a bar number, linearly interpolated
+ * between the tempo-mapping anchor points in `config.bartime[v]` /
+ * `config.barno[v]`.
+ *
+ * Clamps out-of-range inputs: `t <= bartime[0]` returns `barno[0]`;
+ * `t >= bartime[last]` returns `barno[last]`. Internal boundaries
+ * (exact `t === bartime[i]` for any `i`) return `barno[i]` via the
+ * half-open `[bartime[i], bartime[i+1])` loop interval.
+ *
+ * @param t Audio time in seconds.
+ * @param v Recording index: 0 = ALC, 1 = CotE. Matches `State.recording`.
+ * @returns Bar number in `[barno[0], barno[last]]`. Never returns the
+ *   pre-#104 `0` sentinel.
+ */
 export function getBarFromTime(t: number, v: number = 0) {
   const lastIdx = config.bartime[v].length - 1;
   if (t <= config.bartime[v][0]) return config.barno[v][0];
@@ -135,6 +150,17 @@ export function getBarFromTime(t: number, v: number = 0) {
   throw new Error("getBarFromTime: unreachable");
 }
 
+/**
+ * Convert a bar number to an audio time (seconds), the inverse of
+ * `getBarFromTime`. Clamps out-of-range inputs to the first/last anchor
+ * time. Internal boundaries return the exact `bartime[i]` via the
+ * half-open `[barno[i], barno[i+1])` loop interval.
+ *
+ * @param b Bar number.
+ * @param v Recording index: 0 = ALC, 1 = CotE. Matches `State.recording`.
+ * @returns Time in seconds, in `[bartime[0], bartime[last]]`. Never
+ *   returns the pre-#104 `0` sentinel.
+ */
 export function getTimeFromBar(b: number, v: number = 0) {
   const lastIdx = config.barno[v].length - 1;
   if (b <= config.barno[v][0]) return config.bartime[v][0];
