@@ -71,11 +71,13 @@ describe("common", () => {
   });
 
   it("getBarFromTime() interpolates strictly between internal boundaries", () => {
-    // Pin the loop's `t >= bartime[i] && t < bartime[i+1]` interval logic
-    // by probing a value strictly between two internal boundaries. A regression
-    // that flipped `>=` back to `>` would still pass the exact-boundary loops
-    // above (since the clamp guards catch boundary values too), so this off-boundary
-    // probe is what actually pins the `>=` change. Test both ALC and CotE.
+    // Probe the midpoint between two internal boundaries to pin the
+    // linear-interpolation arithmetic (regressions in the tempo formula
+    // would fail this even when the boundary-sweep tests above pass).
+    // The `>=` vs `>` change in the loop predicate is pinned by the
+    // boundary-sweep tests directly: under `>`, an exact internal
+    // boundary value falls through every interval and hits the
+    // unreachable throw. Test both ALC and CotE.
     for (const v of [0, 1] as const) {
       const i = 2; // interior index
       const t0 = config.bartime[v][i];
@@ -106,6 +108,27 @@ describe("common", () => {
       expect(result).toBeCloseTo(expected, 5);
       // And it must NOT equal the clamp value (would indicate snapping).
       expect(result).not.toBe(config.barno[v][lastIdx]);
+    }
+  });
+
+  it("getBarFromTime() clamps non-finite inputs (NaN, +/-Infinity) to first bar", () => {
+    // HTMLMediaElement.currentTime can be NaN before metadata loads.
+    // Without this guard the function would fall through to the unreachable
+    // throw, terminating the requestAnimationFrame loop in MusicControls.
+    for (const v of [0, 1] as const) {
+      expect(getBarFromTime(NaN, v)).toBe(config.barno[v][0]);
+      expect(getBarFromTime(Infinity, v)).toBe(config.barno[v][0]);
+      expect(getBarFromTime(-Infinity, v)).toBe(config.barno[v][0]);
+    }
+  });
+
+  it("getTimeFromBar() clamps non-finite inputs (NaN, +/-Infinity) to first time", () => {
+    // Reachable from MusicControls.setBar when a user enters a
+    // non-numeric value into the bar input box.
+    for (const v of [0, 1] as const) {
+      expect(getTimeFromBar(NaN, v)).toBe(config.bartime[v][0]);
+      expect(getTimeFromBar(Infinity, v)).toBe(config.bartime[v][0]);
+      expect(getTimeFromBar(-Infinity, v)).toBe(config.bartime[v][0]);
     }
   });
 

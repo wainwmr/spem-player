@@ -122,16 +122,26 @@ for (let v = 0; v < config.bartime.length; v++) {
  *
  * Clamps out-of-range inputs: `t <= bartime[0]` returns `barno[0]`;
  * `t >= bartime[last]` returns `barno[last]`. Internal boundaries
- * (exact `t === bartime[i]` for any `i`) return `barno[i]` via the
- * half-open `[bartime[i], bartime[i+1])` loop interval.
+ * (exact `t === bartime[i]` for any internal `i`) return `barno[i]` via
+ * the half-open `[bartime[i], bartime[i+1])` loop interval; the final
+ * boundary is returned by the upper clamp.
+ *
+ * Non-finite `t` (NaN, ±Infinity) is treated as out-of-range and
+ * clamped to `barno[0]`. This matters because `HTMLMediaElement.currentTime`
+ * can be NaN before audio metadata loads; without the guard the
+ * function would fall through to the unreachable throw and terminate
+ * the requestAnimationFrame loop in `MusicControls.ts`. The wider
+ * semantic question (clamp / throw / log) is tracked in
+ * [#368](https://github.com/wainwmr/spem-player/issues/368).
  *
  * @param t Audio time in seconds.
  * @param v Recording index: 0 = ALC, 1 = CotE. Matches `State.recording`.
- * @returns Bar number in `[barno[0], barno[last]]`. Never returns the
- *   pre-#104 `0` sentinel.
+ * @returns Bar number in `[barno[0], barno[last]]`. Never returns 0 as
+ *   an out-of-range sentinel.
  */
 export function getBarFromTime(t: number, v: number = 0) {
   const lastIdx = config.bartime[v].length - 1;
+  if (!Number.isFinite(t)) return config.barno[v][0];
   if (t <= config.bartime[v][0]) return config.barno[v][0];
   if (t >= config.bartime[v][lastIdx]) return config.barno[v][lastIdx];
   for (let index = 0; index < lastIdx; index++) {
@@ -154,15 +164,21 @@ export function getBarFromTime(t: number, v: number = 0) {
  * Convert a bar number to an audio time (seconds), the inverse of
  * `getBarFromTime`. Clamps out-of-range inputs to the first/last anchor
  * time. Internal boundaries return the exact `bartime[i]` via the
- * half-open `[barno[i], barno[i+1])` loop interval.
+ * half-open `[barno[i], barno[i+1])` loop interval; the final boundary
+ * is returned by the upper clamp.
+ *
+ * Non-finite `b` (NaN, ±Infinity) is clamped to `bartime[0]`, matching
+ * `getBarFromTime`'s contract. Reachable from `MusicControls.setBar`
+ * when a user types a non-numeric value into the bar input.
  *
  * @param b Bar number.
  * @param v Recording index: 0 = ALC, 1 = CotE. Matches `State.recording`.
  * @returns Time in seconds, in `[bartime[0], bartime[last]]`. Never
- *   returns the pre-#104 `0` sentinel.
+ *   returns 0 as an out-of-range sentinel.
  */
 export function getTimeFromBar(b: number, v: number = 0) {
   const lastIdx = config.barno[v].length - 1;
+  if (!Number.isFinite(b)) return config.bartime[v][0];
   if (b <= config.barno[v][0]) return config.bartime[v][0];
   if (b >= config.barno[v][lastIdx]) return config.bartime[v][lastIdx];
   for (let index = 0; index < lastIdx; index++) {
