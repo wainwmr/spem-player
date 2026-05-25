@@ -41,12 +41,14 @@ export type Config = {
   lilypond: string;
 };
 
-// Fallback colour set used when the stylesheet's CSS custom properties
-// are absent (typically in unit tests or before the stylesheet has
-// loaded). Choir hues are copied from config so callers cannot mutate
-// the canonical config array through `colors().choir`; the background
-// and highlight HSL strings stay inline because they are not otherwise
-// referenced.
+// Fallback colour set used only when the stylesheet's CSS custom
+// properties are absent (typically in unit tests or before the
+// stylesheet has loaded). The hues here are copied from config so
+// callers cannot mutate the canonical config array through
+// `colors().choir`. NOTE: in production the CSS-present branch below
+// is taken — `config.choirHues` is the source of truth for the
+// fallback only, not for the live render path. See the TODO above the
+// live branch.
 const defaultColors: Colors = {
   background: "hsl(210, 65%, 100%);",
   highlight: "hsl(210, 65%, 90%);",
@@ -65,6 +67,9 @@ export function colors(reload = false): Colors {
     background: style.getPropertyValue("--color-background"),
     highlight: style.getPropertyValue("--color-highlight"),
     scoreHighlight: style.getPropertyValue("--color-score-highlight"),
+    // TODO: hues here are still read from --color-c1..c8 in style.scss,
+    // not from config.choirHues. The two must stay in sync by hand
+    // until the CSS branch is also driven from config.
     choir: [
       Number(style.getPropertyValue("--color-c1")),
       Number(style.getPropertyValue("--color-c2")),
