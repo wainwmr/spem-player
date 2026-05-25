@@ -105,6 +105,17 @@ function maxLyMtimeFor(lyDir, versionDir) {
   return Math.max(...lyFiles.map((p) => statSync(p).mtimeMs));
 }
 
+/**
+ * Decide whether an SVG needs rebuilding.
+ *
+ * @param {number} maxLyMtime - the precomputed max mtime of the .ly files
+ *   in scope for this SVG. Must be produced by `maxLyMtimeFor(lyDir,
+ *   versionDir)` where `lyDir` is the notation directory containing the
+ *   choir's `.ly` and `versionDir` is the edition root. Passing an
+ *   out-of-scope mtime (e.g. another notation's) silently violates the
+ *   over-approximation strategy described above `maxLyMtimeFor`.
+ * @param {string} svgPath - path to the candidate SVG.
+ */
 function needsRebuild(maxLyMtime, svgPath) {
   if (!existsSync(svgPath)) {
     return true;
@@ -176,7 +187,13 @@ for (const notation of notations) {
   }
 
   // Compute max .ly mtime once per notation, not once per choir file.
-  const maxLyMtime = maxLyMtimeFor(lyDir, versionDir);
+  let maxLyMtime;
+  try {
+    maxLyMtime = maxLyMtimeFor(lyDir, versionDir);
+  } catch (error) {
+    console.error(`\nError computing rebuild scope:\n${error.message}`);
+    process.exit(1);
+  }
 
   for (const ly of files.sort()) {
     buildScore(ly, version, notation, maxLyMtime);

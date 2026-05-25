@@ -334,9 +334,9 @@ describe("buildScores.mjs integration", () => {
       });
       expect(result2.status).toBe(0);
       const afterSecond = countScoreInvocations();
-      // Over-approximation: touching one early/*.ly rebuilds all early
-      // scores (notation-level glob), but does NOT touch modern.
-      expect(afterSecond).toBeGreaterThan(afterFirst);
+      // Over-approximation: touching one early/*.ly rebuilds all 8
+      // early scores (notation-level glob), but does NOT touch modern.
+      expect(afterSecond).toBe(afterFirst + 8);
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
