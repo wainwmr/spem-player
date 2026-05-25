@@ -70,6 +70,45 @@ describe("common", () => {
     }
   });
 
+  it("getBarFromTime() interpolates strictly between internal boundaries", () => {
+    // Pin the loop's `t >= bartime[i] && t < bartime[i+1]` interval logic
+    // by probing a value strictly between two internal boundaries. A regression
+    // that flipped `>=` back to `>` would still pass the exact-boundary loops
+    // above (since the clamp guards catch boundary values too), so this off-boundary
+    // probe is what actually pins the `>=` change. Test both ALC and CotE.
+    for (const v of [0, 1] as const) {
+      const i = 2; // interior index
+      const t0 = config.bartime[v][i];
+      const t1 = config.bartime[v][i + 1];
+      const tMid = (t0 + t1) / 2;
+      const expected =
+        config.barno[v][i] +
+        0.5 * (config.barno[v][i + 1] - config.barno[v][i]);
+      expect(getBarFromTime(tMid, v)).toBeCloseTo(expected, 5);
+    }
+  });
+
+  it("getBarFromTime() interpolates just below the final boundary, not snapping to clamp", () => {
+    // Pin the seam between the loop's last interval and the upper clamp.
+    // A t value at bartime[last] - epsilon must interpolate within the
+    // final interval, not snap to barno[last] via the clamp.
+    for (const v of [0, 1] as const) {
+      const lastIdx = config.bartime[v].length - 1;
+      const tLast = config.bartime[v][lastIdx];
+      const t = tLast - 0.5;
+      const prevIdx = lastIdx - 1;
+      const expected =
+        config.barno[v][prevIdx] +
+        ((t - config.bartime[v][prevIdx]) /
+          (tLast - config.bartime[v][prevIdx])) *
+          (config.barno[v][lastIdx] - config.barno[v][prevIdx]);
+      const result = getBarFromTime(t, v);
+      expect(result).toBeCloseTo(expected, 5);
+      // And it must NOT equal the clamp value (would indicate snapping).
+      expect(result).not.toBe(config.barno[v][lastIdx]);
+    }
+  });
+
   it("getBarFromTime() clamps out-of-range time values", () => {
     expect(getBarFromTime(-1, 0)).toBeCloseTo(config.barno[0][0], 5);
     expect(getBarFromTime(600, 0)).toBeCloseTo(
