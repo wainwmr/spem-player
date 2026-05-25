@@ -299,3 +299,31 @@ the updated `method-sub-vera-gate.md` step 4.
 
 Pre-existing items routed to `wiki/refactor-common.ts.md` so they
 do not disperse.
+
+## Re-run (2026-05-25)
+
+After commits `7fa7331`, `217093e`, `16dac2d` landed, re-ran the five
+agents. Three returned clean (code-reviewer, type-design-analyzer,
+comment-analyzer). Two converged on a sub-finding of 101-01:
+
+### 101-14 — [important] Fallback `colors().choir` is still a per-module-load singleton
+
+Agents: pr-test-analyzer, silent-failure-hunter
+File: `src/ts/common.ts:50, 62`
+Status: open
+Notes:
+
+The spread-copy fix at line 56 (`choir: [...config.choirHues]`)
+allocates the copy once, at module load, into the `defaultColors`
+const. Every `colors()` call that takes the fallback branch returns
+the *same* `defaultColors` object — so the `choir` array is shared
+across all fallback calls. A caller that mutates `colors().choir`
+no longer corrupts `config.choirHues` (101-01's headline guarantee),
+but they still corrupt every subsequent fallback call's view.
+Asymmetric with the CSS-present branch, which builds a fresh array
+literal per call.
+
+Bob's verdict: real partial-fix of 101-01. The category 101-01
+flagged was "shared mutable state escape"; closing it for
+`config.choirHues` only is half-delivered. Minimal complete fix:
+build a fresh array on every fallback call.

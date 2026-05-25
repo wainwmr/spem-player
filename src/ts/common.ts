@@ -61,7 +61,9 @@ export function colors(reload = false): Colors {
   if (!reload && loadedColors) return loadedColors; // no need to reload if we already have the colors
   var style = getComputedStyle(document.body);
   if (!style || style.getPropertyValue("--color-background").length == 0) {
-    return defaultColors;
+    // Build a fresh choir array on every fallback call so a caller
+    // mutating the returned array cannot corrupt later callers' views.
+    return { ...defaultColors, choir: [...defaultColors.choir] };
   }
   loadedColors = {
     background: style.getPropertyValue("--color-background"),
