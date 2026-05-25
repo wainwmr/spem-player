@@ -50,7 +50,17 @@ describe("common", () => {
 
     result = getBarFromTime(1000, 0);
     expect(result).toBeTypeOf("number");
-    expect(result).toBe(0);
+    expect(result).toBeCloseTo(139);
+  });
+
+  it("getBarFromTime() returns final bar at ALC boundary", () => {
+    const result = getBarFromTime(512, 0);
+    expect(result).toBeCloseTo(139);
+  });
+
+  it("getBarFromTime() returns final bar at CotE boundary", () => {
+    const result = getBarFromTime(540, 1);
+    expect(result).toBeCloseTo(139);
   });
 
   it("getBarFromTime() converts time to bar as expected for CotE audio", () => {
@@ -67,7 +77,7 @@ describe("common", () => {
 
     result = getBarFromTime(1000, 1);
     expect(result).toBeTypeOf("number");
-    expect(result).toBe(0);
+    expect(result).toBeCloseTo(139);
   });
 
   it("getTimeFromBar() converts bar to time as expected for ALC", () => {
@@ -84,7 +94,17 @@ describe("common", () => {
     expect(result).toBeCloseTo(234.3); // ALC
 
     result = getTimeFromBar(140, 0);
-    expect(result).toBe(0);
+    expect(result).toBeCloseTo(512);
+  });
+
+  it("getTimeFromBar() returns final time at ALC boundary", () => {
+    const result = getTimeFromBar(139, 0);
+    expect(result).toBeCloseTo(512);
+  });
+
+  it("getTimeFromBar() returns final time at CotE boundary", () => {
+    const result = getTimeFromBar(139, 1);
+    expect(result).toBeCloseTo(540);
   });
 
   it("getTimeFromBar() converts bar to time as expected for CotE", () => {
@@ -101,7 +121,7 @@ describe("common", () => {
     expect(result).toBeCloseTo(251.631); // CotE
 
     result = getTimeFromBar(140, 1);
-    expect(result).toBe(0);
+    expect(result).toBeCloseTo(540);
   });
 
   it("colors() reads from CSS custom properties when available", () => {
@@ -122,5 +142,56 @@ describe("common", () => {
     colors(true);
     const result = colors(false);
     expect(result).toBeTypeOf("object");
+  });
+
+  it("config.choirHues defines 8 hue values in the 0–360 range (#101)", () => {
+    expect(Array.isArray(config.choirHues)).toBe(true);
+    expect(config.choirHues).toHaveLength(8);
+    for (const hue of config.choirHues) {
+      expect(hue).toBeTypeOf("number");
+      expect(hue).toBeGreaterThanOrEqual(0);
+      expect(hue).toBeLessThanOrEqual(360);
+    }
+  });
+
+  it("colors() falls back to config.choirHues when CSS properties are absent (#101)", () => {
+    // Strip everything that the CSS-present branch would read so colors()
+    // takes the defaults path.
+    document.body.style.removeProperty("--color-background");
+    document.body.style.removeProperty("--color-highlight");
+    document.body.style.removeProperty("--color-score-highlight");
+    for (let i = 1; i <= 8; i++) {
+      document.body.style.removeProperty("--color-c" + i);
+    }
+    const result = colors(true);
+    expect(result.choir).toEqual(config.choirHues);
+  });
+
+  it("colors() fallback returns a copy, not the live config.choirHues array", () => {
+    // Guards against accidental reference aliasing: any caller that mutates
+    // colors().choir must not corrupt the config singleton.
+    document.body.style.removeProperty("--color-background");
+    document.body.style.removeProperty("--color-highlight");
+    document.body.style.removeProperty("--color-score-highlight");
+    for (let i = 1; i <= 8; i++) {
+      document.body.style.removeProperty("--color-c" + i);
+    }
+    const result = colors(true);
+    expect(result.choir).toEqual(config.choirHues);
+    expect(result.choir).not.toBe(config.choirHues);
+  });
+
+  it("colors() fallback returns a fresh choir array on every call", () => {
+    // Each fallback call must yield an independent array, so that a caller
+    // mutating colors().choir cannot corrupt a later fallback caller's view.
+    document.body.style.removeProperty("--color-background");
+    document.body.style.removeProperty("--color-highlight");
+    document.body.style.removeProperty("--color-score-highlight");
+    for (let i = 1; i <= 8; i++) {
+      document.body.style.removeProperty("--color-c" + i);
+    }
+    const a = colors(true);
+    const b = colors(true);
+    expect(a.choir).not.toBe(b.choir);
   });
 });

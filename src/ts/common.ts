@@ -41,12 +41,19 @@ export type Config = {
   lilypond: string;
 };
 
-// All the colors are defined in the style sheet
+// Fallback colour set used only when the stylesheet's CSS custom
+// properties are absent (typically in unit tests or before the
+// stylesheet has loaded). The hues here are copied from config so
+// callers cannot mutate the canonical config array through
+// `colors().choir`. NOTE: in production the CSS-present branch below
+// is taken — `config.choirHues` is the source of truth for the
+// fallback only, not for the live render path. See the TODO above the
+// live branch.
 const defaultColors: Colors = {
   background: "hsl(210, 65%, 100%);",
   highlight: "hsl(210, 65%, 90%);",
   scoreHighlight: "hsl(210, 65%, 90%);",
-  choir: [360, 320, 30, 50, 110, 150, 190, 220],
+  choir: [...config.choirHues],
 };
 var loadedColors: Colors;
 
@@ -54,13 +61,17 @@ export function colors(reload = false): Colors {
   if (!reload && loadedColors) return loadedColors; // no need to reload if we already have the colors
   var style = getComputedStyle(document.body);
   if (!style || style.getPropertyValue("--color-background").length == 0) {
-    return defaultColors;
+    // Build a fresh choir array on every fallback call so a caller
+    // mutating the returned array cannot corrupt later callers' views.
+    return { ...defaultColors, choir: [...defaultColors.choir] };
   }
   loadedColors = {
     background: style.getPropertyValue("--color-background"),
     highlight: style.getPropertyValue("--color-highlight"),
     scoreHighlight: style.getPropertyValue("--color-score-highlight"),
-    // TODO: Need to use config to load the hues for each choir
+    // TODO: hues here are still read from --color-c1..c8 in style.scss,
+    // not from config.choirHues. The two must stay in sync by hand
+    // until the CSS branch is also driven from config.
     choir: [
       Number(style.getPropertyValue("--color-c1")),
       Number(style.getPropertyValue("--color-c2")),
@@ -92,7 +103,7 @@ export function toNum(
 }
 
 export function getBarFromTime(t: number, v: number = 0) {
-  for (let index = 0; index < config.bartime[v].length; index++) {
+  for (let index = 0; index < config.bartime[v].length - 1; index++) {
     if (t > config.bartime[v][index] && t < config.bartime[v][index + 1]) {
       // calculate temp (bars per second)
       const currenttempo =
@@ -103,11 +114,15 @@ export function getBarFromTime(t: number, v: number = 0) {
       return b;
     }
   }
+  const lastIdx = config.bartime[v].length - 1;
+  if (t >= config.bartime[v][lastIdx]) {
+    return config.barno[v][lastIdx];
+  }
   return 0;
 }
 
 export function getTimeFromBar(b: number, v: number = 0) {
-  for (let index = 0; index < config.bartime[v].length; index++) {
+  for (let index = 0; index < config.barno[v].length - 1; index++) {
     if (b >= config.barno[v][index] && b < config.barno[v][index + 1]) {
       // calculate temp (bars per second)
       const currenttempo =
@@ -118,6 +133,10 @@ export function getTimeFromBar(b: number, v: number = 0) {
         config.bartime[v][index] + (b - config.barno[v][index]) / currenttempo
       );
     }
+  }
+  const lastIdx = config.barno[v].length - 1;
+  if (b >= config.barno[v][lastIdx]) {
+    return config.bartime[v][lastIdx];
   }
   return 0;
 }
