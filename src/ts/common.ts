@@ -155,8 +155,12 @@ export function getBarFromTime(t: number, v: number = 0) {
       return b;
     }
   }
-  // Unreachable: the two clamp guards above (t <= bartime[0] and t >= bartime[last])
-  // cover every input, and the loop covers every interior interval [bartime[i], bartime[i+1]).
+  // Unreachable for any valid `v` in [0, config.bartime.length): the
+  // non-finite guard handles NaN/±Infinity, the two clamp guards
+  // (t <= bartime[0], t >= bartime[last]) cover every other finite t,
+  // and the loop covers every interior interval [bartime[i], bartime[i+1]).
+  // An out-of-range `v` would land here via undefined comparisons; see
+  // #369 for the type-narrowing fix that makes this case unrepresentable.
   throw new Error("getBarFromTime: unreachable");
 }
 
@@ -193,6 +197,7 @@ export function getTimeFromBar(b: number, v: number = 0) {
       );
     }
   }
-  // Unreachable: clamp guards above cover every input and the loop covers every interior interval.
+  // Unreachable for any valid `v` (see `getBarFromTime` for full
+  // rationale; same coverage applies symmetrically).
   throw new Error("getTimeFromBar: unreachable");
 }
