@@ -146,4 +146,18 @@ describe("common", () => {
     const result = colors(true);
     expect(result.choir).toEqual(config.choirHues);
   });
+
+  it("colors() fallback returns a copy, not the live config.choirHues array", () => {
+    // Guards against accidental reference aliasing: any caller that mutates
+    // colors().choir must not corrupt the config singleton.
+    document.body.style.removeProperty("--color-background");
+    document.body.style.removeProperty("--color-highlight");
+    document.body.style.removeProperty("--color-score-highlight");
+    for (let i = 1; i <= 8; i++) {
+      document.body.style.removeProperty("--color-c" + i);
+    }
+    const result = colors(true);
+    expect(result.choir).toEqual(config.choirHues);
+    expect(result.choir).not.toBe(config.choirHues);
+  });
 });

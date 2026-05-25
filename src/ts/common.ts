@@ -43,15 +43,15 @@ export type Config = {
 
 // Fallback colour set used when the stylesheet's CSS custom properties
 // are absent (typically in unit tests or before the stylesheet has
-// loaded). Choir hues live in `config.choirHues` so the values have one
-// source of truth shared with the rest of the theming system; the
-// background and highlight HSL strings stay inline because they are
-// not otherwise referenced.
+// loaded). Choir hues are copied from config so callers cannot mutate
+// the canonical config array through `colors().choir`; the background
+// and highlight HSL strings stay inline because they are not otherwise
+// referenced.
 const defaultColors: Colors = {
   background: "hsl(210, 65%, 100%);",
   highlight: "hsl(210, 65%, 90%);",
   scoreHighlight: "hsl(210, 65%, 90%);",
-  choir: config.choirHues,
+  choir: [...config.choirHues],
 };
 var loadedColors: Colors;
 
