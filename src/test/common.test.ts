@@ -50,7 +50,17 @@ describe("common", () => {
 
     result = getBarFromTime(1000, 0);
     expect(result).toBeTypeOf("number");
-    expect(result).toBe(0);
+    expect(result).toBeCloseTo(139);
+  });
+
+  it("getBarFromTime() returns final bar at ALC boundary", () => {
+    const result = getBarFromTime(512, 0);
+    expect(result).toBeCloseTo(139);
+  });
+
+  it("getBarFromTime() returns final bar at CotE boundary", () => {
+    const result = getBarFromTime(540, 1);
+    expect(result).toBeCloseTo(139);
   });
 
   it("getBarFromTime() converts time to bar as expected for CotE audio", () => {
@@ -67,7 +77,7 @@ describe("common", () => {
 
     result = getBarFromTime(1000, 1);
     expect(result).toBeTypeOf("number");
-    expect(result).toBe(0);
+    expect(result).toBeCloseTo(139);
   });
 
   it("getTimeFromBar() converts bar to time as expected for ALC", () => {
@@ -84,7 +94,17 @@ describe("common", () => {
     expect(result).toBeCloseTo(234.3); // ALC
 
     result = getTimeFromBar(140, 0);
-    expect(result).toBe(0);
+    expect(result).toBeCloseTo(512);
+  });
+
+  it("getTimeFromBar() returns final time at ALC boundary", () => {
+    const result = getTimeFromBar(139, 0);
+    expect(result).toBeCloseTo(512);
+  });
+
+  it("getTimeFromBar() returns final time at CotE boundary", () => {
+    const result = getTimeFromBar(139, 1);
+    expect(result).toBeCloseTo(540);
   });
 
   it("getTimeFromBar() converts bar to time as expected for CotE", () => {
@@ -101,7 +121,7 @@ describe("common", () => {
     expect(result).toBeCloseTo(251.631); // CotE
 
     result = getTimeFromBar(140, 1);
-    expect(result).toBe(0);
+    expect(result).toBeCloseTo(540);
   });
 
   it("colors() reads from CSS custom properties when available", () => {
