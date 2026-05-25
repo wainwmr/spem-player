@@ -3,7 +3,7 @@
 Mode: work (Vera ran during initial development, before PR open)
 Cycle: 1
 Generated: 2026-05-25 23:35
-Last run:  2026-05-25 23:50
+Last run:  2026-05-26 00:05 (pass 2 added 104-19; the JSDoc revisions and test-comment tightening at 104-20/21 were folded into the 104-19 fix commit)
 
 See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/issues/104#issuecomment-4537557250)
 
@@ -129,3 +129,39 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 - **104-16** *(test)* mixing `toBe` for exact boundary lookups and `toBeCloseTo` for interpolated values would document intent. *Noted; deferred — the every-boundary loops would need restructuring.*
 - **104-17** *(comment)* `"clamps out-of-range time values"` could be `"clamps out-of-range time values to first/last bar"` for self-documentation. *Pedantic; noted.*
 - **104-18** *(comment)* `expect(result).toBeTypeOf("number")` assertions at lines :48 and :95 are unexplained leftover guards from the old `return 0` ambiguity. *Noted; could drop these in a follow-up.*
+
+## Pass 2 findings (cycle 1, re-run after the seven fixes above)
+
+### 104-19 — important Non-finite inputs (NaN, ±Infinity) reach the throw and break the rAF loop
+
+> **silent-failure-hunter + code-reviewer + type-design-analyzer, src/ts/common.ts:**
+> The cycle-1 fix at 104-02 replaced `return 0` with `throw new Error("...unreachable")` for both `getBarFromTime` and `getTimeFromBar`. The clamp guards (`t <= bartime[0]`, `t >= bartime[last]`) and the loop intervals partition the *finite* real line correctly, but `NaN` evaluates `false` against every comparison and falls through to the throw. `MusicControls.ts:253` calls `getBarFromTime(self.audio.currentTime, v)` inside a `requestAnimationFrame` loop; `HTMLMediaElement.currentTime` can be `NaN` before metadata loads. Pre-#104 this silently returned `0`; post-#104 it throws inside the rAF callback, silently terminating the bar-tracking loop — audio keeps playing, playhead freezes. `MusicControls.setBar` (line 311) is also reachable from user input via `Number(b)` → NaN.
+
+**Bob's triage:** Real defect introduced by the cycle-1 fix at 104-02 (NOT pre-existing the way 104-07 was — 104-02 changed the symptom from benign-zero to frozen-UI). The pass-1 deferral of 104-07 was made on the assumption that NaN behaviour was unchanged; pass 2 surfaces that 104-02 changed it. Legitimate reversal, new information. Address now: defensive `!Number.isFinite` guard at the top of both functions, clamping to first bar/time. The wider semantic question (clamp vs throw vs log+clamp) stays open under #368 — Mark can choose later.
+
+**Resolution:** addressed (commit d1674e8). Added `if (!Number.isFinite(t)) return config.barno[v][0];` (and symmetric for `getTimeFromBar`). Added two tests pinning NaN, +Infinity, -Infinity → first bar/time for both recordings. Updated JSDoc on both functions to: (a) describe the non-finite contract, (b) explain why the guard exists (the rAF caller), (c) cross-reference #368 for the wider semantic question, (d) tighten the "Never returns the pre-#104 0 sentinel" wording to "Never returns 0 as an out-of-range sentinel" (104-21), (e) clarify that the final boundary is returned by the upper clamp not the loop (104-20).
+
+### 104-20 — suggestion JSDoc overstated half-open-interval claim
+
+> **silent-failure-hunter, src/ts/common.ts JSDoc block:**
+> "Internal boundaries (exact `t === bartime[i]` for any `i`) return `barno[i]` via the half-open `[bartime[i], bartime[i+1])` loop interval" — for `i === lastIdx` the value is returned via the upper clamp, not the loop interval.
+
+**Bob's triage:** Doc accuracy. One-word fix. Folded into 104-19.
+
+**Resolution:** addressed (commit d1674e8). JSDoc now says "for any internal `i`" and adds "the final boundary is returned by the upper clamp".
+
+### 104-21 — suggestion "pre-#104" reference will age in the JSDoc
+
+> **comment-analyzer, src/ts/common.ts JSDoc block:**
+> "Never returns the pre-#104 `0` sentinel" is useful now but will age into "what was #104?" once the issue is closed.
+
+**Bob's triage:** Durability. Reframe. Folded into 104-19.
+
+**Resolution:** addressed (commit d1674e8). Rephrased to "Never returns 0 as an out-of-range sentinel; clamps NaN/out-of-range to first bar".
+
+## Pass 2 suggestions (informational)
+
+- **104-22** *(silent-failure)* throw messages omit `t`/`v` values — debugging an "unreachable" stack trace would lack context. *Noted; deferred as a polish.*
+- **104-23** *(silent-failure)* module-scope length-check throw lacks `logError`/Sentry call — a bad config takes the whole app down with a raw `Error`. *Noted; deferred — fits with the broader error-id audit, not a #104 concern.*
+- **104-24** *(comment-analyzer)* the cycle-1 added cross-reference "See `refactor-common.ts.md`" risks rot if the file is renamed. *Noted; refactor reports are unlikely to be renamed and the doc-link convention is consistent elsewhere.*
+- **104-25** *(test-analyzer)* no symmetric interior-interpolation probe for `getTimeFromBar`. *Noted; the every-boundary loops + the throw on fallthrough already pin the loop predicates indirectly.*
