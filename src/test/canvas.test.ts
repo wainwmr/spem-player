@@ -459,4 +459,56 @@ describe("MusicCanvas custom element", () => {
     expect(pos.choir).toBeGreaterThanOrEqual(0);
     expect(pos.choir).toBeLessThan(config.choirs[0].length);
   });
+
+  it("touchmove does not mutate canvas internal state", async () => {
+    expect(canvas).not.toBeNull();
+
+    canvas!.getBoundingClientRect = vi.fn(
+      () =>
+        ({
+          width: 1400,
+          height: 400,
+          top: 0,
+          left: 0,
+          right: 1400,
+          bottom: 400,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        }) as DOMRect
+    );
+
+    // Set a known initial state
+    canvas!.choir = 0;
+    canvas!.voicePart = 2;
+    canvas!.bar = 50;
+
+    const movePromise = new Promise<void>((resolve) => {
+      canvas!.addEventListener("music-canvas-touchmove", () => resolve(), {
+        once: true,
+      });
+    });
+
+    const innerCanvas = canvas!.querySelector("canvas")!;
+    const touch = {
+      clientX: 1200,
+      clientY: 300,
+      identifier: 0,
+      target: innerCanvas,
+    };
+    const touchMove = new Event("touchmove", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(touchMove, "targetTouches", { value: [touch] });
+    Object.defineProperty(touchMove, "preventDefault", { value: vi.fn() });
+
+    innerCanvas.dispatchEvent(touchMove);
+    await movePromise;
+
+    // Internal state should remain unchanged
+    expect(canvas!.choir).toBe(0);
+    expect(canvas!.voicePart).toBe(2);
+    expect(canvas!.bar).toBe(50);
+  });
 });
