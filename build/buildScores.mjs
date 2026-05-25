@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 import { execSync } from "child_process";
-import { existsSync, statSync } from "fs";
+import { existsSync, statSync, rmSync } from "fs";
 import { globSync } from "fs";
 import { basename } from "path";
 import { postprocessSvg } from "./postprocessSvg.mjs";
@@ -119,6 +119,11 @@ function buildScore(ly, version, notation) {
   try {
     postprocessSvg(svg);
   } catch (error) {
+    try {
+      rmSync(svg, { force: true });
+    } catch {
+      // ignore cleanup failure
+    }
     console.error(`\nError post-processing ${svg}:\n${error.message}`);
     process.exit(1);
   }

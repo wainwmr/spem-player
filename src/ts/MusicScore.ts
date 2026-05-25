@@ -214,9 +214,13 @@ export class MusicScore extends MusicElement {
       String(indicatorWidth)
     );
 
-    // Highlight and scroll to the current bar
+    // Highlight and scroll to the current bar. Defer scrollSmooth() via
+    // requestAnimationFrame so the layout reads inside it (offsetWidth,
+    // getBoundingClientRect) happen against clean post-paint layout
+    // rather than forcing a synchronous reflow on the freshly inserted
+    // SVG — see #92.
     this.highlight();
-    this.scrollSmooth();
+    requestAnimationFrame(() => this.scrollSmooth());
   }
 
   async setChoir(c: string | number) {

@@ -5,7 +5,8 @@ import {
   detectFalseRelations,
 } from "../ts/lily";
 import type { ActiveNote } from "../ts/lily";
-const { romanise, setupLilypondParser, noteToPitchClass } = exportedForTesting;
+const { romanise, setupLilypondParser, noteToPitchClass, semantics } =
+  exportedForTesting;
 import { Note, Duration } from "../ts/music-classes";
 import * as ohm from "ohm-js";
 import lyGrammar from "../ohmjs/ly-grammar.ohm-bundle";
@@ -48,6 +49,18 @@ describe("lilypond parsing tests", () => {
   it("setupLilypondParser", () => {
     var s = setupLilypondParser();
     expect(s).toBeTruthy();
+  });
+
+  it("fraction multiplier parses with denominator (#321)", () => {
+    const match = lyGrammar.match("3/4", "fraction");
+    expect(match.succeeded()).toBe(true);
+    expect(semantics(match).parse()).toBe(0.75);
+  });
+
+  it("fraction multiplier parses without denominator (#321 regression)", () => {
+    const match = lyGrammar.match("3", "fraction");
+    expect(match.succeeded()).toBe(true);
+    expect(semantics(match).parse()).toBe(3);
   });
 
   it("processLilypond", () => {
