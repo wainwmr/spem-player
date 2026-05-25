@@ -102,7 +102,11 @@ export function toNum(
   return integer ? Math.floor(nums + HDSQTIME) : nums;
 }
 
-// Verify tempo mapping arrays have matching lengths
+// Fail fast at import time: mismatched lengths would silently corrupt
+// getBarFromTime/getTimeFromBar interval lookups. Throwing at module scope
+// breaks the whole app on bad config — intentional, since the alternative
+// is a hard-to-trace runtime divergence. See refactor-common.ts.md for the
+// related untracked-debt discussion.
 for (let v = 0; v < config.bartime.length; v++) {
   if (config.bartime[v].length !== config.barno[v].length) {
     throw new Error(
