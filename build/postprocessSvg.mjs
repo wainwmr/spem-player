@@ -193,19 +193,26 @@ export function postprocessSvg(
       aElem.getAttributeNS(xlinkNs, "href") || aElem.getAttribute("href");
     if (!href) continue;
 
-    href = decodeURIComponent(href);
+    try {
+      href = decodeURIComponent(href);
+    } catch (e) {
+      href = null;
+    }
+
     let partIndex = null;
 
-    // Check words first since "spem words.ly" contains "spem.ly"
-    if (href.includes("spem words.ly") || href.includes("spem%20words.ly")) {
-      const match = href.match(/:(\d+):\d+:\d+$/);
-      if (match) {
-        partIndex = findPartIndex(Number(match[1]), wordsMap);
-      }
-    } else if (href.includes("spem.ly:")) {
-      const match = href.match(/:(\d+):\d+:\d+$/);
-      if (match) {
-        partIndex = findPartIndex(Number(match[1]), noteMap);
+    if (href) {
+      // Check words first since "spem words.ly" contains "spem.ly"
+      if (href.includes("spem words.ly") || href.includes("spem%20words.ly")) {
+        const match = href.match(/:(\d+):\d+:\d+$/);
+        if (match) {
+          partIndex = findPartIndex(Number(match[1]), wordsMap);
+        }
+      } else if (href.includes("spem.ly:")) {
+        const match = href.match(/:(\d+):\d+:\d+$/);
+        if (match) {
+          partIndex = findPartIndex(Number(match[1]), noteMap);
+        }
       }
     }
 
