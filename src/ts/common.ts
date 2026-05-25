@@ -117,7 +117,7 @@ export function getBarFromTime(t: number, v: number = 0) {
   if (t >= config.bartime[v][lastIdx]) return config.barno[v][lastIdx];
   for (let index = 0; index < lastIdx; index++) {
     if (t >= config.bartime[v][index] && t < config.bartime[v][index + 1]) {
-      // calculate temp (bars per second)
+      // calculate tempo (bars per second)
       const currenttempo =
         (config.barno[v][index + 1] - config.barno[v][index]) /
         (config.bartime[v][index + 1] - config.bartime[v][index]);
@@ -135,7 +135,7 @@ export function getTimeFromBar(b: number, v: number = 0) {
   if (b >= config.barno[v][lastIdx]) return config.bartime[v][lastIdx];
   for (let index = 0; index < lastIdx; index++) {
     if (b >= config.barno[v][index] && b < config.barno[v][index + 1]) {
-      // calculate temp (bars per second)
+      // calculate tempo (bars per second)
       const currenttempo =
         (config.barno[v][index + 1] - config.barno[v][index]) /
         (config.bartime[v][index + 1] - config.bartime[v][index]);
