@@ -61,6 +61,12 @@ npm run build:scores -- --version="Hugh Keyte" --notation=early --choir="II B"
 
 This iterates over matching `Choir*.ly` files under `src/lilypond/` and runs `lilypond --svg` for each, then post-processes the generated SVG with `build/postprocessSvg.mjs`.
 
+### Timing
+
+LilyPond is the slow part: roughly 60 seconds per choir, 16 choirs across early + modern notations. When `.ly` sources are current, `npm run build:scores` (and the `prebuild` step inside `npm run build`) completes in a few seconds because `needsRebuild` compares mtimes and skips unchanged files. After a batch edit of `.ly` files — particularly shared includes (`basic.ly`, `layout.ly`) — expect the next full `npm run ci` to take 10+ minutes as the affected SVGs regenerate. This is a one-off; the next build after that is fast again.
+
+Rebuilds are functionally equivalent to the committed SVGs but not byte-identical: LilyPond and the postprocessor reorder path definitions and dedup staff lines depending on input timing. If you see `src/scores/**/*.svg` files showing as modified after a rebuild on a clean branch, discard them (`git restore src/scores/`); the committed versions are canonical.
+
 ## Quality Checks
 
 Run the full quality gate locally (Ohm grammar bundle, unused-export check, formatting, lint, typecheck, dependency checks):
