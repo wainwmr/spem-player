@@ -183,3 +183,88 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 **Bob's triage:** rejected. The step declares `shell: bash`, so `[ ... == ... ]` is well-defined. Portability to non-bash shells is not a current requirement. YAGNI.
 
 **Resolution:** rejected (Bob's defence: bash-declared shell; portability not in scope)
+
+## Pass 2 findings
+
+Pass 2 re-ran the five-agent toolkit on 2026-05-27 against the branch tip after the pass-1 fixes landed. All pass-1 fixes confirmed clean. Nine new findings (4 important, 5 suggestion) raised — mostly doc-vs-code divergence introduced by my pass-1 doc-sweep predating the filter-list expansion, plus one genuine new coverage gap (path-filter missing `vite.config.ts`, `tsconfig.json`, `.nvmrc`).
+
+### 377-20 — important — `doc/CI.md` path-filter list under-enumerates `ci.yml`
+
+> **code-reviewer pass 2 F1, silent-failure-hunter pass 2 finding 3, comment-analyzer pass 2 finding 1 — `doc/CI.md` filter bullet list:**
+> Doc lists 5 entries (`build/**`, `src/lilypond/**`, `src/scores/**`, `package.json`, `package-lock.json`); ci.yml has 7 (adds `src/test/integration/**` and `.github/workflows/ci.yml`). Stale claim caused by 11f107b doc-sweep landing before 5cdeac1 expanded the filter. A reader trusting CI.md would believe PRs editing integration tests or the workflow itself don't trigger the integration job — but they do.
+
+**Bob's triage:** my error, caused by ordering of pass-1 fixes. Reconcile the doc to match (and then to the now-10-entry list after 377-22). Trivial.
+
+**Resolution:** addressed (commit ab085e1)
+
+### 377-21 — important — `doc/TESTING.md` path-filter inline summary has the same gap
+
+> **code-reviewer pass 2 F2, pr-test-analyzer pass 2 finding 3, comment-analyzer pass 2 finding 2 — `doc/TESTING.md:67`:**
+> Same 5-vs-7 (now 10) divergence as 377-20. Either enumerate inline or point at CI.md as canonical.
+
+**Bob's triage:** point at CI.md as the canonical source. Avoid duplicating the list across docs — divergence will recur.
+
+**Resolution:** addressed (commit ab085e1)
+
+### 377-22 — important — `ci.yml` path-filter misses `vite.config.ts`, `tsconfig.json`, `.nvmrc`
+
+> **pr-test-analyzer pass 2 finding 2, silent-failure-hunter pass 2 finding 1 — `.github/workflows/ci.yml:37-44`:**
+> A PR that bumps the Node version, tightens `tsconfig` strictness, or edits `vite.config.ts` (which defines vitest's exclude/include and runs `execSync` at config-eval time) can break the integration suite without triggering it. The nightly cron eventually catches it; the PR gate reports green meanwhile.
+
+**Bob's triage:** real coverage gap, missed in pass 1. Three additional filter entries. Low risk of false-positive triggers (these files change rarely). Address now.
+
+**Resolution:** addressed (commit 6e1e7e4)
+
+### 377-23 — important — `postprocessSvg.test.ts` / `postprocessSvgDedup.test.ts` exercise `build/` code under the unit job
+
+> **pr-test-analyzer pass 2 finding 1 — `src/test/postprocessSvg.test.ts`, `src/test/postprocessSvgDedup.test.ts`:**
+> Both import directly from `build/postprocessSvg.mjs` and run in the unit (`test`) job — defensible (no subprocess, fast under jsdom) but the doc mental model is "`build/` changes go through the integration job". A regression in `build/postprocessSvg.mjs` is caught by *unit* tests, contradicting the docs.
+
+**Bob's triage:** classification is correct (these tests are in-process). The doc gap is the issue — clarify in TESTING.md that in-process `build/` tests live as unit tests. No test-file moves needed.
+
+**Resolution:** addressed (commit ab085e1 — doc/TESTING.md note added)
+
+### 377-24 — suggestion — `doc/BUILD.md` pre-push guidance lists 3 paths
+
+> **code-reviewer pass 2 F3, comment-analyzer pass 2 finding 3 — `doc/BUILD.md` pre-push paragraph:**
+> Recommended running `npm run test:integration` before pushing only on changes touching `build/`, `src/lilypond/`, or `src/scores/` — inconsistent with the now-10-entry filter and with CONTRIBUTING.md's always-before-push guidance.
+
+**Bob's triage:** see 377-25.
+
+**Resolution:** addressed (commit ab085e1)
+
+### 377-25 — suggestion — BUILD.md vs CONTRIBUTING.md pre-push narrowing inconsistency
+
+> **comment-analyzer pass 2 finding 4 — `doc/BUILD.md` vs `doc/CONTRIBUTING.md:168`:**
+> BUILD.md said "run integration before push only if you touched build paths"; CONTRIBUTING.md says "always run the full suite plus build and e2e before push". Two docs, two rules.
+
+**Bob's triage:** pick one. Always-before-push is the simpler rule and the integration suite is ~50s. Update BUILD.md to match CONTRIBUTING.md.
+
+**Resolution:** addressed (commit ab085e1 — BUILD.md aligned to always-before-push)
+
+### 377-26 — suggestion — Skip-reporter message asserts cause not verified
+
+> **silent-failure-hunter pass 2 finding 2 — `.github/workflows/ci.yml` Report-skip step:**
+> "Integration tests skipped (no build-related changes)" is a positive claim about why the step skipped. If the `if:` is ever refactored (e.g. to `always() &&`), the message could appear under unexpected conditions and mislead.
+
+**Bob's triage:** defensive nit but cheap. Parameterise the message with the actual `should-run` output so it describes observed state rather than inferred cause.
+
+**Resolution:** addressed (commit 6e1e7e4)
+
+### 377-27 — suggestion — Skip reporter writes only to job log, not `$GITHUB_STEP_SUMMARY`
+
+> **pr-test-analyzer pass 2 finding 4 — `.github/workflows/ci.yml` Report-skip step:**
+> The echo lands inside the job log, visible only if a reader clicks into the job. A reader scanning the PR Checks pane sees green with no indication of skip. Cheap to surface via the workflow Step Summary page.
+
+**Bob's triage:** small fix, real visibility win. Address now.
+
+**Resolution:** addressed (commit 6e1e7e4 — Step Summary added)
+
+### 377-28 — suggestion — `doc/TESTING.md` should note that new shared-fixture dirs need filter additions
+
+> **pr-test-analyzer pass 2 finding 5 — `doc/TESTING.md`:**
+> Current integration test uses dynamically-created fixtures; no external shared fixture dir. If a future fixture dir is added (e.g. `src/test/fixtures/`) it won't trigger the integration gate. Document the convention so future authors update both places.
+
+**Bob's triage:** trivial doc note; future-proofs the filter.
+
+**Resolution:** addressed (commit ab085e1)
