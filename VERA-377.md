@@ -18,27 +18,27 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 > **code-reviewer, pr-test-analyzer, silent-failure-hunter, type-design-analyzer, comment-analyzer — `.github/workflows/ci.yml`:**
 > The new `paths-filter` step uses `if: github.event_name == "pull_request"`. GitHub Actions expression syntax requires single-quoted string literals. Double quotes here cause the evaluator to treat `"pull_request"` as an identifier reference, evaluating to null. The condition is always false, so `dorny/paths-filter` never runs on any event including pull requests. `steps.filter.outputs.build-related` is therefore always empty, the bash `should-run` step falls through to `run=false` on PRs, and integration tests **never run on PRs touching build paths** — the opposite of the ticket intent. Compare to the other `if:` on the same step block which correctly uses single quotes (`== 'true'`).
 
-**Bob's triage:** [open]
+**Bob's triage:** real defect, caused by this diff. One-character fix per `if:` line. Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 9f66158)
 
 ### 377-02 — critical — Job rename `test` → `unit` silently bypasses branch-protection ruleset
 
 > **silent-failure-hunter, type-design-analyzer, code-reviewer, comment-analyzer — `.github/workflows/ci.yml` job rename + `doc/CI.md:68` + `.github/workflows/dependabot-auto-merge.yml:57`:**
 > Ruleset 15878992 ("Main should be golden") on wainwmr/spem-player requires status check context `test` (verified via `gh api repos/wainwmr/spem-player/rulesets/15878992`). After this PR merges the `test` job no longer exists; the required check will never report, branch protection is effectively neutralised, and `dependabot-auto-merge.yml` (which gates on the same name per doc/CI.md) loses its gate too. Fix options: (a) keep the job named `test`, or (b) update the ruleset BEFORE merging to require `unit` (and `integration` if intended) and refresh doc/CI.md + dependabot-auto-merge references.
 
-**Bob's triage:** [open]
+**Bob's triage:** real defect, caused by this diff. Option (a) is the smaller change — rename `unit` → `test` in `ci.yml`, leave the ruleset alone. Making `integration` a required check is a design decision worth deferring (the silent-gate hazard from 377-03 cuts against it). Address now via option (a).
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 9f66158)
 
 ### 377-03 — critical — Integration job reports success when fully skipped
 
 > **silent-failure-hunter — `.github/workflows/ci.yml`:**
 > When `should-run=false`, every remaining step in the integration job is `if:`-gated and skipped. There is no terminal unconditional step, so the job concludes "success" with zero tests executed. Combined with 377-01 (paths-filter never works on PRs), every PR gets a false-green from this job. If a future ruleset adds `integration` as a required check (as 377-02 remediation might), this becomes a silent gate failure on every PR that doesn't touch build paths. Fix: add a terminal `if: steps.should-run.outputs.run != 'true'` step that prints "Integration tests skipped (no build-related changes)" so the no-op is visibly recorded; or switch to job-level `if:` so GitHub reports a cleaner "skipped" state.
 
-**Bob's triage:** [open]
+**Bob's triage:** real defect, caused by this diff. Terminal echo step is the proportionate fix — visible no-op, no job-level `if:` semantics commitment. Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 9f66158)
 
 ### 377-04 — important — `paths-filter` glob misses `src/test/integration/**` and `.github/workflows/ci.yml`
 
