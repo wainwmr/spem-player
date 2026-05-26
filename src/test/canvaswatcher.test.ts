@@ -1,7 +1,11 @@
-import { MusicCanvas } from "../ts/MusicCanvas";
 import { MusicCanvasWatcher } from "../ts/MusicCanvasWatcher";
 
-MusicCanvas.define("music-canvas");
+// MusicCanvas is deliberately not imported or defined here. The watcher
+// listens for `music-canvas-hover` events fired by `<music-canvas>` elements,
+// but the tests dispatch those events with synthetic detail objects, so a
+// real upgraded MusicCanvas is not needed. Leaving `<music-canvas>` as an
+// unupgraded HTMLElement avoids ~500-700ms per test from the canvas's
+// connectedCallback (the previous behaviour that made this file take ~7s).
 MusicCanvasWatcher.define("music-canvas-watcher");
 
 describe("MusicCanvasWatcher custom element", () => {
