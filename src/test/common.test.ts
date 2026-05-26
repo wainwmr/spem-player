@@ -46,6 +46,7 @@ describe("common", () => {
     expect(Math.floor(result)).toBe(1);
 
     result = getBarFromTime(200, 0);
+    expect(result).toBeTypeOf("number");
     expect(Math.floor(result)).toBe(55);
 
     result = getBarFromTime(1000, 0);
@@ -53,14 +54,95 @@ describe("common", () => {
     expect(result).toBeCloseTo(139);
   });
 
-  it("getBarFromTime() returns final bar at ALC boundary", () => {
-    const result = getBarFromTime(512, 0);
-    expect(result).toBeCloseTo(139);
+  it("getBarFromTime() returns correct bar at every ALC boundary", () => {
+    for (let i = 0; i < config.bartime[0].length; i++) {
+      const t = config.bartime[0][i];
+      const expectedBar = config.barno[0][i];
+      expect(getBarFromTime(t, 0)).toBeCloseTo(expectedBar, 5);
+    }
   });
 
-  it("getBarFromTime() returns final bar at CotE boundary", () => {
-    const result = getBarFromTime(540, 1);
-    expect(result).toBeCloseTo(139);
+  it("getBarFromTime() returns correct bar at every CotE boundary", () => {
+    for (let i = 0; i < config.bartime[1].length; i++) {
+      const t = config.bartime[1][i];
+      const expectedBar = config.barno[1][i];
+      expect(getBarFromTime(t, 1)).toBeCloseTo(expectedBar, 5);
+    }
+  });
+
+  it("getBarFromTime() interpolates strictly between internal boundaries", () => {
+    // Probe the midpoint between two internal boundaries to pin the
+    // linear-interpolation arithmetic (regressions in the tempo formula
+    // would fail this even when the boundary-sweep tests above pass).
+    // The `>=` vs `>` change in the loop predicate is pinned by the
+    // boundary-sweep tests directly: under `>`, an exact internal
+    // boundary value falls through every interval and hits the
+    // unreachable throw. Test both ALC and CotE.
+    for (const v of [0, 1] as const) {
+      const i = 2; // interior index
+      const t0 = config.bartime[v][i];
+      const t1 = config.bartime[v][i + 1];
+      const tMid = (t0 + t1) / 2;
+      const expected =
+        config.barno[v][i] +
+        0.5 * (config.barno[v][i + 1] - config.barno[v][i]);
+      expect(getBarFromTime(tMid, v)).toBeCloseTo(expected, 5);
+    }
+  });
+
+  it("getBarFromTime() interpolates just below the final boundary, not snapping to clamp", () => {
+    // Pin the seam between the loop's last interval and the upper clamp.
+    // A t value at bartime[last] - epsilon must interpolate within the
+    // final interval, not snap to barno[last] via the clamp.
+    for (const v of [0, 1] as const) {
+      const lastIdx = config.bartime[v].length - 1;
+      const tLast = config.bartime[v][lastIdx];
+      const t = tLast - 0.5;
+      const prevIdx = lastIdx - 1;
+      const expected =
+        config.barno[v][prevIdx] +
+        ((t - config.bartime[v][prevIdx]) /
+          (tLast - config.bartime[v][prevIdx])) *
+          (config.barno[v][lastIdx] - config.barno[v][prevIdx]);
+      const result = getBarFromTime(t, v);
+      expect(result).toBeCloseTo(expected, 5);
+      // And it must NOT equal the clamp value (would indicate snapping).
+      expect(result).not.toBe(config.barno[v][lastIdx]);
+    }
+  });
+
+  it("getBarFromTime() clamps non-finite inputs (NaN, +/-Infinity) to first bar", () => {
+    // HTMLMediaElement.currentTime can be NaN before metadata loads.
+    // Without this guard the function would fall through to the unreachable
+    // throw, terminating the requestAnimationFrame loop in MusicControls.
+    for (const v of [0, 1] as const) {
+      expect(getBarFromTime(NaN, v)).toBe(config.barno[v][0]);
+      expect(getBarFromTime(Infinity, v)).toBe(config.barno[v][0]);
+      expect(getBarFromTime(-Infinity, v)).toBe(config.barno[v][0]);
+    }
+  });
+
+  it("getTimeFromBar() clamps non-finite inputs (NaN, +/-Infinity) to first time", () => {
+    // Reachable from MusicControls.setBar when a user enters a
+    // non-numeric value into the bar input box.
+    for (const v of [0, 1] as const) {
+      expect(getTimeFromBar(NaN, v)).toBe(config.bartime[v][0]);
+      expect(getTimeFromBar(Infinity, v)).toBe(config.bartime[v][0]);
+      expect(getTimeFromBar(-Infinity, v)).toBe(config.bartime[v][0]);
+    }
+  });
+
+  it("getBarFromTime() clamps out-of-range time values", () => {
+    expect(getBarFromTime(-1, 0)).toBeCloseTo(config.barno[0][0], 5);
+    expect(getBarFromTime(600, 0)).toBeCloseTo(
+      config.barno[0][config.barno[0].length - 1],
+      5
+    );
+    expect(getBarFromTime(-1, 1)).toBeCloseTo(config.barno[1][0], 5);
+    expect(getBarFromTime(600, 1)).toBeCloseTo(
+      config.barno[1][config.barno[1].length - 1],
+      5
+    );
   });
 
   it("getBarFromTime() converts time to bar as expected for CotE audio", () => {
@@ -73,6 +155,7 @@ describe("common", () => {
     expect(Math.floor(result)).toBe(1);
 
     result = getBarFromTime(200, 1);
+    expect(result).toBeTypeOf("number");
     expect(Math.floor(result)).toBe(51);
 
     result = getBarFromTime(1000, 1);
@@ -97,14 +180,33 @@ describe("common", () => {
     expect(result).toBeCloseTo(512);
   });
 
-  it("getTimeFromBar() returns final time at ALC boundary", () => {
-    const result = getTimeFromBar(139, 0);
-    expect(result).toBeCloseTo(512);
+  it("getTimeFromBar() returns correct time at every ALC boundary", () => {
+    for (let i = 0; i < config.barno[0].length; i++) {
+      const b = config.barno[0][i];
+      const expectedTime = config.bartime[0][i];
+      expect(getTimeFromBar(b, 0)).toBeCloseTo(expectedTime, 5);
+    }
   });
 
-  it("getTimeFromBar() returns final time at CotE boundary", () => {
-    const result = getTimeFromBar(139, 1);
-    expect(result).toBeCloseTo(540);
+  it("getTimeFromBar() returns correct time at every CotE boundary", () => {
+    for (let i = 0; i < config.barno[1].length; i++) {
+      const b = config.barno[1][i];
+      const expectedTime = config.bartime[1][i];
+      expect(getTimeFromBar(b, 1)).toBeCloseTo(expectedTime, 5);
+    }
+  });
+
+  it("getTimeFromBar() clamps out-of-range bar values", () => {
+    expect(getTimeFromBar(-1, 0)).toBeCloseTo(config.bartime[0][0], 5);
+    expect(getTimeFromBar(200, 0)).toBeCloseTo(
+      config.bartime[0][config.bartime[0].length - 1],
+      5
+    );
+    expect(getTimeFromBar(-1, 1)).toBeCloseTo(config.bartime[1][0], 5);
+    expect(getTimeFromBar(200, 1)).toBeCloseTo(
+      config.bartime[1][config.bartime[1].length - 1],
+      5
+    );
   });
 
   it("getTimeFromBar() converts bar to time as expected for CotE", () => {

@@ -102,10 +102,51 @@ export function toNum(
   return integer ? Math.floor(nums + HDSQTIME) : nums;
 }
 
+// Fail fast at import time: mismatched lengths would silently corrupt
+// getBarFromTime/getTimeFromBar interval lookups. Throwing at module scope
+// breaks the whole app on bad config — intentional, since the alternative
+// is a hard-to-trace runtime divergence. See refactor-common.ts.md for the
+// related untracked-debt discussion.
+for (let v = 0; v < config.bartime.length; v++) {
+  if (config.bartime[v].length !== config.barno[v].length) {
+    throw new Error(
+      `config.bartime[${v}] and config.barno[${v}] must have equal length`
+    );
+  }
+}
+
+/**
+ * Convert an audio time (seconds) to a bar number, linearly interpolated
+ * between the tempo-mapping anchor points in `config.bartime[v]` /
+ * `config.barno[v]`.
+ *
+ * Clamps out-of-range inputs: `t <= bartime[0]` returns `barno[0]`;
+ * `t >= bartime[last]` returns `barno[last]`. Internal boundaries
+ * (exact `t === bartime[i]` for any internal `i`) return `barno[i]` via
+ * the half-open `[bartime[i], bartime[i+1])` loop interval; the final
+ * boundary is returned by the upper clamp.
+ *
+ * Non-finite `t` (NaN, ±Infinity) is treated as out-of-range and
+ * clamped to `barno[0]`. This matters because `HTMLMediaElement.currentTime`
+ * can be NaN before audio metadata loads; without the guard the
+ * function would fall through to the unreachable throw and terminate
+ * the requestAnimationFrame loop in `MusicControls.ts`. The wider
+ * semantic question (clamp / throw / log) is tracked in
+ * [#368](https://github.com/wainwmr/spem-player/issues/368).
+ *
+ * @param t Audio time in seconds.
+ * @param v Recording index: 0 = ALC, 1 = CotE. Matches `State.recording`.
+ * @returns Bar number in `[barno[0], barno[last]]`. Never returns 0 as
+ *   an out-of-range sentinel.
+ */
 export function getBarFromTime(t: number, v: number = 0) {
-  for (let index = 0; index < config.bartime[v].length - 1; index++) {
-    if (t > config.bartime[v][index] && t < config.bartime[v][index + 1]) {
-      // calculate temp (bars per second)
+  const lastIdx = config.bartime[v].length - 1;
+  if (!Number.isFinite(t)) return config.barno[v][0];
+  if (t <= config.bartime[v][0]) return config.barno[v][0];
+  if (t >= config.bartime[v][lastIdx]) return config.barno[v][lastIdx];
+  for (let index = 0; index < lastIdx; index++) {
+    if (t >= config.bartime[v][index] && t < config.bartime[v][index + 1]) {
+      // calculate tempo (bars per second)
       const currenttempo =
         (config.barno[v][index + 1] - config.barno[v][index]) /
         (config.bartime[v][index + 1] - config.bartime[v][index]);
@@ -114,17 +155,39 @@ export function getBarFromTime(t: number, v: number = 0) {
       return b;
     }
   }
-  const lastIdx = config.bartime[v].length - 1;
-  if (t >= config.bartime[v][lastIdx]) {
-    return config.barno[v][lastIdx];
-  }
-  return 0;
+  // Unreachable for any valid `v` in [0, config.bartime.length): the
+  // non-finite guard handles NaN/±Infinity, the two clamp guards
+  // (t <= bartime[0], t >= bartime[last]) cover every other finite t,
+  // and the loop covers every interior interval [bartime[i], bartime[i+1]).
+  // An out-of-range `v` would land here via undefined comparisons; see
+  // #369 for the type-narrowing fix that makes this case unrepresentable.
+  throw new Error("getBarFromTime: unreachable");
 }
 
+/**
+ * Convert a bar number to an audio time (seconds), the inverse of
+ * `getBarFromTime`. Clamps out-of-range inputs to the first/last anchor
+ * time. Internal boundaries return the exact `bartime[i]` via the
+ * half-open `[barno[i], barno[i+1])` loop interval; the final boundary
+ * is returned by the upper clamp.
+ *
+ * Non-finite `b` (NaN, ±Infinity) is clamped to `bartime[0]`, matching
+ * `getBarFromTime`'s contract. Reachable from `MusicControls.setBar`
+ * when a user types a non-numeric value into the bar input.
+ *
+ * @param b Bar number.
+ * @param v Recording index: 0 = ALC, 1 = CotE. Matches `State.recording`.
+ * @returns Time in seconds, in `[bartime[0], bartime[last]]`. Never
+ *   returns 0 as an out-of-range sentinel.
+ */
 export function getTimeFromBar(b: number, v: number = 0) {
-  for (let index = 0; index < config.barno[v].length - 1; index++) {
+  const lastIdx = config.barno[v].length - 1;
+  if (!Number.isFinite(b)) return config.bartime[v][0];
+  if (b <= config.barno[v][0]) return config.bartime[v][0];
+  if (b >= config.barno[v][lastIdx]) return config.bartime[v][lastIdx];
+  for (let index = 0; index < lastIdx; index++) {
     if (b >= config.barno[v][index] && b < config.barno[v][index + 1]) {
-      // calculate temp (bars per second)
+      // calculate tempo (bars per second)
       const currenttempo =
         (config.barno[v][index + 1] - config.barno[v][index]) /
         (config.bartime[v][index + 1] - config.bartime[v][index]);
@@ -134,9 +197,7 @@ export function getTimeFromBar(b: number, v: number = 0) {
       );
     }
   }
-  const lastIdx = config.barno[v].length - 1;
-  if (b >= config.barno[v][lastIdx]) {
-    return config.bartime[v][lastIdx];
-  }
-  return 0;
+  // Unreachable for any valid `v` (see `getBarFromTime` for full
+  // rationale; same coverage applies symmetrically).
+  throw new Error("getTimeFromBar: unreachable");
 }
