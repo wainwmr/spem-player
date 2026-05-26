@@ -45,9 +45,9 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 > **silent-failure-hunter — `.github/workflows/ci.yml:28-34`:**
 > Filter covers `build/**`, `src/lilypond/**`, `src/scores/**`, `package.json`, `package-lock.json`. A PR that edits `src/test/integration/buildScores.test.ts` (e.g. fixing a flaky assertion or adding a new integration test) will not trigger the integration job. The test author gets a green PR without ever running the test they changed. A PR that edits `ci.yml` itself has the same problem — changes to the workflow don't trigger the integration job that the workflow defines. Fix: add `- "src/test/integration/**"` and `- ".github/workflows/ci.yml"` to the filter list.
 
-**Bob's triage:** [open]
+**Bob's triage:** real coverage gap, caused by this diff. Two-line filter additions. Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 5cdeac1)
 
 ### 377-05 — important — `npm run ci` semantics silently narrowed; AGENTS-LOCAL, BUILD, CI docs stale
 
@@ -126,60 +126,60 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 > **pr-test-analyzer F — `.github/workflows/ci.yml` integration job:**
 > The step has no `timeout-minutes`, so a hang would consume the default 360 min. PR #380 added a 30s test-level timeout inside `buildScores.test.ts`; a job-level cap is independent of that. Suggestion: `timeout-minutes: 15` on the `npm run test:integration` step (or on the job).
 
-**Bob's triage:** [open]
+**Bob's triage:** defensive suggestion, cheap. Job-level `timeout-minutes: 15` caps a hang including setup; simpler than per-step. Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 5cdeac1)
 
 ### 377-14 — suggestion — Nightly cron has no failure notification
 
 > **pr-test-analyzer G, silent-failure-hunter 6 — `.github/workflows/ci.yml:8-9`:**
 > Daily cron at `0 0 * * *`. If it silently stops (Actions disables schedules on inactive repos after 60 days; secret rotation; quota), no signal. Existing `e2e.yml` cron has the same gap but at least uploads artefacts on failure. Suggestion: add an `if: failure()` step that opens or comments on a tracking issue, or wire to existing alerting.
 
-**Bob's triage:** [open]
+**Bob's triage:** project-wide concern, not PR-specific. The existing `e2e.yml` cron has the same gap. Alerting strategy is a separate design call (issue? Slack? email?). Defer to a Workbench Meta item covering both workflows.
 
-**Resolution:** [open]
+**Resolution:** deferred to Item [#256](https://github.com/wainwright1000/spem-tools/issues/256)
 
 ### 377-15 — suggestion — Cron line lacks explanatory comment
 
 > **code-reviewer H, comment-analyzer 10 — `.github/workflows/ci.yml:8-9`:**
 > `schedule: - cron: "0 0 * * *"` has no comment explaining why integration also runs nightly (presumably to catch drift even when PRs don't touch build paths). One-line `# Daily at 00:00 UTC` (and note that GitHub may delay by ~15 min during peak) would save future maintainers a `git blame`.
 
-**Bob's triage:** [open]
+**Bob's triage:** trivial comment line. Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 5cdeac1)
 
 ### 377-16 — suggestion — Inconsistent `.nvmrc` quoting in same file
 
 > **code-reviewer I — `.github/workflows/ci.yml:17, 41`:**
 > The diff flips `'.nvmrc'` → `".nvmrc"` in one job for no functional reason. Both are valid YAML. Suggestion: pick one and stick to it across the file.
 
-**Bob's triage:** [open]
+**Bob's triage:** trivial style. Restore single-quoted `'.nvmrc'` (matches pre-change style; minimises diff vs origin/main). Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 5cdeac1)
 
 ### 377-17 — suggestion — `ci.yml` steps lack `name:` fields
 
 > **comment-analyzer 9 — `.github/workflows/ci.yml`:**
 > Diffed steps `- run: npm ci` and `- run: npm run test:integration` have no `name:` field, so the GitHub UI shows the raw command. Compare with the named "Check if integration tests should run" step. Adding `name:` improves log skim.
 
-**Bob's triage:** [open]
+**Bob's triage:** trivial readability. Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 5cdeac1)
 
 ### 377-18 — suggestion — Co-locate test scripts in `package.json`
 
 > **comment-analyzer 7 — `package.json:60-62`:**
 > `test:unit`, `test:integration`, `test:all` are appended at the bottom of the scripts block, separated from the existing `test` / `test:watch` / `test:coverage` cluster at lines 44-46. Co-locating aids discoverability via `npm run`. Subsumed by the 377-08 cleanup once that's resolved.
 
-**Bob's triage:** [open]
+**Bob's triage:** trivial readability after 377-08 cleanup. Move `test:unit` and `test:integration` up next to `test` / `test:watch` / `test:coverage`. Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit cc97231)
 
 ### 377-19 — suggestion — POSIX-vs-bashism `==` in shell test
 
 > **type-design-analyzer Finding 6 — `.github/workflows/ci.yml` `should-run` step bash heredoc:**
 > Uses `[ ... == ... ]` which is a bashism (POSIX `[ ]` is `=`). Step declares `shell: bash` so it works; flagged only for future portability if anyone ever runs this in `sh`.
 
-**Bob's triage:** [open]
+**Bob's triage:** rejected. The step declares `shell: bash`, so `[ ... == ... ]` is well-defined. Portability to non-bash shells is not a current requirement. YAGNI.
 
-**Resolution:** [open]
+**Resolution:** rejected (Bob's defence: bash-declared shell; portability not in scope)
