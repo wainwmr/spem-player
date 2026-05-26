@@ -132,14 +132,10 @@ CI's `test` job runs on every push and pull request, so it is fast:
 npm run ci
 ```
 
-Before pushing a change that touches `build/`, `src/lilypond/`, or
-`src/scores/`, also run the integration suite locally — those paths trigger
-the CI `integration` job, but it is easier to fix failures before the PR is
-open:
-
-```console
-npm run test:integration
-```
+Before pushing, run the full suite (`npm test` — unit and integration) so
+locally you exercise everything CI eventually runs. The integration suite is
+gated by paths on PRs (see `doc/CI.md`), but running it always before push is
+the simpler rule and the cost is small.
 
 ## Build Notes
 

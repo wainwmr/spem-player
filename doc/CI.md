@@ -26,10 +26,15 @@ Runs the subprocess-heavy integration suite (`src/test/integration/`). It runs u
 - `build/**`
 - `src/lilypond/**`
 - `src/scores/**`
+- `src/test/integration/**`
 - `package.json`
 - `package-lock.json`
+- `vite.config.ts`
+- `tsconfig.json`
+- `.nvmrc`
+- `.github/workflows/ci.yml`
 
-A skipped PR run is reported with an explicit "Integration tests skipped (no build-related changes)" log line, so the absence of test output is visible rather than appearing as a silent pass.
+A skipped PR run is reported on the workflow summary page and in the job log with a message quoting the actual `should-run` output (e.g. `Integration tests skipped — should-run='false' (PR did not touch build-related paths).`), so the absence of test output is visible rather than appearing as a silent pass.
 
 The `integration` job is not currently a required check; failures surface but do not block merge. This is deliberate while the path-filter and skip-reporting behaviour bed in.
 
