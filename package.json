@@ -53,8 +53,11 @@
     "check:unused": "knip",
     "fix:lint": "eslint . --fix",
     "fix:format": "prettier --write src/",
-    "ci": "npm run check && npm run build && npm run test",
-    "prepare": "husky"
+    "ci": "npm run check && npm run build && npm run test:unit",
+    "prepare": "husky",
+    "test:unit": "vitest run --exclude \"src/test/integration/**\"",
+    "test:integration": "vitest run src/test/integration",
+    "test:all": "vitest run"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx,js,jsx,json,scss,css,html,md}": [

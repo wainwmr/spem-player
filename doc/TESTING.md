@@ -23,7 +23,19 @@ Without this step, any test importing `src/ohmjs/ly-grammar.ohm-bundle` will fai
 
 ## Running Tests
 
-Run tests once:
+Run unit tests once (excludes integration tests):
+
+```console
+npm run test:unit
+```
+
+Run integration tests once (subprocess-heavy, slower):
+
+```console
+npm run test:integration
+```
+
+Run all tests:
 
 ```console
 npm test
@@ -43,7 +55,9 @@ npm run test:coverage
 
 ## Test File Location and Naming
 
-Tests live in `src/test/` and follow the naming convention `*.test.ts`.
+Unit tests live in `src/test/` and follow the naming convention `*.test.ts`.
+
+Integration tests live in `src/test/integration/` and also follow `*.test.ts`.
 
 ## Key Dependencies
 
