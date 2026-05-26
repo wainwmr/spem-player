@@ -56,8 +56,7 @@
     "ci": "npm run check && npm run build && npm run test:unit",
     "prepare": "husky",
     "test:unit": "vitest run --exclude \"src/test/integration/**\"",
-    "test:integration": "vitest run src/test/integration",
-    "test:all": "vitest run"
+    "test:integration": "vitest run src/test/integration"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx,js,jsx,json,scss,css,html,md}": [
