@@ -55,9 +55,16 @@ npm run test:coverage
 
 ## Test File Location and Naming
 
-Unit tests live in `src/test/` and follow the naming convention `*.test.ts`.
+Unit tests live anywhere under `src/test/` *except* `src/test/integration/` and follow the naming convention `*.test.ts`. They run in-process under jsdom and should complete in under a few seconds each.
 
-Integration tests live in `src/test/integration/` and also follow `*.test.ts`.
+Integration tests live in `src/test/integration/` and also follow `*.test.ts`. They typically spawn subprocesses (LilyPond, the build pipeline) and are substantially slower.
+
+## CI Behaviour
+
+The two suites run as separate jobs in `.github/workflows/ci.yml`. See `doc/CI.md` for the full description; in summary:
+
+- The `test` job runs `npm run test:unit` on every push and pull request and is the required status check.
+- The `integration` job runs unconditionally on push to `main` and on a nightly cron, but on pull requests it is gated by `dorny/paths-filter` and runs only when the PR touches `build/`, `src/lilypond/`, `src/scores/`, `package.json`, or `package-lock.json`.
 
 ## Key Dependencies
 

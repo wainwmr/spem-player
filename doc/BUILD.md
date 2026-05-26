@@ -84,7 +84,19 @@ npm run fix:lint
 
 ## Testing
 
-Run tests:
+Run the fast unit suite (excludes subprocess-heavy integration tests):
+
+```console
+npm run test:unit
+```
+
+Run the integration suite only:
+
+```console
+npm run test:integration
+```
+
+Run all tests (unit and integration):
 
 ```console
 npm test
@@ -108,12 +120,25 @@ Run end-to-end tests in a real browser:
 npm run e2e
 ```
 
+See `doc/TESTING.md` for the unit-vs-integration split and `doc/CI.md` for how
+the two suites are gated in CI.
+
 ## CI Pipeline
 
-Run the full local CI pipeline (checks, build, and tests):
+Run the local commit-gate pipeline (checks, build, unit tests). Mirrors what
+CI's `test` job runs on every push and pull request, so it is fast:
 
 ```console
 npm run ci
+```
+
+Before pushing a change that touches `build/`, `src/lilypond/`, or
+`src/scores/`, also run the integration suite locally — those paths trigger
+the CI `integration` job, but it is easier to fix failures before the PR is
+open:
+
+```console
+npm run test:integration
 ```
 
 ## Build Notes
