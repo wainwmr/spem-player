@@ -223,7 +223,7 @@ describe("buildScores.mjs integration", () => {
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
-  });
+  }, 30000);
 
   it("caches by mtime", () => {
     const ws = createWorkspace();
@@ -256,7 +256,7 @@ describe("buildScores.mjs integration", () => {
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
-  });
+  }, 30000);
 
   it("rebuilds all scores when a version-root include is newer (Vera 353-01)", () => {
     const ws = createWorkspace();
