@@ -41,6 +41,9 @@ jobs:
               - "src/test/integration/**"
               - "package.json"
               - "package-lock.json"
+              - "vite.config.ts"
+              - "tsconfig.json"
+              - ".nvmrc"
               - ".github/workflows/ci.yml"
 
       - name: Check if integration tests should run
@@ -71,4 +74,7 @@ jobs:
 
       - name: Report skip when no build-related changes
         if: steps.should-run.outputs.run != 'true'
-        run: echo "Integration tests skipped (no build-related changes)"
+        run: |
+          msg="Integration tests skipped — should-run='${{ steps.should-run.outputs.run }}' (PR did not touch build-related paths)."
+          echo "$msg"
+          echo "$msg" >> "$GITHUB_STEP_SUMMARY"
