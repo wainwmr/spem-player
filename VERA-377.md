@@ -54,72 +54,72 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 > **code-reviewer, silent-failure-hunter, type-design-analyzer — `package.json:56`, `AGENTS-LOCAL.md` (`npm run ci` references), `doc/BUILD.md:116`, `doc/CI.md:25`:**
 > `ci` previously called `npm run test` (which ran everything). It now calls `npm run test:unit`. `AGENTS-LOCAL.md` documents `npm run ci` as the one-shot local gate inside `work` and `redo-pr`, so the local pre-PR check no longer catches integration regressions. `doc/BUILD.md` and `doc/CI.md` describe `npm run ci` as covering unit and integration tests. Fix: either re-point `ci` at `test:all` (or a new `ci:full`) so the local gate stays comprehensive, or update the three docs to reflect that `ci` is now a fast unit-only gate. Touches `AGENTS-LOCAL.md` — wording change requires Clive per the architecture design principle.
 
-**Bob's triage:** [open]
+**Bob's triage:** real defect, caused by this diff. Keep `npm run ci` as the fast unit-only gate (matches the CI workflow's `test` job behaviour and the ticket's under-2-min commit-gate goal). Update `doc/BUILD.md` and `doc/CI.md` accordingly. `AGENTS-LOCAL.md` doesn't actually document `ci` as the gate (only as a one-shot in the yield-safe list) so no Clive consult required. Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 11f107b — `doc/BUILD.md`, `doc/CI.md`)
 
 ### 377-06 — important — `doc/CI.md` is stale in multiple places
 
 > **silent-failure-hunter, comment-analyzer — `doc/CI.md` lines 12-27, 25, 27, 57, 68:**
 > Describes a single `ci.yml` job with a step table listing `npx vitest run` as "Unit and integration test suite"; references the required check by the old name `test`; states "The `test` job from `ci.yml` must pass before merge". After this PR: two jobs (`unit`, `integration`), the unit job runs `npm run ci` which is now unit-only, integration is conditional on build paths, the required check is no longer `test`. Reader following CI.md would believe integration tests gate every PR; they do not. Fix: rewrite the ci.yml section to describe both jobs and the path-filter behaviour, refresh job-name references.
 
-**Bob's triage:** [open]
+**Bob's triage:** real defect, caused by this diff. Lines 27, 57, 68 stay accurate because the job stayed named `test` (377-02 resolution); only line 25 and the workflow description need updating. Rewrite the `ci.yml` section with H3 sub-sections describing both jobs, the path-filter, the nightly cron, and the visible-skip log line. Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 11f107b)
 
 ### 377-07 — important — `doc/BUILD.md` and `doc/CONTRIBUTING.md` recommend `npm test` as the pre-PR check
 
 > **code-reviewer, comment-analyzer — `doc/BUILD.md:85-90`, `doc/CONTRIBUTING.md:162-168`:**
 > Both docs still tell contributors "run `npm test`" as the pre-PR check. After this change, `npm test` (still `vitest run`) runs the slow integration suite locally — surprising to anyone used to a fast pre-push check — while CI's commit gate now runs only unit tests. The doc and the gate have diverged. Fix: recommend `npm run test:unit` (or `npm run ci` if 377-05 is fixed by re-pointing) as the fast pre-commit check, with `npm test` / `npm run test:integration` documented as the fuller check.
 
-**Bob's triage:** [open]
+**Bob's triage:** real defect, caused by this diff. Update both docs to recommend `npm run test:unit` for the inner loop and the full suite (`npm test`) before push. Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 11f107b)
 
 ### 377-08 — important — `npm test` and `npm run test:all` are duplicates
 
 > **code-reviewer J, type-design-analyzer Finding 3, comment-analyzer 8 — `package.json:44, 60`:**
 > `"test": "vitest run"` (existing) and `"test:all": "vitest run"` (new) are identical. Two ways to spell "run everything" — one will eventually drift, or `knip` (`check:unused`) will flag it. Fix: either drop `test:all` and keep `npm test` as the all-tests alias, or redirect `"test": "npm run test:unit"` so the fast path is the default and `test:all` is the explicit "everything" spelling. Pick one.
 
-**Bob's triage:** [open]
+**Bob's triage:** real defect, caused by this diff. Drop `test:all`; `npm test` remains the all-tests alias as it was before. Simpler than renaming `test`. Subsumes 377-18 (co-locate). Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit cca04d3)
 
 ### 377-09 — important — `doc/TESTING.md` lacks CI-split coverage and `src/test/` ambiguity
 
 > **pr-test-analyzer H, comment-analyzer 5 — `doc/TESTING.md:26-37, 46`:**
 > The doc explains the three new npm scripts but says nothing about the CI side (unit always runs, integration only on build-path PRs + nightly), and the line "Unit tests live in `src/test/`" is technically true but ambiguous now that `src/test/integration/` is a subdirectory. A reader could drop a unit test into the integration subdir by accident. Fix: add a one-paragraph CI section and one extra sentence clarifying that unit tests live everywhere under `src/test/` *except* `integration/`.
 
-**Bob's triage:** [open]
+**Bob's triage:** real defect, caused by this diff. Add a CI Behaviour section pointing at doc/CI.md for the full description; clarify location in the existing Test File Location section. Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 11f107b)
 
 ### 377-10 — important — `README.md:73` source-layout line stale
 
 > **silent-failure-hunter, comment-analyzer 6 — `README.md:73`:**
 > Source-layout block says "`src/test/` — unit and integration tests (Vitest)" without signalling the integration split. Fix: "`src/test/` — unit tests; `src/test/integration/` — integration tests (Vitest)".
 
-**Bob's triage:** [open]
+**Bob's triage:** real defect, caused by this diff. Trivial one-line update. Address now.
 
-**Resolution:** [open]
+**Resolution:** addressed (commit 11f107b)
 
 ### 377-11 — important — `dependabot-auto-merge.yml` references stale check name
 
 > **silent-failure-hunter 7 — `.github/workflows/dependabot-auto-merge.yml:57` (per `doc/CI.md`):**
 > The doc claims auto-merge waits for the `test` status check. Cascade from 377-02: with the rename, dependabot auto-merge will gate on whatever the ruleset now requires; with 377-02 unresolved, patch PRs may auto-merge with no CI gate at all. Fix follows from 377-02 resolution — update both file and doc together.
 
-**Bob's triage:** [open]
+**Bob's triage:** re-examined after 377-02 resolution. The `dependabot-auto-merge.yml` file itself does not name a check — it uses `gh pr merge --auto` which inherits from the ruleset. The ruleset still requires `test`, and the job stayed named `test`, so the auto-merge gate is unchanged. Resolves as no-op via 377-02.
 
-**Resolution:** [open]
+**Resolution:** no action needed (cascade from 377-02 / commit 9f66158)
 
 ### 377-12 — important — Verify `test:unit` exclude pattern resolves as expected
 
 > **code-reviewer C, pr-test-analyzer D — `package.json:59-60`:**
 > `vitest run --exclude "src/test/integration/**"` appends to vitest's default exclude list. Pattern looks correct and uses forward slashes (vitest normalises on Windows). No agent could run it from sandbox. Sanity check: `npm run test:unit -- --reporter=verbose | grep buildScores` should return zero matches; `npm run test:integration -- --reporter=verbose | grep buildScores` should run only that test. Local verification needed before merge; if the exclude doesn't take effect (e.g. because `vite.config.ts` has a stronger `include`), switch to `vitest run "src/test/!(integration)/**/*.test.ts"` or add `test.exclude` in `vite.config.ts`.
 
-**Bob's triage:** [open]
+**Bob's triage:** verification step, not a code defect. Ran locally: `npm run test:unit` → 19 test files, 170 tests, 84s; `buildScores.test.ts` excluded. `npm run test:integration` → 1 test file, 10 tests, 48s; only `buildScores.test.ts` runs. Filters work.
 
-**Resolution:** [open]
+**Resolution:** verified locally (2026-05-26 23:48)
 
 ### 377-13 — suggestion — Integration job has no `timeout-minutes` safeguard
 
