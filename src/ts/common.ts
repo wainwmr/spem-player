@@ -108,15 +108,17 @@ export function toRecordingIndex(v: string | number): RecordingIndex {
   // `as RecordingIndex` cast would silently launder NaN past the type
   // system and surface as `undefined.length` deep in async callbacks.
   // Returning by cases keeps the runtime guarantee aligned with the
-  // declared `0 | 1` type. NaN, negative, and `[0, 1)` all map to 0.
+  // declared `0 | 1` type. Anything `>= 1` (including non-integer and
+  // far-over-max) maps to 1; NaN, negative, and `[0, 1)` all map to 0.
   const n = Number(v);
   return n >= 1 ? 1 : 0;
 }
 
-// Fail fast at import time: `RecordingIndex` is hard-coded to `0 | 1` but
-// the runtime clamp uses `config.recording.length`. If a third recording
-// is ever added, the type and data drift silently; assert they stay in
-// step at module load.
+// Fail fast at import time: `RecordingIndex` is hard-coded to `0 | 1` and
+// `toRecordingIndex` clamps with the literal `1`; both assume
+// `config.recording.length === 2`. If a third recording is ever added the
+// type and clamp drift silently from the data — assert they stay in step
+// at module load.
 if (config.recording.length !== 2) {
   throw new Error(
     `RecordingIndex assumes config.recording.length === 2, got ${config.recording.length}`
