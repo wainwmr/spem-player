@@ -269,6 +269,12 @@ export type LilypondData = {
   frLocations: FRlocation[];
 };
 
+// Module-level cache. processLilypond parses static data (spem.ly + scores),
+// so the result is invariant across calls within a process. Caching avoids
+// the ~500-700 ms Ohm parse on every call. Cleared by tests via
+// exportedForTesting.resetLilypondCache.
+let lilypondCache: LilypondData | null = null;
+
 // -----------------------------------------------------
 // Process the lilypond input file and return a LilypondData object:
 //   dict[position] = [ {choir, part, note}, ... ]
@@ -277,6 +283,11 @@ export type LilypondData = {
 //   frLocations — false-relation positions for rendering
 // -----------------------------------------------------
 export function processLilypond(): LilypondData {
+  if (lilypondCache) {
+    barCount = lilypondCache.barCount; // keep module-level global in sync
+    return lilypondCache;
+  }
+
   if (!semantics) {
     semantics = setupLilypondParser();
   }
@@ -359,7 +370,8 @@ export function processLilypond(): LilypondData {
 
   barCount = localBarCount; // side effect: keep global in sync for MusicControls.ts
   const frLocations = detectFalseRelations(activeNotes);
-  return { dict, ranges, barCount: localBarCount, frLocations };
+  lilypondCache = { dict, ranges, barCount: localBarCount, frLocations };
+  return lilypondCache;
 }
 
 export const exportedForTesting = {
@@ -368,4 +380,7 @@ export const exportedForTesting = {
   setupLilypondParser,
   noteToPitchClass,
   detectFalseRelations,
+  resetLilypondCache: () => {
+    lilypondCache = null;
+  },
 };

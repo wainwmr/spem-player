@@ -5,8 +5,13 @@ import {
   detectFalseRelations,
 } from "../ts/lily";
 import type { ActiveNote } from "../ts/lily";
-const { romanise, setupLilypondParser, noteToPitchClass, semantics } =
-  exportedForTesting;
+const {
+  romanise,
+  setupLilypondParser,
+  noteToPitchClass,
+  semantics,
+  resetLilypondCache,
+} = exportedForTesting;
 import { Note, Duration } from "../ts/music-classes";
 import * as ohm from "ohm-js";
 import lyGrammar from "../ohmjs/ly-grammar.ohm-bundle";
@@ -87,6 +92,10 @@ describe("lilypond parsing tests", () => {
   });
 
   it("processLilypond() throws on parse failure", () => {
+    // Clear the module-level cache so processLilypond actually calls
+    // lyGrammar.match (otherwise the cache from earlier tests short-circuits
+    // before the mocked failure).
+    resetLilypondCache();
     const failedMatch = lyGrammar.match("sop987 = \\relative c'' { g2 f e d }"); // invalid: digits in var name
     vi.spyOn(lyGrammar, "match").mockReturnValueOnce(failedMatch);
     expect(() => processLilypond()).toThrow("Lilypond parse failed");
