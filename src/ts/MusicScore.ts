@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import config from "./config";
-import { colors, toNum, RecordingIndex } from "./common";
+import { colors, toNum } from "./common";
 
 import { MusicElement } from "./MusicElement";
 
@@ -14,7 +14,6 @@ export class MusicScore extends MusicElement {
   svgHeight: number = 0;
 
   scoreType: string = "modern";
-  recording: RecordingIndex = 0; // 0 = ALC, 1 = CotE
 
   bars: number[] = [];
 
