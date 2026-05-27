@@ -72,6 +72,17 @@ The Node.js version is pinned in `.nvmrc`. Both GitHub Actions workflows read th
 
 ## Branch Protection
 
+## Duration Budget
+
+The `test` job logs the duration of each phase (check + build, unit tests) and reports a summary. Soft budgets (not hard gates):
+
+- **Unit tests:** under 2 minutes (120s).
+- **Full `test` job:** under 6 minutes (360s).
+
+Exceeding a budget emits a GitHub Actions warning annotation but does **not** fail the job or block merge. The budgets are monitored manually; if they are consistently exceeded, the cause is investigated and the test suite or CI configuration is optimised.
+
+## Branch Protection
+
 The `main` branch has a GitHub Ruleset ("Main should be golden") that enforces:
 
 - Pull requests required for all collaborators except the repository owner (bypass list)
