@@ -23,7 +23,19 @@ Without this step, any test importing `src/ohmjs/ly-grammar.ohm-bundle` will fai
 
 ## Running Tests
 
-Run tests once:
+Run unit tests once (excludes integration tests):
+
+```console
+npm run test:unit
+```
+
+Run integration tests once (subprocess-heavy, slower):
+
+```console
+npm run test:integration
+```
+
+Run all tests:
 
 ```console
 npm test
@@ -43,7 +55,18 @@ npm run test:coverage
 
 ## Test File Location and Naming
 
-Tests live in `src/test/` and follow the naming convention `*.test.ts`.
+Unit tests live anywhere under `src/test/` *except* `src/test/integration/` and follow the naming convention `*.test.ts`. They run in-process under jsdom and should complete in under a few seconds each. In-process tests against `build/` code (for example `postprocessSvg.test.ts`) live here as unit tests because they don't spawn subprocesses; the integration suite covers the subprocess-orchestrated `buildScores` pipeline.
+
+Integration tests live in `src/test/integration/` and also follow `*.test.ts`. They typically spawn subprocesses (LilyPond, the build pipeline) and are substantially slower.
+
+If a new shared fixture directory is introduced (e.g. `src/test/fixtures/`), add it to the `build-related` filter in `.github/workflows/ci.yml` so that PRs touching it exercise the integration suite.
+
+## CI Behaviour
+
+The two suites run as separate jobs in `.github/workflows/ci.yml`. See `doc/CI.md` for the canonical description; in summary:
+
+- The `test` job runs `npm run test:unit` on every push and pull request and is the required status check.
+- The `integration` job runs unconditionally on push to `main` and on a nightly cron. On pull requests it is gated by `dorny/paths-filter` and runs only when the PR touches build-related paths — see `doc/CI.md` for the canonical list.
 
 ## Key Dependencies
 

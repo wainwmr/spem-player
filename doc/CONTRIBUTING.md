@@ -159,7 +159,13 @@ A well-formed ticket body contains:
 
 1. Create a feature branch from `origin/main`.
 2. Make your changes, add tests, and update documentation.
-3. Ensure tests pass:
+3. Ensure tests pass. During the inner loop, run the fast unit suite:
+
+   ```console
+   npm run test:unit
+   ```
+
+   Before pushing, run the full suite (unit + integration) plus build and e2e:
 
    ```console
    npm test

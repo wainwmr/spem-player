@@ -42,6 +42,8 @@
     "build:ohm": "npx ohm generateBundles --withTypes src/ohmjs/ly-grammar.ohm",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:unit": "vitest run --exclude \"src/test/integration/**\"",
+    "test:integration": "vitest run src/test/integration",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
@@ -53,7 +55,7 @@
     "check:unused": "knip",
     "fix:lint": "eslint . --fix",
     "fix:format": "prettier --write src/",
-    "ci": "npm run check && npm run build && npm run test",
+    "ci": "npm run check && npm run build && npm run test:unit",
     "prepare": "husky"
   },
   "lint-staged": {

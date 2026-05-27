@@ -11,33 +11,43 @@ The repository uses GitHub Actions for automated testing and dependency updates.
 
 ### `ci.yml`
 
-Triggers on every push and pull request to `main`.
+Triggers on every push and pull request to `main`, and nightly at 00:00 UTC via a `schedule` cron.
 
-Jobs:
+Defines two parallel jobs.
 
-| Step | Purpose |
-|------|---------|
-| `npm ci` | Install dependencies |
-| `npm run format:check` | Verify Prettier formatting |
-| `npm run lint` | ESLint with zero warnings |
-| `npx tsc --noEmit` | Type check without emitting files |
-| `npm run build` | Production Vite build |
-| `npx vitest run` | Unit and integration test suite |
+#### `test` job
 
-This is the required status check for the `main` branch ruleset. Pull requests cannot merge until this job passes.
+Runs on every trigger. Executes `npm run ci`, which runs `npm run check` (lint, format, type check, unused, deps), `npm run build`, and `npm run test:unit` (the fast unit suite). This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
+
+#### `integration` job
+
+Runs the subprocess-heavy integration suite (`src/test/integration/`). It runs unconditionally on push to `main` and on the nightly cron, but on pull requests it uses `dorny/paths-filter` to skip unless the PR touches one of:
+
+- `build/**`
+- `src/lilypond/**`
+- `src/scores/**`
+- `src/test/integration/**`
+- `package.json`
+- `package-lock.json`
+- `vite.config.ts`
+- `tsconfig.json`
+- `.nvmrc`
+- `.github/workflows/ci.yml`
+
+A skipped PR run is reported on the workflow summary page and in the job log with a message quoting the actual `should-run` output (e.g. `Integration tests skipped — should-run='false' (PR did not touch build-related paths).`), so the absence of test output is visible rather than appearing as a silent pass.
+
+The `integration` job is not currently a required check; failures surface but do not block merge. This is deliberate while the path-filter and skip-reporting behaviour bed in.
 
 ### `e2e.yml`
 
 Triggers on a cron schedule (02:00 UTC daily) and on manual `workflow_dispatch`.
 
-Jobs:
+Steps:
 
-| Step | Purpose |
-|------|---------|
-| `npm ci` | Install dependencies |
-| `npm run build` | Production Vite build |
-| `npx playwright install --with-deps` | Install browser binaries |
-| `npx playwright test` | Run e2e suite |
+- `npm ci` — install dependencies.
+- `npm run build` — production Vite build.
+- `npx playwright install --with-deps` — install browser binaries.
+- `npx playwright test` — run the e2e suite.
 
 On failure, the Playwright HTML report is uploaded as an artifact and retained for 7 days.
 
