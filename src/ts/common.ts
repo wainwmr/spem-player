@@ -14,9 +14,10 @@ export interface Position {
 export type Brightness = "dark" | "light";
 export type ScoreType = "early" | "modern";
 export type Status = "playing" | "paused" | "loading";
+export type RecordingIndex = 0 | 1;
 
 export type State = {
-  recording: number; // 0 = ALC, 1 = CotE
+  recording: RecordingIndex; // 0 = ALC, 1 = CotE
   viewmode: Brightness;
   period: ScoreType;
   choir: number;
@@ -102,6 +103,10 @@ export function toNum(
   return integer ? Math.floor(nums + HDSQTIME) : nums;
 }
 
+export function toRecordingIndex(v: string | number): RecordingIndex {
+  return toNum(v, true, config.recording.length - 1) as RecordingIndex;
+}
+
 // Fail fast at import time: mismatched lengths would silently corrupt
 // getBarFromTime/getTimeFromBar interval lookups. Throwing at module scope
 // breaks the whole app on bad config — intentional, since the alternative
@@ -139,7 +144,7 @@ for (let v = 0; v < config.bartime.length; v++) {
  * @returns Bar number in `[barno[0], barno[last]]`. Never returns 0 as
  *   an out-of-range sentinel.
  */
-export function getBarFromTime(t: number, v: number = 0) {
+export function getBarFromTime(t: number, v: RecordingIndex = 0) {
   const lastIdx = config.bartime[v].length - 1;
   if (!Number.isFinite(t)) return config.barno[v][0];
   if (t <= config.bartime[v][0]) return config.barno[v][0];
@@ -180,7 +185,7 @@ export function getBarFromTime(t: number, v: number = 0) {
  * @returns Time in seconds, in `[bartime[0], bartime[last]]`. Never
  *   returns 0 as an out-of-range sentinel.
  */
-export function getTimeFromBar(b: number, v: number = 0) {
+export function getTimeFromBar(b: number, v: RecordingIndex = 0) {
   const lastIdx = config.barno[v].length - 1;
   if (!Number.isFinite(b)) return config.bartime[v][0];
   if (b <= config.barno[v][0]) return config.bartime[v][0];

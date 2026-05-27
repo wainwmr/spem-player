@@ -5,7 +5,7 @@ import "./src/scss/style.scss";
 
 import config from "./src/ts/config";
 
-import { PartType, State, colors, toNum } from "./src/ts/common";
+import { PartType, State, colors, toNum, toRecordingIndex } from "./src/ts/common";
 
 import { MusicCanvas } from "./src/ts/MusicCanvas";
 import { MusicCanvasWatcher } from "./src/ts/MusicCanvasWatcher";
@@ -470,9 +470,7 @@ function toggleScore(forceEarly = false) {
 }
 
 async function setRecording(r: number) {
-  r = toNum(r, false, config.recording.length - 1);
-
-  current.recording = r;
+  current.recording = toRecordingIndex(r);
   recordinglabel.textContent = config.recording_label[current.recording];
 
   // Update the input field
