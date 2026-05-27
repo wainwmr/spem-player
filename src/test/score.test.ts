@@ -390,6 +390,44 @@ describe("MusicScore custom element", () => {
     expect(elem.bar).toBe(2);
   });
 
+  it("scoreClicked selects bar 0 when clicking in intro bar region", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    const waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem?.setAttribute("choir", "0");
+    await waitingForLoaded;
+
+    const svg = elem.svg!;
+    svg.getScreenCTM = vi.fn(
+      () =>
+        ({
+          inverse: () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+        }) as any
+    );
+
+    elem.bars = [0, 100, 200, 300];
+
+    const clickPromise = new Promise<void>((resolve) => {
+      elem.addEventListener("music-score-click", () => resolve(), {
+        once: true,
+      });
+    });
+
+    const mockEvent = new MouseEvent("click", { clientX: 50, clientY: 50 });
+    elem.scoreClicked(mockEvent);
+
+    await clickPromise;
+    expect(elem.bar).toBe(0);
+  });
+
   it("creates a clef overlay on load", async () => {
     const elem = document.querySelector("music-score") as MusicScore;
     elem.scrollTo = vi.fn();

@@ -150,7 +150,8 @@ export class MusicScore extends MusicElement {
 
     var result = this.bars.find((x) => x > cursorpt.x);
     if (result) {
-      this.setBar(this.bars.indexOf(result));
+      const idx = this.bars.indexOf(result);
+      this.setBar(cursorpt.x < this.bars[1] ? 0 : idx);
       this.fireEvent("music-score-click");
     }
   }
