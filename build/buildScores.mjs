@@ -5,7 +5,8 @@
 
 import { execSync } from "child_process";
 import { existsSync, globSync, rmSync, statSync } from "fs";
-import { basename } from "path";
+import { basename, resolve } from "path";
+import { fileURLToPath } from "url";
 import { postprocessSvg } from "./postprocessSvg.mjs";
 
 
@@ -14,8 +15,8 @@ const defaults = {
   notation: null, // null means build all notations
 };
 
-function parseArgs() {
-  const args = process.argv.slice(2);
+function parseArgs(argv = process.argv.slice(2)) {
+  const args = argv;
   const options = { ...defaults };
   let i = 0;
   while (i < args.length) {
@@ -123,6 +124,10 @@ function needsRebuild(maxLyMtime, svgPath) {
   return maxLyMtime > statSync(svgPath).mtimeMs;
 }
 
+function buildPattern(lyDir, choir) {
+  return choir ? `${lyDir}/Choir ${choir}.ly` : `${lyDir}/Choir*.ly`;
+}
+
 function buildScore(ly, version, notation, maxLyMtime) {
   const choirName = basename(ly, ".ly");
   const svg = `src/scores/${version}/${notation}/${choirName}.svg`;
@@ -163,41 +168,49 @@ function buildScore(ly, version, notation, maxLyMtime) {
   }
 }
 
-const options = parseArgs();
+function main() {
+  const options = parseArgs();
 
-checkLilypond(options["skip-if-missing"]);
+  checkLilypond(options["skip-if-missing"]);
 
-const version = options.version || defaults.version;
-const notations = options.notation
-  ? [options.notation]
-  : ["early", "modern"];
+  const version = options.version || defaults.version;
+  const notations = options.notation
+    ? [options.notation]
+    : ["early", "modern"];
 
-for (const notation of notations) {
-  const lyDir = `src/lilypond/${version}/${notation}`;
-  const versionDir = `src/lilypond/${version}`;
-  const pattern = options.choir
-    ? `${lyDir}/Choir ${options.choir}.ly`
-    : `${lyDir}/Choir*.ly`;
+  for (const notation of notations) {
+    const lyDir = `src/lilypond/${version}/${notation}`;
+    const versionDir = `src/lilypond/${version}`;
+    const pattern = buildPattern(lyDir, options.choir);
 
-  const files = globSync(pattern);
+    const files = globSync(pattern);
 
-  if (files.length === 0) {
-    console.error(`No LilyPond files found matching: ${pattern}`);
-    process.exit(1);
+    if (files.length === 0) {
+      console.error(`No LilyPond files found matching: ${pattern}`);
+      process.exit(1);
+    }
+
+    // Compute max .ly mtime once per notation, not once per choir file.
+    let maxLyMtime;
+    try {
+      maxLyMtime = maxLyMtimeFor(lyDir, versionDir);
+    } catch (error) {
+      console.error(`\nError computing rebuild scope:\n${error.message}`);
+      process.exit(1);
+    }
+
+    for (const ly of files.sort()) {
+      buildScore(ly, version, notation, maxLyMtime);
+    }
   }
 
-  // Compute max .ly mtime once per notation, not once per choir file.
-  let maxLyMtime;
-  try {
-    maxLyMtime = maxLyMtimeFor(lyDir, versionDir);
-  } catch (error) {
-    console.error(`\nError computing rebuild scope:\n${error.message}`);
-    process.exit(1);
-  }
-
-  for (const ly of files.sort()) {
-    buildScore(ly, version, notation, maxLyMtime);
-  }
+  console.log("\nDone.");
 }
 
-console.log("\nDone.");
+const __filename = fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && resolve(process.argv[1]) === resolve(__filename);
+if (isMain) {
+  main();
+}
+
+export { parseArgs, buildPattern };
