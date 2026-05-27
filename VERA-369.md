@@ -53,7 +53,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** real defect, address now. Fail-fast: a silent drift between type and config is exactly the class of bug an import-time assertion exists to catch. Matches the existing pattern at `common.ts:110-116` for `bartime`/`barno`. Cost: 3 lines.
 
-**Resolution:** [in progress — separate fix commit]
+**Resolution:** addressed (commit `b50e3cf`). Added import-time assertion `if (config.recording.length !== 2) throw ...` in `common.ts` next to the existing bartime/barno fail-fast block.
 
 ### 369-05 — important: Public mutable `recording` field on `MusicElement` (encapsulation note)
 
@@ -71,7 +71,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** real defect (small), address now. Dead noise; deleting is one line, low risk, YAGNI. Inherited field works.
 
-**Resolution:** [in progress — separate fix commit]
+**Resolution:** addressed (commit `57c2a5c`). Deleted the shadow declaration and the now-unused `RecordingIndex` import from `MusicScore.ts`. Full unit suite (182 tests) and `tsc --noEmit` clean.
 
 ### 369-07 — important: `common.ts:162-163` "#369" comment now self-references this PR
 
@@ -86,7 +86,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** real defect (documentation drift), address now. The forward-looking framing is now actively misleading. Rewrite in past/present tense; drop the issue ref (the type signature now documents the invariant directly).
 
-**Resolution:** [in progress — separate fix commit]
+**Resolution:** addressed (commit `71ae3c8`). Comment rewritten to past/present tense: "An out-of-range `v` cannot occur: the parameter is `RecordingIndex` (`0 | 1`), narrowed at the boundary by `toRecordingIndex`." Symmetric reference in `getTimeFromBar` left as-is — it just says "see `getBarFromTime`" and inherits the new wording.
 
 ## Suggestions (non-blocking)
 
