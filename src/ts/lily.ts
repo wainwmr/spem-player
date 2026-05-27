@@ -259,20 +259,32 @@ export type Range = {
 };
 
 // HACK: barCount is still exported as a module-level variable consumed by MusicControls.ts
-// and controls.test.ts. All other parsed data is returned from processLilypond(). See ticket #107 follow-on.
+// and controls.test.ts. All other parsed data is returned from processLilypond(). The cache
+// added below re-syncs barCount on cache hits — see the cache-hit branch in processLilypond.
+// See ticket #107 follow-on.
 export var barCount: number = 0;
 
+// Fields are `readonly` (field-level only) because processLilypond now hands
+// out the same cached reference on every call (see lilypondCache below).
+// `readonly` on the field catches `lilyData.dict = somethingElse`, the most
+// likely accidental reassignment. The arrays themselves are not marked
+// readonly because canvas.test.ts deliberately mutates `dict` to exercise
+// seek()'s defensive path (restoring at end-of-test); deep readonly would
+// force a wider refactor than this perf-ticket warrants. Callers MUST treat
+// `dict`, `ranges`, and `frLocations` as immutable in non-test code.
 export type LilypondData = {
-  dict: Dictionary[][];
-  ranges: Range[][][];
-  barCount: number;
-  frLocations: FRlocation[];
+  readonly dict: Dictionary[][];
+  readonly ranges: Range[][][];
+  readonly barCount: number;
+  readonly frLocations: FRlocation[];
 };
 
 // Module-level cache. processLilypond parses static data (spem.ly + scores),
 // so the result is invariant across calls within a process. Caching avoids
-// the ~500-700 ms Ohm parse on every call. Cleared by tests via
-// exportedForTesting.resetLilypondCache.
+// the ~500-700 ms Ohm parse on every call. On a cache hit, the function also
+// re-syncs the module-level `barCount` export from the cached value to
+// preserve the side effect MusicControls.ts depends on. Tests can force a
+// re-parse via exportedForTesting.resetLilypondCache.
 let lilypondCache: LilypondData | null = null;
 
 // -----------------------------------------------------
@@ -288,9 +300,10 @@ export function processLilypond(): LilypondData {
     return lilypondCache;
   }
 
-  if (!semantics) {
-    semantics = setupLilypondParser();
-  }
+  // (`semantics` is initialised eagerly at module load on line 35, so no
+  // lazy-init is needed here. A previous defensive `if (!semantics)` guard
+  // was removed as part of #376 — it had been dead since the eager init
+  // landed.)
 
   // Parse lilypond from the ohm grammar
   const result = lyGrammar.match(spem);
@@ -380,6 +393,7 @@ export const exportedForTesting = {
   setupLilypondParser,
   noteToPitchClass,
   detectFalseRelations,
+  // test-only mutator; arrow form needed to close over the cache binding.
   resetLilypondCache: () => {
     lilypondCache = null;
   },
