@@ -104,7 +104,13 @@ export function toNum(
 }
 
 export function toRecordingIndex(v: string | number): RecordingIndex {
-  return toNum(v, true, config.recording.length - 1) as RecordingIndex;
+  // Construct-don't-cast: `Number(non-numeric)` yields NaN, so a bare
+  // `as RecordingIndex` cast would silently launder NaN past the type
+  // system and surface as `undefined.length` deep in async callbacks.
+  // Returning by cases keeps the runtime guarantee aligned with the
+  // declared `0 | 1` type. NaN, negative, and `[0, 1)` all map to 0.
+  const n = Number(v);
+  return n >= 1 ? 1 : 0;
 }
 
 // Fail fast at import time: mismatched lengths would silently corrupt

@@ -1,5 +1,6 @@
 import {
   toNum,
+  toRecordingIndex,
   getBarFromTime,
   getTimeFromBar,
   colors,
@@ -34,6 +35,30 @@ describe("common", () => {
     expect(toNum("7.2", false, 7)).toBe(7);
     expect(toNum("7.2", true, 7)).toBe(7);
     expect(toNum("10.999999958333332", true)).toBe(11);
+  });
+
+  it("toRecordingIndex() narrows to 0 | 1 with NaN-safe fallback", () => {
+    // Happy path
+    expect(toRecordingIndex(0)).toBe(0);
+    expect(toRecordingIndex(1)).toBe(1);
+    expect(toRecordingIndex("0")).toBe(0);
+    expect(toRecordingIndex("1")).toBe(1);
+
+    // Over-max clamp (pins 369-02: integer-truncation behaviour change)
+    expect(toRecordingIndex(2)).toBe(1);
+    expect(toRecordingIndex(99)).toBe(1);
+    expect(toRecordingIndex(1.5)).toBe(1);
+
+    // Under-min and fractional inputs (pins 369-03: no HDSQTIME upward rounding)
+    expect(toRecordingIndex(-1)).toBe(0);
+    expect(toRecordingIndex(0.5)).toBe(0);
+    expect(toRecordingIndex(0.95)).toBe(0);
+    expect(toRecordingIndex(0.94)).toBe(0);
+
+    // Non-numeric input (pins 369-01: bare cast no longer launders NaN)
+    expect(toRecordingIndex("foo")).toBe(0);
+    expect(toRecordingIndex(NaN)).toBe(0);
+    expect(toRecordingIndex(undefined as unknown as number)).toBe(0);
   });
 
   it("getBarFromTime() converts time to bar as expected for ALC audio", () => {
