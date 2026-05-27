@@ -180,8 +180,8 @@ export function getBarFromTime(t: number, v: RecordingIndex = 0) {
   // non-finite guard handles NaN/±Infinity, the two clamp guards
   // (t <= bartime[0], t >= bartime[last]) cover every other finite t,
   // and the loop covers every interior interval [bartime[i], bartime[i+1]).
-  // An out-of-range `v` would land here via undefined comparisons; see
-  // #369 for the type-narrowing fix that makes this case unrepresentable.
+  // An out-of-range `v` cannot occur: the parameter is `RecordingIndex`
+  // (`0 | 1`), narrowed at the boundary by `toRecordingIndex`.
   throw new Error("getBarFromTime: unreachable");
 }
 
