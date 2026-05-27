@@ -113,6 +113,16 @@ export function toRecordingIndex(v: string | number): RecordingIndex {
   return n >= 1 ? 1 : 0;
 }
 
+// Fail fast at import time: `RecordingIndex` is hard-coded to `0 | 1` but
+// the runtime clamp uses `config.recording.length`. If a third recording
+// is ever added, the type and data drift silently; assert they stay in
+// step at module load.
+if (config.recording.length !== 2) {
+  throw new Error(
+    `RecordingIndex assumes config.recording.length === 2, got ${config.recording.length}`
+  );
+}
+
 // Fail fast at import time: mismatched lengths would silently corrupt
 // getBarFromTime/getTimeFromBar interval lookups. Throwing at module scope
 // breaks the whole app on bad config — intentional, since the alternative
