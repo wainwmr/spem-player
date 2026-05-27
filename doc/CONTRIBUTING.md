@@ -272,7 +272,7 @@ When creating or modifying a component:
 
 ### Writing Tests
 
-Unit and integration tests use Vitest 3 with the jsdom environment. End-to-end
+Unit and integration tests use Vitest 4 with the jsdom environment. End-to-end
 tests use Playwright across Chromium, Firefox, and WebKit. See `doc/TESTING.md` for
 commands and configuration.
 

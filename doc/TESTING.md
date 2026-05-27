@@ -61,6 +61,39 @@ Integration tests live in `src/test/integration/` and also follow `*.test.ts`. T
 
 If a new shared fixture directory is introduced (e.g. `src/test/fixtures/`), add it to the `build-related` filter in `.github/workflows/ci.yml` so that PRs touching it exercise the integration suite.
 
+## Test Layer Decision Criteria
+
+Choosing the right layer keeps the suite fast and deterministic.
+
+**Unit tests** (Vitest/jsdom, `src/test/`) cover single modules in isolation:
+
+- custom element behaviour and state helpers
+- parser logic (LilyPond, Ohm grammar)
+- build script logic that does not spawn subprocesses
+- pure functions and domain models
+
+**Integration tests** (Vitest/jsdom, `src/test/integration/`) cover cross-module behaviour and subprocess orchestration:
+
+- event flow across multiple custom elements
+- build-pipeline verification that spawns Node scripts, LilyPond, or other external processes
+
+**End-to-end tests** (Playwright, `e2e/`) cover real browser behaviour:
+
+- real browser rendering and visual layout
+- audio lifecycle and playback state
+- keyboard navigation and interaction
+- CSS-triggered behaviour
+
+**What jsdom cannot reliably test:**
+
+- `getBoundingClientRect` (always returns zero)
+- `AudioContext` (not implemented)
+- canvas pixel output (the `canvas` package provides the API but not pixel-perfect browser rendering)
+- CSS-triggered behaviour (no layout engine)
+- real timer execution inside DOM event handlers (`vi.useFakeTimers()` does not intercept `setTimeout` scheduled by jsdom's internal event loop)
+
+If a test needs any of the above, it belongs in the E2E layer.
+
 ## CI Behaviour
 
 The two suites run as separate jobs in `.github/workflows/ci.yml`. See `doc/CI.md` for the canonical description; in summary:
