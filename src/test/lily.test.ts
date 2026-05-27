@@ -5,8 +5,13 @@ import {
   detectFalseRelations,
 } from "../ts/lily";
 import type { ActiveNote } from "../ts/lily";
-const { romanise, setupLilypondParser, noteToPitchClass, semantics } =
-  exportedForTesting;
+const {
+  romanise,
+  setupLilypondParser,
+  noteToPitchClass,
+  semantics,
+  resetLilypondCache,
+} = exportedForTesting;
 import { Note, Duration } from "../ts/music-classes";
 import * as ohm from "ohm-js";
 import lyGrammar from "../ohmjs/ly-grammar.ohm-bundle";
@@ -87,14 +92,35 @@ describe("lilypond parsing tests", () => {
   });
 
   it("processLilypond() throws on parse failure", () => {
+    // Clear the module-level cache so processLilypond actually calls
+    // lyGrammar.match. This test relies on earlier tests in this describe
+    // block having warmed the cache; without the reset the cache short-
+    // circuits before the mocked failure. If the test order changes or
+    // `test.isolate` is ever set to false, this assumption needs revisiting.
+    resetLilypondCache();
     const failedMatch = lyGrammar.match("sop987 = \\relative c'' { g2 f e d }"); // invalid: digits in var name
     vi.spyOn(lyGrammar, "match").mockReturnValueOnce(failedMatch);
     expect(() => processLilypond()).toThrow("Lilypond parse failed");
     vi.restoreAllMocks();
+    // The cache assignment in processLilypond is unreachable past the throw,
+    // so the cache should still be null. Subsequent calls should produce a
+    // valid parse result rather than handing out a poisoned cached value.
+    expect(processLilypond().dict.length).toBeGreaterThan(0);
   });
 
-  it("processLilypond() is idempotent — repeated calls give same dict length", () => {
+  it("processLilypond() returns identical reference on second call (cache hit)", () => {
+    const first = processLilypond();
+    const second = processLilypond();
+    expect(second).toBe(first); // referential equality — same cached object
+  });
+
+  it("processLilypond() is idempotent over the parse — repeated cold calls produce equal data", () => {
+    // Force a cold call by resetting the cache between invocations, so this
+    // test actually exercises the parser's determinism rather than the
+    // cache's identity (which is covered separately above).
+    resetLilypondCache();
     const result1 = processLilypond();
+    resetLilypondCache();
     const result2 = processLilypond();
     expect(result2.dict.length).toBe(result1.dict.length);
     expect(result2.ranges.length).toBe(result1.ranges.length);
