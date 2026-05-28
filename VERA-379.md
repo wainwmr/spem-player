@@ -3,13 +3,13 @@
 Mode: work (Vera ran during initial development, before PR open)
 Cycle: 1
 Generated: 2026-05-28 22:25 UTC
-Last run:  2026-05-28 22:25 UTC
+Last run:  2026-05-28 22:55 UTC
 
 See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/issues/379#issuecomment-4568868300)
 
 ## Summary
 
-[Placeholder — finalised at close-out.]
+Cycle 1 took two passes. Pass 1 was the heaviest small-diff cycle of the day: a 50-line CI yaml + docs change produced 8 important findings plus 3 explicit criticals from silent-failure-hunter — well above what the diff size predicted. The underlying problem was that the duration-budget telemetry was structurally broken in exactly the failure modes it existed to report on: `set -e` aborted before duration emission, the report step ran only on upstream success, and empty step outputs would syntax-error the arithmetic. Address-now covered 8 findings in one combined fix commit (`57d0085`): trap-equivalent status capture on the timed steps so duration survives failure, `if: always()` on the report step, `env:` for step outputs with regex-validating defaults, env-hoisted budgets (`UNIT_BUDGET_SEC` / `TOTAL_BUDGET_SEC`) for single source of truth, an honest "Total measured" rename + doc caveat, `$GITHUB_STEP_SUMMARY` write so the report surfaces on the run page, baseline note in doc/CI.md, stale-prose fix at doc:20, duplicate heading removal, and reverted out-of-scope `.nvmrc` quote tweak. Three findings deferred to Workbench items #285 (integration job duration + timeout-minutes), #286 (package.json single-source-of-truth via ci:check-build / ci:test split), #287 (telemetry aggregation/history follow-through). Pass 2 cleared with zero new critical or important findings across all five agents, with type-design ratings on the implicit `DurationReport` record moving up substantially (encapsulation 5→8, invariant expression 4→7, usefulness 5→8, enforcement 3→7). A small polish commit (`ccd39d2`) picked up the cheapest pass-2 suggestions (env block partition comments, regex-non-negativity intent comment, doc:20 "two timed phases" clarification). Notable: this is the second time today bias-toward-running has fired on a non-test-code change (#379 CI yaml, plus #356 build script) and surfaced load-bearing defects on small diffs.
 
 ## Findings
 
@@ -191,3 +191,17 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 - No PR conflicts with the five open Review PRs (#395, #396, #399, #400, #401) — no other open PR touches `.github/workflows/ci.yml` (PRA [H] confirmation).
 - Step naming pattern is consistent with the existing `integration:` job style.
 - Path-filter documentation is already at `doc/CI.md:24-39` from prior PR — ticket's "document path-filter rules" satisfied modulo 379-01.
+
+## Pass 2 notes
+
+All five agents independently judged gate-pass. No critical, no important. Suggestion-grade observations recorded:
+
+- **CRV (P2-1):** "Unit tests: 0s" misleading when only one phase failed; could distinguish missing-vs-zero in per-line output. Suggestion only; the existing both-zero guard handles the typical case and the upstream "(exit X)" line gives the user the failure signal.
+- **CRV (P2-2):** `-eo pipefail` not pinned in workflow defaults (a `defaults: run: shell: bash` block would make it explicit). Optional; the GH Actions default is stable and documented.
+- **CRV (P2-3):** pre-existing `${{ }}` interpolation at line 152 (integration job's Report skip). Safe in practice (literal "true"/"false") but out of scope.
+- **PRA (P2):** VERA-379*.md files present at branch root — workflow-hygiene observation; they are deleted by the gate's close-out commit (standard pattern).
+- **SFH (P2-1):** `||`-pattern vs `trap EXIT` choice means SIGKILL mid-phase produces no per-phase duration, only the "Duration data unavailable" fallback. Acceptable trade; the fallback is explicit and user-visible.
+- **SFH (P2-2):** Absence of `timeout-minutes` on the `test` job (deferred to #285) becomes slightly more material now that the report step has `if: always()` — a hung report would hang the job until the 6-hour default. Note added to #285's relevance.
+- **TDA (P2-N1):** Regex `^[0-9]+$` enforces non-negativity incidentally; addressed by the pass-2 polish commit `ccd39d2` (intent now documented in comment).
+- **TDA (P2-N2):** `env:` block had no separator between measurement inputs and policy budgets; addressed by pass-2 polish commit `ccd39d2` (`# Inputs` / `# Policy` comments).
+- **CMT (P2):** doc/CI.md:20 said "each phase timed" where the workflow times two phases (check+build as one timer, unit tests as the other); addressed by pass-2 polish commit `ccd39d2` ("two timed phases" clarification).
