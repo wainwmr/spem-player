@@ -51,10 +51,10 @@ describe("postprocessSvg build script", () => {
     expect(output).not.toMatch(/<svg[^>]*\swidth=/);
   }, 15000);
 
-  it("handles malformed anchor hrefs gracefully", () => {
+  it("preserves processing of well-formed anchors when an earlier anchor has a malformed href", () => {
     const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100" height="100">
-  <a xlink:href="textedit:///test%ZZ.ly:1:2:3">
+  <a xlink:href="textedit:///spem.ly:1:0:0?bad=%ZZ">
     <text>malformed</text>
   </a>
   <a xlink:href="textedit:///spem.ly:1:0:0">
@@ -62,27 +62,39 @@ describe("postprocessSvg build script", () => {
   </a>
 </svg>`;
 
-    const spemLy = `\\notesSoprano = \\relative c' \\new Voice = "soprano" { c' }`;
-    const wordsLy = `\\wordsSoprano = \\lyricmode \\new Lyrics = "wordsSoprano" { la }`;
+    // Fixture variable names must match postprocessSvg's notePattern /
+    // wordsPattern. Otherwise parseVariables returns an empty map and
+    // the well-formed anchor's data-part assertion would be vacuous.
+    const spemLy = `notesIASoprano = \\relative c' { c' }`;
+    const wordsLy = `wordsIASoprano = \\lyricmode { la }`;
 
-    const tmpSvg = join(tmpDir, "malformed-test.svg");
-    const tmpSpem = join(tmpDir, "malformed-spem.ly");
-    const tmpWords = join(tmpDir, "malformed-spem words.ly");
+    const malformedSvg = join(tmpDir, "malformed-test.svg");
+    const malformedSpem = join(tmpDir, "malformed-spem.ly");
+    const malformedWords = join(tmpDir, "malformed-spem words.ly");
 
-    writeFileSync(tmpSvg, svgContent, "utf-8");
-    writeFileSync(tmpSpem, spemLy, "utf-8");
-    writeFileSync(tmpWords, wordsLy, "utf-8");
+    writeFileSync(malformedSvg, svgContent, "utf-8");
+    writeFileSync(malformedSpem, spemLy, "utf-8");
+    writeFileSync(malformedWords, wordsLy, "utf-8");
 
-    expect(() => postprocessSvg(tmpSvg, tmpSpem, tmpWords)).not.toThrow();
+    expect(() =>
+      postprocessSvg(malformedSvg, malformedSpem, malformedWords)
+    ).not.toThrow();
 
-    const output = readFileSync(tmpSvg, "utf-8");
+    const output = readFileSync(malformedSvg, "utf-8");
 
-    // Both anchors should be unwrapped
+    // Both anchors unwrapped — text content survives as direct children.
     expect(output).not.toMatch(/<a\s/);
-    expect(output).not.toMatch(/<\/a>/);
+    expect(output).toMatch(/>well-formed</);
+    expect(output).toMatch(/>malformed</);
 
-    // Malformed anchor should have no data-part; well-formed may or may not
-    // depending on whether the href matches a variable range.
-    // The key assertion is that processing completed without throwing.
+    // Well-formed anchor's child was classified (loop did not abort on
+    // the malformed throw); malformed anchor's child was not classified
+    // (the `if (href)` guard suppressed the includes() checks).
+    expect(output).toMatch(/<text[^>]*data-part="0"[^>]*>well-formed/);
+    expect(output).toMatch(/<text(?![^>]*data-part)[^>]*>malformed/);
+
+    // Defence in depth: exactly one data-part in the output.
+    const dataParts = output.match(/data-part="\d+"/g) || [];
+    expect(dataParts).toEqual(['data-part="0"']);
   });
 });
