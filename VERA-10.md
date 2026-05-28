@@ -3,14 +3,14 @@
 Mode: work (Vera ran during initial development, before PR open)
 Cycle: 2
 Generated: 2026-05-28 13:42
-Last run:  2026-05-28 13:42
+Last run:  2026-05-28 14:00
 
 See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/issues/10#issuecomment-4564050528)
 (Earlier cycles: [Synthesis (cycle 1)](https://github.com/wainwmr/spem-player/issues/10#issuecomment-4561299282))
 
 ## Summary
 
-[To be finalised at close-out.]
+Cycle 2 ran on the squashed branch produced by `rebase-parked`. Pass 1 surfaced 8 critical/important findings across the five agents; Bob's triage reduced these to 3 real comment-drift items (10-25/26/27, all in `src/test/keyboard.test.ts`) plus 1 commit-message-vs-code discrepancy (10-24 — PageUp/Home/End named in the squash commit message but absent from the code's `SCROLL_KEYS`). The three comment fixes shipped in commit `5b2a6fc`. 10-24 was reclassified at close-out from "amend the commit message" to "name the actual scope in the PR description"; the squash commit message stays as-is, the durable record of the discrepancy is this synthesis comment plus the PR description Mark sees. Pass 2 ran clean apart from one low-severity wording finding (10-32 — "jump-word" claim in the rewritten Cmd+Arrow comment is technically wrong for body-focus, where Cmd+Arrow is history navigation; deferred, pre-existing in both files). The pass-2 finding is exactly the self-inflicted comment-drift pattern cycle 1 also exhibited — pass-2 catches pass-1's edits when they inherit a pre-existing inaccuracy. No re-run after the close-out edits.
 
 ## Findings
 
@@ -19,9 +19,9 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 > **code-reviewer / pr-test-analyzer / silent-failure-hunter / type-design-analyzer, index.ts:236-242 and commit d169f16:**
 > The squash commit message lists `Space, ArrowUp, ArrowDown, PageUp, PageDown, Home, End` as the swallowed set. Production code only contains `Space, ArrowUp, ArrowDown, ArrowLeft, ArrowRight`. PageUp/PageDown/Home/End are absent. The contract in the commit message is wider than the code's behaviour.
 
-**Bob's triage:** Real artefact, but the *defect* is in the squash commit message (written today during rebase-parked), not in the code. Cycle 1's scope decision was "Space + 4 arrows" — that decision stands; the iPad bug report names "space or arrows" and the app does not bind PageUp/Home/End. Resolution: amend the commit message at close-out so prose matches code. No code change.
+**Bob's triage:** Real artefact, but the *defect* is in the squash commit message (written today during rebase-parked), not in the code. Cycle 1's scope decision was "Space + 4 arrows" — that decision stands; the iPad bug report names "space or arrows" and the app does not bind PageUp/Home/End. Reclassified at close-out: rather than amending d169f16 (which requires rewriting pushed history with nested rebases the workflow discourages), the PR description will name the actual scope ("Space + 4 arrows"). The Vera synthesis comment on the ticket records the commit-message overstatement durably; reviewers see the PR description, not the individual commit messages, so the practical signal Mark gets is accurate.
 
-**Resolution:** addressed at close-out by amending d169f16's commit message.
+**Resolution:** deferred — PR description at publish-merge will name the actual scope.
 
 ### 10-25 — [important] Test comment makes false historical claim about plain Slash
 
@@ -85,6 +85,15 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 **Bob's triage:** Genuine refactor opportunities, not defects. The current `Set<string>` works correctly; the proposed literal union is structural improvement. File for the refactor report rather than expanding this PR.
 
 **Resolution:** deferred to refactor report for `index.ts`.
+
+### 10-32 — [suggestion] Pass-2 — "jump-word" wording inaccurate for body-focus path
+
+> **comment-analyzer pass 2, src/test/keyboard.test.ts:206-208 and index.ts:271-275:**
+> Both comments cite the OS shortcut as "macOS Cmd+Arrow jump-word" / "the OS jump-word shortcut". Cmd+ArrowLeft/Right is jump-word only when focus is inside a text field. On `<body>` focus (the path the handler actually exercises), macOS Safari/Chrome map Cmd+Arrow to history Back/Forward. The named OS behaviour doesn't match the focus context.
+
+**Bob's triage:** Real factual inaccuracy in user-facing prose (well, comments), but pre-existing in both files (the test comment inherited it via cycle-2 commit 5b2a6fc). Low severity per the gate's framework. Two-line fix would address it but triggers pass 3. Defer — opportunistic fix at the next touch of either comment, or pull into a redo-pr if Mark queries the wording.
+
+**Resolution:** deferred.
 
 ### Suggestions (not blocking)
 
