@@ -195,7 +195,10 @@ export function postprocessSvg(
 
     try {
       href = decodeURIComponent(href);
-    } catch (e) {
+    } catch {
+      // Malformed URI: skip classification but fall through so the
+      // anchor still gets unwrapped below, otherwise the broken
+      // <a> wrapper would survive in the output SVG.
       href = null;
     }
 
