@@ -30,7 +30,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real comment-to-code drift. Comment lies about history; user-skill rule says past references belong in the PR description anyway. Address now: drop the historical sentence, keep the present-tense rationale (Firefox quick-find).
 
-**Resolution:** addressed (commit hash TBD).
+**Resolution:** addressed (commit 5b2a6fc).
 
 ### 10-26 — [important] Test comment drags Alt into Cmd/Ctrl+Arrow rationale
 
@@ -39,7 +39,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real comment drift. Misleads on both what the test asserts and what the production code does. Address now: rewrite the comment to name only Cmd/Ctrl.
 
-**Resolution:** addressed (commit hash TBD).
+**Resolution:** addressed (commit 5b2a6fc).
 
 ### 10-27 — [important] Test top-of-file comment references the ticket as "the underlying bug"
 
@@ -48,7 +48,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real drift per user-skill rule "comments referencing the past belong in the PR description, not the code". Address now: drop the trailing sentence; keep the rationale.
 
-**Resolution:** addressed (commit hash TBD).
+**Resolution:** addressed (commit 5b2a6fc).
 
 ### 10-28 — [important] Non-Element `e.target` early-return loses scroll-prevention
 
