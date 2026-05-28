@@ -9,13 +9,37 @@ See also: [Original Report (cycle 1)](LINK_TO_BE_FILLED_AFTER_ORIGINAL_POSTED)
 
 ## Summary
 
-[Placeholder — finalised at close-out. Cycle 1; pass 1 produced 15 substantive
-findings (1 critical, 6 important, 8 suggestions/notes) across five agents,
-clustered on (a) the absence of a comment explaining why `#touchMoved` does
-not commit — four agents flagged the same concern from different angles —
-and (b) the missing inverse-contract test pinning that `#touchStarted` DOES
-commit. Bob's view: 3 findings worth addressing in-PR, 2 wiki drifts for
-the post-merge item, the remainder defended or noted in the PR description.]
+Cycle 1, one pass. Pass 2 was skipped — the addressed-now round was a
+4-line WHY comment in `#touchMoved` plus a paired touchstart-commits
+test; no production behaviour changed since the original fix at
+`82f685c`, so a re-run of the five agents would not surface new
+behavioural defects. The cluster centre was clear from the start —
+four agents flagged the absence of a comment explaining `#touchMoved`'s
+deliberate omission, and the comment plus the inverse-test address both
+"why does this read like a missed call site" worries simultaneously.
+
+Pass 1 produced 15 substantive findings (1 critical, 6 important, 8
+suggestions/notes). Bob's overall view: most of what Vera surfaced
+was either author-choice scope (the ticket explicitly preserved
+`this.draw()` and offered an OR on the overlay rewrite) or pre-existing
+concerns about the `music-canvas-touchmove` event payload contract and
+`#getTouchPos`'s hard-coded `"all"` (which #327 already tracks). The
+findings that were load-bearing for the #326 fix — the missing scar
+tissue around the deletion (326-01) and the missing inverse-test
+(326-02) — are addressed in this PR.
+
+Noteworthy: the silent-failure-hunter caught that the diff narrows the
+reproduction surface for #327 (per-touchmove `"all"` flood reduced to one
+write per gesture); this is **noted in the PR description** so owners of
+that ticket can test the existing repro path before any follow-up fix
+lands. The comment-analyzer caught two wiki-doc drifts in
+`refactor-MusicCanvas.ts.md` (`#touchMoved` listed as a `moveToPosition`
+caller) which are deferred to the post-merge docs Workbench item.
+
+**Counts:** 5 addressed (326-01, 326-02, 326-03, 326-07, 326-10);
+2 deferred to the post-merge docs Workbench item (326-08, 326-09); 7
+rejected with defence (326-04, 326-06, 326-11, 326-12, 326-14, 326-15;
+plus 326-05 and 326-13 noted in PR description rather than addressed).
 
 ## Findings
 
@@ -26,7 +50,7 @@ the post-merge item, the remainder defended or noted in the PR description.]
 
 **Bob's triage:** Real defect — the absence of code IS the contract. Without a comment, the omission reads as a missing call site. Address now with a one-line WHY anchored on the historical reason (#317/#326) and the failure mode (60+/s state churn).
 
-**Resolution:** address now — add comment above `#touchMoved`.
+**Resolution:** addressed (commit 7be11d0) — 4-line comment added above `fireEvent` in `#touchMoved` referencing #317/#326 and the `voicePart: "all"` interaction with #327.
 
 ### 326-02 — critical: no inverse-contract test pinning that `#touchStarted` commits
 
@@ -35,7 +59,7 @@ the post-merge item, the remainder defended or noted in the PR description.]
 
 **Bob's triage:** Real defect. The touch trio (start/move/end) is a contract; pinning only one side leaves the other vulnerable. The fix for #326 hinges entirely on this asymmetry being load-bearing. Address now with a new test asserting that touchstart DOES mutate state.
 
-**Resolution:** address now — add `touchstart commits position (#326)` test that touchstart-dispatches at a known coord and asserts state changed from seeded values.
+**Resolution:** addressed (commit 9227d21) — new test `touchstart commits position (#326)` dispatches a touchstart at (1200, 300) and asserts state changed from seeded (0, 2, 50) to derived (`voicePart === "all"`, choir !== 0, bar !== 50). `voicePart === "all"` is the deterministic falsifier.
 
 ### 326-03 — important: coordinate doesn't sufficiently differ from seeded state (PTA-B)
 
@@ -44,7 +68,7 @@ the post-merge item, the remainder defended or noted in the PR description.]
 
 **Bob's triage:** Real but partially mitigated by 326-02 (the new touchstart-commits test will pin a non-seeded post-commit position derived from the coord). For the existing touchmove test, the `voicePart="all"` assertion is the load-bearing falsifier; the choir/bar checks are belt-and-braces. Address now via the 326-02 test pair: touchstart at coordA (commits to some derived position), then touchmove at coordB; expect state to stay at coordA's derived position.
 
-**Resolution:** address now — folded into 326-02 (touchstart-then-touchmove paired test reads back the committed state, then asserts it's unchanged after move).
+**Resolution:** addressed (commit 9227d21) — the new touchstart-commits test and the renamed touchmove-no-commit test together pin the contract. Both use coord (1200, 300) which derives to choir≈6, bar≈119, voicePart="all" — distinct from the seeded (0, 2, 50). Documented inline via the "seed sentinel values" comment in each test.
 
 ### 326-04 — important: no touchend coverage (PTA-C)
 
@@ -80,7 +104,7 @@ the post-merge item, the remainder defended or noted in the PR description.]
 
 **Bob's triage:** This is the test shape Bob endorses for 326-02 — touchstart commits to derived position, then touchmove leaves it alone. Already folded into 326-02's resolution.
 
-**Resolution:** address now — folded into 326-02.
+**Resolution:** addressed (commit 9227d21) — folded into 326-02; the new tests use direct seeding + dispatch + assert pattern at line ~463 and the touchstart variant at line ~513.
 
 ### 326-08 — medium: wiki/refactor-MusicCanvas.ts.md:115 drift (CA-1)
 
@@ -89,7 +113,7 @@ the post-merge item, the remainder defended or noted in the PR description.]
 
 **Bob's triage:** Real wiki drift. But wiki edits do not ship in this PR (per `method-publish.md` step 5 — "Do not edit the wiki here"). Defer to the post-merge documentation Workbench item for this ticket.
 
-**Resolution:** deferred — captured in the post-merge docs Workbench item (Item #TBD).
+**Resolution:** deferred — captured in the post-merge docs Workbench item (filed during publish step 5 of this PR).
 
 ### 326-09 — medium: wiki/refactor-MusicCanvas.ts.md:258 drift (CA-2)
 
@@ -98,7 +122,7 @@ the post-merge item, the remainder defended or noted in the PR description.]
 
 **Bob's triage:** Same family as 326-08.
 
-**Resolution:** deferred — captured in the post-merge docs Workbench item (Item #TBD).
+**Resolution:** deferred — captured in the post-merge docs Workbench item (filed during publish step 5 of this PR).
 
 ### 326-10 — suggestion: test name "does not mutate canvas internal state" is broader than asserted (CA-4)
 
@@ -107,7 +131,7 @@ the post-merge item, the remainder defended or noted in the PR description.]
 
 **Bob's triage:** Real, cheap. Address now per DAMP-test-name convention (name pins the #326 contract, not the broader claim).
 
-**Resolution:** address now — rename test.
+**Resolution:** addressed (commit 9227d21) — test renamed to `"touchmove does not commit position (#326)"`.
 
 ### 326-11 — note: `this.draw()` redraws unchanged scene (SFH-1)
 
