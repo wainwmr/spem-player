@@ -23,7 +23,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real defect, unambiguous. Cross-agent convergence. Address now.
 
-**Resolution:** [placeholder — to be filled after fix]
+**Resolution:** Addressed in commit `57d0085`. Orphan heading deleted; section order is now `Node Version` → `Duration Budget` → `Branch Protection`.
 
 ### 379-02 — critical — Report step lacks `if: always()` guard
 
@@ -33,7 +33,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real defect. The feature exists to provide signal on CI-duration regression; making it conditional on success means it can't catch the regression it's named for. Address now, combined with 379-03 (defaults) and 379-04 (trap-pattern duration capture).
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `57d0085`. Report step now has `if: always()`.
 
 ### 379-03 — critical — Empty step outputs produce bash arithmetic syntax error
 
@@ -45,7 +45,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real defect. Pairs with 379-02 — both are required to make the telemetry useful under failure. Address now in the same commit as 379-02.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `57d0085`. Inputs come via `env:` (not YAML interpolation) and are validated with `[[ "$VAR" =~ ^[0-9]+$ ]] || VAR=0`. If both durations are 0 the step emits a "Duration data unavailable" line and exits 0 rather than erroring on arithmetic.
 
 ### 379-04 — critical — Duration only written on success
 
@@ -66,7 +66,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real defect, same family as 379-02 and 379-03. Address now in the same fix commit so the telemetry is robust top-to-bottom.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `57d0085`. Both timed steps adopt the trap-equivalent pattern (`status=0; cmd || status=$?; ... ; exit "$status"`) so duration is always emitted; the step's success/failure semantics are preserved via the captured exit code.
 
 ### 379-05 — important — `Total CI duration` overstates what is measured
 
@@ -78,7 +78,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real defect at the doc level. Cheapest correct fix is the rename; measuring wall-clock would be a scope expansion. Address now.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `57d0085`. Workflow label is now "Total measured (check+build + unit tests)"; docs section retitled "measured phases combined" with an explicit caveat that per-job overhead is excluded.
 
 ### 379-06 — important — Threshold magic numbers duplicated across 5-7 sites
 
@@ -90,7 +90,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real maintainability concern. The `env:` hoist is the standard YAML remedy and costs little. Address now.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `57d0085`. Budgets are now step-level `env:` (`UNIT_BUDGET_SEC: 120`, `TOTAL_BUDGET_SEC: 360`); workflow has single source of truth. Docs cite the env var names so the doc no longer asserts the numbers in isolation.
 
 ### 379-07 — important — `${{ steps.X.outputs.Y }}` not hardened per file convention
 
@@ -100,7 +100,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real defect at the consistency level; the `env:` pattern is cleaner than YAML-time interpolation and the file already establishes the convention. Address now, naturally combined with 379-06's env-hoist.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `57d0085`. Step outputs come via `env:` (`CHECK_BUILD_S`, `UNIT_S`), validated, defaulted. No more YAML-time interpolation into shell.
 
 ### 379-08 — important — Out-of-scope `.nvmrc` quote tweak applied inconsistently
 
@@ -110,7 +110,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Scope-creep cosmetic change. Revert is cleanest for #379 — keeps the diff focused on what the ticket asks for. Address now.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `57d0085`. Both `.nvmrc` lines reverted to single-quote form, matching the pre-PR state and `e2e.yml`.
 
 ### 379-09 — important — Stale `npm run ci` description in doc/CI.md
 
@@ -120,7 +120,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real defect at the comment-rot level — the PR is the proximate cause. Cheap to fix; pair with 379-01 in the doc commit.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `57d0085`. `doc/CI.md:20` rewritten to describe the three-phase workflow without the `npm run ci` framing.
 
 ### 379-10 — important — 120s / 360s budgets are unevidenced
 
@@ -132,7 +132,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real concern — without provenance the budgets are arbitrary. Cheap to fix as a one-line doc addition. Address now alongside 379-09 in the doc commit. This subsumes CMT F2.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `57d0085`. Doc section now records the current Linux baseline (~60s for the test job's measured phases) and explains the 2× / 6× budget headroom rationale.
 
 ### 379-11 — important — Integration job duration not measured
 
@@ -142,7 +142,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real scope shortfall but expanding now would balloon the PR. Defer to a Workbench item with a clear "extend the same pattern to the integration job" brief. Document the scope decision in doc/CI.md.
 
-**Resolution:** [placeholder — defer to Workbench item]
+**Resolution:** Deferred to Workbench item [#285](https://github.com/wainwright1000/spem-tools/issues/285) (covers integration-job duration measurement AND adding `timeout-minutes` to the test job).
 
 ### 379-12 — important — `npm run ci` split loses single-source-of-truth with package.json
 
@@ -152,7 +152,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real concern but the cleanest fix touches package.json which is wider than this PR's scope. Defer to a Workbench item.
 
-**Resolution:** [placeholder — defer to Workbench item]
+**Resolution:** Deferred to Workbench item [#286](https://github.com/wainwright1000/spem-tools/issues/286) (split `ci` into `ci:check-build` and `ci:test` scripts in package.json so workflow and humans share definitions).
 
 ### 379-13 — important — `::warning::` annotations have no follow-through
 
@@ -164,7 +164,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real concern but the team has no workflow today to act on aggregated telemetry (same family as #356's observability defer). The cheap step-summary improvement is worth adding now — it makes warnings visible on the workflow run page without burying them. Address the step-summary piece now; defer the aggregation/history piece to a Workbench item with `[#356/#379 observability follow-up]` framing.
 
-**Resolution:** [placeholder]
+**Resolution:** Partially addressed in commit `57d0085` — report step now writes a structured block to `$GITHUB_STEP_SUMMARY` (heading + per-phase lines + Budget-exceeded sub-blocks when triggered), so the warning surfaces on the workflow run summary page rather than buried in step logs. Aggregation and history deferred to Workbench item [#287](https://github.com/wainwright1000/spem-tools/issues/287).
 
 ## Suggestions (noted; do not block the gate)
 
