@@ -460,7 +460,11 @@ describe("MusicCanvas custom element", () => {
     expect(pos.choir).toBeLessThan(config.choirs[0].length);
   });
 
-  it("touchmove does not mutate canvas internal state", async () => {
+  it("touchstart commits position (#326)", async () => {
+    // Inverse contract for the #326 touchmove fix: touchstart MUST still
+    // commit. A future refactor that drops the `#moveToPosition` call from
+    // `#touchStarted` (structurally identical to the line we removed from
+    // `#touchMoved`) needs to fail this test.
     expect(canvas).not.toBeNull();
 
     canvas!.getBoundingClientRect = vi.fn(
@@ -478,7 +482,65 @@ describe("MusicCanvas custom element", () => {
         }) as DOMRect
     );
 
-    // Set a known initial state
+    // Seed sentinel values that the derived coord-A position MUST differ from
+    // (canvasPadding=5; (1200,300) maps to choir≈6, bar≈119, voicePart="all").
+    canvas!.choir = 0;
+    canvas!.voicePart = 2;
+    canvas!.bar = 50;
+
+    const startPromise = new Promise<void>((resolve) => {
+      canvas!.addEventListener("music-canvas-touchstart", () => resolve(), {
+        once: true,
+      });
+    });
+
+    const innerCanvas = canvas!.querySelector("canvas")!;
+    const touch = {
+      clientX: 1200,
+      clientY: 300,
+      identifier: 0,
+      target: innerCanvas,
+    };
+    const touchStart = new Event("touchstart", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(touchStart, "targetTouches", { value: [touch] });
+    Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
+
+    innerCanvas.dispatchEvent(touchStart);
+    await startPromise;
+
+    // State must have been committed to the derived position. voicePart is the
+    // load-bearing falsifier: `#getTouchPos` hard-codes "all" (see #327), so
+    // any commit replaces the seeded `2` with `"all"`.
+    expect(canvas!.voicePart).toBe("all");
+    expect(canvas!.choir).not.toBe(0);
+    expect(canvas!.bar).not.toBe(50);
+  });
+
+  it("touchmove does not commit position (#326)", async () => {
+    expect(canvas).not.toBeNull();
+
+    canvas!.getBoundingClientRect = vi.fn(
+      () =>
+        ({
+          width: 1400,
+          height: 400,
+          top: 0,
+          left: 0,
+          right: 1400,
+          bottom: 400,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        }) as DOMRect
+    );
+
+    // Seed sentinel values that DIFFER from what `#getTouchPos` would derive at
+    // (1200,300) (which is choir≈6, bar≈119, voicePart="all"). The seeded
+    // `voicePart=2` is the load-bearing falsifier: if touchmove ever commits,
+    // it would be overwritten with "all" (hard-coded by `#getTouchPos`).
     canvas!.choir = 0;
     canvas!.voicePart = 2;
     canvas!.bar = 50;
@@ -506,7 +568,7 @@ describe("MusicCanvas custom element", () => {
     innerCanvas.dispatchEvent(touchMove);
     await movePromise;
 
-    // Internal state should remain unchanged
+    // Internal state must remain at the seeded values — no commit on move.
     expect(canvas!.choir).toBe(0);
     expect(canvas!.voicePart).toBe(2);
     expect(canvas!.bar).toBe(50);
