@@ -41,7 +41,7 @@ describe("parseArgs", () => {
     expect(options.choir).toBe("I A");
   });
 
-  it("does not treat a following --arg as a value for the previous key", () => {
+  it("treats a bare --flag followed by another --flag as boolean, then parses the next flag normally", () => {
     const options = parseArgs(["--skip-if-missing", "--version", "OUP"]);
     expect(options["skip-if-missing"]).toBe(true);
     expect(options.version).toBe("OUP");

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /* eslint-env node */
 // Copyright (c) 2024-2026 Mark Wainwright
 // SPDX-License-Identifier: MIT
@@ -15,8 +14,18 @@ const defaults = {
   notation: null, // null means build all notations
 };
 
-function parseArgs(argv = process.argv.slice(2)) {
-  const args = argv;
+/**
+ * Parse CLI-style flags into an options object.
+ *
+ * Accepts `--key=value`, `--key value`, and bare `--flag` (-> true).
+ * A token starting with `--` is never consumed as a value for the
+ * preceding key. Unknown keys are accepted and returned as-is.
+ * Bare positional args (not starting with `--`) are ignored.
+ *
+ * @param {string[]} [args] argument list, defaults to `process.argv.slice(2)`.
+ * @returns options object seeded with `defaults`.
+ */
+function parseArgs(args = process.argv.slice(2)) {
   const options = { ...defaults };
   let i = 0;
   while (i < args.length) {
@@ -124,6 +133,11 @@ function needsRebuild(maxLyMtime, svgPath) {
   return maxLyMtime > statSync(svgPath).mtimeMs;
 }
 
+/**
+ * Build the glob pattern for choir `.ly` files in a notation directory.
+ * Encodes the on-disk naming convention (`Choir <id>.ly`, space-separated).
+ * When `choir` is omitted, returns a wildcard matching every choir.
+ */
 function buildPattern(lyDir, choir) {
   return choir ? `${lyDir}/Choir ${choir}.ly` : `${lyDir}/Choir*.ly`;
 }
@@ -207,6 +221,9 @@ function main() {
   console.log("\nDone.");
 }
 
+// Only run main() when this file is invoked directly from the CLI, not when
+// imported by tests. `process.argv[1]` is undefined under some embed contexts;
+// treat that as "not main".
 const __filename = fileURLToPath(import.meta.url);
 const isMain = process.argv[1] && resolve(process.argv[1]) === resolve(__filename);
 if (isMain) {
