@@ -19,7 +19,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real defect, blocking. The test gate was clearly skipped during development. Fix: remove the shebang. The script is invoked via `node build/buildScores.mjs ...` in `package.json`; doesn't need to be directly executable (matches `postprocessSvg.mjs` pattern). Address now.
 
-**Resolution:** addressed (commit hash TBD).
+**Resolution:** addressed (commit d372937).
 
 ### 261-02 — [important] Dead alias `const args = argv;`
 
@@ -27,7 +27,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real cosmetic defect. Rename the parameter to `args` and drop the alias line. Address now.
 
-**Resolution:** addressed (commit hash TBD).
+**Resolution:** addressed (commit d372937).
 
 ### 261-03 — [important] `.d.mts` types misrepresent runtime guarantees
 
@@ -38,7 +38,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real type defect. The `.d.mts` is new in this PR; fixing it now costs five lines. Does not touch parser behaviour (no scope creep). Address now.
 
-**Resolution:** addressed (commit hash TBD).
+**Resolution:** addressed (commit d372937).
 
 ### 261-04 — [important] parseArgs has no JSDoc
 
@@ -46,7 +46,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real documentation gap; the test file is doing the documentation work today via test names. Add a JSDoc block naming the contract. Address now.
 
-**Resolution:** addressed (commit hash TBD).
+**Resolution:** addressed (commit d372937).
 
 ### 261-05 — [important] buildPattern has no JSDoc
 
@@ -54,7 +54,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Add one-line JSDoc. Address now.
 
-**Resolution:** addressed (commit hash TBD).
+**Resolution:** addressed (commit d372937).
 
 ### 261-06 — [important] `.d.mts` has no header comment
 
@@ -62,7 +62,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Add 2-3 line header. Address now.
 
-**Resolution:** addressed (commit hash TBD).
+**Resolution:** addressed (commit d372937).
 
 ### 261-07 — [important] isMain guard has no comment
 
@@ -70,7 +70,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Add a one-line comment naming the guard's purpose. Address now.
 
-**Resolution:** addressed (commit hash TBD).
+**Resolution:** addressed (commit d372937).
 
 ### 261-08 — [important] Unknown flags silently accepted (CLUSTER)
 
@@ -78,7 +78,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real silent-failure mode, but **scope creep** — fixing requires adding an allowlist + raising errors, which changes parser behaviour beyond "add tests for current behaviour". File a separate parser-hardening ticket.
 
-**Resolution:** deferred — file Workbench item / new ticket for parseArgs allowlist.
+**Resolution:** deferred to Workbench Item #270 (parser hardening).
 
 ### 261-09 — [important] Missing-value detection (CLUSTER)
 
@@ -86,7 +86,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Same cluster as 261-08. Requires per-flag arity table — parser redesign. Defer to follow-up ticket.
 
-**Resolution:** deferred — same ticket as 261-08.
+**Resolution:** deferred to Workbench Item #270.
 
 ### 261-10 — [important] Empty values silently accepted
 
@@ -94,7 +94,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Same cluster. Defer.
 
-**Resolution:** deferred — same ticket.
+**Resolution:** deferred to Workbench Item #270.
 
 ### 261-11 — [important] Repeated flag last-wins unpinned
 
@@ -102,7 +102,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Could be pinned with a single test (cheap), but doing so requires deciding whether last-wins is the intended contract or whether repeated flags should error. That decision belongs in the parser-hardening ticket. Defer.
 
-**Resolution:** deferred — same ticket.
+**Resolution:** deferred to Workbench Item #270.
 
 ### 261-12 — [important] choir type vs runtime mismatch (CLUSTER)
 
@@ -110,7 +110,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Same cluster as 261-08/09 — fixing means the parser enforces "choir requires value". Defer to ticket. (Note: 261-03 doesn't touch choir to avoid scope creep into the parser-hardening domain.)
 
-**Resolution:** deferred — same ticket.
+**Resolution:** deferred to Workbench Item #270.
 
 ### 261-13 — [important] Key containing `=` after the first
 
@@ -118,7 +118,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Cluster. Defer.
 
-**Resolution:** deferred — same ticket.
+**Resolution:** deferred to Workbench Item #270.
 
 ### 261-14 — [important] buildPattern shell-meta values
 
@@ -126,7 +126,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Cluster. Defer.
 
-**Resolution:** deferred — same ticket.
+**Resolution:** deferred to Workbench Item #270.
 
 ### 261-15 — [suggestion] Test description on line 44 too narrow
 
@@ -134,7 +134,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Cheap rename of the test name. Address now (one-line change).
 
-**Resolution:** addressed (commit hash TBD).
+**Resolution:** addressed (commit d372937).
 
 ### Suggestions (not blocking; not addressed)
 
