@@ -3,13 +3,13 @@
 Mode: work (Vera ran during initial development, before PR open)
 Cycle: 1
 Generated: 2026-05-28 21:50 UTC
-Last run:  2026-05-28 21:50 UTC
+Last run:  2026-05-28 22:15 UTC
 
 See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/issues/356#issuecomment-4568649676)
 
 ## Summary
 
-[Placeholder — finalised at close-out.]
+Cycle 1 took two passes. Pass 1 surfaced 8 important findings across five agents on a 2-file, 60-line diff — heavier than the diff size predicts. Three were addressed in-line: 356-01 (test fixture rewrite that pins AC #2 and AC #3 by renaming fixture variables to match the production `notePattern` and adding an exactly-one-`data-part="0"` cardinality assertion), 356-02 (WHY comment on the catch's fall-through), and 356-03 (parameter-less `catch`). Two were rejected: 356-05 (`instanceof URIError` narrowing, defensive against speculative future code) and 356-07 (in-band null sentinel critique, discharged-in-spirit by the WHY comment per Bob). Three were deferred to Workbench items #282 (observability cluster: 356-04 silent-swallow + 356-06 unobservable null-href unwrap) and #283 (loop-split refactor: 356-08). Pass 2 cleared with zero new critical or important findings; all five agents independently concurred on gate-pass. Notable: silent-failure-hunter recorded continued disagreement that "WHY comment ≠ observability" — accepted with Bob's no-workflow-today rationale, captured in #282's brief. Type-design ratings on the `href: string | null` post-condition moved encapsulation 4→5 and invariant expression 3→6 with the WHY comment in place.
 
 ## Findings
 
@@ -123,3 +123,17 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 - Surviving `// Check words first since "spem words.ly" contains "spem.ly"` comment (CMT F3) is a legitimate WHY-comment, correctly placed after the re-indentation.
 - No ticket-number references in code (CMT F5) — CLAUDE.md compliance.
 - No PR conflicts with the four open Review PRs (#395, #396, #399, #400) — disjoint file footprints (PRA confirmation).
+
+## Pass 2 notes
+
+All five agents independently judged gate-pass. No critical, no important. Suggestion-grade observations recorded here for the future:
+
+- **CRV (P2-1):** test title "preserves processing of well-formed anchors when an *earlier* anchor has a malformed href" hints at symmetric coverage (later-malformed) that the fixture does not provide. Cosmetic. No action.
+- **PRA (P2-5):** fixture rename couples the test to the production `notePattern`/`wordsPattern` regex shape. Comment at test lines 65-67 documents the coupling; principled fix (export the patterns) is wider than warranted. Recorded as known coupling cost.
+- **PRA (P2-6):** well-formed-then-malformed ordering coverage gap (originally PRA F6, suggestion 356-14) still unaddressed; deferred. Risk is low because the loop body is per-anchor and stateless across iterations.
+- **SFH (P2-1):** WHY comment improves reviewability but does not convert the swallow into a runtime-observable event. Accepts the disposition for #282 given Bob's no-workflow-today rationale; flagged so the synthesis does not silently retire SFH F1 as "addressed by comment".
+- **SFH (P2-2):** the comment's "Malformed URI" wording asserts a diagnosis the catch does not enforce — defensible while the `try` body stays a single `decodeURIComponent` call; would mislead if anything else is inlined into the `try`. Treat the one-line `try` body as a maintenance constraint.
+- **SFH (P2-4):** test does not (and should not) assert no-warn — that would lock in the deferred disposition. A `vi.spyOn(console, "warn")` hook would be a cheap scaffold for when #282 lands; not done now.
+- **TDA (P2-N2):** the negative-lookahead regex `/<text(?![^>]*data-part)[^>]*>malformed/` is fragile under serialiser changes; the exact-equality cardinality assertion is the robust backstop and is doing the load-bearing work.
+- **TDA (P2-N3):** fixture-variable / production-regex coupling is noted in #283's brief as the natural trigger condition for the helper extraction (TDA F3) — if a second `decodeURIComponent` call site ever appears, the YAGNI argument flips.
+- **CMT (P2-2/5/6):** suggested tighter wordings for the catch comment ("the unwrap below" rather than "broken `<a>` wrapper") and the test fixture comment ("notePattern / wordsPattern in postprocessSvg.mjs" rather than identifier names) — minor rot-risk reductions. Left as-is; current wordings are accurate and small.
