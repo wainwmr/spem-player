@@ -17,7 +17,7 @@ Defines two parallel jobs.
 
 #### `test` job
 
-Runs on every trigger. Executes `npm run check` (lint, format, type check, unused, deps), then `npm run build`, then `npm run test:unit` (the fast unit suite), with each phase timed against a soft duration budget — see Duration Budget below. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
+Runs on every trigger. Executes `npm run check` (lint, format, type check, unused, deps) and `npm run build` as one timed phase, then `npm run test:unit` (the fast unit suite) as a second timed phase, both measured against a soft duration budget — see Duration Budget below. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
 
 #### `integration` job
 
