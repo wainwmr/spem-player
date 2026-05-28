@@ -390,7 +390,7 @@ describe("MusicScore custom element", () => {
     expect(elem.bar).toBe(2);
   });
 
-  it("scoreClicked selects bar 0 when clicking in intro bar region", async () => {
+  it("scoreClicked routes intro region to bar 0 and pins boundary at bars[1] (#320)", async () => {
     const elem = document.querySelector("music-score") as MusicScore;
     elem.scrollTo = vi.fn();
 
@@ -413,19 +413,34 @@ describe("MusicScore custom element", () => {
         }) as any
     );
 
+    // Stub `bars` directly so the test exercises `scoreClicked`'s arithmetic
+    // against a known-shape array, rather than the SVG-derived shape from
+    // `getBars()` (which depends on rendered tspan layout). bars[1] = 100 is
+    // the intro/bar-1 boundary; the strict-`<` semantic in MusicScore.ts must
+    // hold.
     elem.bars = [0, 100, 200, 300];
 
-    const clickPromise = new Promise<void>((resolve) => {
-      elem.addEventListener("music-score-click", () => resolve(), {
-        once: true,
+    const clickAt = async (x: number): Promise<void> => {
+      const fired = new Promise<void>((resolve) => {
+        elem.addEventListener("music-score-click", () => resolve(), {
+          once: true,
+        });
       });
-    });
+      elem.scoreClicked(new MouseEvent("click", { clientX: x, clientY: 50 }));
+      await fired;
+    };
 
-    const mockEvent = new MouseEvent("click", { clientX: 50, clientY: 50 });
-    elem.scoreClicked(mockEvent);
+    await clickAt(0);
+    expect(elem.bar).toBe(0); // very left edge → intro
 
-    await clickPromise;
-    expect(elem.bar).toBe(0);
+    await clickAt(50);
+    expect(elem.bar).toBe(0); // well inside intro region
+
+    await clickAt(99);
+    expect(elem.bar).toBe(0); // just under bars[1] → still intro
+
+    await clickAt(100);
+    expect(elem.bar).toBe(2); // exactly bars[1]: strict-< excludes, find returns bars[2]
   });
 
   it("creates a clef overlay on load", async () => {
