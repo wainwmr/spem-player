@@ -26,7 +26,7 @@ of comment + test gaps are worth addressing now to make the fix legible.]
 
 **Bob's triage:** Defensive nit; not caused by this diff. `getBars()` always returns a `bars` array of length ≥ 2 (it does `unshift(0)` and `push(svgWidth)` unconditionally). The new read of `bars[1]` is no more brittle than the pre-existing reads of `bars[length-1]` and `bars[length-2]` in `scrollSmooth` (lines 264, 266). A length guard would be a real change in shape and a stylistic mismatch with the rest of the file. Defer — file a Workbench Spem item for the broader hardening of `bars` access (covers 320-01, 320-11, 320-12).
 
-**Resolution:** deferred (Workbench Item #TBD — `bars: number[]` hardening: invariant encoding + guarded indexers across `scoreClicked` and `scrollSmooth`).
+**Resolution:** deferred (Workbench Item #275 — `scoreClicked` silent-failure surface + `bars[]` invariant hardening; covers 320-01, 320-07, 320-08, 320-09, 320-11, 320-12, 320-16, 320-17, 320-18, 320-20).
 
 ### 320-02 — important: test doesn't exercise the bug's edges
 
@@ -35,7 +35,7 @@ of comment + test gaps are worth addressing now to make the fix legible.]
 
 **Bob's triage:** Real defect. A regression test for the off-by-one bug needs to pin both endpoints of the "intro" interval — `x=0` and `x` just under `bars[1]` — and the boundary exact-equality at `x === bars[1]` to lock the strict-`<` semantic. Address now; cheap test additions.
 
-**Resolution:** address now — extend the new test to include `x=0`, `x=99`, `x=100` (boundary), `x=150` is already covered by the sibling test at line 355.
+**Resolution:** addressed (commit 35ffb29) — extended test pins `x=0`, `x=50`, `x=99` (intro region → bar 0) and `x=100` (boundary, strict-< → bar 2). `x=150` continues to be covered by the sibling test at line 355.
 
 ### 320-03 — important: magic bars[1] needs a WHY comment
 
@@ -44,7 +44,7 @@ of comment + test gaps are worth addressing now to make the fix legible.]
 
 **Bob's triage:** Real defect — comment debt. The whole point of this PR is to make the intro semantic explicit; leaving the cut-off uncommented would invite the same off-by-one back in next time. Address now with a one-line WHY anchored on intent, not mechanics.
 
-**Resolution:** address now — add WHY comment at line 154.
+**Resolution:** addressed (commit 29ee6e9) — WHY comment added above the `bars[1]` cut-off referencing the `bars` field JSDoc.
 
 ### 320-04 — important: missing boundary test at cursorpt.x === bars[1]
 
@@ -53,7 +53,7 @@ of comment + test gaps are worth addressing now to make the fix legible.]
 
 **Bob's triage:** Same family as 320-02. Address now.
 
-**Resolution:** address now — folded into the 320-02 test extension.
+**Resolution:** addressed (commit 35ffb29) — folded into the 320-02 test extension; `x=100` (boundary) pinned at `bar=2`.
 
 ### 320-05 — important: bar 1 region behaviour (PTA [B])
 
@@ -71,7 +71,7 @@ of comment + test gaps are worth addressing now to make the fix legible.]
 
 **Bob's triage:** Real defect — same family as 320-03 (comment debt). One short JSDoc anchored on the data invariant gives both `scoreClicked` and `scrollSmooth` a shared reference. Address now.
 
-**Resolution:** address now — add JSDoc on `bars` field.
+**Resolution:** addressed (commit 29ee6e9) — JSDoc added on `bars` field stating the invariant (`bars[0] === 0`, `bars[length-1] === svgWidth`, intro region is `[0, bars[1])`).
 
 ### 320-07 — important (pre-existing): click-past-last-bar silent no-op
 
@@ -143,7 +143,7 @@ of comment + test gaps are worth addressing now to make the fix legible.]
 
 **Bob's triage:** Real, cheap, address now per convention.
 
-**Resolution:** address now — rename test to include `(#320)` suffix.
+**Resolution:** addressed (commit 35ffb29) — test renamed to `"scoreClicked routes intro region to bar 0 and pins boundary at bars[1] (#320)"`.
 
 ### 320-15 — suggestion: direct mutation of elem.bars (PTA-E)
 
@@ -152,7 +152,7 @@ of comment + test gaps are worth addressing now to make the fix legible.]
 
 **Bob's triage:** Test-level pragmatism is fine; a one-line comment is cheap.
 
-**Resolution:** address now — add a short comment above the `elem.bars` assignment in the new test.
+**Resolution:** addressed (commit 35ffb29) — comment added above the `elem.bars` stub explaining why the test bypasses `getBars()`.
 
 ### 320-16 — suggestion: tests share heavy setup (PTA-F + CR-07)
 
