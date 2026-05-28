@@ -24,9 +24,9 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 >
 > Fix: rename fixture variable to `notesIASoprano` (and `wordsIASoprano`), tighten the well-formed anchor's href to fall inside that range, assert `data-part="0"` on the well-formed `<text>` element, assert absence of `data-part` on the malformed `<text>` element, and delete the rot-prone explanatory comment.
 
-**Bob's triage:** [placeholder]
+**Bob's triage:** Real defect in the test. The test makes assertions the production code can satisfy by accident (zero processed anchors), so it would pass a future regression where neither anchor reaches the unwrap step. Fix is surgical: rename fixture variables to match `notes(?:I{1,3}|IV)[AB]<part>`, assert exactly one `data-part="0"` (proves well-formed processed), assert malformed text has no `data-part`. Rename test title to describe the behavioural contract. Address now.
 
-**Resolution:** [placeholder]
+**Resolution:** [placeholder — to be filled after RGR]
 
 ### 356-02 — important — Missing WHY comment on `href = null` decision
 
@@ -34,9 +34,9 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 >
 > The catch block has no comment explaining why the decision is to set `href = null` rather than `continue` (skip the anchor) or re-throw. A future maintainer reading "set href to null on decode failure" will reasonably ask "why not just skip this anchor?" — and the answer (the anchor still needs to be unwrapped at lines 232-238 so the SVG remains well-formed) is not visible from the code. This is exactly the kind of non-obvious WHY-decision CLAUDE.md says SHOULD be commented. Highest rot risk in the diff: the next person reading this will not know whether "fall through and unwrap anyway" is intentional or a bug.
 
-**Bob's triage:** [placeholder]
+**Bob's triage:** Real defect at the comment-rot level. The choice of `href = null` over `continue` is not obvious; the unwrap-must-still-run rationale lives only in the author's head. CLAUDE.md says comment when the WHY is non-obvious; this qualifies. One-line addition. Address now.
 
-**Resolution:** [placeholder]
+**Resolution:** [placeholder — to be filled after RGR]
 
 ### 356-03 — important — `catch (e)` binds an unused error
 
@@ -44,9 +44,9 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 >
 > Cluster: CRV F1, CMT F6, TDA F7. The catch parameter `e` is named but unused. The parameter-less `catch { ... }` form (ES2019, already used elsewhere in the file ecosystem) more honestly signals "we deliberately discard this" and avoids the linter friction. The named-but-unused binding subtly invites a future maintainer to think there is something to do with `e` when in fact the decision is to silently swallow.
 
-**Bob's triage:** [placeholder]
+**Bob's triage:** Defensive nit but it pairs with 356-02 mechanically — same lines, same scope. Parameter-less `catch { ... }` is cleaner and more honest about intent. Trivial. Address now, paired with 356-02.
 
-**Resolution:** [placeholder]
+**Resolution:** [placeholder — to be filled after RGR]
 
 ### 356-04 — important — Silent swallow lacks any log/warn
 
@@ -54,9 +54,9 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 >
 > The catch swallows the URIError with no `console.warn`, no `console.error`, no telemetry. A malformed `xlink:href` is by the ticket's own framing a signal of upstream corruption — a LilyPond bug, an unexpected percent sequence in a path, a mangled textedit URI. As written, the build completes "successfully" and no developer breadcrumb survives for the next time this happens. Recommendation: `console.warn` carrying svgPath, raw pre-decode href, and the error message.
 
-**Bob's triage:** [placeholder]
+**Bob's triage:** Defensive nit. The build output is already noisy; a `console.warn` adds value only if the team has a workflow to act on it. Adding it now is solution-looking-for-problem. Defer to a Workbench item so the option is preserved if observability becomes a real need.
 
-**Resolution:** [placeholder]
+**Resolution:** Deferred to Workbench item [TBD] (observability cluster, paired with 356-06).
 
 ### 356-05 — important — Broad catch could swallow non-URIError
 
@@ -64,9 +64,9 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 >
 > `decodeURIComponent` is documented to throw only `URIError`. The catch is shaped to also swallow `TypeError` (e.g. if `href` somehow became `undefined` between the truthy guard at line 194 and the call at line 197 — impossible today, but a future edit could break the invariant) and any other thrown value. The narrower form is `catch (e) { if (e instanceof URIError) { href = null; } else { throw e; } }`.
 
-**Bob's triage:** [placeholder]
+**Bob's triage:** Defensive nit against a hypothetical refactor that doesn't exist. The try block contains one operation with one documented throw type, on a string already truthy-guarded. The `instanceof URIError` check adds friction now for zero current benefit. Reject.
 
-**Resolution:** [placeholder]
+**Resolution:** Rejected. At a single call site with one operation whose throw shape is documented, narrowing to `URIError` adds reading cost without changing observable behaviour.
 
 ### 356-06 — important — Unwrap-on-null-href is unobservable at build time
 
@@ -74,9 +74,9 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 >
 > Originally framed critical, downgraded to important. The unwrap step runs unconditionally even when `href` is `null` (the ticket's intended behaviour — "malformed anchors are unwrapped but receive no `data-part`"). But the resulting SVG looks indistinguishable from one whose anchors were well-formed but pointed outside variable ranges. If a future LilyPond upgrade silently starts producing thousands of malformed hrefs per build, nothing notices. Add a counter and `console.warn` at end of `postprocessSvg` if non-zero.
 
-**Bob's triage:** [placeholder]
+**Bob's triage:** Defensive nit, observability-flavoured, naturally pairs with 356-04. Defer to the same Workbench item as 356-04.
 
-**Resolution:** [placeholder]
+**Resolution:** Deferred to Workbench item [TBD] (observability cluster, paired with 356-04).
 
 ### 356-07 — important — In-band `null` sentinel for `href` is unnamed
 
@@ -84,9 +84,9 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 >
 > The "decode failed" state is represented by mutating the same `let href` binding from `string` to `null`. The failure mode is not a separate variable, not a wrapped result. Ratings: encapsulation 4/10, invariant expression 3/10, usefulness 7/10, enforcement 5/10. The cleanest fix here would be `continue`-in-catch except the unwrap step must still run — that fact alone is a design smell worth surfacing (see also 356-08).
 
-**Bob's triage:** [placeholder]
+**Bob's triage:** Real concern but its mitigation overlaps with 356-02 (WHY comment) and 356-03 (cleaner catch). With those addressed, the sentinel's intent is documented at the call site. A wrapped `tryDecodeURIComponent` helper at one call site is YAGNI per code-reviewer's own assessment. Reject as addressed-in-spirit by 356-02 + 356-03; revisit if a second call site appears.
 
-**Resolution:** [placeholder]
+**Resolution:** Rejected. Sentinel intent is documented by 356-02 (WHY comment in catch). Helper extraction is YAGNI at one call site.
 
 ### 356-08 — important — Loop body conflates classification + unwrap
 
@@ -94,9 +94,9 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 >
 > The loop does two unrelated things per anchor: (a) compute partIndex from href, (b) unwrap the anchor. Because they share an iteration, a `continue` on decode failure would skip the unwrap, forcing the `string | null` sentinel. Splitting into two passes (first pass: collect `{aElem, partIndex}` pairs, where decode failures yield no entry; second pass: unwrap all anchors) would let the decode-failure case be expressed without a sentinel. Bigger refactor than #356 calls for.
 
-**Bob's triage:** [placeholder]
+**Bob's triage:** Real structural debt, larger refactor than #356 calls for, no current defect from it (the in-band sentinel works once 356-02 + 356-03 land). Defer to a Workbench item — separate from 356-04/06 because this is structural, not observability.
 
-**Resolution:** [placeholder]
+**Resolution:** Deferred to Workbench item [TBD] (loop-split refactor for postprocessSvg).
 
 ## Suggestions (noted; do not block the gate)
 
