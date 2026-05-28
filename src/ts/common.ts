@@ -14,9 +14,10 @@ export interface Position {
 export type Brightness = "dark" | "light";
 export type ScoreType = "early" | "modern";
 export type Status = "playing" | "paused" | "loading";
+export type RecordingIndex = 0 | 1;
 
 export type State = {
-  recording: number; // 0 = ALC, 1 = CotE
+  recording: RecordingIndex; // 0 = ALC, 1 = CotE
   viewmode: Brightness;
   period: ScoreType;
   choir: number;
@@ -102,6 +103,28 @@ export function toNum(
   return integer ? Math.floor(nums + HDSQTIME) : nums;
 }
 
+export function toRecordingIndex(v: string | number): RecordingIndex {
+  // Construct-don't-cast: `Number(non-numeric)` yields NaN, so a bare
+  // `as RecordingIndex` cast would silently launder NaN past the type
+  // system and surface as `undefined.length` deep in async callbacks.
+  // Returning by cases keeps the runtime guarantee aligned with the
+  // declared `0 | 1` type. Anything `>= 1` (including non-integer and
+  // far-over-max) maps to 1; NaN, negative, and `[0, 1)` all map to 0.
+  const n = Number(v);
+  return n >= 1 ? 1 : 0;
+}
+
+// Fail fast at import time: `RecordingIndex` is hard-coded to `0 | 1` and
+// `toRecordingIndex` clamps with the literal `1`; both assume
+// `config.recording.length === 2`. If a third recording is ever added the
+// type and clamp drift silently from the data — assert they stay in step
+// at module load.
+if (config.recording.length !== 2) {
+  throw new Error(
+    `RecordingIndex assumes config.recording.length === 2, got ${config.recording.length}`
+  );
+}
+
 // Fail fast at import time: mismatched lengths would silently corrupt
 // getBarFromTime/getTimeFromBar interval lookups. Throwing at module scope
 // breaks the whole app on bad config — intentional, since the alternative
@@ -139,7 +162,7 @@ for (let v = 0; v < config.bartime.length; v++) {
  * @returns Bar number in `[barno[0], barno[last]]`. Never returns 0 as
  *   an out-of-range sentinel.
  */
-export function getBarFromTime(t: number, v: number = 0) {
+export function getBarFromTime(t: number, v: RecordingIndex = 0) {
   const lastIdx = config.bartime[v].length - 1;
   if (!Number.isFinite(t)) return config.barno[v][0];
   if (t <= config.bartime[v][0]) return config.barno[v][0];
@@ -159,8 +182,8 @@ export function getBarFromTime(t: number, v: number = 0) {
   // non-finite guard handles NaN/±Infinity, the two clamp guards
   // (t <= bartime[0], t >= bartime[last]) cover every other finite t,
   // and the loop covers every interior interval [bartime[i], bartime[i+1]).
-  // An out-of-range `v` would land here via undefined comparisons; see
-  // #369 for the type-narrowing fix that makes this case unrepresentable.
+  // An out-of-range `v` cannot occur: the parameter is `RecordingIndex`
+  // (`0 | 1`), narrowed at the boundary by `toRecordingIndex`.
   throw new Error("getBarFromTime: unreachable");
 }
 
@@ -180,7 +203,7 @@ export function getBarFromTime(t: number, v: number = 0) {
  * @returns Time in seconds, in `[bartime[0], bartime[last]]`. Never
  *   returns 0 as an out-of-range sentinel.
  */
-export function getTimeFromBar(b: number, v: number = 0) {
+export function getTimeFromBar(b: number, v: RecordingIndex = 0) {
   const lastIdx = config.barno[v].length - 1;
   if (!Number.isFinite(b)) return config.bartime[v][0];
   if (b <= config.barno[v][0]) return config.bartime[v][0];

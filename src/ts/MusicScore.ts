@@ -14,7 +14,6 @@ export class MusicScore extends MusicElement {
   svgHeight: number = 0;
 
   scoreType: string = "modern";
-  recording: number = 0; // 0 = ALC, 1 = CotE
 
   bars: number[] = [];
 

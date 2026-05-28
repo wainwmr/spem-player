@@ -2,11 +2,17 @@
 // SPDX-License-Identifier: MIT
 
 import config from "./config";
-import { PartType, Position, toNum } from "./common";
+import {
+  PartType,
+  Position,
+  toNum,
+  RecordingIndex,
+  toRecordingIndex,
+} from "./common";
 
 export class MusicElement extends HTMLElement {
   // state
-  recording: number = 0; // 0 = ALC, 1 = CotE
+  recording: RecordingIndex = 0; // 0 = ALC, 1 = CotE
   choir: number = 0;
   voicePart: PartType = "all";
   bar: number = 0;
@@ -75,7 +81,7 @@ export class MusicElement extends HTMLElement {
   }
 
   setRecording(v: number | string) {
-    this.recording = toNum(v, true, config.recording.length - 1);
+    this.recording = toRecordingIndex(v);
     this.fireEvent("music-controls-changed");
   }
 
