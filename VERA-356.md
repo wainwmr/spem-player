@@ -26,7 +26,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real defect in the test. The test makes assertions the production code can satisfy by accident (zero processed anchors), so it would pass a future regression where neither anchor reaches the unwrap step. Fix is surgical: rename fixture variables to match `notes(?:I{1,3}|IV)[AB]<part>`, assert exactly one `data-part="0"` (proves well-formed processed), assert malformed text has no `data-part`. Rename test title to describe the behavioural contract. Address now.
 
-**Resolution:** [placeholder — to be filled after RGR]
+**Resolution:** Addressed in commit `e9b1efa`. Fixture variables renamed to `notesIASoprano` / `wordsIASoprano` so `parseVariables` populates `noteMap`. Test asserts exactly one `data-part="0"` in output, that the well-formed `<text>` carries that attribute, and that the malformed `<text>` does not. Test title rewritten to describe the behavioural contract.
 
 ### 356-02 — important — Missing WHY comment on `href = null` decision
 
@@ -36,7 +36,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real defect at the comment-rot level. The choice of `href = null` over `continue` is not obvious; the unwrap-must-still-run rationale lives only in the author's head. CLAUDE.md says comment when the WHY is non-obvious; this qualifies. One-line addition. Address now.
 
-**Resolution:** [placeholder — to be filled after RGR]
+**Resolution:** Addressed in commit `ad95d0e` (combined with 356-03). Catch block now carries a comment naming the trade-off: skip classification but fall through so the anchor still gets unwrapped.
 
 ### 356-03 — important — `catch (e)` binds an unused error
 
@@ -46,7 +46,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Defensive nit but it pairs with 356-02 mechanically — same lines, same scope. Parameter-less `catch { ... }` is cleaner and more honest about intent. Trivial. Address now, paired with 356-02.
 
-**Resolution:** [placeholder — to be filled after RGR]
+**Resolution:** Addressed in commit `ad95d0e` (combined with 356-02). `catch (e)` becomes parameter-less `catch`.
 
 ### 356-04 — important — Silent swallow lacks any log/warn
 
@@ -56,7 +56,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Defensive nit. The build output is already noisy; a `console.warn` adds value only if the team has a workflow to act on it. Adding it now is solution-looking-for-problem. Defer to a Workbench item so the option is preserved if observability becomes a real need.
 
-**Resolution:** Deferred to Workbench item [TBD] (observability cluster, paired with 356-06).
+**Resolution:** Deferred to Workbench item [#282](https://github.com/wainwright1000/spem-tools/issues/282) (observability cluster, paired with 356-06).
 
 ### 356-05 — important — Broad catch could swallow non-URIError
 
@@ -76,7 +76,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Defensive nit, observability-flavoured, naturally pairs with 356-04. Defer to the same Workbench item as 356-04.
 
-**Resolution:** Deferred to Workbench item [TBD] (observability cluster, paired with 356-04).
+**Resolution:** Deferred to Workbench item [#282](https://github.com/wainwright1000/spem-tools/issues/282) (observability cluster, paired with 356-04).
 
 ### 356-07 — important — In-band `null` sentinel for `href` is unnamed
 
@@ -96,7 +96,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real structural debt, larger refactor than #356 calls for, no current defect from it (the in-band sentinel works once 356-02 + 356-03 land). Defer to a Workbench item — separate from 356-04/06 because this is structural, not observability.
 
-**Resolution:** Deferred to Workbench item [TBD] (loop-split refactor for postprocessSvg).
+**Resolution:** Deferred to Workbench item [#283](https://github.com/wainwright1000/spem-tools/issues/283) (loop-split refactor for postprocessSvg).
 
 ## Suggestions (noted; do not block the gate)
 
