@@ -173,8 +173,7 @@ describe("Space bar play/pause", () => {
   describe("Keyboard event swallowing for iPad page-wiggle", () => {
     // Behavioural assertion via `defaultPrevented`, not by spying on
     // `preventDefault()`. The browser only cares whether the default was
-    // actually prevented — that's the user-visible contract. See #10
-    // for the underlying bug.
+    // actually prevented — that's the user-visible contract.
     function dispatchKeydown(
       target: EventTarget,
       init: KeyboardEventInit
@@ -205,8 +204,8 @@ describe("Space bar play/pause", () => {
     );
 
     // Cmd/Ctrl+Arrow is the "seek-by-section" handler — must preventDefault
-    // so the OS shortcut (macOS jump-word on Cmd, Windows browser-back on
-    // Alt; on the iPad path, Cmd is the modifier users press) doesn't fire.
+    // so the OS shortcut (macOS Cmd+Arrow jump-word; on iPad, Cmd is the
+    // modifier users press) doesn't fire.
     it.each([["ArrowLeft"], ["ArrowRight"]])(
       "preventDefaults Ctrl+%s (app handles section seek)",
       (code) => {
@@ -256,8 +255,8 @@ describe("Space bar play/pause", () => {
       document.body.removeChild(button);
     });
 
-    // Plain `/` (no Shift) is not a help-modal trigger; previously it was
-    // silently swallowed which broke Firefox quick-find. Must pass through.
+    // Plain `/` (no Shift) is not a help-modal trigger and must pass
+    // through — Firefox uses it for quick-find.
     it("does not preventDefault Slash without Shift", () => {
       expect(
         dispatchKeydown(document.body, { code: "Slash" }).defaultPrevented
