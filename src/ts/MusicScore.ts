@@ -15,6 +15,13 @@ export class MusicScore extends MusicElement {
 
   scoreType: string = "modern";
 
+  /**
+   * x-coordinates of the bar lines in the SVG, populated by `getBars()`.
+   * `bars[0]` is always `0` (the intro bar's left edge); `bars[bars.length - 1]`
+   * is always `svgWidth` (the score's right edge); interior values are the
+   * x-coords of numbered bar labels parsed from `<tspan>` elements. The intro
+   * region is `[0, bars[1])`; numbered bar N's label sits at `bars[N]`.
+   */
   bars: number[] = [];
 
   highlightBar: SVGRectElement = document.createElementNS(
@@ -151,6 +158,8 @@ export class MusicScore extends MusicElement {
     var result = this.bars.find((x) => x > cursorpt.x);
     if (result) {
       const idx = this.bars.indexOf(result);
+      // bars[1] is the x of bar 1's label; clicks left of it land in the
+      // intro region and resolve to bar 0 (see `bars` field JSDoc).
       this.setBar(cursorpt.x < this.bars[1] ? 0 : idx);
       this.fireEvent("music-score-click");
     }
