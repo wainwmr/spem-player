@@ -21,7 +21,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real fragility. The runtime test is cheap (one dispatch, one assertion) and pins what the comment alone is currently carrying. Address now.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `efc79b0`.
 
 ### 240-02 — important — Held Digit/Letter shortcuts not covered
 
@@ -31,7 +31,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real coverage gap on the exact case the comment claims to prevent. Two tests, same pattern as held-ArrowDown. Address now.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `efc79b0`.
 
 ### 240-03 — important — Guard expresses exemption as inverted denylist
 
@@ -41,7 +41,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Real readability/structure improvement. The `SCROLL_KEYS` precedent makes this consistent rather than novel. Pre-empts the WB #274 deferred SeekKey refactor too. Address now.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `efc79b0`.
 
 ### 240-04 — important — Comment rough edges: "documented", "30+/s", "race the choir/part state"
 
@@ -53,7 +53,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** All three are minor but aggregate into a "this comment doesn't quite tell the truth" feel that erodes trust on a load-bearing block. Cheap to fix while in the area. Address now.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `efc79b0`.
 
 ### 240-05 — suggestion — Missing WHY-comment on `setTimeout(0)` yield pattern
 
@@ -63,7 +63,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** Cheap, aligns with the file's existing comment habit (cf the IME-composition test's strong WHY at line 286). Address now.
 
-**Resolution:** [placeholder]
+**Resolution:** Addressed in commit `efc79b0`.
 
 ### 240-06 — important — Void-fix has no regression test (C1)
 
