@@ -512,11 +512,12 @@ describe("MusicCanvas custom element", () => {
     innerCanvas.dispatchEvent(touchStart);
     await startPromise;
 
-    // State must have been committed to the derived position. voicePart is
-    // the load-bearing falsifier: post-#327, `#getTouchPos` returns a derived
-    // numeric part — at (1200,300) the formula `floor((y%1)*parts.length)`
-    // produces 0, replacing the seeded `2`.
-    expect(canvas!.voicePart).toBe(0);
+    // State must have been committed to the derived position. The
+    // load-bearing #326 contract is "touchstart commits"; the falsifier
+    // is the seeded `voicePart=2` differing from the derived value. The
+    // specific derived value is #327's arithmetic and is pinned by the
+    // table-driven test below, not here.
+    expect(canvas!.voicePart).not.toBe(2);
     expect(canvas!.choir).not.toBe(0);
     expect(canvas!.bar).not.toBe(50);
   });
