@@ -694,7 +694,11 @@ describe("MusicCanvas custom element", () => {
       cancelable: true,
     });
     Object.defineProperty(touchMove, "targetTouches", { value: [touch] });
-    // Mirror `targetTouches` — see the touchstart counterpart above.
+    // Defensive mirror — `#touchMoved` does not currently read
+    // `changedTouches` (post-#326 it does not call `#getTouchPos`), so this
+    // is not load-bearing. Mirroring keeps the fixture consistent with the
+    // touchstart counterpart and future-proofs against a refactor that
+    // re-introduces `#getTouchPos` into the move path.
     Object.defineProperty(touchMove, "changedTouches", { value: [touch] });
     Object.defineProperty(touchMove, "preventDefault", { value: vi.fn() });
 
