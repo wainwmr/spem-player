@@ -60,7 +60,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** defensive nit. Adding `rm -rf` before extract or atomic-rename is straightforward. Out of scope for the immediate CI-unblock; file for follow-up.
 
-**Resolution:** deferred to [Item TBD].
+**Resolution:** deferred to [Item #298](https://github.com/wainwright1000/spem-tools/issues/298).
 
 ### 318-cycle2-07 — important `globalThis` test-loader channel typed as `any`
 
