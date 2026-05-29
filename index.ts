@@ -223,8 +223,23 @@ function handleControlChange(e: CustomEvent) {
 }
 
 // -----------------------------------------------------
-// Keyboard events (wasd)
+// Keyboard event handling
 // -----------------------------------------------------
+
+// Keys whose browser default is to scroll the page. On iPad/Safari,
+// letting these bubble up causes the page to wiggle/scroll while the
+// app handles its own action (#10). We call preventDefault only when
+// the key is plain (no Cmd/Ctrl) — browser shortcuts like Cmd+S /
+// Cmd+F / Cmd+A / Ctrl+R must keep working. Cmd/Ctrl+ArrowLeft/Right
+// is the one modifier combination the app DOES handle (seek-by-section);
+// that case is special-cased via `isModifierSeek` below.
+const SCROLL_KEYS = new Set([
+  "Space",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+]);
 
 function keyboardTapped(e: KeyboardEvent) {
   if (e === undefined || e.target === null) {
@@ -237,7 +252,9 @@ function keyboardTapped(e: KeyboardEvent) {
   }
 
   // don't handle keyboard events on the four control widgets
-  // cos it messes with the UI interaction
+  // cos it messes with the UI interaction. Escape is allowed through
+  // so that the modal-close handlers below can still fire (e.g.
+  // dismissing the feedback dialog while focused in its textarea).
   const classes = [...e.target.classList];
   const isInputLike =
     e.target instanceof HTMLInputElement ||
@@ -250,6 +267,21 @@ function keyboardTapped(e: KeyboardEvent) {
   if (e.isComposing || e.keyCode === 229) {
     return;
   }
+
+  // Swallow the browser-default for scroll-causing keys (iPad fix, #10),
+  // but only when no modifier is held — leave Cmd+S / Cmd+F / etc. alone.
+  // Cmd/Ctrl+ArrowLeft/Right is the one modifier combination the app
+  // owns (seek by section); preventDefault keeps the OS jump-word
+  // shortcut from racing the app handler.
+  const isModifierSeek =
+    (e.metaKey || e.ctrlKey) &&
+    (e.code === "ArrowRight" || e.code === "ArrowLeft");
+  const isPlainScrollKey =
+    !e.metaKey && !e.ctrlKey && SCROLL_KEYS.has(e.code);
+  if (isModifierSeek || isPlainScrollKey) {
+    e.preventDefault();
+  }
+
   if (e.metaKey || e.ctrlKey) {
     switch (e.code) {
       case "ArrowRight":
@@ -271,7 +303,6 @@ function keyboardTapped(e: KeyboardEvent) {
   }
   if (e.code == "Space") {
     controls.isPlaying() ? controls.pause() : controls.play();
-    e.preventDefault();
     return;
   }
   switch (e.code) {
@@ -302,7 +333,6 @@ function keyboardTapped(e: KeyboardEvent) {
       toggleDark();
       break;
     case "KeyF":
-      e.preventDefault();
       showFeedback();
       break;
     case "Slash":
@@ -319,14 +349,12 @@ function keyboardTapped(e: KeyboardEvent) {
       setBar(
         e.altKey ? toNum(current.bar, false) + 0.0625 : toNum(current.bar) + 1
       );
-      e.preventDefault();
       break;
     case "ArrowLeft":
       controls.pause();
       setBar(
         e.altKey ? toNum(current.bar, false) - 0.0625 : toNum(current.bar) - 1
       );
-      e.preventDefault();
       break;
     case "ArrowDown":
       setChoir(
