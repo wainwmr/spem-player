@@ -564,7 +564,8 @@ describe("MusicCanvas custom element", () => {
     );
 
     // Seed sentinel values that the derived coord-A position MUST differ from
-    // (canvasPadding=5; (1200,300) maps to choir≈6, bar≈119, voicePart="all").
+    // (canvasPadding=5; with 8 choirs and 5 parts (1200,300) maps to
+    // choir≈6, bar≈119, voicePart=0 — see #327's table-driven test below).
     canvas!.choir = 0;
     canvas!.voicePart = 2;
     canvas!.bar = 50;
@@ -598,10 +599,11 @@ describe("MusicCanvas custom element", () => {
     innerCanvas.dispatchEvent(touchStart);
     await startPromise;
 
-    // State must have been committed to the derived position. voicePart is the
-    // load-bearing falsifier: `#getTouchPos` hard-codes "all" (see #327), so
-    // any commit replaces the seeded `2` with `"all"`.
-    expect(canvas!.voicePart).toBe("all");
+    // State must have been committed to the derived position. voicePart is
+    // the load-bearing falsifier: post-#327, `#getTouchPos` returns a derived
+    // numeric part — at (1200,300) the formula `floor((y%1)*parts.length)`
+    // produces 0, replacing the seeded `2`.
+    expect(canvas!.voicePart).toBe(0);
     expect(canvas!.choir).not.toBe(0);
     expect(canvas!.bar).not.toBe(50);
   });
@@ -624,10 +626,10 @@ describe("MusicCanvas custom element", () => {
         }) as DOMRect
     );
 
-    // Seed sentinel values that DIFFER from what `#getTouchPos` would derive at
-    // (1200,300) (which is choir≈6, bar≈119, voicePart="all"). The seeded
-    // `voicePart=2` is the load-bearing falsifier: if touchmove ever commits,
-    // it would be overwritten with "all" (hard-coded by `#getTouchPos`).
+    // Seed sentinel values that DIFFER from what `#getTouchPos` would derive
+    // at (1200,300) (which is choir≈6, bar≈119, voicePart=0 post-#327). The
+    // seeded `voicePart=2` is the load-bearing falsifier: if touchmove ever
+    // commits, it would be overwritten with the derived `0`.
     canvas!.choir = 0;
     canvas!.voicePart = 2;
     canvas!.bar = 50;
@@ -666,4 +668,69 @@ describe("MusicCanvas custom element", () => {
     expect(canvas!.voicePart).toBe(2);
     expect(canvas!.bar).toBe(50);
   });
+
+  // #327: touch must select a specific part (0..4) instead of always "all".
+  // Table covers each of the 5 part rows inside choir 0.
+  //
+  // Derivation: with rect 1400x400, canvasPadding=5, choirs.length=8,
+  // parts.length=5, the formula is `y = (clientY - 5) * 8 / 390`,
+  // `part = floor((y % 1) * 5)`.
+  //   clientY=10 → y≈0.103 → part=0
+  //   clientY=20 → y≈0.308 → part=1
+  //   clientY=30 → y≈0.513 → part=2
+  //   clientY=40 → y≈0.718 → part=3
+  //   clientY=50 → y≈0.923 → part=4
+  it.each([
+    [10, 0],
+    [20, 1],
+    [30, 2],
+    [40, 3],
+    [50, 4],
+  ])(
+    "getTouchPos returns part %i for clientY=%i (#327)",
+    async (clientY, expectedPart) => {
+      expect(canvas).not.toBeNull();
+
+      const promise = new Promise<CustomEvent>((resolve) => {
+        canvas!.addEventListener(
+          "music-canvas-touchstart",
+          (e) => resolve(e as CustomEvent),
+          { once: true }
+        );
+      });
+
+      canvas!.getBoundingClientRect = vi.fn(
+        () =>
+          ({
+            width: 1400,
+            height: 400,
+            top: 0,
+            left: 0,
+            right: 1400,
+            bottom: 400,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+          }) as DOMRect
+      );
+
+      const innerCanvas = canvas!.querySelector("canvas")!;
+      const touch = {
+        clientX: 100,
+        clientY,
+        identifier: 0,
+        target: innerCanvas,
+      };
+      const touchStart = new Event("touchstart", {
+        bubbles: true,
+        cancelable: true,
+      });
+      Object.defineProperty(touchStart, "targetTouches", { value: [touch] });
+      Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
+
+      innerCanvas.dispatchEvent(touchStart);
+      const event = await promise;
+      expect(event.detail.position.part).toBe(expectedPart);
+    }
+  );
 });
