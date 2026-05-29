@@ -568,12 +568,15 @@ export class MusicCanvas extends MusicElement {
     const y =
       ((clampedY - this.canvasPadding) * config.choirs[0].length) /
       (rect.height - 2 * this.canvasPadding);
-    // y is a float in [0, choirs.length]: the integer part picks the choir
-    // row, the fractional part is the position within the row. Multiplying
-    // (y % 1) by parts.length picks the voice-part: since `%` returns a
-    // value strictly < 1, the product is strictly < parts.length, so no
-    // explicit clamp is needed (unlike `choir`, where Math.floor(y) can
-    // reach `choirs.length` exactly at the bottom edge).
+    // Because `clampedY` is constrained to [canvasPadding, height-padding],
+    // `y` is a non-negative float in [0, choirs.length]: integer part picks
+    // the choir row, fractional part is the position within the row.
+    // Multiplying (y % 1) by parts.length picks the voice-part: for y ≥ 0,
+    // `%` returns a value in [0, 1), so the product is in [0, parts.length)
+    // and no explicit clamp is needed (unlike `choir`, where Math.floor(y)
+    // can reach `choirs.length` exactly at the bottom edge). If a future
+    // refactor lets clampedY < canvasPadding slip through, `y % 1` could
+    // become negative — restore the clamp at that point.
     return {
       choir: Math.min(config.choirs[0].length - 1, Math.max(0, Math.floor(y))),
       part: Math.floor((y % 1) * config.parts.length),
@@ -613,9 +616,10 @@ export class MusicCanvas extends MusicElement {
     const y =
       ((clampedY - this.canvasPadding) * config.choirs[0].length) /
       (rect.height - 2 * this.canvasPadding);
-    // See `#getMousePos` for the `y` semantics. The same `Math.floor((y % 1)
-    // * parts.length)` formula picks the voice-part; the strict-`<` semantic
-    // of `%` guarantees the result is < parts.length, so no clamp needed.
+    // The `y` formula above is textually duplicated from `#getMousePos`;
+    // see that method for the invariant (clamp-derived y ≥ 0, `%` produces
+    // a value in [0, 1), product is in [0, parts.length)). If the formula
+    // changes here it must change there too — keep them in sync.
     return {
       choir: Math.min(config.choirs[0].length - 1, Math.max(0, Math.floor(y))),
       part: Math.floor((y % 1) * config.parts.length),

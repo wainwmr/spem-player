@@ -482,9 +482,11 @@ describe("MusicCanvas custom element", () => {
         }) as DOMRect
     );
 
-    // Seed sentinel values that the derived coord-A position MUST differ from
-    // (canvasPadding=5; with 8 choirs and 5 parts (1200,300) maps to
-    // choir≈6, bar≈119, voicePart=0 — see #327's table-driven test below).
+    // Seed sentinel values that the derived coord-A position MUST differ
+    // from. With the current `config.choirs[0].length` and `config.parts.length`
+    // (and `canvasPadding=5`), `#getTouchPos` at (1200,300) maps to
+    // choir≈6, bar≈119, voicePart=0 — see #327's table-driven test below
+    // for the part derivation.
     canvas!.choir = 0;
     canvas!.voicePart = 2;
     canvas!.bar = 50;
@@ -540,10 +542,11 @@ describe("MusicCanvas custom element", () => {
         }) as DOMRect
     );
 
-    // Seed sentinel values that DIFFER from what `#getTouchPos` would derive
-    // at (1200,300) (which is choir≈6, bar≈119, voicePart=0 post-#327). The
-    // seeded `voicePart=2` is the load-bearing falsifier: if touchmove ever
-    // commits, it would be overwritten with the derived `0`.
+    // Seed sentinel values that DIFFER from what `#getTouchPos` would
+    // derive at (1200,300) (choir≈6, bar≈119 via `#getTouchPos`, voicePart=0
+    // post-#327). The seeded `voicePart=2` is the load-bearing falsifier:
+    // if touchmove ever commits, it would be overwritten with the derived
+    // value.
     canvas!.choir = 0;
     canvas!.voicePart = 2;
     canvas!.bar = 50;
@@ -577,17 +580,19 @@ describe("MusicCanvas custom element", () => {
     expect(canvas!.bar).toBe(50);
   });
 
-  // #327: touch must select a specific part (0..4) instead of always "all".
-  // Table covers each of the 5 part rows inside choir 0.
+  // #327: touch must select a specific part (0..parts.length-1) instead
+  // of always "all". Table covers each part row inside choir 0.
   //
-  // Derivation: with rect 1400x400, canvasPadding=5, choirs.length=8,
-  // parts.length=5, the formula is `y = (clientY - 5) * 8 / 390`,
-  // `part = floor((y % 1) * 5)`.
-  //   clientY=10 → y≈0.103 → part=0
-  //   clientY=20 → y≈0.308 → part=1
-  //   clientY=30 → y≈0.513 → part=2
-  //   clientY=40 → y≈0.718 → part=3
-  //   clientY=50 → y≈0.923 → part=4
+  // Derivation (assuming the mocked 1400x400 rect, `canvasPadding=5`, and
+  // the current `config.choirs[0].length` and `config.parts.length`):
+  //   y    = (clientY - canvasPadding) * choirs.length / (height - 2*padding)
+  //   part = floor((y % 1) * parts.length)
+  //
+  // The literal expected-part values below assume the current config
+  // (8 choirs, 5 parts, padding 5) and the 1400x400 mock; if those change,
+  // the table needs regenerating. The chosen clientY values land
+  // comfortably mid-row (≥ 0.3 from the nearest boundary) so floating-point
+  // jitter cannot flip the assertion.
   it.each([
     [10, 0],
     [20, 1],
