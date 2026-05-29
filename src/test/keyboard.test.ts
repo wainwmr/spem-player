@@ -309,4 +309,156 @@ describe("Space bar play/pause", () => {
       expect(event.defaultPrevented).toBe(false);
     });
   });
+
+  describe("Auto-repeat (held-key) handling", () => {
+    // Tests that exercise async setChoir need to yield to the
+    // microtask queue (await new Promise + setTimeout 0) so the
+    // attribute writes flush before assertion. The yield is
+    // included in every test in this block for symmetry; it is a
+    // no-op for the sync paths (Space, Enter, KeyD).
+
+    it("held Space does not toggle play/pause", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.playing = false;
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "Space",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.isPlaying()).toBe(false);
+    });
+
+    it("held Enter does not toggle play/pause", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.playing = false;
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "Enter",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.isPlaying()).toBe(false);
+    });
+
+    it("held ArrowDown does not change choir", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.setAttribute("choir", "0");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "ArrowDown",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.getAttribute("choir")).toBe("0");
+    });
+
+    // ArrowLeft and ArrowRight are exempt from the auto-repeat guard
+    // because holding them is the fast-seek gesture (move through
+    // bars while held). These two tests assert the bar actually
+    // advances on a repeat — not just that preventDefault ran — so
+    // a future regression that swallows the seek silently would
+    // fail loudly.
+    it("held ArrowLeft is exempt and seeks backward", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.setAttribute("bar", "5");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "ArrowLeft",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(Number(controls.getAttribute("bar"))).toBe(4);
+    });
+
+    it("held ArrowRight is exempt and seeks forward", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.setAttribute("bar", "5");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "ArrowRight",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(Number(controls.getAttribute("bar"))).toBe(6);
+    });
+
+    // The Cmd/Ctrl+Arrow seek branch returns BEFORE the e.repeat
+    // guard, so held Cmd+Arrow continues to auto-repeat its seek.
+    // The invariant is structural — if a future edit hoists the
+    // guard above the modifier branch, or adds an e.repeat check
+    // inside it, this test pins the regression.
+    it("held Ctrl+ArrowRight is exempt and seeks forward by section", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.setAttribute("bar", "5");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "ArrowRight",
+          bubbles: true,
+          repeat: true,
+          ctrlKey: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(Number(controls.getAttribute("bar"))).toBeGreaterThan(5);
+    });
+
+    // The default-deny posture above the new guard is meant to
+    // cover Digit and Letter shortcuts (the motivating examples in
+    // the production comment). Without these, a future narrowing of
+    // the exempt list could regress choir/part state on key-hold
+    // with no test failure.
+    it("held Digit2 does not change choir", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.setAttribute("choir", "0");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "Digit2",
+          key: "2",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.getAttribute("choir")).toBe("0");
+    });
+
+    it("held KeyD does not toggle dark mode", async () => {
+      const wasLight = document.body.classList.contains("light-theme");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "KeyD",
+          key: "d",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(document.body.classList.contains("light-theme")).toBe(wasLight);
+    });
+  });
 });

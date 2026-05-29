@@ -241,9 +241,18 @@ const SCROLL_KEYS = new Set([
   "ArrowRight",
 ]);
 
+// Default policy for held-key repeats: SUPPRESS. Most shortcuts
+// (Space toggle, Digit/Letter mode-switches, KeyD dark-mode) would
+// strobe or thrash state if they fired many times per second on a
+// held key. Add to this set only if auto-repeating the action is
+// *useful*, not just *noisy*. ArrowLeft/ArrowRight are exempt
+// because holding them is the fast-seek gesture (advance through
+// bars while held).
+const REPEAT_EXEMPT_KEYS = new Set(["ArrowLeft", "ArrowRight"]);
+
 function keyboardTapped(e: KeyboardEvent) {
   if (e === undefined || e.target === null) {
-    return keyboardTapped;
+    return;
   }
 
   // Ensure e.target is an Element before accessing classList
@@ -297,6 +306,19 @@ function keyboardTapped(e: KeyboardEvent) {
     }
     return;
   }
+
+  // Default-deny on auto-repeat. Held keys fire many times per
+  // second at the OS repeat rate; for most shortcuts that means
+  // strobing (held Space toggling play/pause, held KeyD flipping
+  // dark mode) or piling redundant attribute writes through
+  // setChoir/setPart. The exemption list is REPEAT_EXEMPT_KEYS
+  // above. Note the Cmd/Ctrl+Arrow branch already returned, so
+  // held Cmd+Arrow keeps auto-repeating its seek on a separate
+  // code path — covered by a test below.
+  if (e.repeat && !REPEAT_EXEMPT_KEYS.has(e.code)) {
+    return;
+  }
+
   if (e.code == "Enter") {
     controls.isPlaying() ? controls.pause() : controls.play();
     return;
