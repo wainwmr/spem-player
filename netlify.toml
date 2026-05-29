@@ -6,9 +6,11 @@
 #   2. We re-export PATH because the script's PATH export does not propagate
 #      across the `&&` chain. The 2.26.0 here must stay in sync with
 #      LILYPOND_VERSION in build/install-lilypond.sh.
-#   3. `lilypond --version` is a fail-loud probe before `npm run build`
+#   3. `lilypond --version` is a presence probe before `npm run build`
 #      to catch any silent install regression (ticket #318 — the previous
 #      attempt PR #271 was reverted because Netlify shipped empty scores).
+#      It does not check the minimum version; buildScores.mjs enforces
+#      that against the 2.26.0 floor and fails the build if violated.
 #   4. npm run build invokes prebuild (regenerates SVGs from src/lilypond/)
 #      then vite build.
 [build]
