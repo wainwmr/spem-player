@@ -1,11 +1,11 @@
-#!/usr/bin/env node
 /* eslint-env node */
 // Copyright (c) 2024-2026 Mark Wainwright
 // SPDX-License-Identifier: MIT
 
 import { execSync } from "child_process";
 import { existsSync, globSync, rmSync, statSync } from "fs";
-import { basename } from "path";
+import { basename, resolve } from "path";
+import { fileURLToPath } from "url";
 import { postprocessSvg } from "./postprocessSvg.mjs";
 
 
@@ -14,8 +14,18 @@ const defaults = {
   notation: null, // null means build all notations
 };
 
-function parseArgs() {
-  const args = process.argv.slice(2);
+/**
+ * Parse CLI-style flags into an options object.
+ *
+ * Accepts `--key=value`, `--key value`, and bare `--flag` (-> true).
+ * A token starting with `--` is never consumed as a value for the
+ * preceding key. Unknown keys are accepted and returned as-is.
+ * Bare positional args (not starting with `--`) are ignored.
+ *
+ * @param {string[]} [args] argument list, defaults to `process.argv.slice(2)`.
+ * @returns options object seeded with `defaults`.
+ */
+function parseArgs(args = process.argv.slice(2)) {
   const options = { ...defaults };
   let i = 0;
   while (i < args.length) {
@@ -123,6 +133,15 @@ function needsRebuild(maxLyMtime, svgPath) {
   return maxLyMtime > statSync(svgPath).mtimeMs;
 }
 
+/**
+ * Build the glob pattern for choir `.ly` files in a notation directory.
+ * Encodes the on-disk naming convention (`Choir <id>.ly`, space-separated).
+ * When `choir` is omitted, returns a wildcard matching every choir.
+ */
+function buildPattern(lyDir, choir) {
+  return choir ? `${lyDir}/Choir ${choir}.ly` : `${lyDir}/Choir*.ly`;
+}
+
 function buildScore(ly, version, notation, maxLyMtime) {
   const choirName = basename(ly, ".ly");
   const svg = `src/scores/${version}/${notation}/${choirName}.svg`;
@@ -163,41 +182,52 @@ function buildScore(ly, version, notation, maxLyMtime) {
   }
 }
 
-const options = parseArgs();
+function main() {
+  const options = parseArgs();
 
-checkLilypond(options["skip-if-missing"]);
+  checkLilypond(options["skip-if-missing"]);
 
-const version = options.version || defaults.version;
-const notations = options.notation
-  ? [options.notation]
-  : ["early", "modern"];
+  const version = options.version || defaults.version;
+  const notations = options.notation
+    ? [options.notation]
+    : ["early", "modern"];
 
-for (const notation of notations) {
-  const lyDir = `src/lilypond/${version}/${notation}`;
-  const versionDir = `src/lilypond/${version}`;
-  const pattern = options.choir
-    ? `${lyDir}/Choir ${options.choir}.ly`
-    : `${lyDir}/Choir*.ly`;
+  for (const notation of notations) {
+    const lyDir = `src/lilypond/${version}/${notation}`;
+    const versionDir = `src/lilypond/${version}`;
+    const pattern = buildPattern(lyDir, options.choir);
 
-  const files = globSync(pattern);
+    const files = globSync(pattern);
 
-  if (files.length === 0) {
-    console.error(`No LilyPond files found matching: ${pattern}`);
-    process.exit(1);
+    if (files.length === 0) {
+      console.error(`No LilyPond files found matching: ${pattern}`);
+      process.exit(1);
+    }
+
+    // Compute max .ly mtime once per notation, not once per choir file.
+    let maxLyMtime;
+    try {
+      maxLyMtime = maxLyMtimeFor(lyDir, versionDir);
+    } catch (error) {
+      console.error(`\nError computing rebuild scope:\n${error.message}`);
+      process.exit(1);
+    }
+
+    for (const ly of files.sort()) {
+      buildScore(ly, version, notation, maxLyMtime);
+    }
   }
 
-  // Compute max .ly mtime once per notation, not once per choir file.
-  let maxLyMtime;
-  try {
-    maxLyMtime = maxLyMtimeFor(lyDir, versionDir);
-  } catch (error) {
-    console.error(`\nError computing rebuild scope:\n${error.message}`);
-    process.exit(1);
-  }
-
-  for (const ly of files.sort()) {
-    buildScore(ly, version, notation, maxLyMtime);
-  }
+  console.log("\nDone.");
 }
 
-console.log("\nDone.");
+// Only run main() when this file is invoked directly from the CLI, not when
+// imported by tests. `process.argv[1]` is undefined under some embed contexts;
+// treat that as "not main".
+const __filename = fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && resolve(process.argv[1]) === resolve(__filename);
+if (isMain) {
+  main();
+}
+
+export { parseArgs, buildPattern };

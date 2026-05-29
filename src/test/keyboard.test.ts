@@ -169,4 +169,144 @@ describe("Space bar play/pause", () => {
     expect(controls.getAttribute("choir")).toBe("0");
     document.body.removeChild(textarea);
   });
+
+  describe("Keyboard event swallowing for iPad page-wiggle", () => {
+    // Behavioural assertion via `defaultPrevented`, not by spying on
+    // `preventDefault()`. The browser only cares whether the default was
+    // actually prevented — that's the user-visible contract.
+    function dispatchKeydown(
+      target: EventTarget,
+      init: KeyboardEventInit
+    ): KeyboardEvent {
+      const event = new KeyboardEvent("keydown", {
+        bubbles: true,
+        cancelable: true,
+        ...init,
+      });
+      target.dispatchEvent(event);
+      return event;
+    }
+
+    // -- positive cases: scroll-causing keys are preventDefault'd --
+    it.each([
+      ["Space"],
+      ["ArrowUp"],
+      ["ArrowDown"],
+      ["ArrowLeft"],
+      ["ArrowRight"],
+    ])(
+      "preventDefaults %s on document body (iPad scroll prevention)",
+      (code) => {
+        expect(dispatchKeydown(document.body, { code }).defaultPrevented).toBe(
+          true
+        );
+      }
+    );
+
+    // Cmd/Ctrl+Arrow is the "seek-by-section" handler — must preventDefault
+    // so the OS shortcut (macOS Cmd+Arrow jump-word; on iPad, Cmd is the
+    // modifier users press) doesn't fire.
+    it.each([["ArrowLeft"], ["ArrowRight"]])(
+      "preventDefaults Ctrl+%s (app handles section seek)",
+      (code) => {
+        expect(
+          dispatchKeydown(document.body, { code, ctrlKey: true })
+            .defaultPrevented
+        ).toBe(true);
+      }
+    );
+    it.each([["ArrowLeft"], ["ArrowRight"]])(
+      "preventDefaults Cmd+%s on macOS/iPad (app handles section seek)",
+      (code) => {
+        expect(
+          dispatchKeydown(document.body, { code, metaKey: true })
+            .defaultPrevented
+        ).toBe(true);
+      }
+    );
+
+    // -- negative cases: browser shortcuts and non-scroll keys pass through --
+    // Cmd+S, Cmd+F, Cmd+A etc. must NOT be swallowed; the user expects
+    // browser/OS shortcuts to keep working when focus is on the body.
+    it.each([
+      ["KeyS"], // Cmd+S → save page
+      ["KeyF"], // Cmd+F → find in page
+      ["KeyA"], // Cmd+A → select all
+      ["KeyR"], // Cmd+R → reload (browser-level)
+      ["KeyP"], // Cmd+P → print
+    ])("does not preventDefault Cmd+%s (browser shortcut)", (code) => {
+      expect(
+        dispatchKeydown(document.body, { code, metaKey: true }).defaultPrevented
+      ).toBe(false);
+      expect(
+        dispatchKeydown(document.body, { code, ctrlKey: true }).defaultPrevented
+      ).toBe(false);
+    });
+
+    // Enter on a focused button must NOT be swallowed — the synthetic
+    // click that activates the button depends on the keydown default.
+    it("does not preventDefault Enter on a focused <button>", () => {
+      const button = document.createElement("button");
+      document.body.appendChild(button);
+      button.focus();
+      expect(dispatchKeydown(button, { code: "Enter" }).defaultPrevented).toBe(
+        false
+      );
+      document.body.removeChild(button);
+    });
+
+    // Plain `/` (no Shift) is not a help-modal trigger and must pass
+    // through — Firefox uses it for quick-find.
+    it("does not preventDefault Slash without Shift", () => {
+      expect(
+        dispatchKeydown(document.body, { code: "Slash" }).defaultPrevented
+      ).toBe(false);
+    });
+
+    // Escape must stay native (cancel IME composition; macOS field revert).
+    // The top-level swallow block must not call preventDefault for it;
+    // the Escape switch case dismisses modals without preventDefault.
+    it("does not preventDefault Escape on document body (no modal open)", () => {
+      expect(
+        dispatchKeydown(document.body, { code: "Escape" }).defaultPrevented
+      ).toBe(false);
+    });
+
+    // Unhandled keys are never preventDefault'd — keeps focus navigation
+    // (Tab), accessibility keys, and arbitrary printable input working.
+    it.each([["KeyZ"], ["Tab"], ["F5"]])(
+      "does not preventDefault %s (unhandled key)",
+      (code) => {
+        expect(dispatchKeydown(document.body, { code }).defaultPrevented).toBe(
+          false
+        );
+      }
+    );
+
+    // The isInputLike guard skips swallowing when an input/textarea is
+    // focused — typing in search/feedback fields must keep working.
+    it("does not preventDefault Space when an <input> is focused", () => {
+      const input = document.createElement("input");
+      document.body.appendChild(input);
+      input.focus();
+      expect(dispatchKeydown(input, { code: "Space" }).defaultPrevented).toBe(
+        false
+      );
+      document.body.removeChild(input);
+    });
+
+    // IME composition (e.g. Chinese/Japanese input) returns early before
+    // the swallow block — a future refactor that moves the swallow earlier
+    // would break non-Western input silently. This test pins the order.
+    it("does not preventDefault Space during IME composition", () => {
+      const event = new KeyboardEvent("keydown", {
+        code: "Space",
+        bubbles: true,
+        cancelable: true,
+        isComposing: true,
+      });
+      document.body.dispatchEvent(event);
+      expect(event.defaultPrevented).toBe(false);
+    });
+  });
 });
