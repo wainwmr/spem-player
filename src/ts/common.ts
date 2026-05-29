@@ -13,6 +13,24 @@ export interface Position {
 
 export type Brightness = "dark" | "light";
 export type ScoreType = "early" | "modern";
+
+// Test-only seam: production reads of `MusicScore.testSvgLoader` and
+// `globalThis.__SPEM_TEST_SVG_LOADER` are gated by `import.meta.env.MODE`,
+// so the runtime checks tree-shake out of production bundles even though
+// the type lives here. Keeping the alias near the other domain types
+// (rather than in src/test/) lets production sites import it instead of
+// re-declaring the signature.
+export type TestSvgLoader = (
+  scoreType: string,
+  choir: number,
+  recording: number
+) => string | null;
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __SPEM_TEST_SVG_LOADER: TestSvgLoader | undefined;
+}
+
 export type Status = "playing" | "paused" | "loading";
 export type RecordingIndex = 0 | 1;
 

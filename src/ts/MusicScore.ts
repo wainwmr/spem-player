@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import config from "./config";
-import { colors, toNum } from "./common";
+import { colors, toNum, TestSvgLoader } from "./common";
 
 import { MusicElement } from "./MusicElement";
 
@@ -18,11 +18,9 @@ export class MusicScore extends MusicElement {
    * #loadSvg() checks as a fallback — used by `src/test/setup.ts` because
    * `vi.resetModules()` would otherwise lose this static. Both checks are
    * gated behind `import.meta.env.MODE === "test"` so production bundles
-   * never carry the hook.
+   * never invoke the hook (the slot remains as inert payload).
    */
-  static testSvgLoader:
-    | ((scoreType: string, choir: number, recording: number) => string | null)
-    | null = null;
+  static testSvgLoader: TestSvgLoader | null = null;
 
   svg: SVGGraphicsElement | null = null;
   svgWidth: number = 0;
@@ -188,10 +186,13 @@ export class MusicScore extends MusicElement {
     // `static testSvgLoader` for the contract.
     if (import.meta.env?.MODE === "test") {
       const loader =
-        MusicScore.testSvgLoader || (globalThis as any).__SPEM_TEST_SVG_LOADER;
+        MusicScore.testSvgLoader || globalThis.__SPEM_TEST_SVG_LOADER;
       if (loader) {
         const svg = loader(this.scoreType, this.choir, this.recording);
-        if (svg !== null) {
+        // `typeof svg === "string"` covers both null (documented "fall
+        // through" sentinel) and undefined (a stricter shape than the
+        // type guarantees, but defensive against an `any`-typed fixture).
+        if (typeof svg === "string") {
           this.fireEvent("music-score-loaded");
           return svg;
         }

@@ -11,10 +11,12 @@
 // `width / (barCount + 1)`, i.e. `width / 138`. width=800 gives x ≈ 5.8
 // — below the filter, so bar 1 silently drops and `bars.length` is 138
 // instead of 139. width=960 gives x ≈ 6.96, which clears it.
-const VIEWBOX_WIDTHS: Record<string, number> = {
+const VIEWBOX_WIDTHS = {
   modern: 1000,
   early: 960,
-};
+} as const satisfies Record<string, number>;
+
+type FixtureScoreType = keyof typeof VIEWBOX_WIDTHS;
 
 const VIEWBOX_HEIGHT = 500;
 
@@ -23,7 +25,14 @@ const VIEWBOX_HEIGHT = 500;
  * @returns SVG string
  */
 export function makeFixtureSvg(scoreType: string): string {
-  const width = VIEWBOX_WIDTHS[scoreType] ?? VIEWBOX_WIDTHS.modern;
+  // Narrow at the boundary: unknown scoreType falls back to "modern"
+  // explicitly (and is loud about it) rather than silently looking up
+  // `undefined` in `VIEWBOX_WIDTHS`. Production callers always pass
+  // "modern" or "early"; the fallback only protects against typo-only
+  // bugs in test scaffolding.
+  const key: FixtureScoreType =
+    scoreType === "early" || scoreType === "modern" ? scoreType : "modern";
+  const width = VIEWBOX_WIDTHS[key];
   const barCount = 137; // Real scores have bars 1-137 numbered
   const lines: string[] = [];
 

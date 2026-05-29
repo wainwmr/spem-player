@@ -6,5 +6,5 @@ import { makeFixtureSvg } from "./fixtureScore";
 // files call `vi.resetModules()` and re-import MusicScore — the static
 // property would be lost on the re-import, but the global property
 // survives. See MusicScore.ts:#loadSvg for the resolution order.
-(globalThis as any).__SPEM_TEST_SVG_LOADER = (scoreType: string) =>
-  makeFixtureSvg(scoreType);
+// The ambient `declare global` in src/ts/common.ts types this slot.
+globalThis.__SPEM_TEST_SVG_LOADER = (scoreType) => makeFixtureSvg(scoreType);
