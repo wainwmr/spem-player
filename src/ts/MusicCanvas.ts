@@ -568,6 +568,12 @@ export class MusicCanvas extends MusicElement {
     const y =
       ((clampedY - this.canvasPadding) * config.choirs[0].length) /
       (rect.height - 2 * this.canvasPadding);
+    // y is a float in [0, choirs.length]: the integer part picks the choir
+    // row, the fractional part is the position within the row. Multiplying
+    // (y % 1) by parts.length picks the voice-part: since `%` returns a
+    // value strictly < 1, the product is strictly < parts.length, so no
+    // explicit clamp is needed (unlike `choir`, where Math.floor(y) can
+    // reach `choirs.length` exactly at the bottom edge).
     return {
       choir: Math.min(config.choirs[0].length - 1, Math.max(0, Math.floor(y))),
       part: Math.floor((y % 1) * config.parts.length),
@@ -607,9 +613,12 @@ export class MusicCanvas extends MusicElement {
     const y =
       ((clampedY - this.canvasPadding) * config.choirs[0].length) /
       (rect.height - 2 * this.canvasPadding);
+    // See `#getMousePos` for the `y` semantics. The same `Math.floor((y % 1)
+    // * parts.length)` formula picks the voice-part; the strict-`<` semantic
+    // of `%` guarantees the result is < parts.length, so no clamp needed.
     return {
       choir: Math.min(config.choirs[0].length - 1, Math.max(0, Math.floor(y))),
-      part: "all",
+      part: Math.floor((y % 1) * config.parts.length),
       bar: Math.floor(((clampedX - this.canvasPadding) * 140) / rect.width),
     };
   }
