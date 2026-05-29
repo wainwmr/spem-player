@@ -623,7 +623,11 @@ export class MusicCanvas extends MusicElement {
 
   #touchMoved(evt: TouchEvent) {
     evt.preventDefault();
-    this.#moveToPosition(this.#getTouchPos(evt));
+    // Intentionally does NOT commit position — see #317/#326. Per-touchmove
+    // commits caused 60+/s state churn during drag, silently switching to
+    // `voicePart: "all"` (since `#getTouchPos` hard-codes "all", see #327).
+    // `#touchStarted` is the commit point; `#touchEnded` fires a separate
+    // event that `index.ts` routes through `handleCanvasClick`.
     this.fireEvent("music-canvas-touchmove");
     this.draw();
   }
