@@ -345,57 +345,11 @@ describe("MusicCanvas custom element", () => {
     expect(canvas!.choir).toBe(pos.choir);
   });
 
-  it("touchmove resolves a position when the touch is not in targetTouches", async () => {
-    expect(canvas).not.toBeNull();
-
-    canvas!.getBoundingClientRect = vi.fn(
-      () =>
-        ({
-          width: 1400,
-          height: 400,
-          top: 0,
-          left: 0,
-          right: 1400,
-          bottom: 400,
-          x: 0,
-          y: 0,
-          toJSON: () => ({}),
-        }) as DOMRect
-    );
-
-    const touch = {
-      clientX: 100,
-      clientY: 50,
-      identifier: 0,
-      target: canvas!.querySelector("canvas")!,
-    };
-
-    // touchmove is the canonical drag-off-canvas case the ticket
-    // describes. Same falsifier shape as the touchstart test above:
-    // if getTouchPos throws, the CustomEvent never fires and the
-    // await times out.
-    const movePromise = new Promise<CustomEvent<{ position: Position }>>(
-      (resolve) => {
-        canvas!.addEventListener(
-          "music-canvas-touchmove",
-          (e) => resolve(e as CustomEvent<{ position: Position }>),
-          { once: true }
-        );
-      }
-    );
-    const touchMove = new Event("touchmove", {
-      bubbles: true,
-      cancelable: true,
-    });
-    Object.defineProperty(touchMove, "targetTouches", { value: [] });
-    Object.defineProperty(touchMove, "changedTouches", { value: [touch] });
-    Object.defineProperty(touchMove, "preventDefault", { value: vi.fn() });
-
-    canvas!.dispatchEvent(touchMove);
-    const moveEvent = await movePromise;
-    expect(moveEvent.detail.position.bar).toBe(9);
-    expect(canvas!.bar).toBe(moveEvent.detail.position.bar);
-  });
+  // The touchmove counterpart of the above test was removed in cycle 2:
+  // post-#326 (PR #400), `#touchMoved` no longer calls `#getTouchPos`,
+  // so the only path that reads `changedTouches[0]` is `#touchStarted`.
+  // The touchstart test above fully covers the production surface; a
+  // touchmove version was passing only by state leak from the prior test.
 
   it("getMousePos returns valid part for clicks in top padding", async () => {
     expect(canvas).not.toBeNull();
