@@ -348,8 +348,10 @@ describe("MusicCanvas custom element", () => {
   // The touchmove counterpart of the above test was removed in cycle 2:
   // post-#326 (PR #400), `#touchMoved` no longer calls `#getTouchPos`,
   // so the only path that reads `changedTouches[0]` is `#touchStarted`.
-  // The touchstart test above fully covers the production surface; a
-  // touchmove version was passing only by state leak from the prior test.
+  // The touchstart test above fully covers the production surface; the
+  // removed touchmove version was passing only because the preceding
+  // touchstart had set `canvas!.bar = 9`, which the touchmove handler
+  // — now performing no commit — could not have set on its own.
 
   it("getMousePos returns valid part for clicks in top padding", async () => {
     expect(canvas).not.toBeNull();
