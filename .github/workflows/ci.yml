@@ -21,7 +21,85 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
       - run: npm ci
-      - run: npm run ci
+
+      # Timed-step pattern: capture command exit status separately so duration
+      # is emitted even on failure (telemetry is most useful precisely when a
+      # phase regresses), then re-exit with the captured status so the
+      # workflow's success/failure semantics are preserved.
+      - name: Run checks and build
+        id: check-build
+        run: |
+          start=$(date +%s)
+          status=0
+          npm run check && npm run build || status=$?
+          end=$(date +%s)
+          duration=$((end - start))
+          echo "duration=${duration}" >> "$GITHUB_OUTPUT"
+          echo "Check + build completed in ${duration}s (exit ${status})"
+          exit "$status"
+
+      - name: Run unit tests
+        id: unit-tests
+        run: |
+          start=$(date +%s)
+          status=0
+          npm run test:unit || status=$?
+          end=$(date +%s)
+          duration=$((end - start))
+          echo "duration=${duration}" >> "$GITHUB_OUTPUT"
+          echo "Unit tests completed in ${duration}s (exit ${status})"
+          exit "$status"
+
+      # if: always() runs the report even when an upstream step failed —
+      # the missing-duration case is handled below. Budgets are SOFT: a
+      # breach emits a workflow warning annotation and a Budget-exceeded
+      # block on the run summary; it does NOT fail the job. See
+      # doc/CI.md "Duration Budget" for the policy and current baseline.
+      - name: Report CI duration budget
+        if: always()
+        env:
+          # Inputs (measurements)
+          CHECK_BUILD_S: ${{ steps.check-build.outputs.duration }}
+          UNIT_S: ${{ steps.unit-tests.outputs.duration }}
+          # Policy (soft budgets, in seconds)
+          UNIT_BUDGET_SEC: 120
+          TOTAL_BUDGET_SEC: 360
+        run: |
+          # Default to 0 when an upstream step did not emit a duration
+          # (skipped, crashed before save, or a non-integer slipped in).
+          # The ^[0-9]+$ shape also rejects negative values, which date
+          # arithmetic could in principle produce on a runner clock skew.
+          [[ "$CHECK_BUILD_S" =~ ^[0-9]+$ ]] || CHECK_BUILD_S=0
+          [[ "$UNIT_S" =~ ^[0-9]+$ ]] || UNIT_S=0
+
+          total=$((CHECK_BUILD_S + UNIT_S))
+
+          report() {
+            echo "$1"
+            echo "$1" >> "$GITHUB_STEP_SUMMARY"
+          }
+
+          report "## CI duration (measured phases)"
+          report "- Check + build: ${CHECK_BUILD_S}s"
+          report "- Unit tests: ${UNIT_S}s (budget: ${UNIT_BUDGET_SEC}s)"
+          report "- Total measured (check+build + unit tests): ${total}s (budget: ${TOTAL_BUDGET_SEC}s)"
+          report "_Excludes per-job overhead (checkout, setup-node, npm ci); the GitHub UI job time will be larger._"
+
+          if [ "$CHECK_BUILD_S" -eq 0 ] && [ "$UNIT_S" -eq 0 ]; then
+            report ""
+            report "_Duration data unavailable — no timed phases completed._"
+            exit 0
+          fi
+          if [ "$UNIT_S" -gt "$UNIT_BUDGET_SEC" ]; then
+            echo "::warning::Unit tests took ${UNIT_S}s, exceeding the ${UNIT_BUDGET_SEC}s soft budget."
+            report ""
+            report "**Budget exceeded:** unit tests took ${UNIT_S}s (> ${UNIT_BUDGET_SEC}s)."
+          fi
+          if [ "$total" -gt "$TOTAL_BUDGET_SEC" ]; then
+            echo "::warning::Measured CI phases took ${total}s, exceeding the ${TOTAL_BUDGET_SEC}s soft budget."
+            report ""
+            report "**Budget exceeded:** measured phases took ${total}s (> ${TOTAL_BUDGET_SEC}s)."
+          fi
 
   integration:
     runs-on: ubuntu-latest
