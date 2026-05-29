@@ -30,8 +30,11 @@ npm run build
 This runs `vite build` to produce a production bundle into `dist/`.
 
 `npm run prebuild` runs automatically before `build` and generates the Ohm.js
-grammar bundle and SVG scores from LilyPond source. SVG generation is skipped
-if LilyPond is not installed (uses committed SVGs).
+grammar bundle and SVG scores from LilyPond source. The SVG files in
+`src/scores/` are build artefacts (gitignored as of ticket #318); LilyPond is
+required for local builds. The `--skip-if-missing` flag in `prebuild` allows
+local builds to reuse already-generated SVGs when LilyPond is unavailable,
+but errors loudly if no SVGs are present.
 
 ## Preview the Production Build
 
@@ -43,8 +46,10 @@ Serves the contents of `dist/` locally.
 
 ## Regenerate SVG Scores
 
-The SVG files in `src/scores/` are generated from LilyPond source files in `src/lilypond/`.
-`npm run build` automatically regenerates them via the `prebuild` step.
+The SVG files in `src/scores/` are generated from LilyPond source files in
+`src/lilypond/`. They are build artefacts (gitignored as of ticket #318) and
+must be regenerated locally before the app can serve them. `npm run build`
+regenerates them automatically via the `prebuild` step.
 
 To build scores manually:
 
@@ -65,7 +70,10 @@ This iterates over matching `Choir*.ly` files under `src/lilypond/` and runs `li
 
 LilyPond is the slow part: roughly 60 seconds per choir, 16 choirs across early + modern notations. When `.ly` sources are current, `npm run build:scores` (and the `prebuild` step inside `npm run build`) completes in a few seconds because `needsRebuild` compares mtimes and skips unchanged files. After a batch edit of `.ly` files — particularly shared includes (`basic.ly`, `layout.ly`) — expect the next full `npm run ci` to take 10+ minutes as the affected SVGs regenerate. This is a one-off; the next build after that is fast again.
 
-Rebuilds are functionally equivalent to the committed SVGs but not byte-identical: LilyPond and the postprocessor reorder path definitions and dedup staff lines depending on input timing. If you see `src/scores/**/*.svg` files showing as modified after a rebuild on a clean branch, discard them (`git restore src/scores/`); the committed versions are canonical.
+`src/scores/` is gitignored, so `git status` won't show SVG churn after a
+rebuild — the build directory is treated as a pure artefact, not a
+checked-in source. To force a clean regeneration delete the directory
+(`rm -rf src/scores/`) and re-run `npm run build:scores`.
 
 ## Quality Checks
 
@@ -161,7 +169,7 @@ The production build writes to `dist/`:
 
 The project is configured for Netlify. `netlify.toml` specifies:
 
-- Build command: `npm run build`
+- Build command: `bash build/install-lilypond.sh && export PATH=... && lilypond --version && npm run build`
 - Publish directory: `dist`
 - Functions directory: `netlify/functions`
 
@@ -169,4 +177,9 @@ Deployment is automated: merging to `main` triggers a Netlify build and deploy.
 
 **Live site:** [www.spemplayer.net](https://www.spemplayer.net)
 
-`npm run build` invokes LilyPond automatically via the `prebuild` step when available. In CI environments without LilyPond (including Netlify), the `prebuild` step skips gracefully and uses the committed SVGs in `src/scores/`.
+Since ticket #318, `src/scores/` is gitignored. Netlify regenerates the SVGs
+at build time: `install-lilypond.sh` downloads and caches the portable
+LilyPond binary into `$HOME/.local/lilypond`; the `lilypond --version` probe
+fails the build loudly if the install regresses; the `prebuild` step then
+runs `node build/buildScores.mjs` against the LilyPond source in
+`src/lilypond/`.

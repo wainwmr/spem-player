@@ -70,7 +70,16 @@ function checkLilypond(skipIfMissing) {
     output = execSync("lilypond --version", { encoding: "utf-8", stdio: "pipe" });
   } catch {
     if (skipIfMissing) {
-      console.log("LilyPond not found. Skipping score build (using committed SVGs).");
+      // Ticket #318 untracked the SVGs. --skip-if-missing now requires
+      // existing SVGs to skip safely; without them the build would ship
+      // empty scores. Probe a canonical SVG and fail loud if absent.
+      const probe = "src/scores/Hugh Keyte/modern/Choir I A.svg";
+      if (!existsSync(probe)) {
+        console.error(`LilyPond not found AND no pre-built SVGs at ${probe}.`);
+        console.error("Install LilyPond, or run buildScores.mjs without --skip-if-missing.");
+        process.exit(1);
+      }
+      console.log("LilyPond not found. Using existing SVGs.");
       process.exit(0);
     }
     console.error("Error: lilypond is not installed or not on PATH.");

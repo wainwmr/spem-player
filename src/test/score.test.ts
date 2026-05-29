@@ -357,10 +357,11 @@ describe("MusicScore custom element", () => {
     const startpos = elem.highlightBar.getAttribute("x");
     const width = elem.highlightBar.getAttribute("width");
 
-    // wait for score to be loaded
+    // Wait for the score to be fully ready (scroll/highlight applied)
+    // before asserting on post-scroll bar positions.
     waitingForLoaded = waitForEvent(
       elem,
-      "music-score-loaded",
+      "music-score-ready",
       handleScoreLoaded,
       0,
       null,

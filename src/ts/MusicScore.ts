@@ -9,6 +9,21 @@ import { MusicElement } from "./MusicElement";
 export class MusicScore extends MusicElement {
   static observedAttributes = ["choir", "part", "bar", "playing", "score-type"];
 
+  /**
+   * Test-only hook: when set, #loadSvg() bypasses the dynamic import and
+   * uses this function instead. Tests set this to return fixture SVGs so
+   * the suite can run without real score files on disk.
+   *
+   * There is a parallel `globalThis.__SPEM_TEST_SVG_LOADER` channel that
+   * #loadSvg() checks as a fallback — used by `src/test/setup.ts` because
+   * `vi.resetModules()` would otherwise lose this static. Both checks are
+   * gated behind `import.meta.env.MODE === "test"` so production bundles
+   * never carry the hook.
+   */
+  static testSvgLoader:
+    | ((scoreType: string, choir: number, recording: number) => string | null)
+    | null = null;
+
   svg: SVGGraphicsElement | null = null;
   svgWidth: number = 0;
   svgHeight: number = 0;
@@ -168,6 +183,21 @@ export class MusicScore extends MusicElement {
   }
 
   #loadSvg = async (): Promise<string | null> => {
+    // Test-only seam. Gated behind `import.meta.env.MODE === "test"` so
+    // the hook is tree-shaken from production bundles — see the JSDoc on
+    // `static testSvgLoader` for the contract.
+    if (import.meta.env?.MODE === "test") {
+      const loader =
+        MusicScore.testSvgLoader || (globalThis as any).__SPEM_TEST_SVG_LOADER;
+      if (loader) {
+        const svg = loader(this.scoreType, this.choir, this.recording);
+        if (svg !== null) {
+          this.fireEvent("music-score-loaded");
+          return svg;
+        }
+      }
+    }
+
     try {
       const choirName = config.choirs[this.recording][this.choir];
       const svgModule = await import(
@@ -224,8 +254,19 @@ export class MusicScore extends MusicElement {
     // getBoundingClientRect) happen against clean post-paint layout
     // rather than forcing a synchronous reflow on the freshly inserted
     // SVG — see #92.
+    //
+    // Two events fire in this method:
+    //   - `music-score-loaded`: emitted by #loadSvg() once the SVG content
+    //     is available (before the DOM updates here).
+    //   - `music-score-ready`: emitted INSIDE the rAF below, after
+    //     `scrollSmooth()` has applied the final post-paint layout.
+    // Tests that read highlight x/width or scroll position must await
+    // `music-score-ready`, not `loaded`, to avoid racing the rAF.
     this.highlight();
-    requestAnimationFrame(() => this.scrollSmooth());
+    requestAnimationFrame(() => {
+      this.scrollSmooth();
+      this.fireEvent("music-score-ready");
+    });
   }
 
   async setChoir(c: string | number) {
