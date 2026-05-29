@@ -64,16 +64,20 @@ function compareVersions(a, b) {
   return 0;
 }
 
-function checkLilypond(skipIfMissing) {
+function checkLilypond(skipIfMissing, version) {
   let output;
   try {
     output = execSync("lilypond --version", { encoding: "utf-8", stdio: "pipe" });
   } catch {
     if (skipIfMissing) {
-      // Ticket #318 untracked the SVGs. --skip-if-missing now requires
-      // existing SVGs to skip safely; without them the build would ship
-      // empty scores. Probe a canonical SVG and fail loud if absent.
-      const probe = "src/scores/Hugh Keyte/modern/Choir I A.svg";
+      // Ticket #318 untracked the SVGs. --skip-if-missing now requires a
+      // canary SVG for the requested edition to skip safely; without it
+      // the build would ship empty scores. The probe is canary-scope, not
+      // a full inventory check — a partially-built tree (e.g. an
+      // interrupted previous build) will still appear valid here. The
+      // canary is sufficient for the PR #271 regression mode (entire
+      // src/scores/ missing on Netlify) which motivated this guard.
+      const probe = `src/scores/${version}/modern/Choir I A.svg`;
       if (!existsSync(probe)) {
         console.error(`LilyPond not found AND no pre-built SVGs at ${probe}.`);
         console.error("Install LilyPond, or run buildScores.mjs without --skip-if-missing.");
@@ -194,9 +198,8 @@ function buildScore(ly, version, notation, maxLyMtime) {
 function main() {
   const options = parseArgs();
 
-  checkLilypond(options["skip-if-missing"]);
-
   const version = options.version || defaults.version;
+  checkLilypond(options["skip-if-missing"], version);
   const notations = options.notation
     ? [options.notation]
     : ["early", "modern"];
