@@ -21,7 +21,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** real defect — comment misrepresents why the fixture is needed. Caused by my cycle-2 commit `4410de1` (the WB #289 fixture-mirror commit). Small fix: rewrite the comment to state the unconditional test-runner reason.
 
-**Resolution:** addressed (commit TBD).
+**Resolution:** addressed.
 
 ### 388-cycle2-02 — important Touchmove fixture comment overclaims load-bearing role
 
@@ -30,7 +30,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** real defect of similar shape to 388-cycle2-01 — same commit, same drift pattern. Rewrite to state "defensive mirror, not load-bearing".
 
-**Resolution:** addressed (commit TBD).
+**Resolution:** addressed.
 
 ### 388-cycle2-03 — important Touchmove `#388` test no longer exercises `#getTouchPos`
 
@@ -39,7 +39,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** real defect — exposed by the rebase, but introduced by PR #400 (`#326`) merging into `main` while this branch was parked. The cycle-1 test was a legitimate regression test when written; `#326` invalidated it without it being noticed. The touchstart `#388` test fully covers the production surface (post-`#326`, only `#touchStarted` calls `#getTouchPos`). Keeping the misleading touchmove test in place degrades the test suite's signal. Cleanest fix: delete it.
 
-**Resolution:** addressed (commit TBD).
+**Resolution:** addressed.
 
 ### 388-cycle2-04 — out of scope State leakage across singleton canvas
 
