@@ -631,6 +631,12 @@ describe("MusicCanvas custom element", () => {
       cancelable: true,
     });
     Object.defineProperty(touchStart, "targetTouches", { value: [touch] });
+    // Mirror `targetTouches`. Post-#388, `#getTouchPos` reads
+    // `changedTouches[0]` instead of `targetTouches[0]` (see #388 — the
+    // synthetic touchstart this test dispatches has empty `targetTouches`
+    // in some browsers). Without `changedTouches`, this test would throw
+    // `TypeError: Cannot read properties of undefined`.
+    Object.defineProperty(touchStart, "changedTouches", { value: [touch] });
     Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
 
     innerCanvas.dispatchEvent(touchStart);
@@ -688,6 +694,8 @@ describe("MusicCanvas custom element", () => {
       cancelable: true,
     });
     Object.defineProperty(touchMove, "targetTouches", { value: [touch] });
+    // Mirror `targetTouches` — see the touchstart counterpart above.
+    Object.defineProperty(touchMove, "changedTouches", { value: [touch] });
     Object.defineProperty(touchMove, "preventDefault", { value: vi.fn() });
 
     innerCanvas.dispatchEvent(touchMove);
