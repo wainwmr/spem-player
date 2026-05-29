@@ -243,7 +243,7 @@ const SCROLL_KEYS = new Set([
 
 function keyboardTapped(e: KeyboardEvent) {
   if (e === undefined || e.target === null) {
-    return keyboardTapped;
+    return;
   }
 
   // Ensure e.target is an Element before accessing classList
@@ -297,6 +297,19 @@ function keyboardTapped(e: KeyboardEvent) {
     }
     return;
   }
+
+  // Auto-repeat (held key) is suppressed for most shortcuts to avoid
+  // stutter — repeated Space would toggle play/pause 30+ times a
+  // second, repeated Digit/Letter would race the choir/part state.
+  // ArrowLeft and ArrowRight are intentionally exempt: holding them
+  // is the fast-seek gesture (move through bars while held). Note
+  // the Cmd/Ctrl+Arrow branch above has already returned, so held
+  // Cmd+Arrow keeps auto-repeating its seek too — same intent on a
+  // different code path.
+  if (e.repeat && e.code !== "ArrowLeft" && e.code !== "ArrowRight") {
+    return;
+  }
+
   if (e.code == "Enter") {
     controls.isPlaying() ? controls.pause() : controls.play();
     return;

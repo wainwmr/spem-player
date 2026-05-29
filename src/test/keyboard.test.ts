@@ -309,4 +309,92 @@ describe("Space bar play/pause", () => {
       expect(event.defaultPrevented).toBe(false);
     });
   });
+
+  describe("Auto-repeat (held-key) handling", () => {
+    it("held Space does not toggle play/pause", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.playing = false;
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "Space",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.isPlaying()).toBe(false);
+    });
+
+    it("held Enter does not toggle play/pause", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.playing = false;
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "Enter",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.isPlaying()).toBe(false);
+    });
+
+    it("held ArrowDown does not change choir", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.setAttribute("choir", "0");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "ArrowDown",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.getAttribute("choir")).toBe("0");
+    });
+
+    // ArrowLeft and ArrowRight are exempt from the auto-repeat guard
+    // because holding them is the documented fast-seek gesture (move
+    // through bars while held). These two tests assert the bar
+    // actually advances on a repeat — not just that preventDefault
+    // ran — so a future regression that swallows the seek silently
+    // would fail loudly.
+    it("held ArrowLeft is exempt and seeks backward", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.setAttribute("bar", "5");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "ArrowLeft",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(Number(controls.getAttribute("bar"))).toBe(4);
+    });
+
+    it("held ArrowRight is exempt and seeks forward", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.setAttribute("bar", "5");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "ArrowRight",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(Number(controls.getAttribute("bar"))).toBe(6);
+    });
+  });
 });
