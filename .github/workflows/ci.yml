@@ -22,6 +22,17 @@ jobs:
           cache: npm
       - run: npm ci
 
+      # Install LilyPond on the CI runner so `npm run build` (which runs
+      # `prebuild` → `node build/buildScores.mjs --skip-if-missing` and
+      # then `vite build`) has the toolchain it needs to regenerate the
+      # now-gitignored SVGs. Mirrors the netlify.toml chain — same script,
+      # same explicit PATH export across the `&&` boundary (the script's
+      # own export does not propagate). Without this step the probe added
+      # in `buildScores.mjs` (canary SVG at `src/scores/Hugh Keyte/modern/
+      # Choir I A.svg`) trips and `npm run build` fails.
+      - name: Install LilyPond
+        run: bash build/install-lilypond.sh
+
       # Timed-step pattern: capture command exit status separately so duration
       # is emitted even on failure (telemetry is most useful precisely when a
       # phase regresses), then re-exit with the captured status so the
@@ -29,6 +40,7 @@ jobs:
       - name: Run checks and build
         id: check-build
         run: |
+          export PATH="$HOME/.local/lilypond/lilypond-2.26.0/bin:$PATH"
           start=$(date +%s)
           status=0
           npm run check && npm run build || status=$?
