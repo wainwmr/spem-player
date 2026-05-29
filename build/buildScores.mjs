@@ -91,11 +91,11 @@ function checkLilypond(skipIfMissing, version) {
     process.exit(1);
   }
 
-  const version = parseLilypondVersion(output);
+  const lilypondVersion = parseLilypondVersion(output);
   const minVersion = "2.26.0";
-  if (!version || compareVersions(version, minVersion) < 0) {
+  if (!lilypondVersion || compareVersions(lilypondVersion, minVersion) < 0) {
     console.error(
-      `Error: LilyPond ${version || "unknown"} is installed, but ${minVersion} or later is required.`
+      `Error: LilyPond ${lilypondVersion || "unknown"} is installed, but ${minVersion} or later is required.`
     );
     console.error("Please upgrade LilyPond before building scores.");
     process.exit(1);
