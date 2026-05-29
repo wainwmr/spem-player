@@ -311,10 +311,11 @@ describe("Space bar play/pause", () => {
   });
 
   describe("Auto-repeat (held-key) handling", () => {
-    // The choir-change path in index.ts goes through async setChoir;
-    // every test in this block needs to yield to the microtask queue
-    // (await new Promise + setTimeout 0) so the attribute writes
-    // flush before the assertion reads them.
+    // Tests that exercise async setChoir need to yield to the
+    // microtask queue (await new Promise + setTimeout 0) so the
+    // attribute writes flush before assertion. The yield is
+    // included in every test in this block for symmetry; it is a
+    // no-op for the sync paths (Space, Enter, KeyD).
 
     it("held Space does not toggle play/pause", async () => {
       const controls = document.querySelector(

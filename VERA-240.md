@@ -9,7 +9,7 @@ See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/iss
 
 ## Summary
 
-[Placeholder — finalised at close-out.]
+Cycle 1 took two passes plus a polish. Pass 1 surfaced 6 important findings on a small post-rebase diff (15 lines in index.ts + 88 lines of new tests) — heavier than the diff size suggested, dominated by missing test coverage on the cases the production comment explicitly named (held Digit/Letter, held Cmd+Arrow). Five findings addressed in commit `efc79b0`: refactored the guard to a `REPEAT_EXEMPT_KEYS` Set with explicit default-deny policy comment (240-03 + folded SFH F4); added three new tests for held Ctrl+ArrowRight (pins the structural ordering invariant), held Digit2, and held KeyD (pin the comment's motivating examples); added WHY comment on the setTimeout(0) idiom; tightened production comment to drop the "30+/s" specificity, soften "race", and drop "documented" from the test comment. One finding rejected per PRA's explicit guidance: 240-06 (void-fix C1 has no regression test) is accepted as a lint-tier gap and documented in the PR description rather than papered over with a brittle test. Pass 2 cleared on all five agents with PRA empirically verifying that reverting each production change makes the targeted test fail loudly. One polish commit `9a8b0a3` softened the describe-block comment per CMT pass-2 finding (the yield is a no-op for Space/Enter/KeyD paths; previous wording overclaimed). Pass 3 skipped — the polish was comment-only, no production behaviour change since the pass-2 clean state. Notable: even on a 15-line post-rebase diff, Vera produced four important findings with test-empirically-confirmed regression paths — the bias-toward-running heuristic continues to validate.
 
 ## Findings
 
