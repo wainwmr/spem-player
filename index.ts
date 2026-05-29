@@ -241,6 +241,15 @@ const SCROLL_KEYS = new Set([
   "ArrowRight",
 ]);
 
+// Default policy for held-key repeats: SUPPRESS. Most shortcuts
+// (Space toggle, Digit/Letter mode-switches, KeyD dark-mode) would
+// strobe or thrash state if they fired many times per second on a
+// held key. Add to this set only if auto-repeating the action is
+// *useful*, not just *noisy*. ArrowLeft/ArrowRight are exempt
+// because holding them is the fast-seek gesture (advance through
+// bars while held).
+const REPEAT_EXEMPT_KEYS = new Set(["ArrowLeft", "ArrowRight"]);
+
 function keyboardTapped(e: KeyboardEvent) {
   if (e === undefined || e.target === null) {
     return;
@@ -298,15 +307,15 @@ function keyboardTapped(e: KeyboardEvent) {
     return;
   }
 
-  // Auto-repeat (held key) is suppressed for most shortcuts to avoid
-  // stutter — repeated Space would toggle play/pause 30+ times a
-  // second, repeated Digit/Letter would race the choir/part state.
-  // ArrowLeft and ArrowRight are intentionally exempt: holding them
-  // is the fast-seek gesture (move through bars while held). Note
-  // the Cmd/Ctrl+Arrow branch above has already returned, so held
-  // Cmd+Arrow keeps auto-repeating its seek too — same intent on a
-  // different code path.
-  if (e.repeat && e.code !== "ArrowLeft" && e.code !== "ArrowRight") {
+  // Default-deny on auto-repeat. Held keys fire many times per
+  // second at the OS repeat rate; for most shortcuts that means
+  // strobing (held Space toggling play/pause, held KeyD flipping
+  // dark mode) or piling redundant attribute writes through
+  // setChoir/setPart. The exemption list is REPEAT_EXEMPT_KEYS
+  // above. Note the Cmd/Ctrl+Arrow branch already returned, so
+  // held Cmd+Arrow keeps auto-repeating its seek on a separate
+  // code path — covered by a test below.
+  if (e.repeat && !REPEAT_EXEMPT_KEYS.has(e.code)) {
     return;
   }
 
