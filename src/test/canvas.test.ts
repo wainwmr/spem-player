@@ -631,11 +631,11 @@ describe("MusicCanvas custom element", () => {
       cancelable: true,
     });
     Object.defineProperty(touchStart, "targetTouches", { value: [touch] });
-    // Mirror `targetTouches`. Post-#388, `#getTouchPos` reads
-    // `changedTouches[0]` instead of `targetTouches[0]` (see #388 — the
-    // synthetic touchstart this test dispatches has empty `targetTouches`
-    // in some browsers). Without `changedTouches`, this test would throw
-    // `TypeError: Cannot read properties of undefined`.
+    // Post-#388, `#getTouchPos` reads `changedTouches[0]` unconditionally
+    // (see #388 for the production rationale), so synthetic TouchEvents in
+    // tests must populate `changedTouches` or the getter throws `TypeError:
+    // Cannot read properties of undefined`. This isn't browser-specific —
+    // the read happens in our own code.
     Object.defineProperty(touchStart, "changedTouches", { value: [touch] });
     Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
 
