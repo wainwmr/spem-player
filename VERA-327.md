@@ -21,7 +21,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** real defect, caused by diff — comment-to-code drift introduced when the `(#326)` tests landed on `main` and #327 then rebased on top. The comment's `(#327)` parenthetical is now self-referentially wrong: this is the change that removed the hard-coding.
 
-**Resolution:** addressed (commit TBD).
+**Resolution:** addressed.
 
 ### 327-02 — important Test assertion couples #326 test to #327 arithmetic
 
@@ -30,7 +30,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** defensive nit, but caused by my rebase resolution. I over-coupled when changing `"all"` → `0`. Restoring the original falsifier shape (any-value-other-than-sentinel) is a small fix that aligns the test's assertion with its load-bearing purpose. The #327 arithmetic is already pinned by the new table-driven test below.
 
-**Resolution:** addressed (commit TBD).
+**Resolution:** addressed.
 
 ### 327-03 — critical NaN propagation in coord helpers on degenerate rect
 
@@ -39,7 +39,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** pre-existing — the same arithmetic was on `main` before #327. The PR does not introduce the failure mode, it does increase the surface (part is now also derived). Out of scope for #327's narrow purpose.
 
-**Resolution:** deferred to Workbench Item TBD.
+**Resolution:** deferred to [Item #294](https://github.com/wainwright1000/spem-tools/issues/294) (bundled with 327-04).
 
 ### 327-04 — critical Empty `targetTouches[0]` dereference
 
@@ -48,7 +48,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** pre-existing — same dereference on main. Defensive nit. The W3C touch model guarantees at least one targetTouch on touchstart/touchmove, so violations come from synthetic input. Bundle with 327-03 in a single "coord-helper defensive hardening" Workbench item.
 
-**Resolution:** deferred to Workbench Item TBD (bundled with 327-03).
+**Resolution:** deferred to [Item #294](https://github.com/wainwright1000/spem-tools/issues/294) (bundled with 327-03).
 
 ### 327-05 — important `bar` derivation asymmetry between mouse and touch
 
@@ -66,7 +66,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** defensive nit at the type level. The change is well-scoped, but it expands #327's diff into a type-system change touching the Position interface and ripple sites. Design call — the existing type accepts the wider union deliberately because state can be `"all"` (URL/controls path). The narrowing is correct but pulls #327 into a wider refactor.
 
-**Resolution:** deferred to Workbench Item TBD.
+**Resolution:** deferred to [Item #295](https://github.com/wainwright1000/spem-tools/issues/295).
 
 ### 327-07 — coverage gaps for boundary / multi-touch / empty cases
 
@@ -75,7 +75,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** defensive coverage. The happy path is covered by the new table-driven test (5 cases). The boundary cases pin against future regressions but no current bug. Worthwhile — bundle as one Workbench item, "extend canvas touch coverage".
 
-**Resolution:** deferred to Workbench Item TBD.
+**Resolution:** deferred to [Item #296](https://github.com/wainwright1000/spem-tools/issues/296).
 
 ### 327-08 — error logging in coord helpers
 
@@ -90,6 +90,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 > **comment-analyzer I1-I5 + silent-failure-hunter I2 + type-design-analyzer I3:**
 > Cluster of overlapping comment improvements:
+>
 > - Hard-coded `8 choirs`, `5 parts`, `390`, `1400x400` in `canvas.test.ts:484-485` and `:579-587` — name the config keys instead.
 > - Invariant comment in `MusicCanvas.ts:571-576` says `y ∈ [0, choirs.length]` without crediting the clamp two lines above.
 > - `MusicCanvas.ts:616-618` "strict-`<` semantic of `%`" claim — same theme.
@@ -98,7 +99,7 @@ See also: [Original Report (cycle 2)](https://github.com/wainwmr/spem-player/iss
 
 **Bob's triage:** comment hygiene. Small bundle of edits. Most of these are about tightening the lower bound / preconditions that the clamp enforces. Addressing now reduces future rebase drift. Single commit.
 
-**Resolution:** addressed (commit TBD).
+**Resolution:** addressed.
 
 ## Suggestions (no resolution required)
 
