@@ -1,0 +1,40 @@
+import { describe, it, expect } from "vitest";
+import { parseURLSearch } from "../ts/url";
+
+describe("parseURLSearch", () => {
+  it("preserves a value containing '=' instead of truncating at the first '='", () => {
+    // The bug was split("="): "recording=alc=extra" -> ["recording","alc",
+    // "extra"], so parm[1] === "alc" and recording wrongly resolved to 0.
+    // The fix (indexOf/slice) keeps val === "alc=extra".
+    expect(parseURLSearch("?recording=alc=extra").recording).toBe(1);
+    // Tighter proof that the WHOLE value survives, not merely "not alc":
+    // score only sets early when the value is exactly "early". Truncation
+    // would read "early" (true); preservation reads "early=x" (false). So
+    // this fails against the old split() bug AND pins full-value handling.
+    expect(parseURLSearch("?score=early=x").early).toBe(false);
+    expect(parseURLSearch("?score=early").early).toBe(true);
+  });
+
+  it("handles normal parameters without '=' in the value", () => {
+    const result = parseURLSearch("?recording=alc&choir=3&bar=10");
+    expect(result.recording).toBe(0);
+    expect(result.choir).toBe(3);
+    expect(result.bar).toBe(10);
+  });
+
+  it("returns the documented defaults for an empty search string", () => {
+    const result = parseURLSearch("");
+    expect(result.recording).toBe(0);
+    expect(result.choir).toBe(0);
+    expect(result.part).toBe("all");
+    expect(result.dark).toBe(true);
+    expect(result.early).toBe(false);
+  });
+
+  it("treats a key with no '=' as having no value (NaN for numeric keys)", () => {
+    // New indexOf/slice branch: eq === -1 -> val === undefined, so a
+    // numeric key yields Number(undefined) === NaN. Pinned as current
+    // behaviour; a guard against NaN is tracked in the follow-up ticket.
+    expect(Number.isNaN(parseURLSearch("?choir").choir)).toBe(true);
+  });
+});
