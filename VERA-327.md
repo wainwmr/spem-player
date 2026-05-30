@@ -59,7 +59,7 @@ its tokens `clientY` then `part`. Address now; folds in code-reviewer's point
 that the name should describe what is actually asserted (a touchstart
 selection, not `getTouchPos` in isolation).
 
-**Resolution:** addressed (commit RESOLUTION_HASH) — retitled to
+**Resolution:** addressed (commit 9a61b49) — retitled to
 `"touchstart at clientY=%i selects part %i (#327)"`.
 
 ### 327-03 — [important] Bottom-edge clamp (`part=0` collapse) untested
@@ -73,7 +73,7 @@ selection, not `getTouchPos` in isolation).
 **Bob's triage:** real coverage gap on behaviour this diff introduces and the
 code's own comment calls out as subtle. Address now; cheap.
 
-**Resolution:** addressed (commit RESOLUTION_HASH) — new boundary `it.each`
+**Resolution:** addressed (commit 9a61b49) — new boundary `it.each`
 row `[399, 7, 0]` asserting `choir===7, part===0`.
 
 ### 327-04 — [important] Choir-boundary part-wrap untested
@@ -85,7 +85,7 @@ row `[399, 7, 0]` asserting `choir===7, part===0`.
 **Bob's triage:** real coverage gap, the natural complement to the in-row
 table. Address now; close together with 327-03 in one boundary test.
 
-**Resolution:** addressed (commit RESOLUTION_HASH) — boundary `it.each` rows
+**Resolution:** addressed (commit 9a61b49) — boundary `it.each` rows
 `[49, 0, 4]` (last part of choir 0) and `[59, 1, 0]` (first part of choir 1),
 asserting both `choir` and `part`.
 
