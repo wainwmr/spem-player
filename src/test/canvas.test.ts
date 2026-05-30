@@ -693,7 +693,7 @@ describe("MusicCanvas custom element", () => {
     [40, 3],
     [50, 4],
   ])(
-    "getTouchPos returns part %i for clientY=%i (#327)",
+    "touchstart at clientY=%i selects part %i (#327)",
     async (clientY, expectedPart) => {
       expect(canvas).not.toBeNull();
 
@@ -737,6 +737,71 @@ describe("MusicCanvas custom element", () => {
 
       innerCanvas.dispatchEvent(touchStart);
       const event = await promise;
+      expect(event.detail.position.part).toBe(expectedPart);
+    }
+  );
+
+  // #327 boundary cases — the two subtle edges the `#getTouchPos` clamp
+  // comment reasons about, neither of which the mid-row table above exercises:
+  //   - Bottom edge (clientY past height-padding): clampedY pins to
+  //     height-padding, so y === choirs.length exactly. `choir` saturates via
+  //     its Math.min clamp while `part` wraps to 0 (y % 1 === 0). Guards the
+  //     choir clamp ceiling — a regression in the ceiling would change part
+  //     or choir here silently.
+  //   - Choir boundary: part runs 0..parts.length-1 within a choir and resets
+  //     to 0 in the next choir. Guards the `y % 1` wrap (part is per-choir).
+  // [clientY, expectedChoir, expectedPart] for the same 1400x400 mock; see the
+  // derivation comment on the table above for the config dependence.
+  it.each([
+    [399, 7, 0], // clamped to the bottom edge: choir saturates, part wraps to 0
+    [49, 0, 4], // last part of choir 0
+    [59, 1, 0], // first part of choir 1 — part resets across the boundary
+  ])(
+    "touchstart at clientY=%i selects choir %i part %i (#327)",
+    async (clientY, expectedChoir, expectedPart) => {
+      expect(canvas).not.toBeNull();
+
+      const promise = new Promise<CustomEvent>((resolve) => {
+        canvas!.addEventListener(
+          "music-canvas-touchstart",
+          (e) => resolve(e as CustomEvent),
+          { once: true }
+        );
+      });
+
+      canvas!.getBoundingClientRect = vi.fn(
+        () =>
+          ({
+            width: 1400,
+            height: 400,
+            top: 0,
+            left: 0,
+            right: 1400,
+            bottom: 400,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+          }) as DOMRect
+      );
+
+      const innerCanvas = canvas!.querySelector("canvas")!;
+      const touch = {
+        clientX: 100,
+        clientY,
+        identifier: 0,
+        target: innerCanvas,
+      };
+      const touchStart = new Event("touchstart", {
+        bubbles: true,
+        cancelable: true,
+      });
+      Object.defineProperty(touchStart, "targetTouches", { value: [touch] });
+      Object.defineProperty(touchStart, "changedTouches", { value: [touch] });
+      Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
+
+      innerCanvas.dispatchEvent(touchStart);
+      const event = await promise;
+      expect(event.detail.position.choir).toBe(expectedChoir);
       expect(event.detail.position.part).toBe(expectedPart);
     }
   );
