@@ -3,6 +3,11 @@ import commonjs from "vite-plugin-commonjs";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { execSync } from "child_process";
+// Per-worktree dev/preview ports. The offset comes from the
+// SPEM_PORT_OFFSET env var (default 0); see `worktree-ports.ts`. This
+// import never throws — an unset or invalid value falls back to the
+// default ports, so config-eval is safe in CI, forks, and clones.
+import { DEV_PORT, PREVIEW_PORT } from "./worktree-ports.ts";
 
 const pkg = JSON.parse(
   readFileSync(resolve(__dirname, "package.json"), "utf-8")
@@ -24,6 +29,22 @@ const versionWithBranch =
 
 export default defineConfig({
   assetsInclude: ["**/*.ohm", "**/*.ly"],
+  server: {
+    // Dev tolerates port collisions: `strictPort: false` lets Vite
+    // auto-increment from DEV_PORT when running `npm run dev` —
+    // human ergonomics, not a test contract.
+    port: DEV_PORT,
+    strictPort: false,
+  },
+  preview: {
+    // Preview hard-fails on collision. `strictPort: true` is
+    // load-bearing: Playwright's `webServer.port` polls the exact
+    // PREVIEW_PORT (see playwright.config.ts), so silent
+    // auto-increment would test the wrong server. Do NOT relax this
+    // to match the dev block — the asymmetry is intentional.
+    port: PREVIEW_PORT,
+    strictPort: true,
+  },
   test: {
     globals: true,
     environment: "jsdom",
