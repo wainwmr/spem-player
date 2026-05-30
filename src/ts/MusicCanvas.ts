@@ -593,8 +593,15 @@ export class MusicCanvas extends MusicElement {
 
   #getTouchPos(e: TouchEvent): Position {
     var rect = this.getBoundingClientRect();
-    const touchX = e.targetTouches[0].clientX - rect.left;
-    const touchY = e.targetTouches[0].clientY - rect.top;
+    // changedTouches, not targetTouches: targetTouches is filtered to
+    // touches still on the target element, so it is empty once the
+    // finger drags off the canvas — which used to crash this getter.
+    // changedTouches contains the touch that triggered the event
+    // regardless of whether it remains within the target's bounds,
+    // and is guaranteed non-empty for touchstart/move/end/cancel.
+    // The clamp below pins out-of-bounds drags to the canvas edge.
+    const touchX = e.changedTouches[0].clientX - rect.left;
+    const touchY = e.changedTouches[0].clientY - rect.top;
     const clampedX = Math.max(
       this.canvasPadding,
       Math.min(touchX, rect.width - this.canvasPadding)

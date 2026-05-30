@@ -1,5 +1,6 @@
 import { MusicCanvas } from "../ts/MusicCanvas";
 import config from "../ts/config";
+import type { Position } from "../ts/common";
 MusicCanvas.define("music-canvas");
 
 var canvas: MusicCanvas | null;
@@ -243,6 +244,7 @@ describe("MusicCanvas custom element", () => {
       cancelable: true,
     });
     Object.defineProperty(touchStart, "targetTouches", { value: [touch] });
+    Object.defineProperty(touchStart, "changedTouches", { value: [touch] });
     Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
 
     innerCanvas.dispatchEvent(touchStart);
@@ -258,6 +260,7 @@ describe("MusicCanvas custom element", () => {
       cancelable: true,
     });
     Object.defineProperty(touchMove, "targetTouches", { value: [touch] });
+    Object.defineProperty(touchMove, "changedTouches", { value: [touch] });
     Object.defineProperty(touchMove, "preventDefault", { value: vi.fn() });
     canvas!.dispatchEvent(touchMove);
     await movePromise;
@@ -272,6 +275,83 @@ describe("MusicCanvas custom element", () => {
     canvas!.dispatchEvent(touchEnd);
     await endPromise;
   });
+
+  it("getTouchPos resolves a position when the touch is not in targetTouches", async () => {
+    expect(canvas).not.toBeNull();
+
+    canvas!.getBoundingClientRect = vi.fn(
+      () =>
+        ({
+          width: 1400,
+          height: 400,
+          top: 0,
+          left: 0,
+          right: 1400,
+          bottom: 400,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        }) as DOMRect
+    );
+
+    const innerCanvas = canvas!.querySelector("canvas")!;
+    const touch = {
+      clientX: 100,
+      clientY: 50,
+      identifier: 0,
+      target: innerCanvas,
+    };
+
+    // Scenario: the user's finger has left the target element, so
+    // targetTouches is empty, but the touch that triggered the event
+    // is still in changedTouches. Reading targetTouches[0] here would
+    // crash with TypeError; reading changedTouches[0] survives.
+    //
+    // The falsifier is `await startPromise`: when getTouchPos throws,
+    // the touchstart handler aborts before firing the CustomEvent,
+    // the promise never resolves, and the test times out (jsdom
+    // routes listener exceptions to window.onerror rather than
+    // propagating to dispatchEvent's caller — so a `not.toThrow()`
+    // around the dispatch is vacuously true and cannot bind here).
+    const startPromise = new Promise<CustomEvent<{ position: Position }>>(
+      (resolve) => {
+        canvas!.addEventListener(
+          "music-canvas-touchstart",
+          (e) => resolve(e as CustomEvent<{ position: Position }>),
+          { once: true }
+        );
+      }
+    );
+    const touchStart = new Event("touchstart", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(touchStart, "targetTouches", { value: [] });
+    Object.defineProperty(touchStart, "changedTouches", { value: [touch] });
+    Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
+
+    innerCanvas.dispatchEvent(touchStart);
+    const startEvent = await startPromise;
+    const pos = startEvent.detail.position;
+
+    // Positive controls: prove getTouchPos was actually invoked and
+    // moveToPosition consumed its output. bar=9 is deterministic
+    // from the math (floor((100-5) * 140 / 1400)); choir depends
+    // on config.choirs[0].length so we range-check it.
+    expect(pos.bar).toBe(9);
+    expect(pos.choir).toBeGreaterThanOrEqual(0);
+    expect(pos.choir).toBeLessThan(config.choirs[0].length);
+    expect(canvas!.bar).toBe(pos.bar);
+    expect(canvas!.choir).toBe(pos.choir);
+  });
+
+  // The touchmove counterpart of the above test was removed in cycle 2:
+  // post-#326 (PR #400), `#touchMoved` no longer calls `#getTouchPos`,
+  // so the only path that reads `changedTouches[0]` is `#touchStarted`.
+  // The touchstart test above fully covers the production surface; the
+  // removed touchmove version was passing only because the preceding
+  // touchstart had set `canvas!.bar = 9`, which the touchmove handler
+  // — now performing no commit — could not have set on its own.
 
   it("getMousePos returns valid part for clicks in top padding", async () => {
     expect(canvas).not.toBeNull();
@@ -449,6 +529,7 @@ describe("MusicCanvas custom element", () => {
       cancelable: true,
     });
     Object.defineProperty(touchStart, "targetTouches", { value: [touch] });
+    Object.defineProperty(touchStart, "changedTouches", { value: [touch] });
     Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
 
     innerCanvas.dispatchEvent(touchStart);
@@ -506,6 +587,12 @@ describe("MusicCanvas custom element", () => {
       cancelable: true,
     });
     Object.defineProperty(touchStart, "targetTouches", { value: [touch] });
+    // Post-#388, `#getTouchPos` reads `changedTouches[0]` unconditionally
+    // (see #388 for the production rationale), so synthetic TouchEvents in
+    // tests must populate `changedTouches` or the getter throws `TypeError:
+    // Cannot read properties of undefined`. This isn't browser-specific —
+    // the read happens in our own code.
+    Object.defineProperty(touchStart, "changedTouches", { value: [touch] });
     Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
 
     innerCanvas.dispatchEvent(touchStart);
@@ -563,6 +650,12 @@ describe("MusicCanvas custom element", () => {
       cancelable: true,
     });
     Object.defineProperty(touchMove, "targetTouches", { value: [touch] });
+    // Defensive mirror — `#touchMoved` does not currently read
+    // `changedTouches` (post-#326 it does not call `#getTouchPos`), so this
+    // is not load-bearing. Mirroring keeps the fixture consistent with the
+    // touchstart counterpart and future-proofs against a refactor that
+    // re-introduces `#getTouchPos` into the move path.
+    Object.defineProperty(touchMove, "changedTouches", { value: [touch] });
     Object.defineProperty(touchMove, "preventDefault", { value: vi.fn() });
 
     innerCanvas.dispatchEvent(touchMove);
