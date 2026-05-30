@@ -732,6 +732,7 @@ describe("MusicCanvas custom element", () => {
         cancelable: true,
       });
       Object.defineProperty(touchStart, "targetTouches", { value: [touch] });
+      Object.defineProperty(touchStart, "changedTouches", { value: [touch] });
       Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
 
       innerCanvas.dispatchEvent(touchStart);
