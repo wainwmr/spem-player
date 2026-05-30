@@ -6,6 +6,7 @@ import "./src/scss/style.scss";
 import config from "./src/ts/config";
 
 import { PartType, State, colors, toNum, toRecordingIndex } from "./src/ts/common";
+import { parseURLSearch } from "./src/ts/url";
 
 import { MusicCanvas } from "./src/ts/MusicCanvas";
 import { MusicCanvasWatcher } from "./src/ts/MusicCanvasWatcher";
@@ -164,43 +165,15 @@ function setBar(b: number) {
 }
 
 function parseURL() {
-  const url = window.location.search.substring(1);
-  const parms = url.split("&");
-
-  var recording = 0; // ALC
-  var choir = 0; // choir 1 because it is zero indexed
-  var part: PartType = "all";
-  var bar = 1 - config.intro_beats[recording] / 4;
-  var dark = true; // dark mode by default
-  var early = false;
-  var r = 0; // ALC
-
-  for (let i = 0; i < parms.length; i++) {
-    const parm = parms[i].split("=");
-    if (parm[0] == "choir") {
-      choir = Number(parm[1]);
-    } else if (parm[0] == "part") {
-      const n: number = Number(parm[1]);
-      if (n >= 0 && n < config.parts.length) part = n;
-    } else if (parm[0] == "bar") {
-      bar = Number(parm[1]);
-    } else if (parm[0] == "dark") {
-      dark = true;
-    } else if (parm[0] == "recording") {
-      if (parm[1] == "alc") r = 0;
-      else r = 1;
-    } else if (parm[0] == "score") {
-      early = parm[1] == "early";
-    }
-  }
-  setRecording(r);
-  setChoir(choir, true);
-  setPart(part);
-  setBar(bar);
-  if (early) {
+  const parsed = parseURLSearch(window.location.search);
+  setRecording(parsed.recording);
+  setChoir(parsed.choir, true);
+  setPart(parsed.part);
+  setBar(parsed.bar);
+  if (parsed.early) {
     toggleScore();
   }
-  if (!dark) {
+  if (!parsed.dark) {
     document.body.classList.add("light-theme");
     current.viewmode = "light";
   } else {
