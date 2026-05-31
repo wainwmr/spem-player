@@ -127,9 +127,31 @@ describe("MusicScore custom element", () => {
     await waitingForLoaded;
 
     const indicatorWidth = elem.highlightPosition.getAttribute("width");
-    const maskRect = elem.highlightMask.children[0];
-    const maskWidth = maskRect.getAttribute("width");
+    const maskWidth = elem.maskRect!.getAttribute("width");
     expect(maskWidth).toBe(indicatorWidth);
+  });
+
+  it("exposes typed maskRect and maskLine fields as children of highlightMask", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    const waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem?.setAttribute("choir", "0");
+    await waitingForLoaded;
+
+    expect(elem.maskRect).not.toBeNull();
+    expect(elem.maskLine).not.toBeNull();
+    expect(elem.maskRect!.tagName).toBe("rect");
+    expect(elem.maskLine!.tagName).toBe("line");
+    expect(elem.highlightMask.children).toContain(elem.maskRect);
+    expect(elem.highlightMask.children).toContain(elem.maskLine);
   });
 
   it("highlightPosition width changes with score type", async () => {
