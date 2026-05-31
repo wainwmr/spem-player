@@ -2,6 +2,6 @@
 // src/test/ can import it from TypeScript. Keep in sync with the exports
 // at the bottom of scoreCacheKey.mjs.
 
-export const SCORE_CACHE_INPUTS: string[];
+export const SCORE_CACHE_INPUTS: readonly string[];
 
 export function computeScoreCacheKey(opts?: { root?: string }): string;

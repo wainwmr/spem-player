@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { execFileSync } from "child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { dirname, join } from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -79,15 +79,53 @@ describe("computeScoreCacheKey", () => {
     expect(computeScoreCacheKey({ root })).not.toBe(before);
   });
 
-  it("declares every input class in SCORE_CACHE_INPUTS", () => {
-    expect(SCORE_CACHE_INPUTS).toEqual(
-      expect.arrayContaining([
-        "src/lilypond/**/*.ly",
-        "build/buildScores.mjs",
-        "build/postprocessSvg.mjs",
-        "build/install-lilypond.sh",
-      ])
+  it("changes the key when a file is renamed but its content is unchanged", () => {
+    const before = computeScoreCacheKey({ root });
+    renameSync(
+      join(root, "src/lilypond/Hugh Keyte/modern/Choir I A.ly"),
+      join(root, "src/lilypond/Hugh Keyte/modern/Choir I Z.ly")
     );
+    expect(computeScoreCacheKey({ root })).not.toBe(before);
+  });
+
+  // Each content is hashed bound to its path (path, then NUL, then content),
+  // so swapping two files' contents must change the key. A regression that
+  // hashed contents without binding them to paths would leave this unchanged.
+  it("binds content to its path: swapping two files' contents changes the key", () => {
+    const before = computeScoreCacheKey({ root });
+    writeFileSync(
+      join(root, "build/buildScores.mjs"),
+      "// post-processing logic\n"
+    );
+    writeFileSync(
+      join(root, "build/postprocessSvg.mjs"),
+      "// generation logic\n"
+    );
+    expect(computeScoreCacheKey({ root })).not.toBe(before);
+  });
+
+  // A key over zero matched inputs (a renamed/moved tree, a mis-resolved root,
+  // a glob that matches nothing) would be the constant empty-sha256 digest —
+  // valid-looking and stable, so it would silently alias every "no inputs"
+  // state to one cache entry. The function must refuse to emit such a key.
+  it("throws rather than emit a key when no inputs match", () => {
+    const emptyRoot = mkdtempSync(join(tmpdir(), "score-cache-empty-"));
+    try {
+      expect(() => computeScoreCacheKey({ root: emptyRoot })).toThrow();
+    } finally {
+      rmSync(emptyRoot, { recursive: true, force: true });
+    }
+  });
+
+  // Exact (not arrayContaining) so adding a new input class forces this test to
+  // be updated — a prompt to add a matching fixture and mutation case above.
+  it("declares exactly the input classes in SCORE_CACHE_INPUTS", () => {
+    expect(SCORE_CACHE_INPUTS).toEqual([
+      "src/lilypond/**/*.ly",
+      "build/buildScores.mjs",
+      "build/postprocessSvg.mjs",
+      "build/install-lilypond.sh",
+    ]);
   });
 
   // The workflows consume the key via the CLI (`node build/scoreCacheKey.mjs`);

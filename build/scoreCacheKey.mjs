@@ -22,7 +22,7 @@ import { fileURLToPath } from "url";
  *    bump busts the cache.
  *
  * Known residual (deliberately NOT keyed on): postprocessSvg.mjs serialises via
- * `@xmldom/xmldom`. A serialization-changing xmldom bump could in theory stale
+ * `@xmldom/xmldom`. A serialization-changing xmldom bump could silently stale
  * the cache. We do not key on package-lock.json because it churns on every
  * unrelated dependency bump (a vitest patch has nothing to do with SVG bytes),
  * which would defeat the cache. If an xmldom upgrade ever changes output, add
@@ -54,8 +54,21 @@ export function computeScoreCacheKey({ root = REPO_ROOT } = {}) {
   const files = SCORE_CACHE_INPUTS.flatMap((pattern) =>
     globSync(pattern, { cwd: root }),
   )
+    // Normalise separators then sort so the key is stable across OSes and
+    // independent of glob enumeration order.
     .map((p) => p.replace(/\\/g, "/"))
     .sort();
+
+  // Refuse to emit a key over zero inputs. An empty match set would hash to the
+  // constant empty-sha256 digest — valid-looking and stable — silently aliasing
+  // every "no inputs found" state (a renamed/moved tree, a mis-resolved root, a
+  // glob that matches nothing) to one cache entry, shipping stale scores. (#421)
+  if (files.length === 0) {
+    throw new Error(
+      `scoreCacheKey: no files matched any of ${JSON.stringify(SCORE_CACHE_INPUTS)} ` +
+        `under ${root}. Refusing to emit a key over zero inputs (it would poison the cache).`,
+    );
+  }
 
   const hash = createHash("sha256");
   for (const rel of files) {
