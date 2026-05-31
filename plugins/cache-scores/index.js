@@ -9,9 +9,11 @@
 // netlify.toml branches on the `.netlify-scores-hit` flag this plugin writes on
 // a hit; on a miss it clears the restored payload so the build regenerates.
 //
-// This runs only in Netlify's build environment — utils.cache is a no-op
-// elsewhere, so local `npm run build` and CI never hit this plugin and always
-// do a full render. That local-vs-deploy difference is expected, not a bug.
+// The plugin's hooks run only under the Netlify build system (registered via
+// netlify.toml's [[plugins]]). A local `npm run build` and CI never invoke them
+// — npm does not read netlify.toml — so they always do a full regeneration; even
+// `netlify build` run locally has no deploy cache for utils.cache to hit. That
+// local-vs-deploy difference is expected, not a bug.
 
 import { existsSync, readFileSync, rmSync, writeFileSync } from "fs";
 
@@ -57,7 +59,7 @@ export async function onPreBuild({ utils }) {
         "cache-scores: HIT — build will skip the LilyPond install + regeneration.",
       );
     } else {
-      // Stale, or a partial restore the canary caught: clear the payload +
+      // Stale, or a restore missing the canary entirely: clear the payload +
       // marker so the build regenerates from clean, and ensure no hit flag is
       // left set.
       rmSync(SCORES_DIR, { recursive: true, force: true });

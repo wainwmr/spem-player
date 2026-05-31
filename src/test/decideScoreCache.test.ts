@@ -66,10 +66,11 @@ describe("decideScoreCache", () => {
 
   it("misses on a near-match key — exact-match-only, no fuzzy/prefix (#421 discipline)", () => {
     // Pins the `===` against any future fuzzy/startsWith/prefix drift: a stale
-    // tree must never ship. Both a same-length last-character difference and a
-    // strict prefix of the current key must MISS. Without this, a prefix-match
-    // mutant passes the rest of the suite (the other mismatch case differs in
-    // every character).
+    // tree must never ship. Covers all three prefix/length relations so no
+    // single-direction prefix mutant survives — a same-length last-character
+    // difference, a strict prefix of the current key (restored shorter), and a
+    // superset (restored = current key + suffix). The plain mismatch case above
+    // differs in every character and so exercises none of these.
     expect(
       decideScoreCache({
         restoredKey: "a".repeat(63) + "z",
@@ -80,6 +81,13 @@ describe("decideScoreCache", () => {
     expect(
       decideScoreCache({
         restoredKey: "a".repeat(32),
+        currentKey: KEY,
+        canaryPresent: true,
+      })
+    ).toBe("miss");
+    expect(
+      decideScoreCache({
+        restoredKey: KEY + "z",
         currentKey: KEY,
         canaryPresent: true,
       })
