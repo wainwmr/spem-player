@@ -31,8 +31,23 @@ jobs:
       # partial-key match would restore stale SVGs and ship wrong scores. (#421)
       - name: Compute score cache key
         id: scorekey
-        run: echo "key=$(node build/scoreCacheKey.mjs)" >> "$GITHUB_OUTPUT"
+        run: |
+          # Assign first so `set -e` (on by default in Actions) catches a
+          # non-zero exit — a command substitution inside `echo "key=$(...)"`
+          # would NOT trip set -e, silently writing an empty key. Then assert
+          # the digest shape, so a script failure or empty key fails the build
+          # rather than collapsing the cache key to the constant "scores-v1-"
+          # and self-poisoning the cache. (#421)
+          key="$(node build/scoreCacheKey.mjs)"
+          if [[ ! "$key" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "::error::scoreCacheKey.mjs produced an invalid key: '$key'" >&2
+            exit 1
+          fi
+          echo "key=$key" >> "$GITHUB_OUTPUT"
 
+      # actions/cache restores on an exact-key hit; it SAVES src/scores in an
+      # automatic post-job step only on a key miss (and only if the job
+      # succeeds). There is no explicit save step.
       - name: Restore generated SVG cache
         id: scores-cache
         uses: actions/cache@v4
