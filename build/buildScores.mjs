@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 import { execSync } from "child_process";
-import { existsSync, globSync, rmSync, statSync } from "fs";
+import { existsSync, globSync, mkdirSync, rmSync, statSync } from "fs";
 import { basename, resolve } from "path";
 import { fileURLToPath } from "url";
 import { postprocessSvg } from "./postprocessSvg.mjs";
@@ -64,13 +64,26 @@ function compareVersions(a, b) {
   return 0;
 }
 
-function checkLilypond(skipIfMissing) {
+function checkLilypond(skipIfMissing, version) {
   let output;
   try {
     output = execSync("lilypond --version", { encoding: "utf-8", stdio: "pipe" });
   } catch {
     if (skipIfMissing) {
-      console.log("LilyPond not found. Skipping score build (using committed SVGs).");
+      // Ticket #318 untracked the SVGs. --skip-if-missing now requires a
+      // canary SVG for the requested edition to skip safely; without it
+      // the build would ship empty scores. The probe is canary-scope, not
+      // a full inventory check — a partially-built tree (e.g. an
+      // interrupted previous build) will still appear valid here. The
+      // canary is sufficient for the PR #271 regression mode (entire
+      // src/scores/ missing on Netlify) which motivated this guard.
+      const probe = `src/scores/${version}/modern/Choir I A.svg`;
+      if (!existsSync(probe)) {
+        console.error(`LilyPond not found AND no pre-built SVGs at ${probe}.`);
+        console.error("Install LilyPond, or run buildScores.mjs without --skip-if-missing.");
+        process.exit(1);
+      }
+      console.log("LilyPond not found. Using existing SVGs.");
       process.exit(0);
     }
     console.error("Error: lilypond is not installed or not on PATH.");
@@ -78,11 +91,11 @@ function checkLilypond(skipIfMissing) {
     process.exit(1);
   }
 
-  const version = parseLilypondVersion(output);
+  const lilypondVersion = parseLilypondVersion(output);
   const minVersion = "2.26.0";
-  if (!version || compareVersions(version, minVersion) < 0) {
+  if (!lilypondVersion || compareVersions(lilypondVersion, minVersion) < 0) {
     console.error(
-      `Error: LilyPond ${version || "unknown"} is installed, but ${minVersion} or later is required.`
+      `Error: LilyPond ${lilypondVersion || "unknown"} is installed, but ${minVersion} or later is required.`
     );
     console.error("Please upgrade LilyPond before building scores.");
     process.exit(1);
@@ -144,7 +157,8 @@ function buildPattern(lyDir, choir) {
 
 function buildScore(ly, version, notation, maxLyMtime) {
   const choirName = basename(ly, ".ly");
-  const svg = `src/scores/${version}/${notation}/${choirName}.svg`;
+  const outDir = `src/scores/${version}/${notation}`;
+  const svg = `${outDir}/${choirName}.svg`;
 
   if (!needsRebuild(maxLyMtime, svg)) {
     console.log(
@@ -157,12 +171,10 @@ function buildScore(ly, version, notation, maxLyMtime) {
     `\nBuilding ${choirName} (edition: ${version}, notation: ${notation})...`
   );
   try {
-    execSync(
-      `lilypond --svg -o "src/scores/${version}/${notation}/" "${ly}"`,
-      {
-        stdio: "inherit",
-      }
-    );
+    // LilyPond does not create its output directory; on a clean checkout
+    // (src/scores/ is gitignored post-#318) it aborts. Create it first.
+    mkdirSync(outDir, { recursive: true });
+    execSync(`lilypond --svg -o "${outDir}/" "${ly}"`, { stdio: "inherit" });
   } catch (error) {
     console.error(`\nError building ${choirName}:\n${error.message}`);
     process.exit(1);
@@ -185,9 +197,8 @@ function buildScore(ly, version, notation, maxLyMtime) {
 function main() {
   const options = parseArgs();
 
-  checkLilypond(options["skip-if-missing"]);
-
   const version = options.version || defaults.version;
+  checkLilypond(options["skip-if-missing"], version);
   const notations = options.notation
     ? [options.notation]
     : ["early", "modern"];

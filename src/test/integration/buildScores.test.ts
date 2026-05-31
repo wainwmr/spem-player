@@ -54,7 +54,14 @@ const outdir = outdirIdx >= 0 ? args[outdirIdx + 1] : ".";
 const infile = args[args.length - 1];
 const name = path.basename(infile, ".ly");
 
-fs.mkdirSync(outdir, { recursive: true });
+// Model real LilyPond: it does NOT create its output directory. If the
+// target dir is missing it aborts (ticket #318: buildScores.mjs must
+// create it first). The original bug shipped because both this fake and
+// the test workspace pre-created the dir, masking the missing mkdir.
+if (!fs.existsSync(outdir)) {
+  process.stderr.write("fatal error: unable to change directory to: " + outdir + "\\n");
+  process.exit(2);
+}
 const svgPath = path.join(outdir, name + ".svg");
 fs.writeFileSync(
   svgPath,
@@ -214,6 +221,36 @@ describe("buildScores.mjs integration", () => {
       expect(result.status).toBe(0);
       expect(result.stderr).not.toContain("Error");
 
+      expect(countSvgs(join(ws, "src", "scores", "Hugh Keyte", "early"))).toBe(
+        8
+      );
+      expect(countSvgs(join(ws, "src", "scores", "Hugh Keyte", "modern"))).toBe(
+        8
+      );
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+    }
+  }, 30000);
+
+  it("creates missing score output directories on a clean checkout (#318)", () => {
+    // Regression: post-#318 src/scores/ is gitignored, so a fresh
+    // Netlify/CI checkout has no output directory. Real LilyPond does not
+    // create it and aborts; buildScores.mjs must mkdir it first. The fake
+    // LilyPond models that strict behaviour, so this test fails if the
+    // mkdir is missing.
+    const ws = createWorkspace();
+    try {
+      // Simulate the clean checkout: remove the pre-created score dirs.
+      rmSync(join(ws, "src", "scores"), { recursive: true, force: true });
+
+      const result = spawnSync(
+        process.execPath,
+        [join(ws, "build", "buildScores.mjs")],
+        { cwd: ws, env, encoding: "utf-8" }
+      );
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).not.toContain("unable to change directory");
       expect(countSvgs(join(ws, "src", "scores", "Hugh Keyte", "early"))).toBe(
         8
       );
@@ -404,25 +441,73 @@ describe("buildScores.mjs integration", () => {
     expect(output).toContain("lilypond");
   });
 
-  it("skips gracefully with --skip-if-missing", () => {
-    const envNoLilypond = {
-      ...process.env,
-      PATH: "",
-    };
+  it("skips with --skip-if-missing when a probe SVG exists", () => {
+    // Post-#318: src/scores/ is gitignored, so `--skip-if-missing` must
+    // verify SVGs are present before declaring success — otherwise the
+    // build silently ships empty scores. This test exercises the
+    // happy path: probe SVG present, no LilyPond → exit 0 + "using
+    // existing".
+    const ws = createWorkspace();
+    try {
+      const probePath = join(
+        ws,
+        "src",
+        "scores",
+        "Hugh Keyte",
+        "modern",
+        "Choir I A.svg"
+      );
+      writeFileSync(probePath, "<svg/>", "utf-8");
 
-    const result = spawnSync(
-      process.execPath,
-      [BUILD_SCRIPT, "--skip-if-missing"],
-      {
-        cwd: REPO_ROOT,
-        env: envNoLilypond,
-        encoding: "utf-8",
-      }
-    );
+      const envNoLilypond = {
+        ...process.env,
+        PATH: "",
+      };
 
-    expect(result.status).toBe(0);
-    const output = (result.stdout + result.stderr).toLowerCase();
-    expect(output).toContain("skipping");
+      const result = spawnSync(
+        process.execPath,
+        [join(ws, "build", "buildScores.mjs"), "--skip-if-missing"],
+        {
+          cwd: ws,
+          env: envNoLilypond,
+          encoding: "utf-8",
+        }
+      );
+
+      expect(result.status).toBe(0);
+      const output = (result.stdout + result.stderr).toLowerCase();
+      expect(output).toContain("using existing");
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+    }
+  });
+
+  it("fails loudly with --skip-if-missing when no probe SVG exists", () => {
+    // The other half of the post-#318 contract: no LilyPond AND no
+    // pre-built SVGs is a build failure, not a silent skip.
+    const ws = createWorkspace();
+    try {
+      const envNoLilypond = {
+        ...process.env,
+        PATH: "",
+      };
+
+      const result = spawnSync(
+        process.execPath,
+        [join(ws, "build", "buildScores.mjs"), "--skip-if-missing"],
+        {
+          cwd: ws,
+          env: envNoLilypond,
+          encoding: "utf-8",
+        }
+      );
+
+      expect(result.status).not.toBe(0);
+      const output = (result.stdout + result.stderr).toLowerCase();
+      expect(output).toContain("no pre-built svgs");
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+    }
   });
 
   it("fails when lilypond version is too old", () => {

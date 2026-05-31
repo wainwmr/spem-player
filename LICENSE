@@ -28,7 +28,9 @@ It does NOT apply to:
 
 - Audio recordings in public/audio/ (licensed separately by their
   respective copyright holders).
-- Generated musical scores in src/scores/ (derived from editorial
-  editions with their own copyright status).
+- Generated SVG scores (build artefacts produced from src/lilypond/ by
+  build/buildScores.mjs; written to src/scores/ at build time and shipped
+  in dist/). These are derived from editorial editions with their own
+  copyright status.
 - Lilypond source files in src/lilypond/ (see individual files for
   attribution).

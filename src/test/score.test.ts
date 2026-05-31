@@ -357,17 +357,18 @@ describe("MusicScore custom element", () => {
     const startpos = elem.highlightBar.getAttribute("x");
     const width = elem.highlightBar.getAttribute("width");
 
-    // wait for score to be loaded
-    waitingForLoaded = waitForEvent(
+    // Wait for the score to be fully ready (scroll/highlight applied)
+    // before asserting on post-scroll bar positions.
+    const waitingForReady = waitForEvent(
       elem,
-      "music-score-loaded",
+      "music-score-ready",
       handleScoreLoaded,
       0,
       null,
       0
     );
     elem.setAttribute("score-type", "early");
-    loadResult = await waitingForLoaded;
+    loadResult = await waitingForReady;
     expect(loadResult).toStrictEqual(true);
 
     expect(elem.highlightBar.getAttribute("x")).not.toBe(startpos); // highlight bar x pos has changed

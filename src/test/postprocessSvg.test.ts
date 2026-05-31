@@ -1,27 +1,68 @@
-import {
-  mkdtempSync,
-  copyFileSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "fs";
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { postprocessSvg } from "../../build/postprocessSvg.mjs";
 
 describe("postprocessSvg build script", () => {
   const tmpDir = mkdtempSync(join(tmpdir(), "spem-annotate-test-"));
-  const svgSource = "src/scores/Hugh Keyte/modern/Choir I A.svg";
-  const spemSource = "src/lilypond/Hugh Keyte/spem.ly";
-  const wordsSource = "src/lilypond/Hugh Keyte/spem words.ly";
   const tmpSvg = join(tmpDir, "Choir I A.svg");
   const tmpSpem = join(tmpDir, "spem.ly");
   const tmpWords = join(tmpDir, "spem words.ly");
 
   beforeAll(() => {
-    copyFileSync(svgSource, tmpSvg);
-    copyFileSync(spemSource, tmpSpem);
-    copyFileSync(wordsSource, tmpWords);
+    // Minimal spem.ly with voice variables for one choir
+    writeFileSync(
+      tmpSpem,
+      `notesIASoprano = \\relative c' { c4 d e f }
+notesIAAlto = \\relative c' { c4 d e f }
+notesIATenor = \\relative c' { c4 d e f }
+notesIABaritone = \\relative c' { c4 d e f }
+notesIABass = \\relative c' { c4 d e f }
+`,
+      "utf-8"
+    );
+
+    // Minimal lyrics file
+    writeFileSync(
+      tmpWords,
+      `wordsIASoprano = \\lyricmode { Spem }
+wordsIAAlto = \\lyricmode { Spem }
+wordsIATenor = \\lyricmode { Spem }
+wordsIABaritone = \\lyricmode { Spem }
+wordsIABass = \\lyricmode { Spem }
+`,
+      "utf-8"
+    );
+
+    // Synthetic SVG with anchor tags pointing to line numbers in the .ly files.
+    // Line 1 = Soprano (part 0), line 2 = Alto (part 1), etc.
+    writeFileSync(
+      tmpSvg,
+      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="500">
+  <a xlink:href="spem.ly:1:1:1">
+    <path d="M0,0 L1,1" transform="translate(10,10)"/>
+  </a>
+  <a xlink:href="spem.ly:2:1:1">
+    <path d="M0,0 L1,1" transform="translate(20,10)"/>
+  </a>
+  <a xlink:href="spem.ly:3:1:1">
+    <path d="M0,0 L1,1" transform="translate(30,10)"/>
+  </a>
+  <a xlink:href="spem.ly:4:1:1">
+    <path d="M0,0 L1,1" transform="translate(40,10)"/>
+  </a>
+  <a xlink:href="spem.ly:5:1:1">
+    <path d="M0,0 L1,1" transform="translate(50,10)"/>
+  </a>
+  <a xlink:href="spem%20words.ly:1:1:1">
+    <text x="10" y="20">Spem</text>
+  </a>
+  <a xlink:href="spem%20words.ly:3:1:1">
+    <text x="10" y="30">in</text>
+  </a>
+</svg>`,
+      "utf-8"
+    );
   });
 
   afterAll(() => {
@@ -43,8 +84,12 @@ describe("postprocessSvg build script", () => {
     // Should contain data-part attributes for multiple parts
     expect(output).toMatch(/data-part="4"/);
 
-    // Should contain data-part attributes for lyrics (text elements are direct children of anchors)
-    expect(output).toMatch(/data-part="[0-4]"/);
+    // Lyrics path: <text> elements (children of `spem words.ly` anchors)
+    // must receive `data-part` directly. Tighter assertion than a bare
+    // `data-part="[0-4]"` check, which would be satisfied by the note
+    // anchors alone — a regression in the words-vs-notes branch in
+    // postprocessSvg would slip through otherwise.
+    expect(output).toMatch(/<text[^>]*data-part="[0-4]"/);
 
     // Should strip height and width from the root <svg> element
     expect(output).not.toMatch(/<svg[^>]*\sheight=/);
