@@ -3,7 +3,10 @@
 // decideScoreCache.mjs.
 
 export function decideScoreCache(state: {
-  restoredKey?: string;
+  // A restore that yields nothing is a nullable "no key"; tolerated as a miss.
+  restoredKey?: string | null;
+  // Optional only for the defensive empty/absent MISS; production always supplies
+  // a 64-char digest from computeScoreCacheKey().
   currentKey?: string;
   canaryPresent: boolean;
 }): "hit" | "miss";
