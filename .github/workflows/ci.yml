@@ -116,6 +116,14 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # paths-filter falls back to the GitHub API to list a PR's changed files
+    # (the checkout is shallow), which needs pull-requests:read. With a
+    # restrictive default token (e.g. after the repo was made private) that
+    # call fails with "Resource not accessible by integration", skipping the
+    # tests and reddening the job. Grant the read scopes explicitly.
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v6
 
