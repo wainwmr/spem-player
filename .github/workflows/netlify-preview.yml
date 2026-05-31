@@ -25,10 +25,27 @@ jobs:
 
       - run: npm ci
 
-      # Install LilyPond so `npm run build` can regenerate the now-gitignored
-      # SVGs (#318; mirrors ci.yml and netlify.toml). GITHUB_PATH persists the
-      # bin dir to the later build step.
+      # Cache the generated SVGs keyed on a hash of every build input
+      # (build/scoreCacheKey.mjs — the single source of truth, unit-tested in
+      # src/test/scoreCacheKey.test.ts). On an exact-key hit, restore the SVGs
+      # and skip the LilyPond install + regeneration; buildScores.mjs's
+      # --skip-if-missing canary path carries the build on the restored SVGs.
+      # No restore-keys fallback: a partial match would ship stale scores. (#421)
+      - name: Compute score cache key
+        id: scorekey
+        run: echo "key=$(node build/scoreCacheKey.mjs)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore generated SVG cache
+        id: scores-cache
+        uses: actions/cache@v4
+        with:
+          path: src/scores
+          key: scores-v1-${{ steps.scorekey.outputs.key }}
+
+      # Install LilyPond only on a cache miss (#318; mirrors ci.yml and
+      # netlify.toml). GITHUB_PATH persists the bin dir to the later build step.
       - name: Install LilyPond
+        if: steps.scores-cache.outputs.cache-hit != 'true'
         run: |
           bash build/install-lilypond.sh
           echo "$HOME/.local/lilypond/lilypond-2.26.0/bin" >> "$GITHUB_PATH"

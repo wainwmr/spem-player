@@ -22,15 +22,30 @@ jobs:
           cache: npm
       - run: npm ci
 
-      # Install LilyPond on the CI runner so `npm run build` (which runs
-      # `prebuild` → `node build/buildScores.mjs --skip-if-missing` and
-      # then `vite build`) has the toolchain it needs to regenerate the
-      # now-gitignored SVGs. Mirrors the netlify.toml chain — same script,
-      # same explicit PATH export across the `&&` boundary (the script's
-      # own export does not propagate). Without this step the probe added
-      # in `buildScores.mjs` (canary SVG at `src/scores/Hugh Keyte/modern/
-      # Choir I A.svg`) trips and `npm run build` fails.
+      # Cache the generated SVGs keyed on a hash of every input that affects
+      # them (build/scoreCacheKey.mjs — the single source of truth, unit-tested
+      # in src/test/scoreCacheKey.test.ts). On an exact-key hit we restore the
+      # SVGs and skip the LilyPond install + regeneration entirely (~570s);
+      # buildScores.mjs's --skip-if-missing canary path then carries the build
+      # on the restored SVGs. There is deliberately NO restore-keys fallback: a
+      # partial-key match would restore stale SVGs and ship wrong scores. (#421)
+      - name: Compute score cache key
+        id: scorekey
+        run: echo "key=$(node build/scoreCacheKey.mjs)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore generated SVG cache
+        id: scores-cache
+        uses: actions/cache@v4
+        with:
+          path: src/scores
+          key: scores-v1-${{ steps.scorekey.outputs.key }}
+
+      # Install LilyPond only on a cache miss. On a hit the restored SVGs are
+      # used as-is. Mirrors the netlify.toml chain — same script, same explicit
+      # PATH export across the `&&` boundary in the build step below (the
+      # script's own export does not propagate).
       - name: Install LilyPond
+        if: steps.scores-cache.outputs.cache-hit != 'true'
         run: bash build/install-lilypond.sh
 
       # Timed-step pattern: capture command exit status separately so duration
