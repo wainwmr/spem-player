@@ -24,6 +24,15 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      # Install LilyPond so `npm run build` can regenerate the now-gitignored
+      # SVGs (#318; mirrors ci.yml and netlify.toml). GITHUB_PATH persists the
+      # bin dir to the later build step.
+      - name: Install LilyPond
+        run: |
+          bash build/install-lilypond.sh
+          echo "$HOME/.local/lilypond/lilypond-2.26.0/bin" >> "$GITHUB_PATH"
+
       - run: npm run build
 
       - name: Install Netlify CLI
