@@ -1,5 +1,6 @@
 import { MusicCanvas } from "../ts/MusicCanvas";
 import config from "../ts/config";
+import type { Position } from "../ts/common";
 MusicCanvas.define("music-canvas");
 
 var canvas: MusicCanvas | null;
@@ -243,6 +244,7 @@ describe("MusicCanvas custom element", () => {
       cancelable: true,
     });
     Object.defineProperty(touchStart, "targetTouches", { value: [touch] });
+    Object.defineProperty(touchStart, "changedTouches", { value: [touch] });
     Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
 
     innerCanvas.dispatchEvent(touchStart);
@@ -258,6 +260,7 @@ describe("MusicCanvas custom element", () => {
       cancelable: true,
     });
     Object.defineProperty(touchMove, "targetTouches", { value: [touch] });
+    Object.defineProperty(touchMove, "changedTouches", { value: [touch] });
     Object.defineProperty(touchMove, "preventDefault", { value: vi.fn() });
     canvas!.dispatchEvent(touchMove);
     await movePromise;
@@ -272,6 +275,83 @@ describe("MusicCanvas custom element", () => {
     canvas!.dispatchEvent(touchEnd);
     await endPromise;
   });
+
+  it("getTouchPos resolves a position when the touch is not in targetTouches", async () => {
+    expect(canvas).not.toBeNull();
+
+    canvas!.getBoundingClientRect = vi.fn(
+      () =>
+        ({
+          width: 1400,
+          height: 400,
+          top: 0,
+          left: 0,
+          right: 1400,
+          bottom: 400,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        }) as DOMRect
+    );
+
+    const innerCanvas = canvas!.querySelector("canvas")!;
+    const touch = {
+      clientX: 100,
+      clientY: 50,
+      identifier: 0,
+      target: innerCanvas,
+    };
+
+    // Scenario: the user's finger has left the target element, so
+    // targetTouches is empty, but the touch that triggered the event
+    // is still in changedTouches. Reading targetTouches[0] here would
+    // crash with TypeError; reading changedTouches[0] survives.
+    //
+    // The falsifier is `await startPromise`: when getTouchPos throws,
+    // the touchstart handler aborts before firing the CustomEvent,
+    // the promise never resolves, and the test times out (jsdom
+    // routes listener exceptions to window.onerror rather than
+    // propagating to dispatchEvent's caller — so a `not.toThrow()`
+    // around the dispatch is vacuously true and cannot bind here).
+    const startPromise = new Promise<CustomEvent<{ position: Position }>>(
+      (resolve) => {
+        canvas!.addEventListener(
+          "music-canvas-touchstart",
+          (e) => resolve(e as CustomEvent<{ position: Position }>),
+          { once: true }
+        );
+      }
+    );
+    const touchStart = new Event("touchstart", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(touchStart, "targetTouches", { value: [] });
+    Object.defineProperty(touchStart, "changedTouches", { value: [touch] });
+    Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
+
+    innerCanvas.dispatchEvent(touchStart);
+    const startEvent = await startPromise;
+    const pos = startEvent.detail.position;
+
+    // Positive controls: prove getTouchPos was actually invoked and
+    // moveToPosition consumed its output. bar=9 is deterministic
+    // from the math (floor((100-5) * 140 / 1400)); choir depends
+    // on config.choirs[0].length so we range-check it.
+    expect(pos.bar).toBe(9);
+    expect(pos.choir).toBeGreaterThanOrEqual(0);
+    expect(pos.choir).toBeLessThan(config.choirs[0].length);
+    expect(canvas!.bar).toBe(pos.bar);
+    expect(canvas!.choir).toBe(pos.choir);
+  });
+
+  // The touchmove counterpart of the above test was removed in cycle 2:
+  // post-#326 (PR #400), `#touchMoved` no longer calls `#getTouchPos`,
+  // so the only path that reads `changedTouches[0]` is `#touchStarted`.
+  // The touchstart test above fully covers the production surface; the
+  // removed touchmove version was passing only because the preceding
+  // touchstart had set `canvas!.bar = 9`, which the touchmove handler
+  // — now performing no commit — could not have set on its own.
 
   it("getMousePos returns valid part for clicks in top padding", async () => {
     expect(canvas).not.toBeNull();
@@ -449,6 +529,7 @@ describe("MusicCanvas custom element", () => {
       cancelable: true,
     });
     Object.defineProperty(touchStart, "targetTouches", { value: [touch] });
+    Object.defineProperty(touchStart, "changedTouches", { value: [touch] });
     Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
 
     innerCanvas.dispatchEvent(touchStart);
@@ -458,5 +539,131 @@ describe("MusicCanvas custom element", () => {
     expect(pos.bar).toBeLessThan(140);
     expect(pos.choir).toBeGreaterThanOrEqual(0);
     expect(pos.choir).toBeLessThan(config.choirs[0].length);
+  });
+
+  it("touchstart commits position (#326)", async () => {
+    // Inverse contract for the #326 touchmove fix: touchstart MUST still
+    // commit. A future refactor that drops the `#moveToPosition` call from
+    // `#touchStarted` (structurally identical to the line we removed from
+    // `#touchMoved`) needs to fail this test.
+    expect(canvas).not.toBeNull();
+
+    canvas!.getBoundingClientRect = vi.fn(
+      () =>
+        ({
+          width: 1400,
+          height: 400,
+          top: 0,
+          left: 0,
+          right: 1400,
+          bottom: 400,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        }) as DOMRect
+    );
+
+    // Seed sentinel values that the derived coord-A position MUST differ from
+    // (canvasPadding=5; (1200,300) maps to choir≈6, bar≈119, voicePart="all").
+    canvas!.choir = 0;
+    canvas!.voicePart = 2;
+    canvas!.bar = 50;
+
+    const startPromise = new Promise<void>((resolve) => {
+      canvas!.addEventListener("music-canvas-touchstart", () => resolve(), {
+        once: true,
+      });
+    });
+
+    const innerCanvas = canvas!.querySelector("canvas")!;
+    const touch = {
+      clientX: 1200,
+      clientY: 300,
+      identifier: 0,
+      target: innerCanvas,
+    };
+    const touchStart = new Event("touchstart", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(touchStart, "targetTouches", { value: [touch] });
+    // Post-#388, `#getTouchPos` reads `changedTouches[0]` unconditionally
+    // (see #388 for the production rationale), so synthetic TouchEvents in
+    // tests must populate `changedTouches` or the getter throws `TypeError:
+    // Cannot read properties of undefined`. This isn't browser-specific —
+    // the read happens in our own code.
+    Object.defineProperty(touchStart, "changedTouches", { value: [touch] });
+    Object.defineProperty(touchStart, "preventDefault", { value: vi.fn() });
+
+    innerCanvas.dispatchEvent(touchStart);
+    await startPromise;
+
+    // State must have been committed to the derived position. voicePart is the
+    // load-bearing falsifier: `#getTouchPos` hard-codes "all" (see #327), so
+    // any commit replaces the seeded `2` with `"all"`.
+    expect(canvas!.voicePart).toBe("all");
+    expect(canvas!.choir).not.toBe(0);
+    expect(canvas!.bar).not.toBe(50);
+  });
+
+  it("touchmove does not commit position (#326)", async () => {
+    expect(canvas).not.toBeNull();
+
+    canvas!.getBoundingClientRect = vi.fn(
+      () =>
+        ({
+          width: 1400,
+          height: 400,
+          top: 0,
+          left: 0,
+          right: 1400,
+          bottom: 400,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        }) as DOMRect
+    );
+
+    // Seed sentinel values that DIFFER from what `#getTouchPos` would derive at
+    // (1200,300) (which is choir≈6, bar≈119, voicePart="all"). The seeded
+    // `voicePart=2` is the load-bearing falsifier: if touchmove ever commits,
+    // it would be overwritten with "all" (hard-coded by `#getTouchPos`).
+    canvas!.choir = 0;
+    canvas!.voicePart = 2;
+    canvas!.bar = 50;
+
+    const movePromise = new Promise<void>((resolve) => {
+      canvas!.addEventListener("music-canvas-touchmove", () => resolve(), {
+        once: true,
+      });
+    });
+
+    const innerCanvas = canvas!.querySelector("canvas")!;
+    const touch = {
+      clientX: 1200,
+      clientY: 300,
+      identifier: 0,
+      target: innerCanvas,
+    };
+    const touchMove = new Event("touchmove", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(touchMove, "targetTouches", { value: [touch] });
+    // Defensive mirror — `#touchMoved` does not currently read
+    // `changedTouches` (post-#326 it does not call `#getTouchPos`), so this
+    // is not load-bearing. Mirroring keeps the fixture consistent with the
+    // touchstart counterpart and future-proofs against a refactor that
+    // re-introduces `#getTouchPos` into the move path.
+    Object.defineProperty(touchMove, "changedTouches", { value: [touch] });
+    Object.defineProperty(touchMove, "preventDefault", { value: vi.fn() });
+
+    innerCanvas.dispatchEvent(touchMove);
+    await movePromise;
+
+    // Internal state must remain at the seeded values — no commit on move.
+    expect(canvas!.choir).toBe(0);
+    expect(canvas!.voicePart).toBe(2);
+    expect(canvas!.bar).toBe(50);
   });
 });

@@ -15,6 +15,13 @@ export class MusicScore extends MusicElement {
 
   scoreType: string = "modern";
 
+  /**
+   * x-coordinates of the bar lines in the SVG, populated by `getBars()`.
+   * `bars[0]` is always `0` (the intro bar's left edge); `bars[bars.length - 1]`
+   * is always `svgWidth` (the score's right edge); interior values are the
+   * x-coords of numbered bar labels parsed from `<tspan>` elements. The intro
+   * region is `[0, bars[1])`; numbered bar N's label sits at `bars[N]`.
+   */
   bars: number[] = [];
 
   highlightBar: SVGRectElement = document.createElementNS(
@@ -33,6 +40,8 @@ export class MusicScore extends MusicElement {
     "http://www.w3.org/2000/svg",
     "mask"
   );
+  maskRect!: SVGRectElement;
+  maskLine!: SVGLineElement;
   scrollArea: HTMLDivElement | null = null;
   clefOverlay: HTMLDivElement | null = null;
 
@@ -54,24 +63,24 @@ export class MusicScore extends MusicElement {
 
     this.highlightMask.setAttribute("id", "hPosMask");
     this.highlightMask.setAttribute("maskUnits", "userSpaceOnUse");
-    const maskRect = document.createElementNS(
+    this.maskRect = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "rect"
     );
-    maskRect.setAttribute("width", "7");
-    maskRect.setAttribute("height", "0");
-    maskRect.setAttribute("fill", "white");
-    const maskLine = document.createElementNS(
+    this.maskRect.setAttribute("width", "7");
+    this.maskRect.setAttribute("height", "0");
+    this.maskRect.setAttribute("fill", "white");
+    this.maskLine = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "line"
     );
-    maskLine.setAttribute("y1", "0");
-    maskLine.setAttribute("y2", "0");
-    maskLine.setAttribute("stroke", "black");
-    maskLine.setAttribute("stroke-dasharray", "2 2");
-    maskLine.setAttribute("stroke-width", "0.75");
-    this.highlightMask.appendChild(maskRect);
-    this.highlightMask.appendChild(maskLine);
+    this.maskLine.setAttribute("y1", "0");
+    this.maskLine.setAttribute("y2", "0");
+    this.maskLine.setAttribute("stroke", "black");
+    this.maskLine.setAttribute("stroke-dasharray", "2 2");
+    this.maskLine.setAttribute("stroke-width", "0.75");
+    this.highlightMask.appendChild(this.maskRect);
+    this.highlightMask.appendChild(this.maskLine);
     this.highlightPosition.setAttribute("mask", "url(#hPosMask)");
 
     this.highlightBar.setAttribute("id", "hBar");
@@ -150,7 +159,10 @@ export class MusicScore extends MusicElement {
 
     var result = this.bars.find((x) => x > cursorpt.x);
     if (result) {
-      this.setBar(this.bars.indexOf(result));
+      const idx = this.bars.indexOf(result);
+      // bars[1] is the x of bar 1's label; clicks left of it land in the
+      // intro region and resolve to bar 0 (see `bars` field JSDoc).
+      this.setBar(cursorpt.x < this.bars[1] ? 0 : idx);
       this.fireEvent("music-score-click");
     }
   }
@@ -189,11 +201,8 @@ export class MusicScore extends MusicElement {
 
     this.highlightPosition.setAttribute("height", String(this.svgHeight));
     this.highlightBar.setAttribute("height", String(this.svgHeight));
-    this.highlightMask.children[0].setAttribute(
-      "height",
-      String(this.svgHeight)
-    );
-    this.highlightMask.children[1].setAttribute("y2", String(this.svgHeight));
+    this.maskRect.setAttribute("height", String(this.svgHeight));
+    this.maskLine.setAttribute("y2", String(this.svgHeight));
     this.svg.prepend(this.highlightPosition);
     this.svg.prepend(this.highlightBar);
     this.svg.prepend(this.highlightPart);
@@ -208,10 +217,7 @@ export class MusicScore extends MusicElement {
 
     const indicatorWidth = this.svgWidth / 600;
     this.highlightPosition.setAttribute("width", String(indicatorWidth));
-    this.highlightMask.children[0].setAttribute(
-      "width",
-      String(indicatorWidth)
-    );
+    this.maskRect.setAttribute("width", String(indicatorWidth));
 
     // Highlight and scroll to the current bar. Defer scrollSmooth() via
     // requestAnimationFrame so the layout reads inside it (offsetWidth,
@@ -279,15 +285,9 @@ export class MusicScore extends MusicElement {
       );
       const xPos = barcurrentpct * this.svgWidth - indicatorWidth / 2;
       this.highlightPosition.setAttribute("x", String(xPos));
-      this.highlightMask.children[0].setAttribute("x", String(xPos));
-      this.highlightMask.children[1].setAttribute(
-        "x1",
-        String(xPos + indicatorWidth / 2)
-      );
-      this.highlightMask.children[1].setAttribute(
-        "x2",
-        String(xPos + indicatorWidth / 2)
-      );
+      this.maskRect.setAttribute("x", String(xPos));
+      this.maskLine.setAttribute("x1", String(xPos + indicatorWidth / 2));
+      this.maskLine.setAttribute("x2", String(xPos + indicatorWidth / 2));
     }
 
     // set the highlight for the current bar
