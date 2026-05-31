@@ -63,21 +63,49 @@ jobs:
         if: steps.scores-cache.outputs.cache-hit != 'true'
         run: bash build/install-lilypond.sh
 
-      # Timed-step pattern: capture command exit status separately so duration
-      # is emitted even on failure (telemetry is most useful precisely when a
-      # phase regresses), then re-exit with the captured status so the
-      # workflow's success/failure semantics are preserved.
-      - name: Run checks and build
-        id: check-build
+      # Timed-step pattern (each phase below): capture the command's exit status
+      # separately so the duration is emitted even on failure (telemetry matters
+      # most when a phase regresses), then re-exit with the captured status so
+      # the job's success/failure semantics are preserved. The phases are timed
+      # separately (#422) so the report can break out the LilyPond render and
+      # exclude it from the soft budget.
+      - name: Check
+        id: check
+        run: |
+          start=$(date +%s)
+          status=0
+          npm run check || status=$?
+          end=$(date +%s)
+          echo "duration=$((end - start))" >> "$GITHUB_OUTPUT"
+          exit "$status"
+
+      # The LilyPond SVG render, timed on its own so the budget can exclude it
+      # (a fixed external cost). PATH points at the install from the gated step
+      # above; on a cache hit LilyPond is absent and --skip-if-missing carries
+      # the build on the restored SVGs (~0s).
+      - name: Render SVGs
+        id: render
         run: |
           export PATH="$HOME/.local/lilypond/lilypond-2.26.0/bin:$PATH"
           start=$(date +%s)
           status=0
-          npm run check && npm run build || status=$?
+          node build/buildScores.mjs --skip-if-missing || status=$?
           end=$(date +%s)
-          duration=$((end - start))
-          echo "duration=${duration}" >> "$GITHUB_OUTPUT"
-          echo "Check + build completed in ${duration}s (exit ${status})"
+          echo "duration=$((end - start))" >> "$GITHUB_OUTPUT"
+          exit "$status"
+
+      # The vite bundle, timed separately — it counts toward the budget (a vite
+      # regression should trip it). `npx vite build` runs the bundle WITHOUT
+      # re-triggering `prebuild` (ohm already built by `check`, SVGs by `render`),
+      # so the render does not run twice.
+      - name: Bundle
+        id: bundle
+        run: |
+          start=$(date +%s)
+          status=0
+          npx vite build || status=$?
+          end=$(date +%s)
+          echo "duration=$((end - start))" >> "$GITHUB_OUTPUT"
           exit "$status"
 
       - name: Run unit tests
@@ -87,61 +115,25 @@ jobs:
           status=0
           npm run test:unit || status=$?
           end=$(date +%s)
-          duration=$((end - start))
-          echo "duration=${duration}" >> "$GITHUB_OUTPUT"
-          echo "Unit tests completed in ${duration}s (exit ${status})"
+          echo "duration=$((end - start))" >> "$GITHUB_OUTPUT"
           exit "$status"
 
-      # if: always() runs the report even when an upstream step failed —
-      # the missing-duration case is handled below. Budgets are SOFT: a
-      # breach emits a workflow warning annotation and a Budget-exceeded
-      # block on the run summary; it does NOT fail the job. See
-      # doc/CI.md "Duration Budget" for the policy and current baseline.
+      # if: always() runs the report even when an upstream phase failed. Budgets
+      # are SOFT — a breach warns but does NOT fail the job. The SVG render is
+      # reported but EXCLUDED from the pass/fail total (a fixed external cost,
+      # ~0s on a cache hit); the budgeted total guards check + bundle + unit. The
+      # logic lives in the unit-tested build/ciDurationReport.mjs
+      # (src/test/ciDurationReport.test.ts). See doc/CI.md "Duration Budget".
       - name: Report CI duration budget
         if: always()
         env:
-          # Inputs (measurements)
-          CHECK_BUILD_S: ${{ steps.check-build.outputs.duration }}
+          CHECK_S: ${{ steps.check.outputs.duration }}
+          RENDER_S: ${{ steps.render.outputs.duration }}
+          BUNDLE_S: ${{ steps.bundle.outputs.duration }}
           UNIT_S: ${{ steps.unit-tests.outputs.duration }}
-          # Policy (soft budgets, in seconds)
           UNIT_BUDGET_SEC: 120
           TOTAL_BUDGET_SEC: 360
-        run: |
-          # Default to 0 when an upstream step did not emit a duration
-          # (skipped, crashed before save, or a non-integer slipped in).
-          # The ^[0-9]+$ shape also rejects negative values, which date
-          # arithmetic could in principle produce on a runner clock skew.
-          [[ "$CHECK_BUILD_S" =~ ^[0-9]+$ ]] || CHECK_BUILD_S=0
-          [[ "$UNIT_S" =~ ^[0-9]+$ ]] || UNIT_S=0
-
-          total=$((CHECK_BUILD_S + UNIT_S))
-
-          report() {
-            echo "$1"
-            echo "$1" >> "$GITHUB_STEP_SUMMARY"
-          }
-
-          report "## CI duration (measured phases)"
-          report "- Check + build: ${CHECK_BUILD_S}s"
-          report "- Unit tests: ${UNIT_S}s (budget: ${UNIT_BUDGET_SEC}s)"
-          report "- Total measured (check+build + unit tests): ${total}s (budget: ${TOTAL_BUDGET_SEC}s)"
-          report "_Excludes per-job overhead (checkout, setup-node, npm ci); the GitHub UI job time will be larger._"
-
-          if [ "$CHECK_BUILD_S" -eq 0 ] && [ "$UNIT_S" -eq 0 ]; then
-            report ""
-            report "_Duration data unavailable — no timed phases completed._"
-            exit 0
-          fi
-          if [ "$UNIT_S" -gt "$UNIT_BUDGET_SEC" ]; then
-            echo "::warning::Unit tests took ${UNIT_S}s, exceeding the ${UNIT_BUDGET_SEC}s soft budget."
-            report ""
-            report "**Budget exceeded:** unit tests took ${UNIT_S}s (> ${UNIT_BUDGET_SEC}s)."
-          fi
-          if [ "$total" -gt "$TOTAL_BUDGET_SEC" ]; then
-            echo "::warning::Measured CI phases took ${total}s, exceeding the ${TOTAL_BUDGET_SEC}s soft budget."
-            report ""
-            report "**Budget exceeded:** measured phases took ${total}s (> ${TOTAL_BUDGET_SEC}s)."
-          fi
+        run: node build/ciDurationReport.mjs
 
   integration:
     runs-on: ubuntu-latest
