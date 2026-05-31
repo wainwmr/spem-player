@@ -1,20 +1,35 @@
 # Netlify configuration for spem-player
 
-# Build command:
-#   1. install-lilypond.sh downloads LilyPond into $HOME/.local/lilypond
-#      (or no-ops if it's cached / already on PATH).
-#   2. We re-export PATH because the script's PATH export does not propagate
-#      across the `&&` chain. The 2.26.0 here must stay in sync with
-#      LILYPOND_VERSION in build/install-lilypond.sh.
-#   3. `lilypond --version` is a presence probe before `npm run build`
-#      to catch any silent install regression (ticket #318 — the previous
-#      attempt PR #271 was reverted because Netlify shipped empty scores).
-#      It does not check the minimum version; buildScores.mjs enforces
-#      that against the 2.26.0 floor and fails the build if violated.
-#   4. npm run build invokes prebuild (regenerates SVGs from src/lilypond/)
-#      then vite build.
+# Build:
+#   A local Netlify build plugin (plugins/cache-scores) caches the generated
+#   SVGs across deploys, keyed on build/scoreCacheKey.mjs (#421's hashed inputs).
+#   On a cache HIT it writes a .netlify-scores-hit flag and the build command
+#   below skips the LilyPond install + regeneration — buildScores.mjs's
+#   --skip-if-missing canary path carries the build on the restored SVGs. On a
+#   MISS the command installs LilyPond and regenerates (#423). The plugin is
+#   fail-safe: any cache error degrades to the full install + build path.
+#
+#   Miss-path notes (unchanged from #318): install-lilypond.sh downloads
+#   LilyPond (or no-ops if cached); PATH is re-exported because the script's
+#   export does not propagate across `&&` (2.26.0 must stay in sync with
+#   LILYPOND_VERSION in build/install-lilypond.sh); `lilypond --version` is a
+#   presence probe to catch a silent install regression (PR #271 shipped empty
+#   scores). npm run build runs prebuild (regenerate from src/lilypond/) + vite.
+[[plugins]]
+  package = "./plugins/cache-scores"
+
 [build]
-  command = "bash build/install-lilypond.sh && export PATH=\"$HOME/.local/lilypond/lilypond-2.26.0/bin:$PATH\" && lilypond --version && npm run build"
+  command = '''
+    if [ -f .netlify-scores-hit ]; then
+      echo "cache-scores: hit — skipping LilyPond install + regeneration"
+      npm run build
+    else
+      bash build/install-lilypond.sh \
+        && export PATH="$HOME/.local/lilypond/lilypond-2.26.0/bin:$PATH" \
+        && lilypond --version \
+        && npm run build
+    fi
+  '''
   functions = "netlify/functions"
   publish = "dist"
 

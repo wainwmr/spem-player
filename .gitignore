@@ -14,6 +14,10 @@ src/scss/*.css.map
 # src/lilypond/ by build/buildScores.mjs. Locally regenerate with
 # `npm run build:scores`; Netlify regenerates them via install-lilypond.sh.
 src/scores/
+# Netlify SVG-cache markers (ticket #423): written by plugins/cache-scores at
+# build time — the key marker and the cache-hit flag the build command branches on.
+.scores-cache-key
+.netlify-scores-hit
 src/ohmjs/ly-grammar.ohm-bundle.*
 publish.py
 playwright-output/
