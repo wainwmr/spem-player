@@ -25,10 +25,41 @@ jobs:
 
       - run: npm ci
 
-      # Install LilyPond so `npm run build` can regenerate the now-gitignored
-      # SVGs (#318; mirrors ci.yml and netlify.toml). GITHUB_PATH persists the
-      # bin dir to the later build step.
+      # Cache the generated SVGs keyed on a hash of every build input
+      # (build/scoreCacheKey.mjs — the single source of truth, unit-tested in
+      # src/test/scoreCacheKey.test.ts). On an exact-key hit, restore the SVGs
+      # and skip the LilyPond install + regeneration; buildScores.mjs's
+      # --skip-if-missing canary path carries the build on the restored SVGs.
+      # No restore-keys fallback: a partial match would ship stale scores. (#421)
+      - name: Compute score cache key
+        id: scorekey
+        run: |
+          # Assign first so `set -e` catches a non-zero exit — `echo "key=$(...)"`
+          # would NOT trip set -e and would silently write an empty key. Then
+          # assert the digest shape, so a script failure or empty key fails the
+          # build rather than collapsing the cache key to the constant
+          # "scores-v1-" and self-poisoning the cache. (#421)
+          key="$(node build/scoreCacheKey.mjs)"
+          if [[ ! "$key" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "::error::scoreCacheKey.mjs produced an invalid key: '$key'" >&2
+            exit 1
+          fi
+          echo "key=$key" >> "$GITHUB_OUTPUT"
+
+      # actions/cache restores on an exact-key hit; it SAVES src/scores in an
+      # automatic post-job step only on a key miss (and only if the job
+      # succeeds). There is no explicit save step.
+      - name: Restore generated SVG cache
+        id: scores-cache
+        uses: actions/cache@v4
+        with:
+          path: src/scores
+          key: scores-v1-${{ steps.scorekey.outputs.key }}
+
+      # Install LilyPond only on a cache miss (#318; mirrors ci.yml and
+      # netlify.toml). GITHUB_PATH persists the bin dir to the later build step.
       - name: Install LilyPond
+        if: steps.scores-cache.outputs.cache-hit != 'true'
         run: |
           bash build/install-lilypond.sh
           echo "$HOME/.local/lilypond/lilypond-2.26.0/bin" >> "$GITHUB_PATH"
