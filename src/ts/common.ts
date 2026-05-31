@@ -27,7 +27,6 @@ export type TestSvgLoader = (
 ) => string | null;
 
 declare global {
-  // eslint-disable-next-line no-var
   var __SPEM_TEST_SVG_LOADER: TestSvgLoader | undefined;
 }
 
