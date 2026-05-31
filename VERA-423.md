@@ -3,7 +3,7 @@
 Mode: work (Vera ran during initial development, before PR open)
 Cycle: 1
 Generated: 2026-05-31 22:51 GMTST
-Last run:  2026-05-31 23:15 GMTST
+Last run:  2026-05-31 23:33 GMTST
 
 See also: [Original Report (cycle 1)](LINK_TO_BE_FILLED_AFTER_ORIGINAL_POSTED)
 
@@ -21,8 +21,14 @@ and already earmarks "full inventory counting" as a future step — #424's
 build-side 2-canary is the backstop that makes #423's existing canary safe
 (a false plugin hit fails the build rather than shipping incomplete). The
 deferral was the one judgement call; it aligns with the deliberately staged plan
-across #423 and #424, and was confirmed with the user. [Pass count / final re-run
-noted at close-out.]
+across #423 and #424, and was confirmed with the user.
+
+Pass 2 (the re-run after the fixes) earned its keep: three of five reviewers
+confirmed the fixes clean, but pr-test-analyzer found a surviving superset-prefix
+mutant in the new exact-match test (423-09) and comment-analyzer found a
+self-inflicted comment slip (423-10) — both fixed in commit 64cfd28, with 423-09
+verified closed by direct local mutant evaluation. [Pass-3 outcome noted at
+close-out.]
 
 ## Findings
 
@@ -126,6 +132,34 @@ that an empty/absent key is a defined defensive MISS and that production always 
 
 **Resolution:** addressed (commit 7f5a750) — added a `NetlifyCacheUtils` JSDoc typedef
 (`{ cache: { restore(path): Promise<boolean>, save(path): Promise<boolean> } }`) with `@param` on both hooks.
+
+### 423-09 — [important] decideScoreCache test: superset prefix direction left uncovered (pass 2)
+
+> **pr-test-analyzer (pass 2), src/test/decideScoreCache.test.ts:**
+> The pass-1 near-match test kills a `currentKey.startsWith(restoredKey)` mutant (the strict-prefix case)
+> but a `(restoredKey ?? "").startsWith(currentKey)` mutant — "HIT if restored = current key + suffix" —
+> survives all seven tests. Add `restoredKey: KEY + "z"` → MISS.
+
+**Bob's triage:** Real — the "exact-match-only" claim was not yet true; a plausible single-direction prefix
+mutant would ship a stale tree. Address now (one assertion).
+
+**Resolution:** addressed (commit 64cfd28) — added the `KEY + "z"` superset assertion. Verified closed by
+direct local mutant evaluation: the three near-match assertions now kill both prefix directions
+(strict-prefix kills `currentKey.startsWith`, superset kills `restoredKey.startsWith`). vitest 7/7 green,
+`tsc --noEmit` clean.
+
+### 423-10 — [suggestion] index.js: deploy-only header stated the wrong reason + reintroduced "render" (pass 2, self-inflicted)
+
+> **comment-analyzer (pass 2), plugins/cache-scores/index.js:12-14:**
+> The pass-1 deploy-only note attributed local builds skipping the plugin to "utils.cache is a no-op" —
+> wrong causal chain (npm does not read netlify.toml's [[plugins]]) — and reintroduced "render" against the
+> CM-3 "regeneration" wording pass.
+
+**Bob's triage:** Self-inflicted comment inaccuracy from the pass-1 honesty edit; cheap to correct.
+
+**Resolution:** addressed (commit 64cfd28) — reworded to attribute the local full build to npm not reading
+netlify.toml's [[plugins]] ("render"→"regeneration"); also tightened the MISS-branch comment to "a restore
+missing the canary entirely" per the same reviewer's observation.
 
 ## Suggestions (noted, non-blocking)
 
