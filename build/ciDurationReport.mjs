@@ -27,8 +27,8 @@ function toInt(value) {
 /**
  * Compute the duration report. Pure — no I/O.
  *
- * @param {{check?: number|string, render?: number|string, bundle?: number|string,
- *   unit?: number|string, unitBudget?: number|string, totalBudget?: number|string}} phases
+ * @param {{check?: number|string|null, render?: number|string|null, bundle?: number|string|null,
+ *   unit?: number|string|null, unitBudget?: number|string|null, totalBudget?: number|string|null}} phases
  * @returns {{summaryLines: string[], warnings: string[], budgetedTotal: number}}
  */
 export function buildDurationReport(phases) {

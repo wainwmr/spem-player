@@ -3,8 +3,8 @@
 // at the bottom of ciDurationReport.mjs.
 
 // Durations/budgets are coerced (the CLI passes env strings; tests pass numbers
-// and may pass NaN/undefined to exercise the coercion).
-type Duration = number | string | undefined;
+// and may pass null/NaN/undefined to exercise the coercion).
+type Duration = number | string | null | undefined;
 
 export function buildDurationReport(phases: {
   check?: Duration;
