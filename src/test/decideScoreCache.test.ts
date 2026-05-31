@@ -63,4 +63,38 @@ describe("decideScoreCache", () => {
       })
     ).toBe("miss");
   });
+
+  it("misses on a near-match key — exact-match-only, no fuzzy/prefix (#421 discipline)", () => {
+    // Pins the `===` against any future fuzzy/startsWith/prefix drift: a stale
+    // tree must never ship. Both a same-length last-character difference and a
+    // strict prefix of the current key must MISS. Without this, a prefix-match
+    // mutant passes the rest of the suite (the other mismatch case differs in
+    // every character).
+    expect(
+      decideScoreCache({
+        restoredKey: "a".repeat(63) + "z",
+        currentKey: KEY,
+        canaryPresent: true,
+      })
+    ).toBe("miss");
+    expect(
+      decideScoreCache({
+        restoredKey: "a".repeat(32),
+        currentKey: KEY,
+        canaryPresent: true,
+      })
+    ).toBe("miss");
+  });
+
+  it("misses when the restored key is null (no marker restored)", () => {
+    // A restore that yields nothing is naturally a nullable "no key"; the
+    // contract tolerates null (see the string | null param type) as a miss.
+    expect(
+      decideScoreCache({
+        restoredKey: null,
+        currentKey: KEY,
+        canaryPresent: true,
+      })
+    ).toBe("miss");
+  });
 });
