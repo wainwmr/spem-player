@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 import { execSync } from "child_process";
-import { existsSync, globSync, rmSync, statSync } from "fs";
+import { existsSync, globSync, mkdirSync, rmSync, statSync } from "fs";
 import { basename, resolve } from "path";
 import { fileURLToPath } from "url";
 import { postprocessSvg } from "./postprocessSvg.mjs";
@@ -157,7 +157,8 @@ function buildPattern(lyDir, choir) {
 
 function buildScore(ly, version, notation, maxLyMtime) {
   const choirName = basename(ly, ".ly");
-  const svg = `src/scores/${version}/${notation}/${choirName}.svg`;
+  const outDir = `src/scores/${version}/${notation}`;
+  const svg = `${outDir}/${choirName}.svg`;
 
   if (!needsRebuild(maxLyMtime, svg)) {
     console.log(
@@ -170,12 +171,10 @@ function buildScore(ly, version, notation, maxLyMtime) {
     `\nBuilding ${choirName} (edition: ${version}, notation: ${notation})...`
   );
   try {
-    execSync(
-      `lilypond --svg -o "src/scores/${version}/${notation}/" "${ly}"`,
-      {
-        stdio: "inherit",
-      }
-    );
+    // LilyPond does not create its output directory; on a clean checkout
+    // (src/scores/ is gitignored post-#318) it aborts. Create it first.
+    mkdirSync(outDir, { recursive: true });
+    execSync(`lilypond --svg -o "${outDir}/" "${ly}"`, { stdio: "inherit" });
   } catch (error) {
     console.error(`\nError building ${choirName}:\n${error.message}`);
     process.exit(1);

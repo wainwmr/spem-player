@@ -54,7 +54,14 @@ const outdir = outdirIdx >= 0 ? args[outdirIdx + 1] : ".";
 const infile = args[args.length - 1];
 const name = path.basename(infile, ".ly");
 
-fs.mkdirSync(outdir, { recursive: true });
+// Model real LilyPond: it does NOT create its output directory. If the
+// target dir is missing it aborts (ticket #318: buildScores.mjs must
+// create it first). The original bug shipped because both this fake and
+// the test workspace pre-created the dir, masking the missing mkdir.
+if (!fs.existsSync(outdir)) {
+  process.stderr.write("fatal error: unable to change directory to: " + outdir + "\\n");
+  process.exit(2);
+}
 const svgPath = path.join(outdir, name + ".svg");
 fs.writeFileSync(
   svgPath,
@@ -214,6 +221,36 @@ describe("buildScores.mjs integration", () => {
       expect(result.status).toBe(0);
       expect(result.stderr).not.toContain("Error");
 
+      expect(countSvgs(join(ws, "src", "scores", "Hugh Keyte", "early"))).toBe(
+        8
+      );
+      expect(countSvgs(join(ws, "src", "scores", "Hugh Keyte", "modern"))).toBe(
+        8
+      );
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+    }
+  }, 30000);
+
+  it("creates missing score output directories on a clean checkout (#318)", () => {
+    // Regression: post-#318 src/scores/ is gitignored, so a fresh
+    // Netlify/CI checkout has no output directory. Real LilyPond does not
+    // create it and aborts; buildScores.mjs must mkdir it first. The fake
+    // LilyPond models that strict behaviour, so this test fails if the
+    // mkdir is missing.
+    const ws = createWorkspace();
+    try {
+      // Simulate the clean checkout: remove the pre-created score dirs.
+      rmSync(join(ws, "src", "scores"), { recursive: true, force: true });
+
+      const result = spawnSync(
+        process.execPath,
+        [join(ws, "build", "buildScores.mjs")],
+        { cwd: ws, env, encoding: "utf-8" }
+      );
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).not.toContain("unable to change directory");
       expect(countSvgs(join(ws, "src", "scores", "Hugh Keyte", "early"))).toBe(
         8
       );
