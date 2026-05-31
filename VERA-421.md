@@ -3,9 +3,9 @@
 Mode: work (Vera ran during initial development, before PR open)
 Cycle: 1
 Generated: 2026-05-31 21:30
-Last run:  2026-05-31 21:30
+Last run:  2026-05-31 21:45
 
-See also: [Original Report (cycle 1)](LINK_TO_BE_FILLED_AFTER_ORIGINAL_POSTED)
+See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/issues/421#issuecomment-4587987248)
 
 ## Summary
 
@@ -20,7 +20,7 @@ See also: [Original Report (cycle 1)](LINK_TO_BE_FILLED_AFTER_ORIGINAL_POSTED)
 
 **Bob's triage:** Real defect — directly defeats the core no-stale-cache invariant, reproduced empirically by two independent agents, cheap to fix. Address now (both workflows): capture into a var so `set -e` fires, assert `^[0-9a-f]{64}$`, then write.
 
-**Resolution:** [pending]
+**Resolution:** addressed (commit `1553d2d`) — both workflows now assign the key into a variable and assert `^[0-9a-f]{64}$` before writing it; an empty/invalid key fails the step. Verified locally that the assertion accepts the real key and rejects a crashing script.
 
 ### 421-02 — [critical] `computeScoreCacheKey` emits a valid key over zero matched files
 
@@ -29,7 +29,7 @@ See also: [Original Report (cycle 1)](LINK_TO_BE_FILLED_AFTER_ORIGINAL_POSTED)
 
 **Bob's triage:** Real defect — second door to the same poisoning, and the empty-sha256 constant even passes the workflow's `^[0-9a-f]{64}$` assertion, so the in-script guard is needed as defence-in-depth with 421-01. Address now: throw when `files.length === 0`, with a test.
 
-**Resolution:** [pending]
+**Resolution:** addressed (commit `c87bcd2`) — `computeScoreCacheKey` now throws on an empty match set; RGR test `throws rather than emit a key when no inputs match` (red before the guard, green after).
 
 ### 421-03 — [important] `--skip-if-missing` canary checks 1 SVG of N → partial-cache restore slips through
 
@@ -38,7 +38,7 @@ See also: [Original Report (cycle 1)](LINK_TO_BE_FILLED_AFTER_ORIGINAL_POSTED)
 
 **Bob's triage:** Pre-existing — the canary lives in `buildScores.mjs` (from #318, on `main`); this diff does not touch it. Exposed, not introduced. Per the gate's out-of-scope rule it belongs in its own change, not bundled into #421's cache PR. Defer: file a follow-up ticket to strengthen the canary (count expected vs present SVGs; probe both notations).
 
-**Resolution:** [pending — defer to follow-up ticket]
+**Resolution:** deferred to [#424](https://github.com/wainwmr/spem-player/issues/424) (Part 1) — pre-existing, out of #421's scope.
 
 ### 421-04 — [important] Test gaps: NUL-boundary, rename, separator-normalisation, arrayContaining
 
@@ -47,7 +47,7 @@ See also: [Original Report (cycle 1)](LINK_TO_BE_FILLED_AFTER_ORIGINAL_POSTED)
 
 **Bob's triage:** Address the cheap, real ones — a NUL-boundary-collision test, a rename test, and `toEqual` exact (forces a fixture when an input class is added). The cross-OS normalisation assertion is defensive only: the key is computed per-environment, so a Windows key never feeds CI's cache and a false cross-OS match cannot occur — note it, don't chase.
 
-**Resolution:** [pending]
+**Resolution:** addressed (commit `c87bcd2`) — added a rename test, a path-content-binding test (swapping two files' contents changes the key — covers the boundary concern meaningfully), and changed `arrayContaining` → `toEqual` (exact). The cross-OS normalisation assertion was deliberately not added: the key is per-environment, so cross-OS key equality is not load-bearing for cache correctness.
 
 ### 421-05 — [suggestion] `SCORE_CACHE_INPUTS: string[]` → `readonly string[]`
 
@@ -55,7 +55,7 @@ See also: [Original Report (cycle 1)](LINK_TO_BE_FILLED_AFTER_ORIGINAL_POSTED)
 
 **Bob's triage:** Cheap, expresses intent, no breakage; editing the file anyway. Apply.
 
-**Resolution:** [pending]
+**Resolution:** addressed (commit `c87bcd2`) — `.d.mts` now declares `readonly string[]`.
 
 ### 421-06 — [suggestion] Comment polish
 
@@ -63,7 +63,7 @@ See also: [Original Report (cycle 1)](LINK_TO_BE_FILLED_AFTER_ORIGINAL_POSTED)
 
 **Bob's triage:** The cache-save-timing clause is genuinely useful for a future maintainer; the wording tweak is fair. Apply both.
 
-**Resolution:** [pending]
+**Resolution:** addressed (commits `c87bcd2` + `1553d2d`) — "in theory" → "silently" in `scoreCacheKey.mjs`; both workflows' Restore step now documents that `actions/cache` saves in a post-job step on a miss; an inline note added at the normalise/sort line.
 
 ### 421-07 — [suggestion] Hard-coded `lilypond-2.26.0` PATH vs the version pin (pre-existing)
 
@@ -71,7 +71,7 @@ See also: [Original Report (cycle 1)](LINK_TO_BE_FILLED_AFTER_ORIGINAL_POSTED)
 
 **Bob's triage:** Pre-existing coupling (#318), surfaced not introduced. Fold into the 421-03 follow-up ticket.
 
-**Resolution:** [pending — defer with 421-03]
+**Resolution:** deferred to [#424](https://github.com/wainwmr/spem-player/issues/424) (Part 2) — pre-existing, out of #421's scope.
 
 ### 421-08 — [suggestion] `build/` files fail `prettier --check`
 
