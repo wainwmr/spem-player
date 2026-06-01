@@ -70,7 +70,8 @@ function compareVersions(a, b) {
  * other missing) must NOT be treated as a valid skip, so BOTH notations'
  * `Choir I A.svg` are checked (#424). This is still canary-scope, not a full
  * per-choir inventory: a tree missing a non-canary choir within a present
- * notation would still pass. Full inventory counting is deferred (#424 scope).
+ * notation would still pass. Full inventory counting is out of #424 scope,
+ * deferred to a future ticket.
  *
  * @param {string} version - the edition (e.g. "Hugh Keyte").
  * @param {string} [root] - filesystem root to resolve `src/scores` under (".").

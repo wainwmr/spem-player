@@ -122,4 +122,12 @@ describe("canaryCheck", () => {
       missing: modernCanary(),
     });
   });
+
+  it("uses the version parameter — OUP edition (not hard-coded)", () => {
+    const oup = "OUP";
+    makeCanary(`${root}/src/scores/${oup}/modern/Choir I A.svg`);
+    makeCanary(`${root}/src/scores/${oup}/early/Choir I A.svg`);
+    // A version-hardcoded probe would look under "Hugh Keyte" and miss these.
+    expect(canaryCheck(oup, root)).toEqual({ ok: true });
+  });
 });
