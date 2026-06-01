@@ -2,10 +2,10 @@
 
 Mode: work (Vera ran during initial development, before PR open)
 Cycle: 1
-Generated: 2026-06-01 01:?? GMTST
-Last run:  2026-06-01 01:?? GMTST
+Generated: 2026-06-01 01:00 GMTST
+Last run:  2026-06-01 01:05 GMTST
 
-See also: [Original Report (cycle 1)](LINK_TO_BE_FILLED_AFTER_ORIGINAL_POSTED)
+See also: [Original Report (cycle 1)](https://github.com/wainwmr/spem-player/issues/424#issuecomment-4589993085)
 
 ## Summary
 
@@ -26,10 +26,10 @@ killed). One pass.
 No critical or important findings. Suggestions and their dispositions:
 
 - **pr-test-analyzer — non-default `version` (OUP) unpinned [5/10]:** a mutant hard-coding "Hugh Keyte" in
-  the probe paths survived the suite. **Actioned** (commit COMMIT_FIX) — added a `canaryCheck("OUP", root)`
+  the probe paths survived the suite. **Actioned** (commit 563911c) — added a `canaryCheck("OUP", root)`
   unit test (both OUP canaries present → `{ok:true}`); verified it fails against the version-hardcode mutant.
 - **comment-analyzer — "(#424 scope)" ambiguity [trivial]:** the JSDoc used #424 for both "what we did" and
-  "what we deferred". **Actioned** (commit COMMIT_FIX) — reworded to "(out of #424 scope)".
+  "what we deferred". **Actioned** (commit 563911c) — reworded to "(out of #424 scope)".
 - **pr-test-analyzer — inverse partial-restore integration case [5/10]:** only modern-present is tested
   end-to-end, not early-present-only. **Noted** — the unit suite pins the modern-before-early ordering
   precisely; the integration inverse is redundant. Not added.
@@ -50,3 +50,5 @@ The both-notation probe achieves the ticket's goal (rejects half-restored trees,
 smaller than the pre-#424 gap; the discriminated union makes both illegal states unrepresentable; the
 `.d.mts`/`.mjs`/runtime agree with no drift; the non-skip path is byte-identical to main; no stale
 single-canary prose remains anywhere in the tree.
+
+- Claude
