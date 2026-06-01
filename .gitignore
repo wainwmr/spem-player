@@ -22,4 +22,5 @@ playwright/.cache/
 
 __pycache__/
 AGENTS.md
-scripts/
+/scripts/
+.kimi/
