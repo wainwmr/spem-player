@@ -165,21 +165,56 @@ The production build writes to `dist/`:
 - `dist/audio/` — audio files copied from `public/`
 - Other files from `public/` (favicons, manifest, etc.)
 
+## Build Architecture
+
+### Caching
+
+Three independent caches speed up CI and deploy:
+
+| Cache | What | Key |
+| --- | --- | --- |
+| npm | `node_modules` | `package-lock.json` hash |
+| SVG | `src/scores/` | `build/scoreCacheKey.mjs` output |
+| LilyPond | `~/.local/lilypond/` | `lilypond-2.26.0-{os}` |
+
+The SVG cache is deliberately strict: no `restore-keys` fallback. A partial
+match would restore stale SVGs and ship wrong scores.
+
+### Concurrency
+
+GitHub Actions `concurrency` with `cancel-in-progress: true` ensures only the
+latest commit deploys. If two pushes to `main` happen in quick succession, the
+first deploy is cancelled.
+
+### Deploy safety
+
+- Deploy only triggers after CI passes (`workflow_run`).
+- Deploy checks out the exact commit SHA that CI validated (`head_sha`), not
+  the latest `main`.
+- The bypass for direct pushes to `main` is restricted to non-code changes.
+
 ## Deployment
 
-The project is configured for Netlify. `netlify.toml` specifies:
+Production deploys are handled by GitHub Actions, not Netlify auto-builds.
+Netlify is the host only.
 
-- Build command: `bash build/install-lilypond.sh && export PATH=... && lilypond --version && npm run build`
-- Publish directory: `dist`
-- Functions directory: `netlify/functions`
+Pipeline:
 
-Deployment is automated: merging to `main` triggers a Netlify build and deploy.
+```text
+merge to main → CI workflow (build + test) → on success
+  → Deploy workflow (Netlify CLI) → production
+```
+
+- `.github/workflows/ci.yml` — builds the site and runs tests on every push
+  and pull request.
+- `.github/workflows/deploy-production.yml` — triggered by `workflow_run`
+  after CI succeeds on `main`. Downloads the `dist/` artefact from CI and
+  deploys to Netlify production via `netlify deploy --prod`.
+- `.github/workflows/netlify-preview.yml` — builds and deploys PR previews to
+  Netlify aliases (`pr-NUMBER`).
+
+Netlify is unlinked from the git repository. `netlify.toml` contains
+`ignore = "exit 0"` as a fail-safe in case the repository is ever re-linked
+by mistake.
 
 **Live site:** [www.spemplayer.net](https://www.spemplayer.net)
-
-Since ticket #318, `src/scores/` is gitignored. Netlify regenerates the SVGs
-at build time: `install-lilypond.sh` downloads and caches the portable
-LilyPond binary into `$HOME/.local/lilypond`; the `lilypond --version` probe
-fails the build loudly if the install regresses; the `prebuild` step then
-runs `node build/buildScores.mjs` against the LilyPond source in
-`src/lilypond/`.
