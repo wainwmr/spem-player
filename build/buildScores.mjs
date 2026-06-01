@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 import { execSync } from "child_process";
-import { existsSync, globSync, mkdirSync, rmSync, statSync } from "fs";
+import { existsSync, globSync, mkdirSync, realpathSync, rmSync, statSync } from "fs";
 import { basename, resolve } from "path";
 import { fileURLToPath } from "url";
 import { postprocessSvg } from "./postprocessSvg.mjs";
@@ -236,7 +236,7 @@ function main() {
 // imported by tests. `process.argv[1]` is undefined under some embed contexts;
 // treat that as "not main".
 const __filename = fileURLToPath(import.meta.url);
-const isMain = process.argv[1] && resolve(process.argv[1]) === resolve(__filename);
+const isMain = process.argv[1] && realpathSync(process.argv[1]) === realpathSync(__filename);
 if (isMain) {
   main();
 }
