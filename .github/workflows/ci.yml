@@ -92,6 +92,13 @@ jobs:
           echo "Unit tests completed in ${duration}s (exit ${status})"
           exit "$status"
 
+      - name: Upload build artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
       # if: always() runs the report even when an upstream step failed —
       # the missing-duration case is handled below. Budgets are SOFT: a
       # breach emits a workflow warning annotation and a Budget-exceeded

@@ -24,47 +24,13 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
-      - uses: actions/setup-node@v6
+      - name: Download build artefact
+        uses: actions/download-artifact@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
-      # Cache the generated SVGs keyed on a hash of every input that affects
-      # them (build/scoreCacheKey.mjs). On an exact-key hit we restore the
-      # SVGs and skip the LilyPond install + regeneration entirely.
-      # There is deliberately NO restore-keys fallback: a partial-key match
-      # would restore stale SVGs and ship wrong scores. (#421)
-      - name: Compute score cache key
-        id: scorekey
-        run: |
-          key="$(node build/scoreCacheKey.mjs)"
-          if [[ ! "$key" =~ ^[0-9a-f]{64}$ ]]; then
-            echo "::error::scoreCacheKey.mjs produced an invalid key: '$key'" >&2
-            exit 1
-          fi
-          echo "key=$key" >> "$GITHUB_OUTPUT"
-
-      - name: Restore generated SVG cache
-        id: scores-cache
-        uses: actions/cache@v4
-        with:
-          path: src/scores
-          key: scores-v1-${{ steps.scorekey.outputs.key }}
-
-      # Install LilyPond only on a cache miss. On a hit the restored SVGs are
-      # used as-is and buildScores.mjs --skip-if-missing skips regeneration.
-      - name: Install LilyPond
-        if: steps.scores-cache.outputs.cache-hit != 'true'
-        run: |
-          bash build/install-lilypond.sh
-          echo "$HOME/.local/lilypond/lilypond-2.26.0/bin" >> "$GITHUB_PATH"
-
-      - run: npm ci
-
-      - name: Build
-        run: |
-          export PATH="$HOME/.local/lilypond/lilypond-2.26.0/bin:$PATH"
-          npm run build
+          name: dist
+          path: dist/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
 
       - name: Install Netlify CLI
         run: npm install -g netlify-cli

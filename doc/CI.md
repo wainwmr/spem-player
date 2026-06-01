@@ -72,16 +72,14 @@ Triggers via `workflow_run` when the `CI` workflow completes successfully on a p
 
 Steps:
 
-- `actions/checkout` — checks out the exact commit SHA that CI validated (`github.event.workflow_run.head_sha`).
-- `actions/setup-node` — installs Node.js from `.nvmrc`.
-- Compute score cache key and restore generated SVGs — skips LilyPond install when inputs are unchanged.
-- Install LilyPond — only on cache miss.
-- `npm ci` — install dependencies.
-- `npm run build` — production Vite build.
+- `actions/checkout` — checks out the exact commit SHA that CI validated (`github.event.workflow_run.head_sha`). Also ensures `netlify.toml` is present for the CLI.
+- `actions/download-artifact` — downloads the `dist` artefact produced by the CI `test` job.
 - Install Netlify CLI.
 - `netlify deploy --prod` — deploy to production.
 
-This workflow depends on the `CI` workflow passing first. It does not run on scheduled CI runs or PR CI runs.
+This workflow does not rebuild the site. The build output is produced once in CI and passed as an artefact. This avoids redundant builds and saves GitHub Actions minutes.
+
+This workflow does not run on scheduled CI runs or PR CI runs.
 
 ### `netlify-preview.yml`
 
