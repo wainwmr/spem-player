@@ -14,7 +14,11 @@
 #   4. npm run build invokes prebuild (regenerates SVGs from src/lilypond/)
 #      then vite build.
 [build]
-  command = "bash build/install-lilypond.sh && export PATH=\"$HOME/.local/lilypond/lilypond-2.26.0/bin:$PATH\" && lilypond --version && npm run build"
+  # Emergency measure (June 2026): disable Netlify auto-builds to preserve
+  # build minutes. Production builds now run on GitHub Actions and deploy
+  # via Netlify CLI. See .github/workflows/deploy-production.yml.
+  ignore = "exit 0"
+  command = "echo 'Build moved to GitHub Actions'"
   functions = "netlify/functions"
   publish = "dist"
 
