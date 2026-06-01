@@ -1,6 +1,6 @@
 # Continuous Integration
 
-The repository uses GitHub Actions for automated testing, dependency updates, and deploy previews. All workflows run on Ubuntu latest and read the Node.js version from `.nvmrc`.
+The repository uses GitHub Actions for automated testing, dependency updates, deploy previews, and production deploys. All workflows run on Ubuntu latest and read the Node.js version from `.nvmrc`.
 
 ## Philosophy
 
@@ -66,6 +66,23 @@ Dependabot PRs are subject to the same `ci.yml` checks and ruleset requirements 
 
 A separate workflow enables GitHub native auto-merge for Dependabot **patch** PRs once the `test` status check passes. Minor and major bumps remain open for manual review. This workflow runs only when the PR author is `dependabot[bot]` and inspects the update type via `dependabot/fetch-metadata` before enabling auto-merge.
 
+### `deploy-production.yml`
+
+Triggers via `workflow_run` when the `CI` workflow completes successfully on a push to `main`.
+
+Steps:
+
+- `actions/checkout` — checks out the exact commit SHA that CI validated (`github.event.workflow_run.head_sha`).
+- `actions/setup-node` — installs Node.js from `.nvmrc`.
+- Compute score cache key and restore generated SVGs — skips LilyPond install when inputs are unchanged.
+- Install LilyPond — only on cache miss.
+- `npm ci` — install dependencies.
+- `npm run build` — production Vite build.
+- Install Netlify CLI.
+- `netlify deploy --prod` — deploy to production.
+
+This workflow depends on the `CI` workflow passing first. It does not run on scheduled CI runs or PR CI runs.
+
 ### `netlify-preview.yml`
 
 Triggers on `pull_request` events (`opened`, `synchronize`).
@@ -74,7 +91,7 @@ Builds the site in GitHub Actions (`npm ci && npm run build`) and deploys the `d
 
 This workflow exists because the repository is private and Netlify's native GitHub integration requires manual approval for deploy previews from non-team members on the Free plan. Building and deploying through GitHub Actions using a Netlify personal access token bypasses that approval gate.
 
-The workflow posts (or updates) a bot comment on the PR with the preview URL. Production deploys (merges to `main`) are still handled by Netlify's continuous deployment integration.
+The workflow posts (or updates) a bot comment on the PR with the preview URL.
 
 ## Node.js Version
 
