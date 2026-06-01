@@ -11,3 +11,8 @@ export function parseArgs(args?: string[]): {
 };
 
 export function buildPattern(lyDir: string, choir?: string): string;
+
+export function canaryCheck(
+  version: string,
+  root?: string
+): { ok: true } | { ok: false; missing: string };

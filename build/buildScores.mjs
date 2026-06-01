@@ -64,22 +64,48 @@ function compareVersions(a, b) {
   return 0;
 }
 
+/**
+ * Probe the pre-built SVG canaries for an edition. With #421's cache restoring
+ * `src/scores/` on CI and Netlify, a partial tree (one notation present, the
+ * other missing) must NOT be treated as a valid skip, so BOTH notations'
+ * `Choir I A.svg` are checked (#424). This is still canary-scope, not a full
+ * per-choir inventory: a tree missing a non-canary choir within a present
+ * notation would still pass. Full inventory counting is deferred (#424 scope).
+ *
+ * @param {string} version - the edition (e.g. "Hugh Keyte").
+ * @param {string} [root] - filesystem root to resolve `src/scores` under (".").
+ * @returns {{ok: true} | {ok: false, missing: string}}
+ */
+function canaryCheck(version, root = ".") {
+  const canaries = [
+    `${root}/src/scores/${version}/modern/Choir I A.svg`,
+    `${root}/src/scores/${version}/early/Choir I A.svg`,
+  ];
+  for (const probe of canaries) {
+    if (!existsSync(probe)) {
+      return { ok: false, missing: probe };
+    }
+  }
+  return { ok: true };
+}
+
 function checkLilypond(skipIfMissing, version) {
   let output;
   try {
     output = execSync("lilypond --version", { encoding: "utf-8", stdio: "pipe" });
   } catch {
     if (skipIfMissing) {
-      // Ticket #318 untracked the SVGs. --skip-if-missing now requires a
-      // canary SVG for the requested edition to skip safely; without it
-      // the build would ship empty scores. The probe is canary-scope, not
-      // a full inventory check — a partially-built tree (e.g. an
-      // interrupted previous build) will still appear valid here. The
-      // canary is sufficient for the PR #271 regression mode (entire
-      // src/scores/ missing on Netlify) which motivated this guard.
-      const probe = `src/scores/${version}/modern/Choir I A.svg`;
-      if (!existsSync(probe)) {
-        console.error(`LilyPond not found AND no pre-built SVGs at ${probe}.`);
+      // Ticket #318 untracked the SVGs. --skip-if-missing requires the canary
+      // SVGs for the requested edition to skip safely; without them the build
+      // would ship empty (or partial) scores. canaryCheck probes BOTH notations
+      // (#424) so a half-restored tree — one notation missing — is rejected
+      // rather than passed. It is still canary-scope, not a full per-choir
+      // inventory; see canaryCheck. This guards the PR #271 regression mode
+      // (entire src/scores/ missing on Netlify) plus the partial-restore mode
+      // that #421's cache introduced.
+      const check = canaryCheck(version);
+      if (!check.ok) {
+        console.error(`LilyPond not found AND missing pre-built SVG at ${check.missing}.`);
         console.error("Install LilyPond, or run buildScores.mjs without --skip-if-missing.");
         process.exit(1);
       }
@@ -241,4 +267,4 @@ if (isMain) {
   main();
 }
 
-export { parseArgs, buildPattern };
+export { parseArgs, buildPattern, canaryCheck };

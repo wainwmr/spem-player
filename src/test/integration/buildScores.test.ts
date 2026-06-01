@@ -441,23 +441,22 @@ describe("buildScores.mjs integration", () => {
     expect(output).toContain("lilypond");
   });
 
-  it("skips with --skip-if-missing when a probe SVG exists", () => {
+  it("skips with --skip-if-missing when both notation canaries exist", () => {
     // Post-#318: src/scores/ is gitignored, so `--skip-if-missing` must
     // verify SVGs are present before declaring success — otherwise the
-    // build silently ships empty scores. This test exercises the
-    // happy path: probe SVG present, no LilyPond → exit 0 + "using
+    // build silently ships empty scores. #424: BOTH notations' canaries
+    // must be present, so a half-restored tree is not mistaken for valid.
+    // Happy path: both canaries present, no LilyPond → exit 0 + "using
     // existing".
     const ws = createWorkspace();
     try {
-      const probePath = join(
-        ws,
-        "src",
-        "scores",
-        "Hugh Keyte",
-        "modern",
-        "Choir I A.svg"
-      );
-      writeFileSync(probePath, "<svg/>", "utf-8");
+      const writeCanary = (notation: string) => {
+        const dir = join(ws, "src", "scores", "Hugh Keyte", notation);
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(join(dir, "Choir I A.svg"), "<svg/>", "utf-8");
+      };
+      writeCanary("modern");
+      writeCanary("early");
 
       const envNoLilypond = {
         ...process.env,
@@ -504,7 +503,37 @@ describe("buildScores.mjs integration", () => {
 
       expect(result.status).not.toBe(0);
       const output = (result.stdout + result.stderr).toLowerCase();
-      expect(output).toContain("no pre-built svgs");
+      expect(output).toContain("missing pre-built svg");
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+    }
+  });
+
+  it("fails with --skip-if-missing when one notation is missing (partial restore)", () => {
+    // #424: a partial cache restore — one notation present, the other
+    // missing — must NOT be skipped as valid. Only the modern canary
+    // exists, so the early canary is reported missing and the build fails
+    // rather than shipping an incomplete score set.
+    const ws = createWorkspace();
+    try {
+      const dir = join(ws, "src", "scores", "Hugh Keyte", "modern");
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, "Choir I A.svg"), "<svg/>", "utf-8");
+
+      const result = spawnSync(
+        process.execPath,
+        [join(ws, "build", "buildScores.mjs"), "--skip-if-missing"],
+        {
+          cwd: ws,
+          env: { ...process.env, PATH: "" },
+          encoding: "utf-8",
+        }
+      );
+
+      expect(result.status).not.toBe(0);
+      const output = (result.stdout + result.stderr).toLowerCase();
+      expect(output).toContain("missing pre-built svg");
+      expect(output).toContain("early");
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
