@@ -19,7 +19,7 @@
     "autoprefixer": "^10.4.21",
     "canvas": "^3.2.0",
     "dependency-cruiser": "^17.4.2",
-    "eslint": "^10.4.0",
+    "eslint": "^10.4.1",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.6.0",
     "husky": "^9.1.7",
