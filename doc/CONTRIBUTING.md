@@ -211,6 +211,10 @@ A well-formed ticket body contains:
   board item automatically. The difference is that `Fixes` also closes the issue
   on merge; `See` does not.
 
+#### Direct push policy
+
+The repository owner may push directly to `main` only for **non-code changes**: documentation updates, configuration comments, and metadata. All code changes — including build scripts, tooling, and test files — must go through a pull request.
+
 #### What you do when you receive a PR
 
 - **Approve and merge** - Submit `Approve` review, merge PR to `main` - Move ticket from `Review` to `Done`

@@ -123,6 +123,10 @@ The production build must exist before e2e tests run:
 npm run build
 ```
 
+When running e2e tests in a parallel worktree, ensure `SPEM_PORT_OFFSET` is set
+so that `vite preview` and Playwright target the same non-default port. See
+`doc/BUILD.md` § Parallel worktrees.
+
 ### Running E2E Tests
 
 Headless run:
