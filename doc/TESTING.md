@@ -55,9 +55,9 @@ npm run test:coverage
 
 ## Test File Location and Naming
 
-Unit tests live anywhere under `src/test/` *except* `src/test/integration/` and follow the naming convention `*.test.ts`. They run in-process under jsdom and should complete in under a few seconds each. In-process tests against `build/` code (for example `postprocessSvg.test.ts`) live here as unit tests because they don't spawn subprocesses; the integration suite covers the subprocess-orchestrated `buildScores` pipeline.
+Unit tests live anywhere under `src/test/` *except* `lilypond/test/integration/` and follow the naming convention `*.test.ts`. They run in-process under jsdom and should complete in under a few seconds each. In-process tests against `build/` code (for example `postprocessSvg.test.ts`) live here as unit tests because they don't spawn subprocesses; the integration suite covers the subprocess-orchestrated `buildScores` pipeline.
 
-Integration tests live in `src/test/integration/` and also follow `*.test.ts`. They typically spawn subprocesses (LilyPond, the build pipeline) and are substantially slower.
+Integration tests live in `lilypond/test/integration/` and also follow `*.test.ts`. They typically spawn subprocesses (LilyPond, the build pipeline) and are substantially slower.
 
 If a new shared fixture directory is introduced (e.g. `src/test/fixtures/`), add it to the `build-related` filter in `.github/workflows/ci.yml` so that PRs touching it exercise the integration suite.
 
@@ -72,7 +72,7 @@ Choosing the right layer keeps the suite fast and deterministic.
 - build script logic that does not spawn subprocesses
 - pure functions and domain models
 
-**Integration tests** (Vitest/jsdom, `src/test/integration/`) cover cross-module behaviour and subprocess orchestration:
+**Integration tests** (Vitest/jsdom, `lilypond/test/integration/`) cover cross-module behaviour and subprocess orchestration:
 
 - event flow across multiple custom elements
 - build-pipeline verification that spawns Node scripts, LilyPond, or other external processes
