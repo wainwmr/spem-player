@@ -49,9 +49,7 @@ This runs `vite build` to produce a production bundle into `dist/`.
 `npm run prebuild` runs automatically before `build` and generates the Ohm.js
 grammar bundle and SVG scores from LilyPond source. The SVG files in
 `src/scores/` are committed source assets generated from LilyPond source.
-LilyPond is required only if regenerating SVGs from source. The
-`--skip-if-missing` flag in `prebuild` skips the score build when SVGs are
-already present and LilyPond is unavailable.
+LilyPond is required only if regenerating SVGs from source.
 
 ## Preview the Production Build
 
