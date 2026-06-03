@@ -64,6 +64,17 @@ updated SVGs, and the SVG commit then triggers Netlify.
 **Deploy preview:** Netlify posts a preview URL as a comment on each PR
 automatically.
 
+### `monitor-resources.yml`
+
+Triggers daily at 07:30 UTC (`cron: "30 7 * * *"`, deliberately off the top of the hour to avoid GitHub's schedule throttling) and on manual `workflow_dispatch`. Runs one job, `monitor`, on Ubuntu latest with `actions: read`, `issues: write`, and `contents: read` permissions.
+
+Steps:
+
+- `actions/checkout@v6` — checkout the repository.
+- `node .github/scripts/monitor-resources.mjs` — run the monitor, with `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `GITHUB_TOKEN` passed in the environment.
+
+The script queries the current period's Netlify build-minute usage and GitHub Actions usage, then posts a one-line summary to Telegram of the form `Netlify <n>% · GitHub <n>% — <status>`. If either service reaches **90%** of its quota, the status becomes `STOP` (with a 🚨 prefix) and the workflow opens a critical GitHub issue containing a runbook for reducing build-minute consumption.
+
 ## Node.js Version
 
 The Node.js version is pinned in `.nvmrc`. All GitHub Actions workflows read this file via `node-version-file` in `actions/setup-node`. Netlify should be configured to use the same version.
