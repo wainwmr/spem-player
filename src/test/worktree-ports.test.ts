@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { portOffset, DEV_PORT, PREVIEW_PORT } from "../../worktree-ports.ts";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import {
+  portOffset,
+  DEV_PORT,
+  PREVIEW_PORT,
+  readWorktreeOffset,
+} from "../../worktree-ports.ts";
 
 describe("worktree-ports", () => {
   it("DEV_PORT is exactly 1000 above PREVIEW_PORT (single shared offset)", () => {
@@ -37,5 +46,28 @@ describe("worktree-ports", () => {
     expect(portOffset("1OO")).toBe(0); // letter O, not zeros
     expect(portOffset("-100")).toBe(0);
     expect(portOffset("10.5")).toBe(0);
+  });
+});
+
+describe("readWorktreeOffset", () => {
+  it("reads the trimmed offset from a .worktree-offset file beside the module", () => {
+    const dir = mkdtempSync(join(tmpdir(), "wt-offset-"));
+    try {
+      writeFileSync(join(dir, ".worktree-offset"), "200\n");
+      const moduleUrl = pathToFileURL(join(dir, "worktree-ports.ts")).href;
+      expect(readWorktreeOffset(moduleUrl)).toBe("200");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("returns undefined when no .worktree-offset file sits beside the module", () => {
+    const dir = mkdtempSync(join(tmpdir(), "wt-offset-"));
+    try {
+      const moduleUrl = pathToFileURL(join(dir, "worktree-ports.ts")).href;
+      expect(readWorktreeOffset(moduleUrl)).toBeUndefined();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
