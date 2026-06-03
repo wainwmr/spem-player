@@ -69,7 +69,7 @@ Shortcuts are ignored when focus is on an input field or `<select>` element.
 - `src/scss/` — SCSS styles with dark/light theme variables
 - `src/ohmjs/` — Ohm.js grammar for LilyPond parsing
 - `lilypond/src/` — LilyPond source files (two editions: Hugh Keyte and OUP)
-- `src/test/` — unit tests (Vitest); `lilypond/test/integration/` — subprocess-heavy integration tests
+- `src/test/` — unit tests (Vitest); `lilypond/test/*.integration.test.ts` — subprocess-heavy integration tests
 - `public/audio/` — MP3 recordings (ALC and CotE per-part tracks)
 - `public/spem.json` — runtime configuration (choir count, parts, tempo)
 - `build/` — build scripts (LilyPond invocation, SVG post-processing)
