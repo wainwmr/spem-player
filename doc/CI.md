@@ -47,30 +47,22 @@ Dependabot PRs are subject to the same `ci.yml` checks and ruleset requirements 
 
 A separate workflow enables GitHub native auto-merge for Dependabot **patch** PRs once the `test` status check passes. Minor and major bumps remain open for manual review. This workflow runs only when the PR author is `dependabot[bot]` and inspects the update type via `dependabot/fetch-metadata` before enabling auto-merge.
 
-### `deploy-production.yml`
+### Netlify builds and deploys
 
-Triggers via `workflow_run` when the `CI` workflow completes successfully on a push to `main`.
+Netlify handles both production deploys (on push to `main`) and deploy previews
+(on pull requests) via its native GitHub integration.
 
-Steps:
+**Build:** `npm run build` — Vite prebuild (Ohm grammar bundle, SVGs are already
+committed) then Vite production build. No LilyPond required.
 
-- `actions/checkout` — checks out the exact commit SHA that CI validated (`github.event.workflow_run.head_sha`). Also ensures `netlify.toml` is present for the CLI.
-- `actions/download-artifact` — downloads the `dist` artefact produced by the CI `test` job.
-- Install Netlify CLI.
-- `netlify deploy --prod` — deploy to production.
+**Path filter:** `netlify.toml` configures an `ignore` command that skips the
+build when none of the build-relevant paths changed. This preserves the 300
+free monthly build minutes. `src/lilypond/` is intentionally excluded from the
+filter — `.ly` changes trigger the LilyPond workflow (#462) which commits
+updated SVGs, and the SVG commit then triggers Netlify.
 
-This workflow does not rebuild the site. The build output is produced once in CI and passed as an artefact. This avoids redundant builds and saves GitHub Actions minutes.
-
-This workflow does not run on scheduled CI runs or PR CI runs.
-
-### `netlify-preview.yml`
-
-Triggers on `pull_request` events (`opened`, `synchronize`).
-
-Builds the site in GitHub Actions (`npm ci && npm run build`) and deploys the `dist/` folder to Netlify via the CLI using a PR-number alias (`pr-NUMBER`). The preview URL is always `https://pr-NUMBER--spemplayer.netlify.app`.
-
-This workflow exists because the repository is private and Netlify's native GitHub integration requires manual approval for deploy previews from non-team members on the Free plan. Building and deploying through GitHub Actions using a Netlify personal access token bypasses that approval gate.
-
-The workflow posts (or updates) a bot comment on the PR with the preview URL.
+**Deploy preview:** Netlify posts a preview URL as a comment on each PR
+automatically.
 
 ## Node.js Version
 
