@@ -37,7 +37,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "prebuild": "npm run build:ohm && node build/buildScores.mjs --skip-if-missing",
+    "prebuild": "npm run build:ohm",
     "build:scores": "node build/buildScores.mjs",
     "build:ohm": "npx ohm generateBundles --withTypes src/ohmjs/ly-grammar.ohm",
     "preview": "vite preview",
