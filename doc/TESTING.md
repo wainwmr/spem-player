@@ -55,7 +55,7 @@ npm run test:coverage
 
 ## Test File Location and Naming
 
-Unit tests live anywhere under `src/test/` *except* `lilypond/test/*.integration.test.ts` and follow the naming convention `*.test.ts`. They run in-process under jsdom and should complete in under a few seconds each. In-process tests against `build/` code (for example `postprocessSvg.test.ts`) live here as unit tests because they don't spawn subprocesses; the integration suite covers the subprocess-orchestrated `buildScores` pipeline.
+Unit tests live under `src/test/` and `lilypond/test/` (excluding `*.integration.test.ts`) and follow the naming convention `*.test.ts`. They run in-process under jsdom and should complete in under a few seconds each. In-process tests against `lilypond/build/` code (for example `postprocessSvg.test.ts`) live in `lilypond/test/` alongside the integration suite.
 
 Integration tests live in `lilypond/test/*.integration.test.ts` and also follow `*.test.ts`. They typically spawn subprocesses (LilyPond, the build pipeline) and are substantially slower.
 
