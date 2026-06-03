@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseArgs, buildPattern } from "../../lilypond/build/buildScores.mjs";
+import { parseArgs, buildPattern } from "../build/buildScores.mjs";
 
 describe("parseArgs", () => {
   it("returns defaults when given no arguments", () => {
