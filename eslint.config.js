@@ -58,7 +58,6 @@ export default tseslint.config(
       'node_modules/',
       'coverage/',
       '.netlify/',
-      'build/',
       'lilypond/build/',
       'tests-local/',
       'probes/',
