@@ -13,30 +13,11 @@ The repository uses GitHub Actions for automated testing, dependency updates, de
 
 Triggers on every push and pull request to `main`, and nightly at 00:00 UTC via a `schedule` cron.
 
-Defines two parallel jobs.
+Defines one job.
 
 #### `test` job
 
-Runs on every trigger. Executes `npm run check` (lint, format, type check, unused, deps) and `npm run build` as one timed phase, then `npm run test:unit` (the fast unit suite) as a second timed phase, both measured against a soft duration budget — see Duration Budget below. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
-
-#### `integration` job
-
-Runs the subprocess-heavy integration suite (`src/test/integration/`). It runs unconditionally on push to `main` and on the nightly cron, but on pull requests it uses `dorny/paths-filter` to skip unless the PR touches one of:
-
-- `build/**`
-- `src/lilypond/**`
-- `src/scores/**`
-- `src/test/integration/**`
-- `package.json`
-- `package-lock.json`
-- `vite.config.ts`
-- `tsconfig.json`
-- `.nvmrc`
-- `.github/workflows/ci.yml`
-
-A skipped PR run is reported on the workflow summary page and in the job log with a message quoting the actual `should-run` output (e.g. `Integration tests skipped — should-run='false' (PR did not touch build-related paths).`), so the absence of test output is visible rather than appearing as a silent pass.
-
-The `integration` job is not currently a required check; failures surface but do not block merge. This is deliberate while the path-filter and skip-reporting behaviour bed in.
+Runs on every trigger. Executes `npm run check` (lint, format, type check, unused, deps) and `npm run build` as one timed phase, then `npm run test:unit` as a second timed phase, then `npm run test:integration`. All are measured against a soft duration budget — see Duration Budget below. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
 
 ### `e2e.yml`
 
