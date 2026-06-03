@@ -15,7 +15,7 @@ import { readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
-const DEFAULT_SPEM_PATH = "src/lilypond/Hugh Keyte/spem.ly";
+const DEFAULT_SPEM_PATH = "lilypond/src/Hugh Keyte/spem.ly";
 const PART_INDICES = {
   Soprano: 0,
   Alto: 1,

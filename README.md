@@ -68,8 +68,8 @@ Shortcuts are ignored when focus is on an input field or `<select>` element.
 - `src/ts/` — TypeScript source: custom elements, shared types, config, LilyPond parser
 - `src/scss/` — SCSS styles with dark/light theme variables
 - `src/ohmjs/` — Ohm.js grammar for LilyPond parsing
-- `src/lilypond/` — LilyPond source files (two editions: Hugh Keyte and OUP)
-- `src/test/` — unit tests (Vitest); `src/test/integration/` — subprocess-heavy integration tests
+- `lilypond/src/` — LilyPond source files (two editions: Hugh Keyte and OUP)
+- `src/test/` — unit tests (Vitest); `lilypond/test/*.integration.test.ts` — subprocess-heavy integration tests
 - `public/audio/` — MP3 recordings (ALC and CotE per-part tracks)
 - `public/spem.json` — runtime configuration (choir count, parts, tempo)
 - `build/` — build scripts (LilyPond invocation, SVG post-processing)
@@ -91,12 +91,12 @@ This licence does **not** apply to:
 
 - **Audio recordings** in `public/audio/` — licensed separately by their
   respective copyright holders (Andrew Leslie Cooper and Choir of the Earth).
-- **Generated SVG scores** (build artefacts produced from `src/lilypond/` by
-  `build/buildScores.mjs`) — derived from editorial editions with their own
+- **Generated SVG scores** (build artefacts produced from `lilypond/src/` by
+  `lilypond/build/buildScores.mjs`) — derived from editorial editions with their own
   copyright status. These are not checked into the repository (see ticket
   #318) but are written to `src/scores/` at build time and shipped in
   `dist/`.
-- **Lilypond source files** in `src/lilypond/` — see individual files for
+- **Lilypond source files** in `lilypond/src/` — see individual files for
   attribution.
 
 Score and audio licensing is tracked in ticket #217.

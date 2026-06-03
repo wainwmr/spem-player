@@ -187,8 +187,8 @@ function main() {
     : ["early", "modern"];
 
   for (const notation of notations) {
-    const lyDir = `src/lilypond/${version}/${notation}`;
-    const versionDir = `src/lilypond/${version}`;
+    const lyDir = `lilypond/src/${version}/${notation}`;
+    const versionDir = `lilypond/src/${version}`;
     const pattern = buildPattern(lyDir, options.choir);
 
     const files = globSync(pattern);

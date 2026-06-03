@@ -3,8 +3,22 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "doc/**"
+      - "*.md"
+      - "lilypond/**"
+      - ".github/workflows/lilypond.yml"
+      - ".github/workflows/e2e.yml"
+      - ".github/workflows/monitor-resources.yml"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "doc/**"
+      - "*.md"
+      - "lilypond/**"
+      - ".github/workflows/lilypond.yml"
+      - ".github/workflows/e2e.yml"
+      - ".github/workflows/monitor-resources.yml"
   # Daily at 00:00 UTC — catches drift in the test suite on days when no PR
   # triggered the job. GitHub may delay scheduled runs by up to ~15 min during
   # peak load.
@@ -49,9 +63,6 @@ jobs:
           echo "duration=${duration}" >> "$GITHUB_OUTPUT"
           echo "Unit tests completed in ${duration}s (exit ${status})"
           exit "$status"
-
-      - name: Run integration tests
-        run: npm run test:integration
 
       # if: always() runs the report even when an upstream step failed —
       # the missing-duration case is handled below. Budgets are SOFT: a
