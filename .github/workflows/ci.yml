@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - "doc/**"
       - "*.md"
       - "lilypond/**"
       - ".github/workflows/lilypond.yml"
@@ -13,7 +12,6 @@ on:
   pull_request:
     branches: [main]
     paths-ignore:
-      - "doc/**"
       - "*.md"
       - "lilypond/**"
       - ".github/workflows/lilypond.yml"
