@@ -3,6 +3,13 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "doc/**"
+      - "*.md"
+      - "lilypond/**"
+      - ".github/workflows/lilypond.yml"
+      - ".github/workflows/e2e.yml"
+      - ".github/workflows/monitor-resources.yml"
   pull_request:
     branches: [main]
     paths-ignore:
@@ -56,9 +63,6 @@ jobs:
           echo "duration=${duration}" >> "$GITHUB_OUTPUT"
           echo "Unit tests completed in ${duration}s (exit ${status})"
           exit "$status"
-
-      - name: Run integration tests
-        run: npm run test:lilypond
 
       # if: always() runs the report even when an upstream step failed —
       # the missing-duration case is handled below. Budgets are SOFT: a
