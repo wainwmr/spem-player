@@ -11,10 +11,6 @@ coverage
 temp/*
 src/scss/*.css
 src/scss/*.css.map
-# Generated SVG scores (ticket #318): build artefacts produced from
-# src/lilypond/ by build/buildScores.mjs. Locally regenerate with
-# `npm run build:scores`; Netlify regenerates them via install-lilypond.sh.
-src/scores/
 src/ohmjs/ly-grammar.ohm-bundle.*
 publish.py
 playwright-output/

@@ -31,10 +31,10 @@ This runs `vite build` to produce a production bundle into `dist/`.
 
 `npm run prebuild` runs automatically before `build` and generates the Ohm.js
 grammar bundle and SVG scores from LilyPond source. The SVG files in
-`src/scores/` are build artefacts (gitignored as of ticket #318); LilyPond is
-required for local builds. The `--skip-if-missing` flag in `prebuild` allows
-local builds to reuse already-generated SVGs when LilyPond is unavailable,
-but errors loudly if no SVGs are present.
+`src/scores/` are committed source assets generated from LilyPond source.
+LilyPond is required only if regenerating SVGs from source. The
+`--skip-if-missing` flag in `prebuild` skips the score build when SVGs are
+already present and LilyPond is unavailable.
 
 ## Preview the Production Build
 
@@ -47,9 +47,9 @@ Serves the contents of `dist/` locally.
 ## Regenerate SVG Scores
 
 The SVG files in `src/scores/` are generated from LilyPond source files in
-`src/lilypond/`. They are build artefacts (gitignored as of ticket #318) and
-must be regenerated locally before the app can serve them. `npm run build`
-regenerates them automatically via the `prebuild` step.
+`src/lilypond/`. They are committed to git as source assets. `npm run build`
+regenerates them automatically via the `prebuild` step when `.ly` sources are
+newer than the generated SVGs.
 
 To build scores manually:
 
@@ -70,9 +70,7 @@ This iterates over matching `Choir*.ly` files under `src/lilypond/` and runs `li
 
 LilyPond is the slow part: roughly 60 seconds per choir, 16 choirs across early + modern notations. When `.ly` sources are current, `npm run build:scores` (and the `prebuild` step inside `npm run build`) completes in a few seconds because `needsRebuild` compares mtimes and skips unchanged files. After a batch edit of `.ly` files — particularly shared includes (`basic.ly`, `layout.ly`) — expect the next full `npm run ci` to take 10+ minutes as the affected SVGs regenerate. This is a one-off; the next build after that is fast again.
 
-`src/scores/` is gitignored, so `git status` won't show SVG churn after a
-rebuild — the build directory is treated as a pure artefact, not a
-checked-in source. To force a clean regeneration delete the directory
+To force a clean regeneration, delete the directory
 (`rm -rf src/scores/`) and re-run `npm run build:scores`.
 
 ## Quality Checks
@@ -169,16 +167,12 @@ The production build writes to `dist/`:
 
 ### Caching
 
-Three independent caches speed up CI and deploy:
+Two independent caches speed up CI and deploy:
 
 | Cache | What | Key |
 | --- | --- | --- |
 | npm | `node_modules` | `package-lock.json` hash |
-| SVG | `src/scores/` | `build/scoreCacheKey.mjs` output |
 | LilyPond | `~/.local/lilypond/` | `lilypond-2.26.0-{os}` |
-
-The SVG cache is deliberately strict: no `restore-keys` fallback. A partial
-match would restore stale SVGs and ship wrong scores.
 
 ### Concurrency
 
