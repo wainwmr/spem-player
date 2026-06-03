@@ -21,6 +21,23 @@ npm run dev
 
 This serves the application locally with hot module replacement. The `--host` flag is set, so the server is accessible on the local network.
 
+### Parallel worktrees
+
+Multiple worktrees can run dev and preview servers simultaneously by setting
+`SPEM_PORT_OFFSET` in each worktree's environment (for example, in a
+`.env.local` file). The offset is added to the default ports:
+
+| Worktree | Offset | Dev port | Preview port |
+| --- | --- | --- | --- |
+| default | 0 | 5173 | 4173 |
+| vera | 100 | 5273 | 4273 |
+| kimi | 200 | 5373 | 4373 |
+| copilot | 300 | 5473 | 4473 |
+| tele | 400 | 5573 | 4573 |
+
+`vite.config.ts` and `playwright.config.ts` read the offset from
+`worktree-ports.ts` at config-eval time.
+
 ## Build for Production
 
 ```console
