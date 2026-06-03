@@ -1,7 +1,7 @@
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { postprocessSvg } from "../../build/postprocessSvg.mjs";
+import { postprocessSvg } from "../build/postprocessSvg.mjs";
 
 describe("postprocessSvg build script", () => {
   const tmpDir = mkdtempSync(join(tmpdir(), "spem-annotate-test-"));

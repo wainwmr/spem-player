@@ -17,7 +17,7 @@ Defines one job.
 
 #### `test` job
 
-Runs on every trigger. Executes `npm run check` (lint, format, type check, unused, deps) and `npm run build` as one timed phase, then `npm run test:unit` as a second timed phase, then `npm run test:integration`. All are measured against a soft duration budget — see Duration Budget below. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
+Runs on every trigger. Executes `npm run check` (lint, format, type check, unused, deps) and `npm run build` as one timed phase, then `npm run test:unit` as a second timed phase, then `npm run test:lilypond`. All are measured against a soft duration budget — see Duration Budget below. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
 
 ### `e2e.yml`
 
@@ -57,7 +57,7 @@ committed) then Vite production build. No LilyPond required.
 
 **Path filter:** `netlify.toml` configures an `ignore` command that skips the
 build when none of the build-relevant paths changed. This preserves the 300
-free monthly build minutes. `src/lilypond/` is intentionally excluded from the
+free monthly build minutes. `lilypond/src/` is intentionally excluded from the
 filter — `.ly` changes trigger the LilyPond workflow (#462) which commits
 updated SVGs, and the SVG commit then triggers Netlify.
 

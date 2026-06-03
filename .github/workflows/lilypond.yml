@@ -4,16 +4,16 @@ on:
   push:
     branches: [main]
     paths:
-      - "src/lilypond/**"
-      - "build/buildScores.mjs"
-      - "build/postprocessSvg.mjs"
-      - "build/install-lilypond.sh"
+      - "lilypond/src/**"
+      - "lilypond/build/buildScores.mjs"
+      - "lilypond/build/postprocessSvg.mjs"
+      - "lilypond/build/install-lilypond.sh"
   pull_request:
     paths:
-      - "src/lilypond/**"
-      - "build/buildScores.mjs"
-      - "build/postprocessSvg.mjs"
-      - "build/install-lilypond.sh"
+      - "lilypond/src/**"
+      - "lilypond/build/buildScores.mjs"
+      - "lilypond/build/postprocessSvg.mjs"
+      - "lilypond/build/install-lilypond.sh"
 
 permissions:
   contents: write
@@ -32,8 +32,8 @@ jobs:
           cache: npm
 
       - run: npm ci
-
-      - run: bash build/install-lilypond.sh
+      - run: npm run test:lilypond
+      - run: bash lilypond/build/install-lilypond.sh
 
       - run: |
           export PATH="$HOME/.local/lilypond/lilypond-2.26.0/bin:$PATH"

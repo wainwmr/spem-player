@@ -58,7 +58,7 @@ export default tseslint.config(
       'node_modules/',
       'coverage/',
       '.netlify/',
-      'build/',
+      'lilypond/build/',
       'tests-local/',
       'probes/',
       'src/ohmjs/*.ohm-bundle.js',

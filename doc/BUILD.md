@@ -62,7 +62,7 @@ Serves the contents of `dist/` locally.
 ## Regenerate SVG Scores
 
 The SVG files in `src/scores/` are generated from LilyPond source files in
-`src/lilypond/`. They are committed to git as source assets. `npm run build`
+`lilypond/src/`. They are committed to git as source assets. `npm run build`
 regenerates them automatically via the `prebuild` step when `.ly` sources are
 newer than the generated SVGs.
 
@@ -79,7 +79,7 @@ npm run build:scores -- --choir="I A"
 npm run build:scores -- --version="Hugh Keyte" --notation=early --choir="II B"
 ```
 
-This iterates over matching `Choir*.ly` files under `src/lilypond/` and runs `lilypond --svg` for each, then post-processes the generated SVG with `build/postprocessSvg.mjs`.
+This iterates over matching `Choir*.ly` files under `lilypond/src/` and runs `lilypond --svg` for each, then post-processes the generated SVG with `lilypond/build/postprocessSvg.mjs`.
 
 ### Timing
 
@@ -114,7 +114,7 @@ npm run test:unit
 Run the integration suite only:
 
 ```console
-npm run test:integration
+npm run test:lilypond
 ```
 
 Run all tests (unit and integration):
