@@ -114,7 +114,7 @@ npm run test:unit
 Run the integration suite only:
 
 ```console
-npm run test:integration
+npm run test:lilypond
 ```
 
 Run all tests (unit and integration):

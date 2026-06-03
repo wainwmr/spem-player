@@ -32,7 +32,7 @@ npm run test:unit
 Run integration tests once (subprocess-heavy, slower):
 
 ```console
-npm run test:integration
+npm run test:lilypond
 ```
 
 Run all tests:

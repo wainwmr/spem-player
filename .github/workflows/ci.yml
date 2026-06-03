@@ -58,7 +58,7 @@ jobs:
           exit "$status"
 
       - name: Run integration tests
-        run: npm run test:integration
+        run: npm run test:lilypond
 
       # if: always() runs the report even when an upstream step failed —
       # the missing-duration case is handled below. Budgets are SOFT: a
