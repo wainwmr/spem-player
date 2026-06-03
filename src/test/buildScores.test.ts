@@ -22,8 +22,8 @@ describe("parseArgs", () => {
   });
 
   it("treats a bare --flag as boolean true", () => {
-    const options = parseArgs(["--skip-if-missing"]);
-    expect(options["skip-if-missing"]).toBe(true);
+    const options = parseArgs(["--dry-run"]);
+    expect(options["dry-run"]).toBe(true);
   });
 
   it("parses mixed key=value, key value, and boolean flags", () => {
@@ -31,19 +31,19 @@ describe("parseArgs", () => {
       "--version=OUP",
       "--notation",
       "early",
-      "--skip-if-missing",
+      "--dry-run",
       "--choir",
       "I A",
     ]);
     expect(options.version).toBe("OUP");
     expect(options.notation).toBe("early");
-    expect(options["skip-if-missing"]).toBe(true);
+    expect(options["dry-run"]).toBe(true);
     expect(options.choir).toBe("I A");
   });
 
   it("treats a bare --flag followed by another --flag as boolean, then parses the next flag normally", () => {
-    const options = parseArgs(["--skip-if-missing", "--version", "OUP"]);
-    expect(options["skip-if-missing"]).toBe(true);
+    const options = parseArgs(["--dry-run", "--version", "OUP"]);
+    expect(options["dry-run"]).toBe(true);
     expect(options.version).toBe("OUP");
   });
 });
