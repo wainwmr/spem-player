@@ -1,5 +1,5 @@
 import { DOMParser } from "@xmldom/xmldom";
-import { deduplicatePaths } from "../../build/postprocessSvg.mjs";
+import { deduplicatePaths } from "../../lilypond/build/postprocessSvg.mjs";
 
 const DUPLICATE_PATHS_SVG = `<svg xmlns="http://www.w3.org/2000/svg">
   <path d="M 0 0 L 10 10" transform="translate(10,20)" />

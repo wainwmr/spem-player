@@ -38,7 +38,7 @@
     "dev": "vite --host",
     "build": "vite build",
     "prebuild": "npm run build:ohm",
-    "build:scores": "node build/buildScores.mjs",
+    "build:scores": "node lilypond/build/buildScores.mjs",
     "build:ohm": "npx ohm generateBundles --withTypes src/ohmjs/ly-grammar.ohm",
     "preview": "vite preview",
     "test": "vitest run",

@@ -57,7 +57,7 @@ committed) then Vite production build. No LilyPond required.
 
 **Path filter:** `netlify.toml` configures an `ignore` command that skips the
 build when none of the build-relevant paths changed. This preserves the 300
-free monthly build minutes. `src/lilypond/` is intentionally excluded from the
+free monthly build minutes. `lilypond/src/` is intentionally excluded from the
 filter — `.ly` changes trigger the LilyPond workflow (#462) which commits
 updated SVGs, and the SVG commit then triggers Netlify.
 

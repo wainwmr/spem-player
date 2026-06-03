@@ -17,8 +17,8 @@ import { join, resolve } from "path";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 
 const REPO_ROOT = resolve(process.cwd());
-const BUILD_SCRIPT = join(REPO_ROOT, "build", "buildScores.mjs");
-const POSTPROCESS_SCRIPT = join(REPO_ROOT, "build", "postprocessSvg.mjs");
+const BUILD_SCRIPT = join(REPO_ROOT, "lilypond", "build", "buildScores.mjs");
+const POSTPROCESS_SCRIPT = join(REPO_ROOT, "lilypond", "build", "postprocessSvg.mjs");
 const FAKE_LILYPOND_LOG = join(
   REPO_ROOT,
   "temp",
@@ -155,11 +155,11 @@ function createWorkspace(): string {
   copyFileSync(POSTPROCESS_SCRIPT, join(ws, "build", "postprocessSvg.mjs"));
 
   // Copy lilypond files
-  const lilyDir = join(ws, "src", "lilypond", "Hugh Keyte");
+  const lilyDir = join(ws, "lilypond", "src", "Hugh Keyte");
   mkdirSync(join(lilyDir, "early"), { recursive: true });
   mkdirSync(join(lilyDir, "modern"), { recursive: true });
 
-  const realLilyDir = join(REPO_ROOT, "src", "lilypond", "Hugh Keyte");
+  const realLilyDir = join(REPO_ROOT, "lilypond", "src", "Hugh Keyte");
   for (const f of readdirSync(join(realLilyDir, "early"))) {
     copyFileSync(join(realLilyDir, "early", f), join(lilyDir, "early", f));
   }
@@ -316,7 +316,7 @@ describe("buildScores.mjs integration", () => {
 
       // Touch an edition-root include (spem.ly) two seconds in the future
       // to avoid coarse-FS mtime resolution (FAT/exFAT: 2s).
-      const includePath = join(ws, "src", "lilypond", "Hugh Keyte", "spem.ly");
+      const includePath = join(ws, "lilypond", "src", "Hugh Keyte", "spem.ly");
       const future = new Date(Date.now() + 2000);
       utimesSync(includePath, future, future);
 
@@ -355,8 +355,8 @@ describe("buildScores.mjs integration", () => {
       // Touch a single choir .ly two seconds in the future.
       const choirPath = join(
         ws,
-        "src",
         "lilypond",
+        "src",
         "Hugh Keyte",
         "early",
         "Choir I A.ly"
@@ -400,8 +400,8 @@ describe("buildScores.mjs integration", () => {
       // Touch a modern/.ly two seconds in the future.
       const modernPath = join(
         ws,
-        "src",
         "lilypond",
+        "src",
         "Hugh Keyte",
         "modern",
         "Choir I A.ly"
