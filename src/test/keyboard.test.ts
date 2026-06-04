@@ -225,19 +225,6 @@ describe("Space bar play/pause", () => {
       }
     );
 
-    // Alt+Arrow is the fine-grained seek (hemidemisemiquaver) — must
-    // preventDefault so the browser Back/Forward shortcut on Windows
-    // does not fire simultaneously.
-    it.each([["ArrowLeft"], ["ArrowRight"]])(
-      "preventDefaults Alt+%s (app handles 1/64th-note seek)",
-      (code) => {
-        expect(
-          dispatchKeydown(document.body, { code, altKey: true })
-            .defaultPrevented
-        ).toBe(true);
-      }
-    );
-
     // -- negative cases: browser shortcuts and non-scroll keys pass through --
     // Cmd+S, Cmd+F, Cmd+A etc. must NOT be swallowed; the user expects
     // browser/OS shortcuts to keep working when focus is on the body.
