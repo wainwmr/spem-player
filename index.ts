@@ -24,6 +24,8 @@ MusicCanvasWatcher.define("music-canvas-watcher");
 MusicControls.define("music-controls");
 MusicScore.define("music-score");
 
+console.log(`Spem Player ${config.version}`);
+
 const container = document.querySelector(".split-container");
 const score = document.querySelector("music-score") as MusicScore;
 const splitter = document.querySelector(".splitter") as HTMLDivElement;

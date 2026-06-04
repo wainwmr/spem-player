@@ -1,7 +1,10 @@
 // Copyright (c) 2024-2026 Mark Wainwright
 // SPDX-License-Identifier: MIT
 
+import pkg from "../../package.json";
+
 export default {
+  version: pkg.version,
   parts: ["Soprano", "Alto", "Tenor", "Baritone", "Bass"],
   scores: ["modern", "early"],
   audio_prefix: "/audio/",
