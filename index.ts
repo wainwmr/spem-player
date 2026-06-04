@@ -252,13 +252,14 @@ function keyboardTapped(e: KeyboardEvent) {
     return;
   }
 
-  // Swallow the browser-default for scroll-causing keys (iPad fix, #10),
-  // but only when no modifier is held — leave Cmd+S / Cmd+F / etc. alone.
-  // Cmd/Ctrl+ArrowLeft/Right is the one modifier combination the app
-  // owns (seek by section); preventDefault keeps the OS jump-word
-  // shortcut from racing the app handler.
+  // Swallow the browser-default for scroll-causing keys (iPad fix, #10).
+  // Plain arrows and Space scroll the page — the app owns those gestures.
+  // The app also owns three modifier+Arrow combos for seeking:
+  //   Cmd/Ctrl+Arrow  → seek by section
+  //   Alt+Arrow       → fine seek (1/64th note)
+  // Leave all other modifier combinations (Cmd+S, Cmd+F, etc.) alone.
   const isModifierSeek =
-    (e.metaKey || e.ctrlKey) &&
+    (e.metaKey || e.ctrlKey || e.altKey) &&
     (e.code === "ArrowRight" || e.code === "ArrowLeft");
   const isPlainScrollKey =
     !e.metaKey && !e.ctrlKey && SCROLL_KEYS.has(e.code);
