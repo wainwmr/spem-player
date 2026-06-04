@@ -2,9 +2,9 @@ name: Monitor Build Resources
 
 on:
   schedule:
-    # 07:30 UTC (07:30 GMT / 08:30 BST). Off-hour to dodge GitHub
+    # 02:29 UTC (02:29 GMT / 03:29 BST). Off-hour to dodge GitHub
     # top-of-hour scheduling throttling; see #454.
-    - cron: "30 7 * * *"
+    - cron: "29 2 * * *"
   workflow_dispatch:
 
 permissions:
