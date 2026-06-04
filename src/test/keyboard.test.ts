@@ -225,6 +225,19 @@ describe("Space bar play/pause", () => {
       }
     );
 
+    // Alt+Left/Right is the fine seek (1/16 bar) — must preventDefault
+    // so the browser Back/Forward shortcut on Windows does not fire
+    // simultaneously.
+    it.each([["ArrowLeft"], ["ArrowRight"]])(
+      "preventDefaults Alt+%s (app handles 1/16-bar seek)",
+      (code) => {
+        expect(
+          dispatchKeydown(document.body, { code, altKey: true })
+            .defaultPrevented
+        ).toBe(true);
+      }
+    );
+
     // -- negative cases: browser shortcuts and non-scroll keys pass through --
     // Cmd+S, Cmd+F, Cmd+A etc. must NOT be swallowed; the user expects
     // browser/OS shortcuts to keep working when focus is on the body.
@@ -401,6 +414,42 @@ describe("Space bar play/pause", () => {
       );
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(Number(controls.getAttribute("bar"))).toBe(6);
+    });
+
+    // Alt+Left/Right is the fine seek (1/16 bar). These assert the bar
+    // actually moves by the fractional step — not just that preventDefault
+    // ran — so a regression that swallowed the default but broke the seek
+    // (or vice versa) would fail loudly. Mirrors the held-Arrow tests above.
+    it("Alt+ArrowRight fine-seeks forward by 1/16 bar", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.setAttribute("bar", "5");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "ArrowRight",
+          bubbles: true,
+          altKey: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(Number(controls.getAttribute("bar"))).toBeCloseTo(5.0625, 4);
+    });
+
+    it("Alt+ArrowLeft fine-seeks backward by 1/16 bar", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.setAttribute("bar", "5");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "ArrowLeft",
+          bubbles: true,
+          altKey: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(Number(controls.getAttribute("bar"))).toBeCloseTo(4.9375, 4);
     });
 
     // The Cmd/Ctrl+Arrow seek branch returns BEFORE the e.repeat
