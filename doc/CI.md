@@ -34,6 +34,30 @@ On failure, the Playwright HTML report is uploaded as an artifact and retained f
 
 This workflow is intentionally excluded from the PR gate. Playwright tests are slow and can flake on infrastructure issues. Running them nightly catches real regressions within 24 hours without blocking rapid fixes.
 
+### `lilypond.yml`
+
+Triggers on push to `main` and on `pull_request`, both path-filtered to `lilypond/src/**`, `lilypond/build/buildScores.mjs`, `lilypond/build/postprocessSvg.mjs`, and `lilypond/build/install-lilypond.sh`.
+
+Permissions: `contents: write`.
+
+Defines one job.
+
+#### `regenerate-svgs` job
+
+Runs on `ubuntu-latest`.
+
+Steps:
+
+- `actions/checkout@v6` with `ref: ${{ github.head_ref || github.ref_name }}` — checkout the target branch so commits can be pushed back.
+- `actions/setup-node@v6` from `.nvmrc` — install Node.js.
+- `npm ci` — install dependencies.
+- `npm run test:lilypond` — run the Lilypond-related test suite.
+- `bash lilypond/build/install-lilypond.sh` — install LilyPond.
+- Set `PATH` to include LilyPond 2.26.0, then `npm run build:scores` — regenerate SVGs.
+- Commit updated SVGs in `src/scores/` if changes exist, with message `chore: regenerate SVGs [skip ci]`, then push.
+
+If no SVGs changed, the job exits cleanly without committing.
+
 ## Dependabot
 
 `.github/dependabot.yml` configures automated dependency update PRs:

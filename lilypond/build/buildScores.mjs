@@ -8,6 +8,14 @@ import { basename, resolve } from "path";
 import { fileURLToPath } from "url";
 import { postprocessSvg } from "./postprocessSvg.mjs";
 
+const POSTPROCESS_SVG_MTIME = (() => {
+  try {
+    return statSync(new URL("./postprocessSvg.mjs", import.meta.url)).mtimeMs;
+  } catch {
+    return 0;
+  }
+})();
+
 
 const defaults = {
   version: "Hugh Keyte",
@@ -45,6 +53,23 @@ function parseArgs(args = process.argv.slice(2)) {
     i++;
   }
   return options;
+}
+
+function validateOptions(options) {
+  const stringFlags = ["version", "notation", "choir"];
+  for (const flag of stringFlags) {
+    if (options[flag] === true) {
+      console.error(`Error: --${flag} requires a value.`);
+      if (flag === "notation") {
+        console.error("  Valid values: early, modern");
+      } else if (flag === "version") {
+        console.error("  Valid values: Hugh Keyte, OUP");
+      } else if (flag === "choir") {
+        console.error('  Valid values: "I A", "I B", ... (any choir name)');
+      }
+      process.exit(1);
+    }
+  }
 }
 
 function parseLilypondVersion(output) {
@@ -126,7 +151,8 @@ function needsRebuild(maxLyMtime, svgPath) {
   if (!existsSync(svgPath)) {
     return true;
   }
-  return maxLyMtime > statSync(svgPath).mtimeMs;
+  const svgMtime = statSync(svgPath).mtimeMs;
+  return maxLyMtime > svgMtime || POSTPROCESS_SVG_MTIME > svgMtime;
 }
 
 /**
@@ -159,6 +185,7 @@ function buildScore(ly, version, notation, maxLyMtime) {
     mkdirSync(outDir, { recursive: true });
     execSync(`lilypond --svg -o "${outDir}/" "${ly}"`, { stdio: "inherit" });
   } catch (error) {
+    rmSync(svg, { force: true });
     console.error(`\nError building ${choirName}:\n${error.message}`);
     process.exit(1);
   }
@@ -179,6 +206,7 @@ function buildScore(ly, version, notation, maxLyMtime) {
 
 function main() {
   const options = parseArgs();
+  validateOptions(options);
 
   const version = options.version || defaults.version;
   checkLilypond(version);

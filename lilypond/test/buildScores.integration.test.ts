@@ -539,4 +539,143 @@ describe("buildScores.mjs integration", () => {
       rmSync(ws, { recursive: true, force: true });
     }
   });
+
+  it("rejects bare --notation without a value (#306)", () => {
+    const result = spawnSync(
+      process.execPath,
+      [BUILD_SCRIPT, "--notation"],
+      { cwd: REPO_ROOT, encoding: "utf-8" }
+    );
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("--notation requires a value");
+    expect(result.stderr).toContain("early");
+    expect(result.stderr).toContain("modern");
+  });
+
+  it("rejects bare --version without a value (#306)", () => {
+    const result = spawnSync(
+      process.execPath,
+      [BUILD_SCRIPT, "--version"],
+      { cwd: REPO_ROOT, encoding: "utf-8" }
+    );
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("--version requires a value");
+    expect(result.stderr).toContain("Hugh Keyte");
+    expect(result.stderr).toContain("OUP");
+  });
+
+  it("rejects bare --choir without a value (#306)", () => {
+    const result = spawnSync(
+      process.execPath,
+      [BUILD_SCRIPT, "--choir"],
+      { cwd: REPO_ROOT, encoding: "utf-8" }
+    );
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("--choir requires a value");
+  });
+
+  it("rebuilds when postprocessSvg.mjs is newer (#393)", () => {
+    const ws = createWorkspace();
+    try {
+      if (existsSync(FAKE_LILYPOND_LOG)) {
+        rmSync(FAKE_LILYPOND_LOG);
+      }
+
+      const script = join(ws, "build", "buildScores.mjs");
+
+      // First run
+      const result1 = spawnSync(process.execPath, [script], {
+        cwd: ws,
+        env,
+        encoding: "utf-8",
+      });
+      expect(result1.status).toBe(0);
+      const afterFirst = countScoreInvocations();
+      expect(afterFirst).toBe(16);
+
+      // Touch postprocessSvg.mjs two seconds in the future
+      const postprocessPath = join(ws, "build", "postprocessSvg.mjs");
+      const future = new Date(Date.now() + 2000);
+      utimesSync(postprocessPath, future, future);
+
+      const result2 = spawnSync(process.execPath, [script], {
+        cwd: ws,
+        env,
+        encoding: "utf-8",
+      });
+      expect(result2.status).toBe(0);
+      const afterSecond = countScoreInvocations();
+
+      // All scores should rebuild because postprocessor changed.
+      expect(afterSecond).toBe(afterFirst + 16);
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+    }
+  }, 30000);
+
+  it("deletes SVG on lilypond failure (#394)", () => {
+    const ws = createWorkspace();
+    let failDir: string | undefined;
+    try {
+      // First, build successfully so SVG exists
+      const result1 = spawnSync(
+        process.execPath,
+        [join(ws, "build", "buildScores.mjs")],
+        { cwd: ws, env, encoding: "utf-8" }
+      );
+      expect(result1.status).toBe(0);
+
+      const svgPath = join(
+        ws,
+        "src",
+        "scores",
+        "Hugh Keyte",
+        "early",
+        "Choir I A.svg"
+      );
+      expect(existsSync(svgPath)).toBe(true);
+
+      // Touch a .ly file to force rebuild
+      const lyPath = join(
+        ws,
+        "lilypond",
+        "src",
+        "Hugh Keyte",
+        "early",
+        "Choir I A.ly"
+      );
+      const future = new Date(Date.now() + 2000);
+      utimesSync(lyPath, future, future);
+
+      // Create a fake lilypond that fails on build but answers --version
+      failDir = mkdtempSync(join(tmpdir(), "spem-fail-lilypond-"));
+      const failSh = join(failDir, "lilypond");
+      writeFileSync(
+        failSh,
+        `#!/bin/sh\nif [ "$1" = "--version" ]; then\n  echo "GNU LilyPond 2.26.0 (running Guile 3.0)"\n  exit 0\nfi\necho "fatal error: simulated lilypond failure" >&2\nexit 2\n`,
+        "utf-8"
+      );
+      execSync(`chmod +x "${failSh}"`);
+
+      const envFail = {
+        ...env,
+        PATH:
+          failDir +
+          (process.platform === "win32" ? ";" : ":") +
+          env.PATH,
+      };
+
+      const result2 = spawnSync(
+        process.execPath,
+        [join(ws, "build", "buildScores.mjs")],
+        { cwd: ws, env: envFail, encoding: "utf-8" }
+      );
+
+      expect(result2.status).not.toBe(0);
+      expect(existsSync(svgPath)).toBe(false);
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+      if (failDir) rmSync(failDir, { recursive: true, force: true });
+    }
+  }, 30000);
 });
