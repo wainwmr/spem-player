@@ -11,7 +11,7 @@
 [build]
   command = "npm run build"
   publish = "dist"
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- src/ts src/scss src/ohmjs src/scores public index.html vite.config.ts package.json package-lock.json netlify.toml"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- index.ts src/ts src/scss src/ohmjs src/scores public index.html vite.config.ts package.json package-lock.json netlify.toml"
   functions = "netlify/functions"
 
   ## Uncomment to use this redirect for Single Page Applications like create-react-app.
