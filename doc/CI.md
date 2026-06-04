@@ -17,7 +17,7 @@ Defines one job.
 
 #### `test` job
 
-Runs on every trigger. Executes `npm run check` (lint, format, type check, unused, deps) and `npm run build` as one timed phase, then `npm run test:unit` as a second timed phase, then `npm run test:lilypond`. All are measured against a soft duration budget — see Duration Budget below. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
+Runs on every trigger. Executes `npm run check` (lint, format, type check, unused, deps) and `npm run build`, then `npm run test:unit`, then `npm run test:lilypond`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
 
 ### `e2e.yml`
 
@@ -78,19 +78,6 @@ The script queries the current period's Netlify build-minute usage and GitHub Ac
 ## Node.js Version
 
 The Node.js version is pinned in `.nvmrc`. All GitHub Actions workflows read this file via `node-version-file` in `actions/setup-node`. Netlify should be configured to use the same version.
-
-## Duration Budget
-
-The `test` job logs the duration of each measured phase (check + build, unit tests) and reports a summary. Soft budgets (not hard gates) are defined as `UNIT_BUDGET_SEC` and `TOTAL_BUDGET_SEC` env vars on the Report step in `ci.yml`:
-
-- **Unit tests:** under 2 minutes (`UNIT_BUDGET_SEC=120`).
-- **Measured phases combined** (check + build + unit tests): under 6 minutes (`TOTAL_BUDGET_SEC=360`).
-
-The reported total covers the timed phases only, NOT the per-job overhead (`actions/checkout`, `actions/setup-node`, `npm ci`); the wall-clock job duration shown in the GitHub UI will be larger.
-
-Current baseline (Linux runner, on `main`): the test job's measured phases run in roughly 60s end-to-end. The 120s and 360s budgets are set at approximately 2× and 6× that baseline so they flag regression rather than normal run-to-run variance.
-
-Exceeding a budget emits a GitHub Actions warning annotation and a `Budget exceeded` block on the workflow run summary; it does **not** fail the job or block merge. The budgets are monitored manually by Andrew when warnings surface in CI logs; aggregation and history are not yet wired up.
 
 ## Branch Protection
 
