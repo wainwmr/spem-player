@@ -29,4 +29,8 @@ describe("config", () => {
       expect(arr.length).toBe(config.bartime[i].length);
     });
   });
+
+  it("exposes version from package.json", () => {
+    expect(config.version).toMatch(/^\d+\.\d+\.\d+/);
+  });
 });

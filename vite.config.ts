@@ -1,6 +1,6 @@
 import { defineConfig } from "vitest/config";
 import commonjs from "vite-plugin-commonjs";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
 import { execSync } from "child_process";
 // Per-worktree dev/preview ports. The offset comes from the
@@ -83,6 +83,15 @@ export default defineConfig({
             /data-branch="%BRANCH%"/g,
             branch && branch !== "main" ? `data-branch="${branch}"` : ""
           );
+      },
+    },
+    {
+      name: "manifest-version",
+      writeBundle() {
+        const manifestPath = resolve(__dirname, "dist", "site.webmanifest");
+        const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+        manifest.version = versionWithBranch;
+        writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
       },
     },
   ],
