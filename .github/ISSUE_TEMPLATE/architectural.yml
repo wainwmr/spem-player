@@ -1,0 +1,69 @@
+name: Architectural decision
+description: >
+  A repository restructuring, build pipeline change, technology choice, dependency
+  migration, configuration overhaul, or editorial decision about data ownership.
+  Uses the Architectural specification template.
+labels: ["needs-triage"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: >
+        The architectural tension or design question. Why does this decision
+        matter? Include the maintainer-visible symptom or risk first.
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-context
+    attributes:
+      label: Current context / evidence
+      description: >
+        Concrete facts that demonstrate the problem: file paths, directory sizes,
+        build times, dependency counts, config excerpts, etc.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options:
+        - bug
+        - feature
+        - tech debt
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - UI
+        - Score
+        - Canvas
+        - Lily
+        - Config
+        - Test
+        - Tooling
+        - Controls
+        - Docs
+        - Audio
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: Difficulty
+      description: >
+        Architectural decisions can be any size. XS for a single config value;
+        L for a repository split.
+      options:
+        - XS
+        - S
+        - M
+        - L
+    validations:
+      required: true

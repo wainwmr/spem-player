@@ -1,0 +1,71 @@
+name: Bug or feature (M / L)
+description: >
+  A structural change, new feature, cross-file refactor, or bug with a non-obvious
+  root cause that requires deep investigation. Uses the M / L specification template.
+labels: ["needs-triage"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What is the problem or request?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Exact user actions that trigger the issue. Include prerequisites.
+
+  - type: textarea
+    id: expected-result
+    attributes:
+      label: Expected result
+      description: What should happen from the user's perspective?
+
+  - type: textarea
+    id: actual-result
+    attributes:
+      label: Actual result
+      description: What actually happens from the user's perspective?
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options:
+        - bug
+        - feature
+        - tech debt
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - UI
+        - Score
+        - Canvas
+        - Lily
+        - Config
+        - Test
+        - Tooling
+        - Controls
+        - Docs
+        - Audio
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: Difficulty
+      options:
+        - M
+        - L
+    validations:
+      required: true
