@@ -708,4 +708,80 @@ describe("MusicCanvas custom element", () => {
 
     freshCanvas.remove();
   });
+
+  it("removes all event listeners on disconnect and re-adds them on reconnect (#203)", async () => {
+    const freshCanvas = document.createElement("music-canvas") as MusicCanvas;
+    document.body.appendChild(freshCanvas);
+    await new Promise((r) => setTimeout(r, 500));
+
+    const innerCanvas = freshCanvas.querySelector("canvas")!;
+    const addCanvasSpy = vi.spyOn(innerCanvas, "addEventListener");
+    const removeCanvasSpy = vi.spyOn(innerCanvas, "removeEventListener");
+    const addElemSpy = vi.spyOn(freshCanvas, "addEventListener");
+    const removeElemSpy = vi.spyOn(freshCanvas, "removeEventListener");
+
+    // Clear calls from initialisation so we only measure disconnect/reconnect
+    addCanvasSpy.mockClear();
+    addElemSpy.mockClear();
+    removeCanvasSpy.mockClear();
+    removeElemSpy.mockClear();
+
+    freshCanvas.remove();
+
+    expect(removeCanvasSpy).toHaveBeenCalledWith("click", expect.any(Function));
+    expect(removeCanvasSpy).toHaveBeenCalledWith(
+      "mousemove",
+      expect.any(Function),
+      false
+    );
+    expect(removeCanvasSpy).toHaveBeenCalledWith(
+      "touchstart",
+      expect.any(Function)
+    );
+    expect(removeElemSpy).toHaveBeenCalledWith(
+      "touchmove",
+      expect.any(Function)
+    );
+    expect(removeElemSpy).toHaveBeenCalledWith(
+      "touchend",
+      expect.any(Function)
+    );
+    expect(removeElemSpy).toHaveBeenCalledWith("wheel", expect.any(Function));
+
+    // Clear calls from disconnect so we only measure reconnect
+    addCanvasSpy.mockClear();
+    addElemSpy.mockClear();
+    removeCanvasSpy.mockClear();
+    removeElemSpy.mockClear();
+
+    document.body.appendChild(freshCanvas);
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(addCanvasSpy).toHaveBeenCalledWith("click", expect.any(Function));
+    expect(addCanvasSpy).toHaveBeenCalledWith(
+      "mousemove",
+      expect.any(Function),
+      false
+    );
+    expect(addCanvasSpy).toHaveBeenCalledWith(
+      "touchstart",
+      expect.any(Function),
+      { passive: false }
+    );
+    expect(addElemSpy).toHaveBeenCalledWith("touchmove", expect.any(Function), {
+      passive: false,
+    });
+    expect(addElemSpy).toHaveBeenCalledWith("touchend", expect.any(Function), {
+      passive: false,
+    });
+    expect(addElemSpy).toHaveBeenCalledWith("wheel", expect.any(Function), {
+      passive: false,
+    });
+
+    addCanvasSpy.mockRestore();
+    removeCanvasSpy.mockRestore();
+    addElemSpy.mockRestore();
+    removeElemSpy.mockRestore();
+    freshCanvas.remove();
+  });
 });

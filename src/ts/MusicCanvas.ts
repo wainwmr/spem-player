@@ -80,6 +80,12 @@ export class MusicCanvas extends MusicElement {
   // Hotspot: opacity at mid-stop as a fraction of centre alpha.
   static readonly FR_HOTSPOT_GRADIENT_MID_ALPHA_FACTOR = 0.4;
 
+  #boundCanvasClicked = this.#canvasClicked.bind(this);
+  #boundCanvasHovered = this.#canvasHovered.bind(this);
+  #boundTouchStarted = this.#touchStarted.bind(this);
+  #boundTouchMoved = this.#touchMoved.bind(this);
+  #boundTouchEnded = this.#touchEnded.bind(this);
+
   constructor() {
     super();
   }
@@ -94,6 +100,17 @@ export class MusicCanvas extends MusicElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    if (this.canvas) {
+      this.canvas.removeEventListener("click", this.#boundCanvasClicked);
+      this.canvas.removeEventListener(
+        "mousemove",
+        this.#boundCanvasHovered,
+        false
+      );
+      this.canvas.removeEventListener("touchstart", this.#boundTouchStarted);
+    }
+    this.removeEventListener("touchmove", this.#boundTouchMoved);
+    this.removeEventListener("touchend", this.#boundTouchEnded);
     this.removeEventListener("wheel", this.#preventVerticalScroll);
     cancelAnimationFrame(this.shimmerLoopId);
     cancelAnimationFrame(this.playLoopId);
@@ -139,25 +156,39 @@ export class MusicCanvas extends MusicElement {
 
   async #init() {
     if (this.canvas != null) {
+      this.canvas.addEventListener("click", this.#boundCanvasClicked);
+      this.canvas.addEventListener(
+        "mousemove",
+        this.#boundCanvasHovered,
+        false
+      );
+      this.canvas.addEventListener("touchstart", this.#boundTouchStarted, {
+        passive: false,
+      });
+      this.addEventListener("touchmove", this.#boundTouchMoved, {
+        passive: false,
+      });
+      this.addEventListener("touchend", this.#boundTouchEnded, {
+        passive: false,
+      });
+      this.addEventListener("wheel", this.#preventVerticalScroll, {
+        passive: false,
+      });
       return;
     }
 
     this.canvas = document.createElement("canvas");
     this.append(this.canvas);
 
-    this.canvas.addEventListener("click", this.#canvasClicked.bind(this));
-    this.canvas.addEventListener(
-      "mousemove",
-      this.#canvasHovered.bind(this),
-      false
-    );
-    this.canvas.addEventListener("touchstart", this.#touchStarted.bind(this), {
+    this.canvas.addEventListener("click", this.#boundCanvasClicked);
+    this.canvas.addEventListener("mousemove", this.#boundCanvasHovered, false);
+    this.canvas.addEventListener("touchstart", this.#boundTouchStarted, {
       passive: false,
     });
-    this.addEventListener("touchmove", this.#touchMoved.bind(this), {
+    this.addEventListener("touchmove", this.#boundTouchMoved, {
       passive: false,
     });
-    this.addEventListener("touchend", this.#touchEnded.bind(this), {
+    this.addEventListener("touchend", this.#boundTouchEnded, {
       passive: false,
     });
     this.addEventListener("wheel", this.#preventVerticalScroll, {
