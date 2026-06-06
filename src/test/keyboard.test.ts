@@ -362,7 +362,7 @@ describe("Space bar play/pause", () => {
       expect(controls.isPlaying()).toBe(false);
     });
 
-    it("held ArrowDown does not change choir", async () => {
+    it("held ArrowDown changes choir forward", async () => {
       const controls = document.querySelector(
         "music-controls"
       ) as MusicControls;
@@ -370,6 +370,22 @@ describe("Space bar play/pause", () => {
       document.body.dispatchEvent(
         new KeyboardEvent("keydown", {
           code: "ArrowDown",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.getAttribute("choir")).toBe("1");
+    });
+
+    it("held ArrowUp changes choir backward", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.setAttribute("choir", "1");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "ArrowUp",
           bubbles: true,
           repeat: true,
         })
