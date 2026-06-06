@@ -223,7 +223,12 @@ const SCROLL_KEYS = new Set([
 // *useful*, not just *noisy*. ArrowLeft/ArrowRight are exempt
 // because holding them is the fast-seek gesture (advance through
 // bars while held).
-const REPEAT_EXEMPT_KEYS = new Set(["ArrowLeft", "ArrowRight"]);
+const REPEAT_EXEMPT_KEYS = new Set([
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowUp",
+  "ArrowDown",
+]);
 
 function keyboardTapped(e: KeyboardEvent) {
   if (e === undefined || e.target === null) {
