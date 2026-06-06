@@ -688,6 +688,25 @@ describe("MusicCanvas custom element", () => {
     canvas!.playLoopId = 0;
   });
 
+  it("setPlaying(false) cancels the playback rAF loop (#402)", () => {
+    expect(canvas).not.toBeNull();
+    const cancelSpy = vi.spyOn(window, "cancelAnimationFrame");
+    const rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockReturnValue(42);
+
+    canvas!.playing = true;
+    canvas!.play();
+    expect(cancelSpy).not.toHaveBeenCalled();
+
+    canvas!.setPlaying(false);
+    expect(cancelSpy).toHaveBeenCalledWith(42);
+
+    cancelSpy.mockRestore();
+    rafSpy.mockRestore();
+    canvas!.playLoopId = 0;
+  });
+
   it("disconnect and reconnect restarts the shimmer loop (#245)", async () => {
     const freshCanvas = document.createElement("music-canvas") as MusicCanvas;
     document.body.appendChild(freshCanvas);
