@@ -19,5 +19,6 @@ playwright/.cache/
 
 __pycache__/
 AGENTS.md
+CLAUDE.md
 /scripts/
 .kimi/
