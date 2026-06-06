@@ -26,6 +26,7 @@ export class MusicControls extends MusicElement {
   svgPause: SVGElement | null = null;
 
   #isLooping = false;
+  #loopId = 0;
 
   constructor() {
     super();
@@ -145,6 +146,7 @@ export class MusicControls extends MusicElement {
     });
     if (this.playpausebutton)
       this.playpausebutton.addEventListener("click", this.playpause.bind(this));
+    this.audio.addEventListener("ended", () => this.pause());
   }
 
   async #handleControlsChanged() {
@@ -259,17 +261,18 @@ export class MusicControls extends MusicElement {
       self.fireEvent("music-controls-changed");
 
       if (self.isPlaying()) {
-        window.requestAnimationFrame(loop);
+        self.#loopId = window.requestAnimationFrame(loop);
       } else {
         self.#isLooping = false;
       }
     }
-    window.requestAnimationFrame(loop);
+    this.#loopId = window.requestAnimationFrame(loop);
   }
 
   pause() {
     this.playing = false;
     this.#isLooping = false;
+    window.cancelAnimationFrame(this.#loopId);
     if (this.svgPlay && this.svgLoading && this.svgPause) {
       this.svgPlay.style.display = "block";
       this.svgPause.style.display = "none";

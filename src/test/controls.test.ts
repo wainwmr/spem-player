@@ -534,4 +534,52 @@ describe("MusicControls custom element", () => {
     // Internal state must be consistent
     expect(elem.isPlaying()).toBe(false);
   });
+
+  it("audio ended event pauses playback and resets UI (#402)", async () => {
+    const elem = document.querySelector("music-controls") as MusicControls;
+    const play = document.getElementById("play");
+    const pause = document.getElementById("pause");
+
+    const waitingForPlay = waitForEvent(
+      elem,
+      "music-controls-playing",
+      handleAudioStarted
+    );
+    elem.setAttribute("playing", "true");
+    await waitingForPlay;
+    expect(elem.isPlaying()).toBe(true);
+    expect(pause?.style.display).toBe("block");
+
+    // Dispatch ended event
+    elem.audio.dispatchEvent(new Event("ended"));
+
+    expect(elem.isPlaying()).toBe(false);
+    expect(play?.style.display).toBe("block");
+    expect(pause?.style.display).toBe("none");
+  });
+
+  it("pause() cancels the active rAF loop (#402)", async () => {
+    const elem = document.querySelector("music-controls") as MusicControls;
+    const cancelSpy = vi.spyOn(window, "cancelAnimationFrame");
+
+    const waitingForPlay = waitForEvent(
+      elem,
+      "music-controls-playing",
+      handleAudioStarted
+    );
+    elem.setAttribute("playing", "true");
+    await waitingForPlay;
+
+    const waitingForPause = waitForEvent(
+      elem,
+      "music-controls-paused",
+      handleAudioStarted
+    );
+    elem.pause();
+    await waitingForPause;
+
+    expect(cancelSpy).toHaveBeenCalled();
+
+    cancelSpy.mockRestore();
+  });
 });

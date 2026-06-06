@@ -151,7 +151,12 @@ export class MusicCanvas extends MusicElement {
 
   setPlaying(playing: string | boolean) {
     super.setPlaying(playing);
-    if (this.playing) this.play();
+    if (this.playing) {
+      this.play();
+    } else {
+      cancelAnimationFrame(this.playLoopId);
+      this.playLoopId = 0;
+    }
   }
 
   async #init() {
