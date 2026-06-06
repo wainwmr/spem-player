@@ -34,6 +34,7 @@ export class MusicCanvas extends MusicElement {
   fpsLastTime = 0;
   fpsValue = 0;
   shimmerLoopId: number = 0;
+  playLoopId: number = 0;
   oldTimeStamp: number = 0;
 
   // Base lightness for unselected parts in light mode.
@@ -86,12 +87,18 @@ export class MusicCanvas extends MusicElement {
   async connectedCallback() {
     super.connectedCallback();
     await this.#init();
+    if (!this.playing && this.shimmerLoopId === 0) {
+      this.#startShimmerLoop();
+    }
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this.removeEventListener("wheel", this.#preventVerticalScroll);
     cancelAnimationFrame(this.shimmerLoopId);
+    cancelAnimationFrame(this.playLoopId);
+    this.shimmerLoopId = 0;
+    this.playLoopId = 0;
   }
 
   #startShimmerLoop() {
@@ -239,17 +246,20 @@ export class MusicCanvas extends MusicElement {
   }
 
   play() {
+    if (this.playLoopId) {
+      cancelAnimationFrame(this.playLoopId);
+    }
     const self = this;
     function loop() {
       self.draw();
 
       if (self.playing) {
-        window.requestAnimationFrame(loop);
-        // setTimeout(frame, config.tempo / 10);
+        self.playLoopId = window.requestAnimationFrame(loop);
+      } else {
+        self.playLoopId = 0;
       }
     }
-    window.requestAnimationFrame(loop);
-    // setTimeout(frame, config.tempo / 10);
+    this.playLoopId = window.requestAnimationFrame(loop);
   }
 
   draw() {
