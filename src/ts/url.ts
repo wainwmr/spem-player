@@ -37,7 +37,7 @@ export function parseURLSearch(search: string): ParsedURL {
     } else if (key == "bar") {
       bar = Number(val);
     } else if (key == "dark") {
-      dark = true;
+      dark = val !== "false" && val !== "0";
     } else if (key == "recording") {
       if (val == "alc") r = 0;
       else r = 1;
