@@ -37,4 +37,16 @@ describe("parseURLSearch", () => {
     // behaviour; a guard against NaN is tracked in the follow-up ticket.
     expect(Number.isNaN(parseURLSearch("?choir").choir)).toBe(true);
   });
+
+  it("parses ?dark=0 as light mode (#236)", () => {
+    expect(parseURLSearch("?dark=0").dark).toBe(false);
+  });
+
+  it("parses ?dark=false as light mode (#236)", () => {
+    expect(parseURLSearch("?dark=false").dark).toBe(false);
+  });
+
+  it("parses ?dark=1 as dark mode (#236)", () => {
+    expect(parseURLSearch("?dark=1").dark).toBe(true);
+  });
 });
