@@ -8,6 +8,7 @@ import { execSync } from "child_process";
 // import never throws — an unset or invalid value falls back to the
 // default ports, so config-eval is safe in CI, forks, and clones.
 import { DEV_PORT, PREVIEW_PORT } from "./worktree-ports.ts";
+import { escapeHtml } from "./src/ts/escapeHtml";
 
 const pkg = JSON.parse(
   readFileSync(resolve(__dirname, "package.json"), "utf-8")
@@ -77,11 +78,13 @@ export default defineConfig({
       name: "html-version",
       transformIndexHtml(html) {
         return html
-          .replace(/%VERSION%/g, versionWithBranch)
+          .replace(/%VERSION%/g, escapeHtml(versionWithBranch))
           .replace(/%YEAR%/g, new Date().getFullYear().toString())
           .replace(
             /data-branch="%BRANCH%"/g,
-            branch && branch !== "main" ? `data-branch="${branch}"` : ""
+            branch && branch !== "main"
+              ? `data-branch="${escapeHtml(branch)}"`
+              : ""
           );
       },
     },
