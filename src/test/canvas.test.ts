@@ -666,4 +666,46 @@ describe("MusicCanvas custom element", () => {
     expect(canvas!.voicePart).toBe(2);
     expect(canvas!.bar).toBe(50);
   });
+
+  it("calling play() while already playing cancels the previous rAF loop (#245)", () => {
+    expect(canvas).not.toBeNull();
+    const cancelSpy = vi.spyOn(window, "cancelAnimationFrame");
+    const rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockReturnValue(42);
+
+    canvas!.playing = true;
+    canvas!.play();
+    expect(cancelSpy).not.toHaveBeenCalled();
+
+    canvas!.play();
+    expect(cancelSpy).toHaveBeenCalledTimes(1);
+    expect(cancelSpy).toHaveBeenLastCalledWith(42);
+
+    cancelSpy.mockRestore();
+    rafSpy.mockRestore();
+    canvas!.playing = false;
+    canvas!.playLoopId = 0;
+  });
+
+  it("disconnect and reconnect restarts the shimmer loop (#245)", async () => {
+    const freshCanvas = document.createElement("music-canvas") as MusicCanvas;
+    document.body.appendChild(freshCanvas);
+    // Wait for connectedCallback -> #init -> processLilypond -> draw
+    await new Promise((r) => setTimeout(r, 500));
+
+    expect(freshCanvas.shimmerLoopId).not.toBe(0);
+    const oldShimmerId = freshCanvas.shimmerLoopId;
+
+    freshCanvas.remove();
+    expect(freshCanvas.shimmerLoopId).toBe(0);
+
+    document.body.appendChild(freshCanvas);
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(freshCanvas.shimmerLoopId).not.toBe(0);
+    expect(freshCanvas.shimmerLoopId).not.toBe(oldShimmerId);
+
+    freshCanvas.remove();
+  });
 });
