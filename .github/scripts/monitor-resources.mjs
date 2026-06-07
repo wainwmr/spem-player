@@ -9,6 +9,10 @@
  * posts a one-line summary to Telegram, and opens a critical issue if
  * either service exceeds 90% of quota.
  *
+ * Skips the Telegram message on days with no PR merges and normal usage
+ * (below 50%). Watch (≥ 50%), throttle (≥ 75%), and critical (≥ 90%) alerts
+ * always send regardless of PR activity.
+ *
  * Environment variables (all required):
  *   NETLIFY_AUTH_TOKEN
  *   NETLIFY_SITE_ID
@@ -18,8 +22,12 @@
  *   GITHUB_REPOSITORY  (owner/repo format)
  */
 
+import { fileURLToPath } from "url";
+import { realpathSync } from "fs";
+
 const NETLIFY_API = "https://api.netlify.com/api/v1";
 const TELEGRAM_API = "https://api.telegram.org/bot";
+const WATCH_THRESHOLD_PCT = 50;
 
 async function api(url, opts = {}) {
   const res = await fetch(url, opts);
@@ -45,10 +53,72 @@ async function getNetlifyUsage() {
   };
 }
 
+async function getMergedPRCount(since) {
+  const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+  const data = await api(
+    `https://api.github.com/search/issues?q=repo:${owner}/${repo}+is:pr+is:merged+merged:>=${since}&per_page=1`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    }
+  );
+  // total_count is reliable from the Search API even with per_page=1;
+  // we need the count, not the PR records, so fetching one record is enough.
+  if (!Number.isInteger(data.total_count) || data.total_count < 0) {
+    throw new Error(
+      `PR search API returned unexpected total_count: ${JSON.stringify(data.total_count)}`
+    );
+  }
+  return data.total_count;
+}
+
+/**
+ * Returns true if the daily Telegram report should be suppressed.
+ *
+ * Suppresses only when both conditions hold: no PRs merged in the reporting
+ * window (mergedCount === 0) and resource usage is below the watch threshold.
+ * Either condition alone is insufficient.
+ *
+ * @param {number} mergedCount - PR merge count for the reporting window.
+ * @param {number} maxPct - Maximum of Netlify and GitHub usage percentages (0–100).
+ * @returns {boolean}
+ */
+export function shouldSkipReport(mergedCount, maxPct) {
+  return mergedCount === 0 && maxPct < WATCH_THRESHOLD_PCT;
+}
+
+/**
+ * Builds the one-line Telegram summary message.
+ * Appends "· N PR(s) merged" only when mergedCount > 0.
+ *
+ * @param {string} emoji - Status emoji (🟢/🟡/🔴/🚨).
+ * @param {number} netlifyPct - Netlify usage percentage (0–100).
+ * @param {number} githubPct - GitHub Actions usage percentage (0–100).
+ * @param {string} status - Status label ("normal"/"watch"/"throttle"/"STOP").
+ * @param {number} mergedCount - Number of PRs merged in the reporting window.
+ * @returns {string}
+ */
+export function formatMessage(
+  emoji,
+  netlifyPct,
+  githubPct,
+  status,
+  mergedCount
+) {
+  const base = `${emoji} Netlify ${netlifyPct}% · GitHub ${githubPct}% — ${status}`;
+  if (mergedCount === 0) return base;
+  const noun = mergedCount === 1 ? "PR" : "PRs";
+  return `${base} · ${mergedCount} ${noun} merged`;
+}
+
 async function getGitHubUsage() {
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
   const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  const start = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+  ).toISOString();
 
   let totalMs = 0;
   let page = 1;
@@ -89,14 +159,17 @@ async function sendTelegram(text) {
 
 async function openIssue(title, body) {
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
-  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ title, body }),
-  });
+  const res = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/issues`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ title, body }),
+    }
+  );
   if (!res.ok) throw new Error(`Issues API HTTP ${res.status}`);
 }
 
@@ -106,35 +179,90 @@ async function main() {
   try {
     netlify = await getNetlifyUsage();
   } catch (e) {
-    await sendTelegram(`🚨 Monitor: Netlify API failed — ${e.message}`);
-    await openIssue("Monitor failure: Netlify API error", e.message);
+    try {
+      await sendTelegram(`🚨 Monitor: Netlify API failed — ${e.message}`);
+      await openIssue("Monitor failure: Netlify API error", e.message);
+    } catch (alertErr) {
+      console.error(
+        `Failed to send alert for Netlify failure: ${alertErr.message}`
+      );
+    }
     throw e;
   }
 
   try {
     github = await getGitHubUsage();
   } catch (e) {
-    await sendTelegram(`🚨 Monitor: GitHub API failed — ${e.message}`);
-    await openIssue("Monitor failure: GitHub API error", e.message);
+    try {
+      await sendTelegram(`🚨 Monitor: GitHub API failed — ${e.message}`);
+      await openIssue("Monitor failure: GitHub API error", e.message);
+    } catch (alertErr) {
+      console.error(
+        `Failed to send alert for GitHub failure: ${alertErr.message}`
+      );
+    }
     throw e;
   }
 
-  const netlifyPct = netlify.limit > 0 ? Math.round((netlify.current / netlify.limit) * 100) : 0;
-  const githubPct = github.limit > 0 ? Math.round((github.current / github.limit) * 100) : 0;
+  const netlifyPct =
+    netlify.limit > 0 ? Math.round((netlify.current / netlify.limit) * 100) : 0;
+  const githubPct =
+    github.limit > 0 ? Math.round((github.current / github.limit) * 100) : 0;
   const maxPct = Math.max(netlifyPct, githubPct);
 
   let emoji = "🟢";
   let status = "normal";
-  if (maxPct >= 90) { emoji = "🚨"; status = "STOP"; }
-  else if (maxPct >= 75) { emoji = "🔴"; status = "throttle"; }
-  else if (maxPct >= 50) { emoji = "🟡"; status = "watch"; }
+  if (maxPct >= 90) {
+    emoji = "🚨";
+    status = "STOP";
+  } else if (maxPct >= 75) {
+    emoji = "🔴";
+    status = "throttle";
+  } else if (maxPct >= WATCH_THRESHOLD_PCT) {
+    emoji = "🟡";
+    status = "watch";
+  }
 
-  const message = `${emoji} Netlify ${netlifyPct}% · GitHub ${githubPct}% — ${status}`;
+  const since =
+    new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 19) + "Z";
+  let mergedCount;
+  try {
+    mergedCount = await getMergedPRCount(since);
+  } catch (e) {
+    try {
+      await sendTelegram(`🚨 Monitor: PR search API failed — ${e.message}`);
+      await openIssue("Monitor failure: PR search API error", e.message);
+    } catch (alertErr) {
+      console.error(
+        `Failed to send alert for PR search failure: ${alertErr.message}`
+      );
+    }
+    throw e;
+  }
+
+  if (shouldSkipReport(mergedCount, maxPct)) {
+    console.log(`Skipping report: no PRs merged and usage normal (${maxPct}%)`);
+    return;
+  }
+
+  const message = formatMessage(
+    emoji,
+    netlifyPct,
+    githubPct,
+    status,
+    mergedCount
+  );
 
   try {
     await sendTelegram(message);
   } catch (e) {
-    await openIssue("Monitor failure: Telegram API error", e.message);
+    try {
+      await openIssue("Monitor failure: Telegram API error", e.message);
+    } catch (alertErr) {
+      console.error(
+        `Failed to open issue for Telegram failure: ${alertErr.message}`
+      );
+    }
     throw e;
   }
 
@@ -149,7 +277,15 @@ async function main() {
   console.log(message);
 }
 
-main().catch((err) => {
-  console.error(err.message);
-  process.exit(1);
-});
+// Only run main() when invoked directly, not when imported by tests.
+// realpathSync on both sides resolves symlinks so the comparison holds
+// when Node is launched via a symlinked path (macOS / nvm common case).
+const __filename = fileURLToPath(import.meta.url);
+const isMain =
+  process.argv[1] && realpathSync(process.argv[1]) === realpathSync(__filename);
+if (isMain) {
+  main().catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });
+}
