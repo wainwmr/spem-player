@@ -90,14 +90,14 @@ automatically.
 
 ### `monitor-resources.yml`
 
-Triggers daily at 07:30 UTC (`cron: "30 7 * * *"`, deliberately off the top of the hour to avoid GitHub's schedule throttling) and on manual `workflow_dispatch`. Runs one job, `monitor`, on Ubuntu latest with `actions: read`, `issues: write`, and `contents: read` permissions.
+Triggers daily at 02:29 UTC (`cron: "29 2 * * *"`, deliberately off the top of the hour to avoid GitHub's schedule throttling; GitHub's ~5 h scheduling delay lands the Telegram post around breakfast) and on manual `workflow_dispatch`. Runs one job, `monitor`, on Ubuntu latest with `actions: read`, `issues: write`, and `contents: read` permissions.
 
 Steps:
 
 - `actions/checkout@v6` — checkout the repository.
 - `node .github/scripts/monitor-resources.mjs` — run the monitor, with `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `GITHUB_TOKEN` passed in the environment.
 
-The script queries the current period's Netlify build-minute usage and GitHub Actions usage, then posts a one-line summary to Telegram of the form `Netlify <n>% · GitHub <n>% — <status>`. If either service reaches **90%** of its quota, the status becomes `STOP` (with a 🚨 prefix) and the workflow opens a critical GitHub issue containing a runbook for reducing build-minute consumption.
+The script queries the current period's Netlify build-minute usage and GitHub Actions usage. On days with no PRs merged in the past 24 hours and normal resource usage (both services below 50%), the Telegram message is skipped to reduce noise. Watch (≥ 50%), throttle (≥ 75%), and critical (≥ 90%) alerts always send regardless of PR activity. When the message is sent, it takes the form `Netlify <n>% · GitHub <n>% — <status>`, appending `· N PR(s) merged` when at least one PR merged in the past 24 hours. If either service reaches **90%** of its quota, the status becomes `STOP` (with a 🚨 prefix) and the workflow opens a critical GitHub issue containing a runbook for reducing build-minute consumption.
 
 ## Node.js Version
 
