@@ -18,12 +18,13 @@
 // the directory name (CI checks out into `spem-player`, a fork could be
 // named anything — the name is an unreliable proxy).
 //
-// Suggested per-worktree values (offset -> dev / preview):
-//   main / claude  0   -> 5173 / 4173
-//   vera           100 -> 5273 / 4273
-//   kimi           200 -> 5373 / 4373
-//   copilot        300 -> 5473 / 4473
-//   tele           400 -> 5573 / 4573
+// Per-worktree values in use (offset -> dev / preview):
+//   main / claude  0  -> 5173 / 4173
+//   copilot        10 -> 5183 / 4183
+//   kimi           20 -> 5193 / 4193
+//   tele           30 -> 5203 / 4203
+//   vera           40 -> 5213 / 4213
+//   zimi           50 -> 5223 / 4223
 //
 // vite.config.ts and playwright.config.ts read DEV_PORT / PREVIEW_PORT at
 // config-eval time; the offset is resolved once here at module load.
@@ -53,8 +54,20 @@ export function readWorktreeOffset(
 }
 
 /**
+ * Parse a raw offset value to a non-negative integer, returning `0` when it
+ * is undefined, empty, or not a valid non-negative integer. Pure — no
+ * environment or filesystem access — so it is deterministic in every
+ * worktree and is the unit the value-case tests target.
+ */
+export const parseOffset = (raw: string | undefined): number => {
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 ? n : 0;
+};
+
+/**
  * Resolve the per-worktree port offset from `SPEM_PORT_OFFSET`, falling
- * back to a `.worktree-offset` file beside this module.
+ * back to a `.worktree-offset` file beside this module, then parse it via
+ * {@link parseOffset}.
  *
  * @param raw - the raw offset value (defaults to
  *   `process.env.SPEM_PORT_OFFSET`, falling back to the `.worktree-offset`
@@ -70,10 +83,7 @@ export function readWorktreeOffset(
 export const portOffset = (
   raw: string | undefined = process.env.SPEM_PORT_OFFSET ??
     readWorktreeOffset(),
-): number => {
-  const n = Number(raw);
-  return Number.isInteger(n) && n >= 0 ? n : 0;
-};
+): number => parseOffset(raw);
 
 export const DEV_PORT = 5173 + portOffset();
 export const PREVIEW_PORT = 4173 + portOffset();
