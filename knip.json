@@ -2,6 +2,6 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "project": ["src/**/*.ts", "lilypond/build/**/*.mjs", "*.ts"],
   "entry": ["src/**/*.ts", "lilypond/build/**/*.mjs"],
-  "ignoreDependencies": ["autoprefixer", "lint-staged"],
-  "ignore": [".husky/**"]
+  "ignoreDependencies": ["autoprefixer"],
+  "ignoreBinaries": ["lilypond"]
 }
