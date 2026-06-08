@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config";
 import commonjs from "vite-plugin-commonjs";
+import { VitePWA } from "vite-plugin-pwa";
 import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
 import { execSync } from "child_process";
@@ -97,5 +98,56 @@ export default defineConfig({
         writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
       },
     },
+    VitePWA({
+      registerType: "prompt",
+      injectRegister: false,
+      manifest: false,
+      useCredentials: true,
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: /\.(mp3|ogg|wav)$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "audio-cache",
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+              cacheableResponse: { statuses: [0, 200] },
+              matchOptions: { ignoreSearch: true },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "google-fonts-cache",
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "google-fonts-static",
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+        // Precache the app shell but NOT the audio files.
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,json,webmanifest}"],
+        navigateFallback: "index.html",
+        clientsClaim: true,
+        skipWaiting: true,
+      },
+    }),
   ],
 });
