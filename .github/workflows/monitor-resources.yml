@@ -11,6 +11,7 @@ permissions:
   actions: read
   issues: write
   contents: read
+  metadata: read
 
 jobs:
   monitor:
