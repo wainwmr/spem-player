@@ -113,6 +113,20 @@ export function formatMessage(
   return `${base} · ${mergedCount} ${noun} merged`;
 }
 
+/**
+ * Returns the start of the 24-hour reporting window as a `YYYY-MM-DD` string.
+ *
+ * GitHub's Search API `merged:` qualifier requires `YYYY-MM-DD`; passing an
+ * ISO timestamp causes it to return `total_count: 0` even when matching PRs
+ * exist. See #491.
+ *
+ * @param {number} nowMs - Current time in milliseconds since Unix epoch.
+ * @returns {string}
+ */
+export function getReportingSince(nowMs = Date.now()) {
+  return new Date(nowMs - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
 async function getGitHubUsage() {
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
   const now = new Date();
@@ -223,8 +237,7 @@ async function main() {
     status = "watch";
   }
 
-  const since =
-    new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 19) + "Z";
+  const since = getReportingSince();
   let mergedCount;
   try {
     mergedCount = await getMergedPRCount(since);
