@@ -7,8 +7,8 @@ import * as ohm from "ohm-js";
 import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
 import spem from "../../lilypond/src/Hugh Keyte/spem.ly?raw";
 
-// Make an dictionary of music positions (hemidemisemiquavers/128) to array of notes {choir, part, note}
-export type Dictionary = {
+// A single note entry at a quantised bar position.
+export type NoteEntry = {
   c: number;
   p: number;
   n: Note;
@@ -266,14 +266,14 @@ export var barCount: number = 0;
 
 // Fields are `readonly` (field-level only) because processLilypond now hands
 // out the same cached reference on every call (see lilypondCache below).
-// `readonly` on the field catches `lilyData.dict = somethingElse`, the most
-// likely accidental reassignment. The arrays themselves are not marked
-// readonly because canvas.test.ts deliberately mutates `dict` to exercise
-// seek()'s defensive path (restoring at end-of-test); deep readonly would
-// force a wider refactor than this perf-ticket warrants. Callers MUST treat
-// `dict`, `ranges`, and `frLocations` as immutable in non-test code.
+// `readonly` on the field catches `lilyData.notesByQuant = somethingElse`,
+// the most likely accidental reassignment. The Map itself is not marked
+// readonly because canvas.test.ts deliberately mutates `notesByQuant` to
+// exercise seek()'s defensive path (restoring at end-of-test); deep readonly
+// would force a wider refactor. Callers MUST treat `notesByQuant`, `ranges`,
+// and `frLocations` as immutable in non-test code.
 export type LilypondData = {
-  readonly dict: Dictionary[][];
+  readonly notesByQuant: Map<number, NoteEntry[]>;
   readonly ranges: Range[][][];
   readonly barCount: number;
   readonly frLocations: FRlocation[];
@@ -313,7 +313,7 @@ export function processLilypond(): LilypondData {
 
   semantics(result).parse();
 
-  const dict: Dictionary[][] = [];
+  const notesByQuant = new Map<number, NoteEntry[]>();
   const ranges: Range[][][] = [];
   const activeNotes = new Map<number, ActiveNote[]>();
   let localBarCount = 0;
@@ -340,10 +340,12 @@ export function processLilypond(): LilypondData {
             from = pos;
           }
 
-          if (dict[pos] == undefined) {
-            dict[pos] = [];
+          const entry = notesByQuant.get(pos);
+          if (entry) {
+            entry.push({ c, p, n: comp });
+          } else {
+            notesByQuant.set(pos, [{ c, p, n: comp }]);
           }
-          dict[pos].push({ c: c, p: p, n: comp });
 
           if (comp.duration != null) pos += comp.duration.sfths / barsize;
 
@@ -383,7 +385,12 @@ export function processLilypond(): LilypondData {
 
   barCount = localBarCount; // side effect: keep global in sync for MusicControls.ts
   const frLocations = detectFalseRelations(activeNotes);
-  lilypondCache = { dict, ranges, barCount: localBarCount, frLocations };
+  lilypondCache = {
+    notesByQuant,
+    ranges,
+    barCount: localBarCount,
+    frLocations,
+  };
   return lilypondCache;
 }
 

@@ -5,7 +5,7 @@ import config from "./config";
 import { PartType, Position, colors } from "./common";
 import { MusicElement } from "./MusicElement";
 
-import { Dictionary, Range, FRlocation, processLilypond } from "./lily";
+import { NoteEntry, Range, FRlocation, processLilypond } from "./lily";
 
 export class MusicCanvas extends MusicElement {
   static observedAttributes = ["choir", "part", "bar", "playing"];
@@ -21,7 +21,7 @@ export class MusicCanvas extends MusicElement {
   lastNoteDuration: number[][] = [];
   falseRelationPulses: number[] = [];
   shimmerPhases: number[] = [];
-  dict: Dictionary[][] = []; // HACK: bad name and data type
+  notesByQuant: Map<number, NoteEntry[]> = new Map();
   ranges: Range[][][] = []; // HACK: bad data type
   barCount: number = 0;
   frLocations: FRlocation[] = [];
@@ -204,7 +204,7 @@ export class MusicCanvas extends MusicElement {
     this.#showLoadingOnCanvas();
 
     const lilyData = processLilypond();
-    this.dict = lilyData.dict;
+    this.notesByQuant = lilyData.notesByQuant;
     this.ranges = lilyData.ranges;
     this.barCount = lilyData.barCount;
     this.frLocations = lilyData.frLocations;
@@ -266,7 +266,7 @@ export class MusicCanvas extends MusicElement {
 
   seek(pos: Position, direction: 1 | -1) {
     var intbar = Math.floor(pos.bar);
-    const choirnotes = (this.dict[intbar] ?? []).filter(
+    const choirnotes = (this.notesByQuant.get(intbar) ?? []).filter(
       (x) => x.c == pos.choir
     );
     const singing = choirnotes.length != 0;
@@ -275,7 +275,8 @@ export class MusicCanvas extends MusicElement {
     while (intbar + direction >= 0 && intbar + direction <= this.barCount) {
       intbar = intbar + direction;
       const newsinging =
-        (this.dict[intbar] ?? []).filter((x) => x.c == pos.choir).length != 0;
+        (this.notesByQuant.get(intbar) ?? []).filter((x) => x.c == pos.choir)
+          .length != 0;
       if (singing !== newsinging) break;
     }
     return intbar;
@@ -300,7 +301,7 @@ export class MusicCanvas extends MusicElement {
 
   draw() {
     if (!this.canvas) return;
-    if (this.ranges.length === 0 || this.dict.length === 0) return;
+    if (this.ranges.length === 0 || this.notesByQuant.size === 0) return;
     if (!this.#shouldDraw()) return;
 
     this.#updatePulses();
@@ -331,7 +332,7 @@ export class MusicCanvas extends MusicElement {
 
     // If there are notes starting now, record their onset and duration
     const quant = Math.floor(this.bar * 16) / 16;
-    const notes = this.dict[quant];
+    const notes = this.notesByQuant.get(quant);
     if (notes != undefined && notes.length > 0) {
       for (var n of notes) {
         if (n.n.duration != null) {
