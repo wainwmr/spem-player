@@ -32,7 +32,7 @@ describe("MusicCanvas custom element", () => {
     // Note: this exercises the !this.canvas guard (element not in DOM), not the
     // ranges.length === 0 guard. See refactor item 15 in wiki/refactor-lily.ts.md.
     const freshCanvas = document.createElement("music-canvas") as MusicCanvas;
-    freshCanvas.dict = [];
+    freshCanvas.notesByQuant = new Map();
     freshCanvas.ranges = [];
     freshCanvas.draw();
   });
@@ -117,22 +117,22 @@ describe("MusicCanvas custom element", () => {
     expect(result).toBeLessThanOrEqual(canvas!.barCount);
   });
 
-  it("seek() does not throw when dict[intbar] is undefined (#244)", () => {
+  it("seek() does not throw when notesByQuant.get(intbar) is undefined (#244)", () => {
     expect(canvas).not.toBeNull();
-    const saved = canvas!.dict[2];
-    delete canvas!.dict[2];
+    const saved = canvas!.notesByQuant.get(2);
+    canvas!.notesByQuant.delete(2);
     const pos = { choir: 0, part: "all" as const, bar: 1 };
     expect(() => canvas!.seek(pos, +1)).not.toThrow();
-    canvas!.dict[2] = saved;
+    if (saved) canvas!.notesByQuant.set(2, saved);
   });
 
-  it("seek() backward from bar 1 with empty dict[0] returns 0 (#244)", () => {
+  it("seek() backward from bar 1 with empty notesByQuant.get(0) returns 0 (#244)", () => {
     expect(canvas).not.toBeNull();
-    const saved = canvas!.dict[0];
-    delete canvas!.dict[0];
+    const saved = canvas!.notesByQuant.get(0);
+    canvas!.notesByQuant.delete(0);
     const pos = { choir: 0, part: "all" as const, bar: 1 };
     expect(canvas!.seek(pos, -1)).toBe(0);
-    canvas!.dict[0] = saved;
+    if (saved) canvas!.notesByQuant.set(0, saved);
   });
 
   it("canvas click fires music-canvas-click event", async () => {

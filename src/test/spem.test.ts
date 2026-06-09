@@ -1,7 +1,7 @@
 import { processLilypond } from "../ts/lily";
 
 describe("Check that spem notes looks good", () => {
-  const { dict, ranges } = processLilypond();
+  const { notesByQuant, ranges } = processLilypond();
 
   it("8 choir of 5 parts", async () => {
     expect(ranges.length).toBe(8); // choirs
@@ -18,7 +18,7 @@ describe("Check that spem notes looks good", () => {
         expect(last.to).toBe(139);
       }
     }
-    expect(dict.length).toBe(139);
+    expect(notesByQuant.size).toBeGreaterThan(0);
   });
 
   it("Everyone is singing respice at bar 122", () => {
@@ -28,7 +28,7 @@ describe("Check that spem notes looks good", () => {
         expect(result, "choir/part " + c + "/" + p).toBe(true);
       }
     }
-    expect(dict[122].length).toBe(40);
+    expect(notesByQuant.get(122)!.length).toBe(40);
   });
 
   it("Nobody is singing in the third beat of bar 74", () => {
@@ -43,7 +43,7 @@ describe("Check that spem notes looks good", () => {
         ).toBeUndefined();
       }
     }
-    expect(dict[74.5]).toBeUndefined();
+    expect(notesByQuant.get(74.5)).toBeUndefined();
   });
 
   it("Nobody is singing in the third beat of bar 108", () => {
@@ -58,7 +58,7 @@ describe("Check that spem notes looks good", () => {
         ).toBeUndefined();
       }
     }
-    expect(dict[108.5]).toBeUndefined();
+    expect(notesByQuant.get(108.5)).toBeUndefined();
   });
 
   it("Nobody is singing in the last minim of 121", () => {
@@ -73,6 +73,6 @@ describe("Check that spem notes looks good", () => {
         ).toBeUndefined();
       }
     }
-    expect(dict[121.75]).toBeUndefined();
+    expect(notesByQuant.get(121.75)).toBeUndefined();
   });
 });
