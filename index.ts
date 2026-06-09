@@ -26,29 +26,8 @@ MusicScore.define("music-score");
 
 console.log(`Spem Player ${config.version}`);
 
-// Register service worker for PWA offline support
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((registration) => {
-        console.log("SW registered:", registration.scope);
-        registration.addEventListener("updatefound", () => {
-          const newWorker = registration.installing;
-          newWorker?.addEventListener("statechange", () => {
-            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              // New content is available; prompt user to refresh
-              console.log("New version available; reload to update.");
-              // TODO: surface a non-blocking "Update available — refresh?" toast
-            }
-          });
-        });
-      })
-      .catch((err) => {
-        console.warn("SW registration failed:", err);
-      });
-  });
-}
+// Register service worker for PWA offline support and update prompt
+import "./src/ts/pwa-update";
 
 const container = document.querySelector(".split-container");
 const score = document.querySelector("music-score") as MusicScore;

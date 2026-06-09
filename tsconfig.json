@@ -23,7 +23,7 @@
     "noFallthroughCasesInSwitch": true,
 
     /* vitest */
-    "types": ["vite/client", "vitest/globals"]
+    "types": ["vite/client", "vitest/globals", "vite-plugin-pwa/client"]
   },
   "include": ["src", "vite.config.ts", "playwright.config.ts"]
 }
