@@ -62,6 +62,21 @@ Shortcuts are ignored when focus is on an input field or `<select>` element.
 - Responsive layout for desktop and mobile
 - Splitter between score and canvas allows resizing
 
+## Install and Offline Use
+
+Spem Player is a Progressive Web App (PWA). After visiting the site once, you can install it to your home screen and use it offline.
+
+### Install
+
+- **Android / desktop** — tap the browser's **Install** button when it appears.
+- **iOS** — open in Safari, tap **Share**, then **Add to Home Screen**. (iOS does not show an automatic install prompt.) Once added, it launches full-screen without the Safari chrome.
+
+### Offline behaviour
+
+- The **UI shell** (HTML, CSS, JavaScript, SVG scores) is cached automatically after the first visit.
+- **Audio is cached on first play**, not bulk-downloaded. Each recording is fetched and stored by Workbox as you play it. Rehearsing a part offline works only for tracks you have already played while online.
+- When an update is available, a toast prompts you to refresh.
+
 ## Source Layout
 
 - `index.html` / `index.ts` — single-page markup and application bootstrap
