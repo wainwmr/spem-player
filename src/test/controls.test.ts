@@ -56,6 +56,9 @@ describe("MusicControls custom element", () => {
     expect(choirs?.querySelectorAll("option").length).toBe(
       config.choirs[0].length
     );
+    expect(
+      Array.from(choirs!.querySelectorAll("option")).map((o) => o.textContent)
+    ).toEqual(config.choirs[0]);
 
     const parts = document.getElementById("part-select");
     expect(parts).not.toBeNull();
@@ -69,6 +72,57 @@ describe("MusicControls custom element", () => {
     expect(bar?.getAttribute("name")).toBe("bar");
     expect(bar?.getAttribute("value")).toBe("0");
     expect(bar?.getAttribute("min")).toBe("0");
+  });
+
+  it("setRecording updates choir dropdown labels", () => {
+    const elem = document.querySelector("music-controls") as MusicControls;
+    const choir = document.getElementById("choir-select") as HTMLSelectElement;
+
+    // Default recording is 0 (ALC)
+    const options0 = Array.from(choir.querySelectorAll("option"));
+    expect(options0.map((o) => o.textContent)).toEqual(config.choirs[0]);
+
+    // Switch to recording 1 (CotE)
+    elem.setRecording(1);
+
+    const options1 = Array.from(choir.querySelectorAll("option"));
+    expect(options1.map((o) => o.textContent)).toEqual(config.choirs[1]);
+  });
+
+  it("setRecording rebuilds choir dropdown labels when switching back (#398)", () => {
+    const elem = document.querySelector("music-controls") as MusicControls;
+    const choir = document.getElementById("choir-select") as HTMLSelectElement;
+
+    // Switch away to recording 1 (CotE), then back to recording 0 (ALC)
+    elem.setRecording(1);
+    expect(
+      Array.from(choir.querySelectorAll("option")).map((o) => o.textContent)
+    ).toEqual(config.choirs[1]);
+
+    elem.setRecording(0);
+
+    // Labels must return to recording 0, not stay stale on recording 1
+    expect(
+      Array.from(choir.querySelectorAll("option")).map((o) => o.textContent)
+    ).toEqual(config.choirs[0]);
+  });
+
+  it("setRecording preserves selected choir index", () => {
+    const elem = document.querySelector("music-controls") as MusicControls;
+    const choir = document.getElementById("choir-select") as HTMLSelectElement;
+
+    // Set choir to 3
+    elem.setAttribute("choir", "3");
+    expect(choir.value).toBe("3");
+
+    // Switch recording
+    elem.setRecording(1);
+
+    // Selection preserved
+    expect(choir.value).toBe("3");
+    // Label updated
+    const options = Array.from(choir.querySelectorAll("option"));
+    expect(options[3].textContent).toBe(config.choirs[1][3]);
   });
 
   it("MusicControls has the loading, play and pause SVGs", () => {

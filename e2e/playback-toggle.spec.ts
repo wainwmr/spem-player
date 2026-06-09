@@ -50,4 +50,27 @@ test.describe("Playback keyboard toggle", () => {
     await page.keyboard.press("Enter");
     await expect(pauseIcon).toBeHidden();
   });
+
+  test("play/pause button stays circular when the recording changes (#398)", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const button = page.locator("#playpausebutton");
+    await expect(button).toBeVisible();
+
+    // The button is border-radius:50%, so it only reads as a circle while its
+    // width equals its height. Changing the recording rebuilds the choir
+    // dropdown to a different label width, reflowing the controls row; the
+    // button must not be resized by that reflow.
+    const isSquare = async () => {
+      const box = await button.boundingBox();
+      if (!box) throw new Error("button has no bounding box");
+      expect(Math.abs(box.width - box.height)).toBeLessThanOrEqual(1);
+    };
+
+    await isSquare();
+    await page.locator("#recordingswitch").click();
+    await isSquare();
+  });
 });
