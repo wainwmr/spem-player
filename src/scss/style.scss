@@ -375,6 +375,11 @@ kbd {
       padding: 3px;
       margin: 3px 5px;
 
+      // Pin the button so flexbox cannot resize it when the controls row
+      // reflows (e.g. when the choir dropdown rebuilds to a different
+      // recording's labels). Without this, a shrunk width against the fixed
+      // height renders the border-radius:50% circle as an oval (#398).
+      flex: none;
       height: 3rem;
       width: 3rem;
       background: white;
