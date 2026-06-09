@@ -10,7 +10,7 @@ module.exports = {
     {
       name: "no-orphans",
       severity: "warn",
-      from: { orphan: true },
+      from: { orphan: true, pathNot: "src/ts/escapeHtml.ts" },
       to: {},
     },
     {
