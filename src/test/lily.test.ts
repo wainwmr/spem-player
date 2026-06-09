@@ -72,11 +72,11 @@ describe("lilypond parsing tests", () => {
     const { notesByQuant, ranges } = processLilypond();
     expect(notesByQuant.size).toBeGreaterThan(0);
     expect(barCount).toBe(139);
-    expect(ranges.length).toBe(8); // choirs
+    expect(ranges.size).toBe(40); // 8 choirs * 5 parts
     for (var c = 0; c < 8; c++) {
-      expect(ranges[c].length).toBe(5);
       for (var p = 0; p < 1; p++) {
-        const last = ranges[c][p][ranges[c][p].length - 1];
+        const list = ranges.get(`${c}-${p}`)!;
+        const last = list[list.length - 1];
         expect(last.to).toBe(139);
       }
     }
@@ -86,7 +86,7 @@ describe("lilypond parsing tests", () => {
     const result = processLilypond();
     expect(result).toBeDefined();
     expect(result.notesByQuant.size).toBeGreaterThan(0);
-    expect(result.ranges.length).toBe(8);
+    expect(result.ranges.size).toBe(40);
     expect(result.barCount).toBeGreaterThan(0);
     expect(result.frLocations.length).toBeGreaterThan(0);
   });
@@ -123,7 +123,7 @@ describe("lilypond parsing tests", () => {
     resetLilypondCache();
     const result2 = processLilypond();
     expect(result2.notesByQuant.size).toBe(result1.notesByQuant.size);
-    expect(result2.ranges.length).toBe(result1.ranges.length);
+    expect(result2.ranges.size).toBe(result1.ranges.size);
     expect(result2.barCount).toBe(result1.barCount);
     expect(result2.frLocations.length).toBe(result1.frLocations.length);
   });

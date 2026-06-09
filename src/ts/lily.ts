@@ -274,7 +274,7 @@ export var barCount: number = 0;
 // and `frLocations` as immutable in non-test code.
 export type LilypondData = {
   readonly notesByQuant: Map<number, NoteEntry[]>;
-  readonly ranges: Range[][][];
+  readonly ranges: Map<string, Range[]>;
   readonly barCount: number;
   readonly frLocations: FRlocation[];
 };
@@ -289,8 +289,8 @@ let lilypondCache: LilypondData | null = null;
 
 // -----------------------------------------------------
 // Process the lilypond input file and return a LilypondData object:
-//   dict[position] = [ {choir, part, note}, ... ]
-//   ranges[choir (0 to 7)][part (0 to 4)] = [ {from, to}, ... ]
+//   notesByQuant.get(position) = [ {choir, part, note}, ... ]
+//   ranges.get("choir-part") = [ {from, to}, ... ]
 //   barCount — index of the last bar
 //   frLocations — false-relation positions for rendering
 // -----------------------------------------------------
@@ -314,15 +314,14 @@ export function processLilypond(): LilypondData {
   semantics(result).parse();
 
   const notesByQuant = new Map<number, NoteEntry[]>();
-  const ranges: Range[][][] = [];
+  const ranges = new Map<string, Range[]>();
   const activeNotes = new Map<number, ActiveNote[]>();
   let localBarCount = 0;
   for (let c = 0; c < config.choirs[0].length; c++) {
     const choir = config.choirs[0][c];
-    ranges[c] = [];
     for (let p = 0; p < config.parts.length; p++) {
       const part = config.parts[p];
-      ranges[c][p] = [];
+      ranges.set(`${c}-${p}`, []);
       var key = "notes" + choir.replace(/ /g, "") + part;
 
       // get the lilypond for this choir and part
@@ -364,7 +363,7 @@ export function processLilypond(): LilypondData {
           }
         } else if (comp instanceof Rest) {
           if (from != undefined) {
-            ranges[c][p].push({ from: from, to: pos });
+            ranges.get(`${c}-${p}`)!.push({ from, to: pos });
             from = undefined;
           }
 
@@ -373,7 +372,7 @@ export function processLilypond(): LilypondData {
       }
 
       if (from != undefined) {
-        ranges[c][p].push({ from: from, to: pos });
+        ranges.get(`${c}-${p}`)!.push({ from, to: pos });
       }
 
       if (pos > localBarCount) {

@@ -22,7 +22,7 @@ export class MusicCanvas extends MusicElement {
   falseRelationPulses: number[] = [];
   shimmerPhases: number[] = [];
   notesByQuant: Map<number, NoteEntry[]> = new Map();
-  ranges: Range[][][] = []; // HACK: bad data type
+  ranges: Map<string, Range[]> = new Map();
   barCount: number = 0;
   frLocations: FRlocation[] = [];
   source: string | null = null;
@@ -301,7 +301,7 @@ export class MusicCanvas extends MusicElement {
 
   draw() {
     if (!this.canvas) return;
-    if (this.ranges.length === 0 || this.notesByQuant.size === 0) return;
+    if (this.ranges.size === 0 || this.notesByQuant.size === 0) return;
     if (!this.#shouldDraw()) return;
 
     this.#updatePulses();
@@ -443,7 +443,9 @@ export class MusicCanvas extends MusicElement {
         const startY =
           this.canvasPadding + c * this.choirHeight + p * this.partHeight;
 
-        const list: { from: number; to: number }[] = this.ranges[c][p];
+        const list: { from: number; to: number }[] = this.ranges.get(
+          `${c}-${p}`
+        )!;
         list.forEach((r) => {
           const from = r.from;
           const to = r.to;
