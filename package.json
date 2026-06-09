@@ -1,7 +1,7 @@
 {
   "name": "spem-player",
   "private": true,
-  "version": "2.7.0",
+  "version": "2.7.1",
   "description": "Helping singers learn Thomas Tallis Spem in alium",
   "type": "module",
   "dependencies": {
