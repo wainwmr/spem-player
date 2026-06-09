@@ -70,12 +70,7 @@ export class MusicControls extends MusicElement {
     this.choirselect.setAttribute("name", "choir");
     this.choirselect.setAttribute("id", "choir-select");
     this.choirselect.setAttribute("class", "control");
-    for (var c in config.choirs[0]) {
-      const opt = document.createElement("option");
-      opt.setAttribute("value", c);
-      opt.appendChild(document.createTextNode(config.choirs[0][c]));
-      this.choirselect.append(opt);
-    }
+    this.#buildChoirDropdown();
     label.append(this.choirselect);
     this.append(label);
 
@@ -147,6 +142,25 @@ export class MusicControls extends MusicElement {
     if (this.playpausebutton)
       this.playpausebutton.addEventListener("click", this.playpause.bind(this));
     this.audio.addEventListener("ended", () => this.pause());
+  }
+
+  #buildChoirDropdown() {
+    if (!this.choirselect) return;
+    // Invariant: every recording's choir list is the same length, so the
+    // selected index (`this.choir`, restored below via `.value`) is always a
+    // valid option after a rebuild. All recordings have 8 choirs today; a
+    // future recording with a different count would make `.value` silently
+    // fail to select. A length-parity assertion is tracked in #504.
+    this.choirselect.innerHTML = "";
+    for (var c in config.choirs[this.recording]) {
+      const opt = document.createElement("option");
+      opt.setAttribute("value", c);
+      opt.appendChild(
+        document.createTextNode(config.choirs[this.recording][c])
+      );
+      this.choirselect.append(opt);
+    }
+    this.choirselect.value = String(this.choir);
   }
 
   async #handleControlsChanged() {
@@ -292,6 +306,7 @@ export class MusicControls extends MusicElement {
 
   setRecording(v: number | string): void {
     super.setRecording(v);
+    this.#buildChoirDropdown();
     this.audio.currentTime = getTimeFromBar(this.bar, this.recording);
     if (this.isPlaying()) this.play();
   }
