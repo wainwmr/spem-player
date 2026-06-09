@@ -33,7 +33,7 @@ describe("MusicCanvas custom element", () => {
     // ranges.length === 0 guard. See refactor item 15 in wiki/refactor-lily.ts.md.
     const freshCanvas = document.createElement("music-canvas") as MusicCanvas;
     freshCanvas.notesByQuant = new Map();
-    freshCanvas.ranges = [];
+    freshCanvas.ranges = new Map();
     freshCanvas.draw();
   });
 
