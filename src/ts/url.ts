@@ -30,12 +30,14 @@ export function parseURLSearch(search: string): ParsedURL {
     const key = eq === -1 ? parms[i] : parms[i].slice(0, eq);
     const val = eq === -1 ? undefined : parms[i].slice(eq + 1);
     if (key == "choir") {
-      choir = Number(val);
+      const n = Number(val);
+      if (!Number.isNaN(n)) choir = n;
     } else if (key == "part") {
       const n: number = Number(val);
       if (n >= 0 && n < config.parts.length) part = n;
     } else if (key == "bar") {
-      bar = Number(val);
+      const n = Number(val);
+      if (!Number.isNaN(n)) bar = n;
     } else if (key == "dark") {
       dark = val !== "false" && val !== "0";
     } else if (key == "recording") {

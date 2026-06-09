@@ -31,11 +31,23 @@ describe("parseURLSearch", () => {
     expect(result.early).toBe(false);
   });
 
-  it("treats a key with no '=' as having no value (NaN for numeric keys)", () => {
-    // New indexOf/slice branch: eq === -1 -> val === undefined, so a
-    // numeric key yields Number(undefined) === NaN. Pinned as current
-    // behaviour; a guard against NaN is tracked in the follow-up ticket.
-    expect(Number.isNaN(parseURLSearch("?choir").choir)).toBe(true);
+  it("treats a key with no '=' as having the default value", () => {
+    // A key with no '=' has val === undefined, and Number(undefined)
+    // is NaN. The NaN guard should fall back to the default.
+    expect(parseURLSearch("?choir").choir).toBe(0);
+  });
+
+  it("ignores an invalid bar parameter (#235)", () => {
+    expect(parseURLSearch("?bar=abc").bar).toBe(1 - 2 / 4); // default for ALC recording
+  });
+
+  it("ignores an invalid choir parameter (#235)", () => {
+    expect(parseURLSearch("?choir=xyz").choir).toBe(0);
+  });
+
+  it("accepts valid bar and choir parameters (#235)", () => {
+    expect(parseURLSearch("?bar=50").bar).toBe(50);
+    expect(parseURLSearch("?choir=3").choir).toBe(3);
   });
 
   it("parses ?dark=0 as light mode (#236)", () => {
