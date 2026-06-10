@@ -53,8 +53,24 @@ async function getNetlifyUsage() {
   };
 }
 
+/**
+ * Parse `owner` and `repo` from the `GITHUB_REPOSITORY` environment variable.
+ *
+ * @returns {{owner: string, repo: string}} Both guaranteed non-empty.
+ * @throws {Error} If `GITHUB_REPOSITORY` is absent or not in `owner/repo` form.
+ */
+export function parseRepo() {
+  const [owner, repo] = process.env.GITHUB_REPOSITORY?.split("/") ?? [];
+  if (!owner || !repo) {
+    throw new Error(
+      `GITHUB_REPOSITORY must be owner/repo format, got: ${process.env.GITHUB_REPOSITORY}`
+    );
+  }
+  return { owner, repo };
+}
+
 async function getMergedPRCount(since) {
-  const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+  const { owner, repo } = parseRepo();
   const data = await api(
     `https://api.github.com/search/issues?q=repo:${owner}/${repo}+is:pr+is:merged+merged:>=${since}&per_page=1`,
     {
@@ -128,7 +144,7 @@ export function getReportingSince(nowMs = Date.now()) {
 }
 
 async function getGitHubUsage() {
-  const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+  const { owner, repo } = parseRepo();
   const now = new Date();
   const start = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
@@ -172,7 +188,7 @@ async function sendTelegram(text) {
 }
 
 async function openIssue(title, body) {
-  const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+  const { owner, repo } = parseRepo();
   const res = await fetch(
     `https://api.github.com/repos/${owner}/${repo}/issues`,
     {
