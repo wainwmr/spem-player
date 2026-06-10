@@ -11,12 +11,12 @@ Tests use Vitest 4 with the jsdom environment. Configuration lives in `vite.conf
 
 ## Prerequisites
 
-The Ohm.js grammar bundle must be built before tests can run. `npm run check` and
-`npm run build` handle this automatically, but if you are running tests in
+The Ohm.js grammar bundle must be built before tests can run. `pnpm run check` and
+`pnpm run build` handle this automatically, but if you are running tests in
 isolation you may need:
 
 ```console
-npm run build:ohm
+pnpm run build:ohm
 ```
 
 Without this step, any test importing `src/ohmjs/ly-grammar.ohm-bundle` will fail.
@@ -26,38 +26,38 @@ Without this step, any test importing `src/ohmjs/ly-grammar.ohm-bundle` will fai
 Run unit tests once (excludes integration tests):
 
 ```console
-npm run test:unit
+pnpm run test:unit
 ```
 
 Run integration tests once (subprocess-heavy, slower):
 
 ```console
-npm run test:lilypond
+pnpm run test:lilypond
 ```
 
 Run all tests:
 
 ```console
-npm test
+pnpm test
 ```
 
 Watch mode:
 
 ```console
-npm run test:watch
+pnpm run test:watch
 ```
 
 Single run with coverage:
 
 ```console
-npm run test:coverage
+pnpm run test:coverage
 ```
 
 ## Test File Location and Naming
 
 Unit tests live under `src/test/` and `lilypond/test/` (excluding `*.integration.test.ts`) and follow the naming convention `*.test.ts`. They run in-process under jsdom and should complete in under a few seconds each. In-process tests against `lilypond/build/` code (for example `postprocessSvg.test.ts`) live in `lilypond/test/` alongside the integration suite.
 
-Scripts in `.github/scripts/` that expose pure functions use the Node.js built-in test runner (`node:test`) rather than Vitest, and live alongside the script as `*.test.mjs`. Run them directly with `node --test .github/scripts/<name>.test.mjs`. These files are excluded from the Vitest config (`vite.config.ts`) and do not appear in `npm run test:unit` output.
+Scripts in `.github/scripts/` that expose pure functions use the Node.js built-in test runner (`node:test`) rather than Vitest, and live alongside the script as `*.test.mjs`. Run them directly with `node --test .github/scripts/<name>.test.mjs`. These files are excluded from the Vitest config (`vite.config.ts`) and do not appear in `pnpm run test:unit` output.
 
 Integration tests live in `lilypond/test/*.integration.test.ts` and also follow `*.test.ts`. They typically spawn subprocesses (LilyPond, the build pipeline) and are substantially slower.
 
@@ -100,7 +100,7 @@ If a test needs any of the above, it belongs in the E2E layer.
 
 The two suites run as separate jobs in `.github/workflows/ci.yml`. See `doc/CI.md` for the canonical description; in summary:
 
-- The `test` job runs `npm run test:unit` on every push and pull request and is the required status check.
+- The `test` job runs `pnpm run test:unit` on every push and pull request and is the required status check.
 - The `integration` job runs unconditionally on push to `main` and on a nightly cron. On pull requests it is gated by `dorny/paths-filter` and runs only when the PR touches build-related paths — see `doc/CI.md` for the canonical list.
 
 ## Key Dependencies
@@ -122,7 +122,7 @@ End-to-end tests run in a real browser using Playwright. They live in `e2e/` and
 The production build must exist before e2e tests run:
 
 ```console
-npm run build
+pnpm run build
 ```
 
 When running e2e tests in a parallel worktree, ensure `SPEM_PORT_OFFSET` is set
@@ -134,10 +134,10 @@ so that `vite preview` and Playwright target the same non-default port. See
 Headless run:
 
 ```console
-npm run e2e
+pnpm run e2e
 ```
 
 ### E2E Key Dependencies
 
 - `@playwright/test`: test runner and browser automation
-- `chromium`, `firefox`, `webkit`: browsers under test (installed via `npx playwright install chromium firefox webkit`)
+- `chromium`, `firefox`, `webkit`: browsers under test (installed via `pnpm exec playwright install chromium firefox webkit`)

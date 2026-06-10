@@ -10,14 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-      - run: npx playwright install --with-deps
-      - run: npm run e2e
+          cache: pnpm
+      - run: pnpm ci
+      - run: pnpm run build
+      - run: pnpm exec playwright install --with-deps
+      - run: pnpm run e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

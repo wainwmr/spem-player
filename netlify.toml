@@ -1,6 +1,6 @@
 # Netlify configuration for spem-player
 #
-# Build: npm run build (prebuild + vite build). SVGs are committed to git
+# Build: pnpm run build (prebuild + vite build). SVGs are committed to git
 # (#461) so LilyPond is not needed on Netlify.
 #
 # Ignore: skip the build when none of the listed paths changed. Exits 0
@@ -9,9 +9,9 @@
 # LilyPond workflow (#462) which commits updated SVGs, and the SVG commit
 # then triggers Netlify.
 [build]
-  command = "npm run build"
+  command = "pnpm run build"
   publish = "dist"
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- index.ts src/ts src/scss src/ohmjs src/scores public index.html vite.config.ts package.json package-lock.json netlify.toml"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- index.ts src/ts src/scss src/ohmjs src/scores public index.html vite.config.ts package.json pnpm-lock.yaml netlify.toml"
   functions = "netlify/functions"
 
   ## Uncomment to use this redirect for Single Page Applications like create-react-app.

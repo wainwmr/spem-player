@@ -2,13 +2,13 @@
 
 ## Prerequisites
 
-- Node.js and npm
+- Node.js and pnpm (corepack-provided via `packageManager` in `package.json`)
 - LilyPond 2.26.0 or later (only if regenerating SVG scores from source)
 
 ## Install Dependencies
 
 ```console
-npm install
+pnpm install
 ```
 
 ## Development
@@ -16,7 +16,7 @@ npm install
 Start the Vite dev server:
 
 ```console
-npm run dev
+pnpm run dev
 ```
 
 This serves the application locally with hot module replacement. The `--host` flag is set, so the server is accessible on the local network.
@@ -41,12 +41,12 @@ Multiple worktrees can run dev and preview servers simultaneously by setting
 ## Build for Production
 
 ```console
-npm run build
+pnpm run build
 ```
 
 This runs `vite build` to produce a production bundle into `dist/`.
 
-`npm run prebuild` runs automatically before `build` and generates the Ohm.js
+`pnpm run prebuild` runs automatically before `build` and generates the Ohm.js
 grammar bundle and SVG scores from LilyPond source. The SVG files in
 `src/scores/` are committed source assets generated from LilyPond source.
 LilyPond is required only if regenerating SVGs from source.
@@ -54,7 +54,7 @@ LilyPond is required only if regenerating SVGs from source.
 ## Preview the Production Build
 
 ```console
-npm run preview
+pnpm run preview
 ```
 
 Serves the contents of `dist/` locally.
@@ -62,45 +62,45 @@ Serves the contents of `dist/` locally.
 ## Regenerate SVG Scores
 
 The SVG files in `src/scores/` are generated from LilyPond source files in
-`lilypond/src/`. They are committed to git as source assets. `npm run build`
+`lilypond/src/`. They are committed to git as source assets. `pnpm run build`
 regenerates them automatically via the `prebuild` step when `.ly` sources are
 newer than the generated SVGs.
 
 To build scores manually:
 
 ```console
-npm run build:scores
+pnpm run build:scores
 ```
 
 Build a single score or notation:
 
 ```console
-npm run build:scores -- --choir="I A"
-npm run build:scores -- --version="Hugh Keyte" --notation=early --choir="II B"
+pnpm run build:scores -- --choir="I A"
+pnpm run build:scores -- --version="Hugh Keyte" --notation=early --choir="II B"
 ```
 
 This iterates over matching `Choir*.ly` files under `lilypond/src/` and runs `lilypond --svg` for each, then post-processes the generated SVG with `lilypond/build/postprocessSvg.mjs`.
 
 ### Timing
 
-LilyPond is the slow part: roughly 60 seconds per choir, 16 choirs across early + modern notations. When `.ly` sources are current, `npm run build:scores` (and the `prebuild` step inside `npm run build`) completes in a few seconds because `needsRebuild` compares mtimes and skips unchanged files. After a batch edit of `.ly` files — particularly shared includes (`basic.ly`, `layout.ly`) — expect the next full `npm run ci` to take 10+ minutes as the affected SVGs regenerate. This is a one-off; the next build after that is fast again.
+LilyPond is the slow part: roughly 60 seconds per choir, 16 choirs across early + modern notations. When `.ly` sources are current, `pnpm run build:scores` (and the `prebuild` step inside `pnpm run build`) completes in a few seconds because `needsRebuild` compares mtimes and skips unchanged files. After a batch edit of `.ly` files — particularly shared includes (`basic.ly`, `layout.ly`) — expect the next full `pnpm run ci` to take 10+ minutes as the affected SVGs regenerate. This is a one-off; the next build after that is fast again.
 
 To force a clean regeneration, delete the directory
-(`rm -rf src/scores/`) and re-run `npm run build:scores`.
+(`rm -rf src/scores/`) and re-run `pnpm run build:scores`.
 
 ## Quality Checks
 
 Run the full quality gate locally (Ohm grammar bundle, unused-export check, formatting, lint, typecheck, dependency checks):
 
 ```console
-npm run check
+pnpm run check
 ```
 
 Fix formatting and lint issues automatically:
 
 ```console
-npm run fix:format
-npm run fix:lint
+pnpm run fix:format
+pnpm run fix:lint
 ```
 
 ## Testing
@@ -108,37 +108,37 @@ npm run fix:lint
 Run the fast unit suite (excludes subprocess-heavy integration tests):
 
 ```console
-npm run test:unit
+pnpm run test:unit
 ```
 
 Run the integration suite only:
 
 ```console
-npm run test:lilypond
+pnpm run test:lilypond
 ```
 
 Run all tests (unit and integration):
 
 ```console
-npm test
+pnpm test
 ```
 
 Run tests in watch mode:
 
 ```console
-npm run test:watch
+pnpm run test:watch
 ```
 
 Run tests once with coverage:
 
 ```console
-npm run test:coverage
+pnpm run test:coverage
 ```
 
 Run end-to-end tests in a real browser:
 
 ```console
-npm run e2e
+pnpm run e2e
 ```
 
 See `doc/TESTING.md` for the unit-vs-integration split and `doc/CI.md` for how
@@ -150,10 +150,10 @@ Run the local commit-gate pipeline (checks, build, unit tests). Mirrors what
 CI's `test` job runs on every push and pull request, so it is fast:
 
 ```console
-npm run ci
+pnpm run ci
 ```
 
-Before pushing, run the full suite (`npm test` — unit and integration) so
+Before pushing, run the full suite (`pnpm test` — unit and integration) so
 locally you exercise everything CI eventually runs. The integration suite is
 gated by paths on PRs (see `doc/CI.md`), but running it always before push is
 the simpler rule and the cost is small.
@@ -168,7 +168,7 @@ When releasing, update `package.json` only. The build will propagate the new ver
 
 ### Ohm Grammar
 
-`npm run build:ohm` regenerates `src/ohmjs/ly-grammar.ohm-bundle.js` and `src/ohmjs/ly-grammar.ohm-bundle.d.ts` from `src/ohmjs/ly-grammar.ohm` via `@ohm-js/cli`. If you modify the grammar, rebuild before testing or deploying.
+`pnpm run build:ohm` regenerates `src/ohmjs/ly-grammar.ohm-bundle.js` and `src/ohmjs/ly-grammar.ohm-bundle.d.ts` from `src/ohmjs/ly-grammar.ohm` via `@ohm-js/cli`. If you modify the grammar, rebuild before testing or deploying.
 
 ## Build Output
 
@@ -206,7 +206,7 @@ Two independent caches speed up CI and deploy:
 
 | Cache    | What                 | Key                      |
 | -------- | -------------------- | ------------------------ |
-| npm      | `node_modules`       | `package-lock.json` hash |
+| pnpm     | pnpm global store    | `pnpm-lock.yaml` hash    |
 | LilyPond | `~/.local/lilypond/` | `lilypond-2.26.0-{os}`   |
 
 ### Concurrency
