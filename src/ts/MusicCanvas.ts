@@ -606,9 +606,10 @@ export class MusicCanvas extends MusicElement {
 
   #getMousePos(e: MouseEvent): Position {
     const rect = this.getBoundingClientRect();
+    const cssPadding = this.canvasPadding * (rect.width / this.canvas!.width);
     const clampedX = Math.max(
-      this.canvasPadding,
-      Math.min(e.offsetX, rect.width - this.canvasPadding)
+      cssPadding,
+      Math.min(e.offsetX, rect.width - cssPadding)
     );
     const clampedY = Math.max(
       this.canvasPadding,
@@ -617,10 +618,13 @@ export class MusicCanvas extends MusicElement {
     const y =
       ((clampedY - this.canvasPadding) * config.choirs[0].length) /
       (rect.height - 2 * this.canvasPadding);
+    const drawableWidth = rect.width - 2 * cssPadding;
     return {
       choir: Math.min(config.choirs[0].length - 1, Math.max(0, Math.floor(y))),
       part: Math.floor((y % 1) * config.parts.length),
-      bar: Math.floor((clampedX * 140) / rect.width),
+      bar: Math.floor(
+        ((clampedX - cssPadding) * this.barCount) / drawableWidth
+      ),
     };
   }
 
@@ -651,9 +655,10 @@ export class MusicCanvas extends MusicElement {
     // The clamp below pins out-of-bounds drags to the canvas edge.
     const touchX = e.changedTouches[0].clientX - rect.left;
     const touchY = e.changedTouches[0].clientY - rect.top;
+    const cssPadding = this.canvasPadding * (rect.width / this.canvas!.width);
     const clampedX = Math.max(
-      this.canvasPadding,
-      Math.min(touchX, rect.width - this.canvasPadding)
+      cssPadding,
+      Math.min(touchX, rect.width - cssPadding)
     );
     const clampedY = Math.max(
       this.canvasPadding,
@@ -663,10 +668,13 @@ export class MusicCanvas extends MusicElement {
     const y =
       ((clampedY - this.canvasPadding) * config.choirs[0].length) /
       (rect.height - 2 * this.canvasPadding);
+    const drawableWidth = rect.width - 2 * cssPadding;
     return {
       choir: Math.min(config.choirs[0].length - 1, Math.max(0, Math.floor(y))),
       part: "all",
-      bar: Math.floor(((clampedX - this.canvasPadding) * 140) / rect.width),
+      bar: Math.floor(
+        ((clampedX - cssPadding) * this.barCount) / drawableWidth
+      ),
     };
   }
 
