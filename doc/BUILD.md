@@ -215,32 +215,18 @@ GitHub Actions `concurrency` with `cancel-in-progress: true` ensures only the
 latest commit deploys. If two pushes to `main` happen in quick succession, the
 first deploy is cancelled.
 
-### Deploy safety
-
-- Deploy only triggers after CI passes (`workflow_run`).
-- Deploy checks out the exact commit SHA that CI validated (`head_sha`), not
-  the latest `main`.
-- The bypass for direct pushes to `main` is restricted to non-code changes.
-
 ## Deployment
 
-Production deploys are handled by GitHub Actions, not Netlify auto-builds.
-Netlify is the host only.
-
-Pipeline:
-
-```text
-merge to main → CI workflow (build + test) → on success
-  → Deploy workflow (Netlify CLI) → production
-```
+Production deploys and PR previews are handled by Netlify's native git
+integration. Netlify builds automatically on every push to `main` and on
+every pull request update.
 
 - `.github/workflows/ci.yml` — builds the site and runs tests on every push
   and pull request.
-- `.github/workflows/deploy-production.yml` — triggered by `workflow_run`
-  after CI succeeds on `main`. Downloads the `dist/` artefact from CI and
-  deploys to Netlify production via `netlify deploy --prod`.
-PR previews are deployed automatically by Netlify's GitHub integration when a
-pull request is opened or updated. Preview URLs follow the pattern
+- Netlify — deploys production from `main` and generates preview builds for
+  open pull requests.
+
+PR preview URLs follow the pattern
 `https://deploy-preview-<number>--spemplayer.netlify.app`.
 
 **Live site:** [www.spemplayer.net](https://www.spemplayer.net)
