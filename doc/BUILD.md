@@ -239,11 +239,8 @@ merge to main → CI workflow (build + test) → on success
 - `.github/workflows/deploy-production.yml` — triggered by `workflow_run`
   after CI succeeds on `main`. Downloads the `dist/` artefact from CI and
   deploys to Netlify production via `netlify deploy --prod`.
-- `.github/workflows/netlify-preview.yml` — builds and deploys PR previews to
-  Netlify aliases (`pr-NUMBER`).
-
-Netlify is unlinked from the git repository. `netlify.toml` contains
-`ignore = "exit 0"` as a fail-safe in case the repository is ever re-linked
-by mistake.
+PR previews are deployed automatically by Netlify's GitHub integration when a
+pull request is opened or updated. Preview URLs follow the pattern
+`https://deploy-preview-<number>--spemplayer.netlify.app`.
 
 **Live site:** [www.spemplayer.net](https://www.spemplayer.net)
