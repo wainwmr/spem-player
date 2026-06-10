@@ -56,6 +56,7 @@ export class MusicScore extends MusicElement {
   maskRect!: SVGRectElement;
   maskLine!: SVGLineElement;
   scrollArea: HTMLDivElement | null = null;
+  #loadGeneration = 0;
   clefOverlay: HTMLDivElement | null = null;
 
   constructor() {
@@ -188,7 +189,11 @@ export class MusicScore extends MusicElement {
       const loader =
         MusicScore.testSvgLoader || globalThis.__SPEM_TEST_SVG_LOADER;
       if (loader) {
-        const svg = loader(this.scoreType, this.choir, this.recording);
+        // Await Promise.resolve so tests can supply either sync strings
+        // or async Promises (e.g. to simulate network races, #391).
+        const svg = await Promise.resolve(
+          loader(this.scoreType, this.choir, this.recording)
+        );
         // `typeof svg === "string"` covers both null (documented "fall
         // through" sentinel) and undefined (a stricter shape than the
         // type guarantees, but defensive against an `any`-typed fixture).
@@ -213,7 +218,15 @@ export class MusicScore extends MusicElement {
   };
 
   async #loadScore() {
+    const generation = ++this.#loadGeneration;
     const svgComp = await this.#loadSvg();
+
+    // If a newer load has started since we began, abort this stale run
+    // before it mutates DOM or state (#391).
+    if (generation !== this.#loadGeneration) {
+      return;
+    }
+
     if (svgComp) {
       this.innerHTML = `<div class="score-scroll-area">${svgComp}</div>`;
     }

@@ -6,6 +6,7 @@ import {
   expectedPart,
   waitForEvent,
 } from "./helpers";
+import { makeFixtureSvg } from "./fixtureScore";
 
 // Polyfill DOMPoint for jsdom
 if (typeof DOMPoint === "undefined") {
@@ -687,5 +688,53 @@ describe("MusicScore custom element", () => {
     const overlay = elem.querySelector(".score-clef-overlay");
     expect(overlay).not.toBeNull();
     expect(overlay!.querySelector("#part-dim-style")).toBeNull();
+  });
+
+  it("aborts stale #loadScore when a newer choir request resolves first (#391)", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    let resolveChoir0: (svg: string) => void = () => {};
+    let resolveChoir1: (svg: string) => void = () => {};
+
+    const originalLoader = MusicScore.testSvgLoader;
+    MusicScore.testSvgLoader = (scoreType, choir) => {
+      if (choir === 0) {
+        return new Promise((resolve) => {
+          resolveChoir0 = resolve;
+        }) as unknown as string;
+      }
+      if (choir === 1) {
+        return new Promise((resolve) => {
+          resolveChoir1 = resolve;
+        }) as unknown as string;
+      }
+      return makeFixtureSvg(scoreType);
+    };
+
+    // Start two choir changes without awaiting between them
+    const p0 = elem.setChoir(0);
+    const p1 = elem.setChoir(1);
+
+    // Resolve choir 1 first (the newer request wins the race)
+    resolveChoir1(
+      makeFixtureSvg("modern").replace("<svg ", '<svg data-choir="1" ')
+    );
+    await new Promise((r) => setTimeout(r, 10));
+
+    // Then resolve choir 0 (stale)
+    resolveChoir0(
+      makeFixtureSvg("modern").replace("<svg ", '<svg data-choir="0" ')
+    );
+
+    await Promise.all([p0, p1]);
+
+    // Final state must be consistent: svg, bars, and choir all agree
+    expect(elem.choir).toBe(1);
+    expect(elem.svg).not.toBeNull();
+    expect(elem.svg!.isConnected).toBe(true);
+    expect(elem.svg!.getAttribute("data-choir")).toBe("1");
+
+    MusicScore.testSvgLoader = originalLoader;
   });
 });
