@@ -1,9 +1,10 @@
-import { test } from "node:test";
+import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import {
   shouldSkipReport,
   formatMessage,
   getReportingSince,
+  parseRepo,
 } from "./monitor-resources.mjs";
 
 // shouldSkipReport: skip only when zero PRs AND below 50% (normal status)
@@ -58,4 +59,47 @@ test("getReportingSince returns YYYY-MM-DD format", () => {
   assert.equal(since, "2026-06-07");
   assert.doesNotMatch(since, /T/);
   assert.doesNotMatch(since, /Z/);
+});
+
+// parseRepo: parses and validates GITHUB_REPOSITORY environment variable.
+// These tests mutate the shared env var; restore it afterwards so they do not
+// leak global state to later tests or depend on execution order.
+const ORIG_GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY;
+after(() => {
+  if (ORIG_GITHUB_REPOSITORY === undefined) {
+    delete process.env.GITHUB_REPOSITORY;
+  } else {
+    process.env.GITHUB_REPOSITORY = ORIG_GITHUB_REPOSITORY;
+  }
+});
+
+test("parseRepo returns owner and repo for valid input", () => {
+  process.env.GITHUB_REPOSITORY = "wainwmr/spem-player";
+  const result = parseRepo();
+  assert.equal(result.owner, "wainwmr");
+  assert.equal(result.repo, "spem-player");
+});
+
+test("parseRepo throws when GITHUB_REPOSITORY is undefined", () => {
+  delete process.env.GITHUB_REPOSITORY;
+  assert.throws(
+    () => parseRepo(),
+    /GITHUB_REPOSITORY must be owner\/repo format, got: undefined/
+  );
+});
+
+test("parseRepo throws when GITHUB_REPOSITORY has no slash", () => {
+  process.env.GITHUB_REPOSITORY = "badvalue";
+  assert.throws(
+    () => parseRepo(),
+    /GITHUB_REPOSITORY must be owner\/repo format, got: badvalue/
+  );
+});
+
+test("parseRepo throws when GITHUB_REPOSITORY is empty string", () => {
+  process.env.GITHUB_REPOSITORY = "";
+  assert.throws(
+    () => parseRepo(),
+    /GITHUB_REPOSITORY must be owner\/repo format, got: /
+  );
 });
