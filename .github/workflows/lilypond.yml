@@ -26,18 +26,19 @@ jobs:
         with:
           ref: ${{ github.head_ref || github.ref_name }}
 
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
-      - run: npm run test:lilypond
+      - run: pnpm ci
+      - run: pnpm run test:lilypond
       - run: bash lilypond/build/install-lilypond.sh
 
       - run: |
           export PATH="$HOME/.local/lilypond/lilypond-2.26.0/bin:$PATH"
-          npm run build:scores
+          pnpm run build:scores
 
       - name: Commit updated SVGs
         run: |

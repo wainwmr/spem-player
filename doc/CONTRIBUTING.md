@@ -167,29 +167,29 @@ A well-formed ticket body contains:
 3. Ensure tests pass. During the inner loop, run the fast unit suite:
 
    ```console
-   npm run test:unit
+   pnpm run test:unit
    ```
 
    Before pushing, run the full suite (unit + integration) plus build and e2e:
 
    ```console
-   npm test
-   npm run build
-   npm run e2e
+   pnpm test
+   pnpm run build
+   pnpm run e2e
    ```
 
 4. Run the quality gate:
 
    ```console
-   npm run check
+   pnpm run check
    ```
 
    Or run individual checks:
 
    ```console
-   npm run check:format
-   npm run check:lint
-   npm run check:types
+   pnpm run check:format
+   pnpm run check:lint
+   pnpm run check:types
    ```
 
 5. Commit with a clear message referencing the ticket number.
@@ -243,11 +243,11 @@ The repository owner may push directly to `main` only for **non-code changes**: 
 
 ### Lint and Type Checking
 
-The CI pipeline runs `npm run check:lint` and `npm run check:types`. Pull requests must pass both.
+The CI pipeline runs `pnpm run check:lint` and `pnpm run check:types`. Pull requests must pass both.
 
 The project uses an ESLint flat config (`eslint.config.js`) with `typescript-eslint`. Some rules are relaxed because the codebase predates them (for example, `no-var` and `@typescript-eslint/no-explicit-any` are currently off). Follow the existing patterns in the file you are editing rather than refactoring legacy code to meet stricter rules.
 
-The project uses **Prettier** for automatic formatting. Run `npm run fix:format` before committing, or configure your editor to format on save. The CI pipeline runs `npm run check:format` as part of the build gate.
+The project uses **Prettier** for automatic formatting. Run `pnpm run fix:format` before committing, or configure your editor to format on save. The CI pipeline runs `pnpm run check:format` as part of the build gate.
 
 All `.md` files must pass `markdownlint-cli2` before a PR is opened. Run `npx markdownlint-cli2 <file>` after editing any markdown file.
 

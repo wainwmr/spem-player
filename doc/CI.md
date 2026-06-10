@@ -17,7 +17,7 @@ Defines one job.
 
 #### `test` job
 
-Runs on every trigger. Executes `npm run check` (lint, format, type check, unused, deps) and `npm run build`, then `npm run test:unit`, then `npm run test:lilypond`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
+Runs on every trigger. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`, then `pnpm run test:lilypond`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
 
 ### `e2e.yml`
 
@@ -25,10 +25,10 @@ Triggers on a cron schedule (02:00 UTC daily) and on manual `workflow_dispatch`.
 
 Steps:
 
-- `npm ci` — install dependencies.
-- `npm run build` — production Vite build.
-- `npx playwright install --with-deps` — install browser binaries.
-- `npx playwright test` — run the e2e suite.
+- `pnpm ci` — clean install from lockfile.
+- `pnpm run build` — production Vite build.
+- `pnpm exec playwright install --with-deps` — install browser binaries.
+- `pnpm exec playwright test` — run the e2e suite.
 
 On failure, the Playwright HTML report is uploaded as an artifact and retained for 7 days.
 
@@ -50,10 +50,10 @@ Steps:
 
 - `actions/checkout@v6` with `ref: ${{ github.head_ref || github.ref_name }}` — checkout the target branch so commits can be pushed back.
 - `actions/setup-node@v6` from `.nvmrc` — install Node.js.
-- `npm ci` — install dependencies.
-- `npm run test:lilypond` — run the Lilypond-related test suite.
+- `pnpm ci` — clean install from lockfile.
+- `pnpm run test:lilypond` — run the Lilypond-related test suite.
 - `bash lilypond/build/install-lilypond.sh` — install LilyPond.
-- Set `PATH` to include LilyPond 2.26.0, then `npm run build:scores` — regenerate SVGs.
+- Set `PATH` to include LilyPond 2.26.0, then `pnpm run build:scores` — regenerate SVGs.
 - Commit updated SVGs in `src/scores/` if changes exist, with message `chore: regenerate SVGs [skip ci]`, then push.
 
 If no SVGs changed, the job exits cleanly without committing.
@@ -62,7 +62,7 @@ If no SVGs changed, the job exits cleanly without committing.
 
 `.github/dependabot.yml` configures automated dependency update PRs:
 
-- **npm:** Weekly on Mondays at 09:00 UTC, targeting `main`. Related dependencies are grouped into single PRs (vite, vitest, build-tools, types-and-testing, ohm).
+- **pnpm:** Weekly on Mondays at 09:00 UTC, targeting `main`. Related dependencies are grouped into single PRs (vite, vitest, build-tools, types-and-testing, ohm).
 - **GitHub Actions:** Monthly, targeting `main`.
 
 Dependabot PRs are subject to the same `ci.yml` checks and ruleset requirements as human-authored PRs.
@@ -76,7 +76,7 @@ A separate workflow enables GitHub native auto-merge for Dependabot **patch** PR
 Netlify handles both production deploys (on push to `main`) and deploy previews
 (on pull requests) via its native GitHub integration.
 
-**Build:** `npm run build` — Vite prebuild (Ohm grammar bundle, SVGs are already
+**Build:** `pnpm run build` — Vite prebuild (Ohm grammar bundle, SVGs are already
 committed) then Vite production build. No LilyPond required.
 
 **Path filter:** `netlify.toml` configures an `ignore` command that skips the
