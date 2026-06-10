@@ -64,7 +64,10 @@ Mark's kanban workflow with explicit entry and exit criteria:
 
 #### Type
 
-- `bug` — defect
+- `bug` — user-visible defect: a reproducible failure a user can hit in normal use
+- `tooling bug` — defect in repo-tracked build scripts, test harness, CI, or dev
+  tooling; not user-visible (for example, a broken build script). Distinct from
+  `tech debt`: a tooling bug is broken, whereas tech debt works but is suboptimal
 - `feature` — new capability
 - `tech debt` — structural or maintenance improvement
 
