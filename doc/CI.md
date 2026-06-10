@@ -1,6 +1,6 @@
 # Continuous Integration
 
-The repository uses GitHub Actions for automated testing, dependency updates, deploy previews, and production deploys. All workflows run on Ubuntu latest and read the Node.js version from `.nvmrc`.
+The repository uses GitHub Actions for automated testing and dependency updates. All workflows run on Ubuntu latest and read the Node.js version from `.nvmrc`.
 
 ## Philosophy
 
