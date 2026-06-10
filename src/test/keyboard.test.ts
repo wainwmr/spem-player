@@ -323,6 +323,29 @@ describe("Space bar play/pause", () => {
     });
   });
 
+  describe("Part shortcuts with non-Latin keyboard layouts (#522)", () => {
+    it.each([
+      ["KeyS", "ы", "0"],
+      ["KeyA", "ф", "1"],
+      ["KeyT", "е", "2"],
+      ["KeyR", "к", "3"],
+      ["KeyB", "и", "4"],
+    ])(
+      "%s with Cyrillic e.key selects part %s",
+      async (code, key, expectedPart) => {
+        const controls = document.querySelector(
+          "music-controls"
+        ) as MusicControls;
+        controls.setAttribute("part", "all");
+        document.body.dispatchEvent(
+          new KeyboardEvent("keydown", { code, key, bubbles: true })
+        );
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(controls.getAttribute("part")).toBe(expectedPart);
+      }
+    );
+  });
+
   describe("Auto-repeat (held-key) handling", () => {
     // Tests that exercise async setChoir need to yield to the
     // microtask queue (await new Promise + setTimeout 0) so the
