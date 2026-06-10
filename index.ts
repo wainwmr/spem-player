@@ -326,9 +326,11 @@ function keyboardTapped(e: KeyboardEvent) {
     case "KeyA":
     case "KeyT":
     case "KeyR":
-    case "KeyB":
-      setPart("satrb".indexOf(String(e.key).toLowerCase()));
+    case "KeyB": {
+      const partCodes = ["KeyS", "KeyA", "KeyT", "KeyR", "KeyB"];
+      setPart(partCodes.indexOf(e.code));
       break;
+    }
     case "KeyV":
       toggleRecording();
       break;
