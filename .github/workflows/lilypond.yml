@@ -5,12 +5,14 @@ on:
     branches: [main]
     paths:
       - "lilypond/src/**"
+      - "lilypond/test/**"
       - "lilypond/build/buildScores.mjs"
       - "lilypond/build/postprocessSvg.mjs"
       - "lilypond/build/install-lilypond.sh"
   pull_request:
     paths:
       - "lilypond/src/**"
+      - "lilypond/test/**"
       - "lilypond/build/buildScores.mjs"
       - "lilypond/build/postprocessSvg.mjs"
       - "lilypond/build/install-lilypond.sh"
