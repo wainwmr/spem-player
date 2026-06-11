@@ -37,11 +37,128 @@ describe("MusicCanvas custom element", () => {
     freshCanvas.draw();
   });
 
-  it("draw() executes during playback without throttling", () => {
+  it("draw() renders every frame at 120Hz during playback (#554)", () => {
     expect(canvas).not.toBeNull();
-    canvas!.playing = true;
-    canvas!.draw();
-    canvas!.playing = false;
+    // Fixture precondition: draw() returns silently on empty data, so a dead
+    // fixture would report 0 renders and masquerade as a throttle regression.
+    // notesByQuant is the guard that actually trips on a data-less parse;
+    // ranges is seeded per choir-part pair unconditionally (lily.ts), so its
+    // size only detects #init never completing.
+    expect(canvas!.ranges.size).toBeGreaterThan(0);
+    expect(canvas!.notesByQuant.size).toBeGreaterThan(0);
+
+    // Simulate a 120Hz display: rAF fires every ~8.3ms. The old #shouldDraw
+    // throttle read Date.now() (not the rAF timestamp), so the clock must be
+    // mocked: real elapsed time per iteration of this synchronous loop is
+    // nondeterministic — near 0ms when renders are fast, but above the old
+    // 10ms threshold when a jsdom render runs slow (see below), in which
+    // case a reintroduced throttle would never drop a frame and this test
+    // would pass anyway.
+    let fakeNow = 100_000;
+    const dateSpy = vi.spyOn(Date, "now").mockImplementation(() => fakeNow);
+
+    let rafId = 0;
+    const rAFCallbacks: FrameRequestCallback[] = [];
+    const rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((cb: FrameRequestCallback) => {
+        rAFCallbacks.push(cb);
+        return ++rafId; // distinct non-zero handles, per the platform contract
+      });
+
+    // draw() is *called* on every rAF tick regardless of the old throttle
+    // (which suppressed rendering inside draw, not the call), so a spy on
+    // draw itself would be vacuous. Count effective renders instead:
+    // each render clears the full canvas via one fillRect(0, 0, w, h).
+    const ctx = canvas!.canvas!.getContext("2d")!;
+    const fillRectSpy = vi.spyOn(ctx, "fillRect");
+
+    // The finally block guarantees mock restoration even if the mid-loop
+    // rAF-chain assertion or an unexpected play()/draw() exception throws.
+    // A leaked frozen Date.now or black-holed rAF cascades failures across
+    // the file. (A reintroduced throttle itself throws nothing — it surfaces
+    // as a low count at the assertion after the finally.)
+    let fullClears: number | undefined;
+    try {
+      // 12 frames suffice: the throttle's drop pattern alternates (render,
+      // drop, render, ...), so any count exposes it — 12/12 without the
+      // throttle, 6/12 with it. More frames only slow the suite (a full
+      // jsdom canvas render can exceed the old 10ms threshold under load).
+      canvas!.playing = true;
+      canvas!.play();
+      for (let i = 0; i < 12; i++) {
+        const cb = rAFCallbacks.shift();
+        // A broken rAF chain must name itself, not surface as a low count.
+        expect(cb, `rAF chain broke at frame ${i}`).toBeDefined();
+        cb!(fakeNow);
+        fakeNow += 8.3;
+      }
+
+      // Count inside the try: mockRestore() below wipes mock.calls.
+      fullClears = fillRectSpy.mock.calls.filter(
+        (c) =>
+          c[0] === 0 &&
+          c[1] === 0 &&
+          c[2] === canvas!.canvas!.width &&
+          c[3] === canvas!.canvas!.height
+      ).length;
+    } finally {
+      canvas!.playing = false;
+      dateSpy.mockRestore();
+      rafSpy.mockRestore();
+      fillRectSpy.mockRestore();
+      canvas!.playLoopId = 0;
+    }
+
+    expect(fullClears).toBe(12);
+  });
+
+  it("setBar() does not render directly during playback (#554)", () => {
+    expect(canvas).not.toBeNull();
+    const ctx = canvas!.canvas!.getContext("2d")!;
+    const fillRectSpy = vi.spyOn(ctx, "fillRect");
+    const countFullClears = () =>
+      fillRectSpy.mock.calls.filter(
+        (c) =>
+          c[0] === 0 &&
+          c[1] === 0 &&
+          c[2] === canvas!.canvas!.width &&
+          c[3] === canvas!.canvas!.height
+      ).length;
+
+    // The body must stay synchronous: an await would let the (live, unmocked)
+    // shimmer loop fire while paused and inflate the render counts.
+    let clearsWhilePlaying: number | undefined;
+    let clearsWhilePaused: number | undefined;
+    let barWhilePlaying: number | undefined;
+    try {
+      // While playing, the play loop already renders every rAF tick; setBar
+      // (driven by the controls loop, also every tick) must not add a second
+      // render per frame. The old throttle silently collapsed that duplicate;
+      // with the throttle gone, the guard in setBar is what prevents it.
+      canvas!.playing = true;
+      canvas!.setBar(10);
+      clearsWhilePlaying = countFullClears();
+      barWhilePlaying = canvas!.bar;
+
+      // While paused there is no play loop, and no rAF callback can fire
+      // while this body stays synchronous; setBar's direct draw is what
+      // renders a bar change immediately (in the app the shimmer loop would
+      // catch up a frame later) and must remain.
+      canvas!.playing = false;
+      canvas!.setBar(11);
+      clearsWhilePaused = countFullClears() - clearsWhilePlaying;
+    } finally {
+      canvas!.playing = false;
+      fillRectSpy.mockRestore();
+    }
+
+    expect(clearsWhilePlaying).toBe(0);
+    // The guard must skip only the draw — state must still commit (a
+    // top-of-method early return would freeze the bar during playback).
+    expect(barWhilePlaying).toBe(10);
+    expect(clearsWhilePaused).toBe(1);
+    expect(canvas!.bar).toBe(11);
   });
 
   it("draw() with a specific voice part", async () => {
@@ -999,6 +1116,33 @@ describe("MusicCanvas custom element", () => {
     expect(freshCanvas.shimmerLoopId).not.toBe(0);
     expect(freshCanvas.shimmerLoopId).not.toBe(oldShimmerId);
 
+    freshCanvas.remove();
+  });
+
+  it("disconnect and reconnect during playback restarts the play loop (#554)", async () => {
+    const freshCanvas = document.createElement("music-canvas") as MusicCanvas;
+    document.body.appendChild(freshCanvas);
+    // Wait for connectedCallback -> #init -> processLilypond -> draw
+    await new Promise((r) => setTimeout(r, 500));
+
+    freshCanvas.setPlaying(true);
+    expect(freshCanvas.playLoopId).not.toBe(0);
+
+    freshCanvas.remove();
+    expect(freshCanvas.playLoopId).toBe(0);
+    // disconnectedCallback cancels the loop but leaves playing true — that
+    // desync is the scenario under test.
+    expect(freshCanvas.playing).toBe(true);
+
+    document.body.appendChild(freshCanvas);
+    await new Promise((r) => setTimeout(r, 100));
+
+    // Without a restart the canvas is silently frozen: playing is true, no
+    // loop runs, and the setBar guard skips the controls-driven draws that
+    // used to be the de-facto fallback render path.
+    expect(freshCanvas.playLoopId).not.toBe(0);
+
+    freshCanvas.setPlaying(false);
     freshCanvas.remove();
   });
 

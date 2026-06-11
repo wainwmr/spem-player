@@ -35,7 +35,6 @@ export class MusicCanvas extends MusicElement {
   fpsValue = 0;
   shimmerLoopId: number = 0;
   playLoopId: number = 0;
-  oldTimeStamp: number = 0;
 
   // Base lightness for unselected parts in light mode.
   static readonly DULL_BASE_LIGHTNESS_LIGHT = 80;
@@ -96,6 +95,12 @@ export class MusicCanvas extends MusicElement {
     if (!this.playing && this.shimmerLoopId === 0) {
       this.#startShimmerLoop();
     }
+    // disconnectedCallback cancels the play loop but leaves `playing` true,
+    // so a reconnect during playback must restart it — without this the
+    // canvas freezes silently (setBar skips its draw while playing, #554).
+    if (this.playing && this.playLoopId === 0) {
+      this.play();
+    }
   }
 
   disconnectedCallback() {
@@ -134,6 +139,12 @@ export class MusicCanvas extends MusicElement {
     }
   };
 
+  // setChoir/setPart draw unconditionally: the controls loop fires
+  // music-controls-changed every tick during playback, but index.ts only
+  // writes the canvas's choir/part attributes when the value actually
+  // changed (and MusicElement.attributeChangedCallback drops any same-value
+  // write), so these setters run at interaction rate. bar changes every
+  // tick, hence setBar's guard below.
   setChoir(c: string | number) {
     super.setChoir(c);
     this.draw();
@@ -146,7 +157,14 @@ export class MusicCanvas extends MusicElement {
 
   setBar(b: string | number) {
     super.setBar(b);
-    this.draw();
+    // During playback the play loop renders every rAF tick, and the controls
+    // loop drives setBar at the same rate — drawing here too would double
+    // the render rate (#554). When paused, the shimmer loop still redraws
+    // every rAF tick; this synchronous draw just renders a bar change
+    // immediately rather than on the next shimmer frame.
+    if (!this.playing) {
+      this.draw();
+    }
   }
 
   setPlaying(playing: string | boolean) {
@@ -302,7 +320,6 @@ export class MusicCanvas extends MusicElement {
   draw() {
     if (!this.canvas) return;
     if (this.ranges.size === 0 || this.notesByQuant.size === 0) return;
-    if (!this.#shouldDraw()) return;
 
     this.#updatePulses();
 
@@ -316,15 +333,6 @@ export class MusicCanvas extends MusicElement {
     this.#drawDev(ctx);
     this.#drawFalseRelationHotspot(ctx);
     this.#drawFalseRelationPulses(ctx);
-  }
-
-  #shouldDraw(): boolean {
-    if (!this.playing) return true;
-    const now = Date.now();
-    const secondsPassed = (now - this.oldTimeStamp) / 1000;
-    if (secondsPassed < 0.01) return false;
-    this.oldTimeStamp = now;
-    return true;
   }
 
   #updatePulses() {
