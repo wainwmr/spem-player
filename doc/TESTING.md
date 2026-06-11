@@ -61,7 +61,7 @@ Scripts in `.github/scripts/` that expose pure functions use the Node.js built-i
 
 Integration tests live in `lilypond/test/*.integration.test.ts` and also follow `*.test.ts`. They typically spawn subprocesses (LilyPond, the build pipeline) and are substantially slower.
 
-If a new shared fixture directory is introduced (e.g. `src/test/fixtures/`), add it to the `build-related` filter in `.github/workflows/ci.yml` so that PRs touching it exercise the integration suite.
+When changing integration tests, always run `pnpm run test:lilypond` locally — see § CI Behaviour below for which workflows run them in CI and the `lilypond/test/**` trigger gap (#558).
 
 ## Test Layer Decision Criteria
 
@@ -98,10 +98,10 @@ If a test needs any of the above, it belongs in the E2E layer.
 
 ## CI Behaviour
 
-The two suites run as separate jobs in `.github/workflows/ci.yml`. See `doc/CI.md` for the canonical description; in summary:
+The two suites run in separate workflows. See `doc/CI.md` for the canonical description; in summary:
 
-- The `test` job runs `pnpm run test:unit` on every push and pull request and is the required status check.
-- The `integration` job runs unconditionally on push to `main` and on a nightly cron. On pull requests it is gated by `dorny/paths-filter` and runs only when the PR touches build-related paths — see `doc/CI.md` for the canonical list.
+- The `test` job (`.github/workflows/ci.yml`) runs `pnpm run check`, `pnpm run build`, and `pnpm run test:unit` on push to `main` and on pull requests targeting `main`, except changes confined to the workflow's `paths-ignore` list (see `ci.yml`; notably `lilypond/**`), plus a nightly cron. It is the required status check.
+- The integration suite (`pnpm run test:lilypond`) runs in the Regenerate SVGs workflow (`.github/workflows/lilypond.yml`) when `lilypond/src/**` or the build scripts listed in the workflow's paths filter change. Changes confined to `lilypond/test/**` trigger neither workflow, so the required `test` check never reports and the PR cannot merge without a ruleset bypass (#558); a local `pnpm run test:lilypond` is the only verification meanwhile.
 
 ## Key Dependencies
 

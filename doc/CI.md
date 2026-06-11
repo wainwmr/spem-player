@@ -11,13 +11,13 @@ The repository uses GitHub Actions for automated testing and dependency updates.
 
 ### `ci.yml`
 
-Triggers on every push and pull request to `main`, and nightly at 00:00 UTC via a `schedule` cron.
+Triggers on push to `main` and on pull requests targeting `main` — except changes confined to the workflow's `paths-ignore` list (see `ci.yml`; it ignores root-level `*.md`, `lilypond/**`, and three sibling workflow files) — and nightly at 00:00 UTC via a `schedule` cron.
 
 Defines one job.
 
 #### `test` job
 
-Runs on every trigger. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`, then `pnpm run test:lilypond`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
+Runs on every trigger. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes. The LilyPond integration suite (`pnpm run test:lilypond`) does not run here — it runs in the Regenerate SVGs workflow below. Changes confined to `lilypond/test/**` trigger neither workflow, so the required check never reports and such PRs cannot merge without a ruleset bypass (#558).
 
 ### `e2e.yml`
 
