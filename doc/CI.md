@@ -17,7 +17,7 @@ Defines one job.
 
 #### `test` job
 
-Runs on every trigger. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
+Runs on every trigger. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes. The LilyPond integration suite (`pnpm run test:lilypond`) does not run here — it runs in the Regenerate SVGs workflow below. Changes confined to `lilypond/test/**` trigger neither workflow, so the required check never reports and such PRs cannot merge without a ruleset bypass (#558).
 
 ### `e2e.yml`
 
