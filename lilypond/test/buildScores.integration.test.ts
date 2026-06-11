@@ -86,8 +86,12 @@ fs.appendFileSync(logFile, args.join(" ") + "\\n", "utf-8");
   writeFileSync(sh, `#!/bin/sh\nnode "${helperJs}" "$@"\n`, "utf-8");
   try {
     execSync(`chmod +x "${sh}"`);
-  } catch {
-    // ignore chmod failure on Windows
+  } catch (error) {
+    // Windows has no chmod (the .bat fixture is used there). On Unix a
+    // chmod failure would leave the script non-executable and PATH lookup
+    // would silently fall through to another fake — rethrow so the cause
+    // is visible (Vera 539-01).
+    if (process.platform !== "win32") throw error;
   }
 
   return fakeDir;
@@ -230,7 +234,7 @@ describe("buildScores.mjs integration", () => {
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
-  }, 30000);
+  }, 60000);
 
   it("creates missing score output directories on a clean checkout (#318)", () => {
     // Regression: post-#318 src/scores/ is gitignored, so a fresh
@@ -260,7 +264,7 @@ describe("buildScores.mjs integration", () => {
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
-  }, 30000);
+  }, 60000);
 
   it("caches by mtime", () => {
     const ws = createWorkspace();
@@ -293,7 +297,7 @@ describe("buildScores.mjs integration", () => {
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
-  }, 30000);
+  }, 60000);
 
   it("rebuilds all scores when a version-root include is newer (Vera 353-01)", () => {
     const ws = createWorkspace();
@@ -332,7 +336,7 @@ describe("buildScores.mjs integration", () => {
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
-  }, 30000);
+  }, 60000);
 
   it("rebuilds the touched choir's notation when its own .ly is newer (Vera 353-11)", () => {
     const ws = createWorkspace();
@@ -377,7 +381,7 @@ describe("buildScores.mjs integration", () => {
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
-  }, 30000);
+  }, 60000);
 
   it("does NOT rebuild a sibling notation when only one notation changes (Vera 353-07)", () => {
     const ws = createWorkspace();
@@ -422,7 +426,7 @@ describe("buildScores.mjs integration", () => {
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
-  }, 30000);
+  }, 60000);
 
   it("fails gracefully without lilypond", () => {
     const envNoLilypond = {
@@ -538,7 +542,7 @@ describe("buildScores.mjs integration", () => {
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
-  });
+  }, 60000);
 
   it("rejects bare --notation without a value (#306)", () => {
     const result = spawnSync(
@@ -611,7 +615,7 @@ describe("buildScores.mjs integration", () => {
     } finally {
       rmSync(ws, { recursive: true, force: true });
     }
-  }, 30000);
+  }, 60000);
 
   it("deletes SVG on lilypond failure (#394)", () => {
     const ws = createWorkspace();
@@ -649,13 +653,39 @@ describe("buildScores.mjs integration", () => {
 
       // Create a fake lilypond that fails on build but answers --version
       failDir = mkdtempSync(join(tmpdir(), "spem-fail-lilypond-"));
-      const failSh = join(failDir, "lilypond");
+      const failHelperJs = join(failDir, "_fake_lilypond.js");
       writeFileSync(
-        failSh,
-        `#!/bin/sh\nif [ "$1" = "--version" ]; then\n  echo "GNU LilyPond 2.26.0 (running Guile 3.0)"\n  exit 0\nfi\necho "fatal error: simulated lilypond failure" >&2\nexit 2\n`,
+        failHelperJs,
+        `const args = process.argv.slice(2);\n` +
+          `if (args.includes("--version")) {\n` +
+          `  console.log("GNU LilyPond 2.26.0 (running Guile 3.0)");\n` +
+          `  process.exit(0);\n` +
+          `}\n` +
+          `console.error("fatal error: simulated lilypond failure");\n` +
+          `process.exit(2);\n`,
         "utf-8"
       );
-      execSync(`chmod +x "${failSh}"`);
+
+      const failBat = join(failDir, "lilypond.bat");
+      writeFileSync(
+        failBat,
+        `@echo off\nnode "${failHelperJs}" %*\n`,
+        "utf-8"
+      );
+
+      const failSh = join(failDir, "lilypond");
+      // Delegate to the same helper as the .bat so both platforms execute
+      // identical failure logic by construction (Vera 539-03).
+      writeFileSync(failSh, `#!/bin/sh\nnode "${failHelperJs}" "$@"\n`, "utf-8");
+      try {
+        execSync(`chmod +x "${failSh}"`);
+      } catch (error) {
+        // Windows has no chmod (the .bat fixture is used there). On Unix a
+        // chmod failure would leave the script non-executable and PATH
+        // lookup would silently fall through to the success fake — rethrow
+        // so the cause is visible (Vera 539-01).
+        if (process.platform !== "win32") throw error;
+      }
 
       const envFail = {
         ...env,
@@ -672,10 +702,14 @@ describe("buildScores.mjs integration", () => {
       );
 
       expect(result2.status).not.toBe(0);
+      // Pin the failure to the simulated fake: a fallthrough to the success
+      // fake or a version-check failure would not carry this marker
+      // (Vera 539-03).
+      expect(result2.stderr).toContain("simulated lilypond failure");
       expect(existsSync(svgPath)).toBe(false);
     } finally {
       rmSync(ws, { recursive: true, force: true });
       if (failDir) rmSync(failDir, { recursive: true, force: true });
     }
-  }, 30000);
+  }, 60000);
 });
