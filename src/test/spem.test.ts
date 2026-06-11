@@ -14,7 +14,7 @@ describe("Check that spem notes looks good", () => {
 
   it("Everyone finishes at the end of bar 138", async () => {
     for (var c = 0; c < 8; c++) {
-      for (var p = 0; p < 1; p++) {
+      for (var p = 0; p < 5; p++) {
         const list = ranges.get(`${c}-${p}`)!;
         const last = list[list.length - 1];
         expect(last.to).toBe(139);
@@ -25,9 +25,9 @@ describe("Check that spem notes looks good", () => {
 
   it("Everyone is singing respice at bar 122", () => {
     for (var c = 0; c < 8; c++) {
-      for (var p = 0; p < 1; p++) {
+      for (var p = 0; p < 5; p++) {
         const result =
-          ranges.get(`${c}-${p}`)!.find((x) => (x.from = 122)) != null;
+          ranges.get(`${c}-${p}`)!.find((x) => x.from === 122) != null;
         expect(result, "choir/part " + c + "/" + p).toBe(true);
       }
     }
