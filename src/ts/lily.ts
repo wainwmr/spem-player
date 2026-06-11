@@ -254,8 +254,8 @@ function setupLilypondParser(): ohm.Semantics {
 
 // A continuous singing interval for one part: bar positions from start to end.
 export type Range = {
-  from: number;
-  to: number;
+  readonly from: number;
+  readonly to: number;
 };
 
 // HACK: barCount is still exported as a module-level variable consumed by MusicControls.ts

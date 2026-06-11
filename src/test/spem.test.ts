@@ -27,7 +27,7 @@ describe("Check that spem notes looks good", () => {
     for (var c = 0; c < 8; c++) {
       for (var p = 0; p < 1; p++) {
         const result =
-          ranges.get(`${c}-${p}`)!.find((x) => (x.from = 122)) != null;
+          ranges.get(`${c}-${p}`)!.find((x) => x.from === 122) != null;
         expect(result, "choir/part " + c + "/" + p).toBe(true);
       }
     }
