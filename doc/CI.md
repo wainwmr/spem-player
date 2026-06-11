@@ -4,20 +4,20 @@ The repository uses GitHub Actions for automated testing and dependency updates.
 
 ## Philosophy
 
-- **Fast PR gate:** Only unit tests, lint, and type checks block merges. The full browser-based end-to-end suite runs separately.
+- **Fast PR gate:** Unit and integration tests, lint, and type checks block merges — the integration suite fakes LilyPond, so it stays fast. The full browser-based end-to-end suite runs separately.
 - **Nightly regression:** Playwright e2e tests run on a schedule to catch browser-level regressions without adding friction to the pull request workflow.
 
 ## Workflows
 
 ### `ci.yml`
 
-Triggers on push and pull request to `main`, nightly at 00:00 UTC via a `schedule` cron, and path-filtered to skip changes that do not affect the application build or unit tests (for example, `lilypond/src/**` and `lilypond/build/**` are ignored).
+Triggers on push and pull requests to `main` — except changes confined to its `paths-ignore` list — and nightly at 00:00 UTC via a `schedule` cron. The ignore list mirrors `lilypond.yml`'s `paths` (LilyPond sources and the three build scripts) so the two workflows are complementary: those paths regenerate SVGs in `lilypond.yml`, while everything else under `lilypond/` — tests, type declarations — runs the `test` job here (#558). Root-level `*.md` files and two of its sibling workflow files (`e2e.yml`, `monitor-resources.yml`) are also ignored; `lilypond.yml` deliberately is not, so edits to it run the mirror-enforcing `lilypond/test/workflowPathsMirror.test.ts` (part of the unit suite) at PR time. Note the consequence of any full match: the required `test` check never reports, so a PR confined to ignored paths (including LilyPond source-only PRs, whose only test-running trigger is the non-required Regenerate SVGs workflow) cannot merge without the owner's ruleset bypass (#558 fixed this for non-mirrored `lilypond/` paths; the residue is tracked in #563).
 
 Defines one job.
 
 #### `test` job
 
-Runs on every trigger. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes. The LilyPond integration suite (`pnpm run test:lilypond`) does not run here — it runs in the Regenerate SVGs workflow below. Changes confined to `lilypond/test/**` trigger neither workflow, so the required check never reports and such PRs cannot merge without a ruleset bypass (#558).
+Runs on every trigger. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit` (the Vitest suite), then `pnpm run test:lilypond` (the integration suite fakes LilyPond, so no install is needed), then `pnpm run test:scripts` (the `node:test` suites in `.github/scripts/`). This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
 
 ### `e2e.yml`
 
@@ -36,7 +36,7 @@ This workflow is intentionally excluded from the PR gate. Playwright tests are s
 
 ### `lilypond.yml`
 
-Triggers on push to `main` and on `pull_request`, both path-filtered to `lilypond/src/**`, `lilypond/test/**`, `lilypond/build/buildScores.mjs`, `lilypond/build/postprocessSvg.mjs`, and `lilypond/build/install-lilypond.sh`.
+Triggers on push to `main` and on `pull_request`, both path-filtered to `lilypond/src/**`, `lilypond/build/buildScores.mjs`, `lilypond/build/postprocessSvg.mjs`, and `lilypond/build/install-lilypond.sh` — mirroring `ci.yml`'s `paths-ignore` (enforced by `lilypond/test/workflowPathsMirror.test.ts`), so `lilypond/test/**` changes run the required `test` job in `ci.yml` rather than regenerating SVGs here (#558).
 
 Permissions: `contents: write`.
 
@@ -51,7 +51,7 @@ Steps:
 - `actions/checkout@v6` with `ref: ${{ github.head_ref || github.ref_name }}` — checkout the target branch so commits can be pushed back.
 - `actions/setup-node@v6` from `.nvmrc` — install Node.js.
 - `pnpm ci` — clean install from lockfile.
-- `pnpm run test:lilypond` — run the Lilypond-related test suite.
+- `pnpm run test:lilypond` — run the LilyPond integration suite (fakes LilyPond; the same script the `test` job runs).
 - `bash lilypond/build/install-lilypond.sh` — install LilyPond.
 - Set `PATH` to include LilyPond 2.26.0, then `pnpm run build:scores` — regenerate SVGs.
 - Commit updated SVGs in `src/scores/` if changes exist, with message `chore: regenerate SVGs [skip ci]`, then push.

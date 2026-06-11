@@ -57,7 +57,7 @@ pnpm run test:coverage
 
 Unit tests live under `src/test/` and `lilypond/test/` (excluding `*.integration.test.ts`) and follow the naming convention `*.test.ts`. They run in-process under jsdom and should complete in under a few seconds each. In-process tests against `lilypond/build/` code (for example `postprocessSvg.test.ts`) live in `lilypond/test/` alongside the integration suite.
 
-Scripts in `.github/scripts/` that expose pure functions use the Node.js built-in test runner (`node:test`) rather than Vitest, and live alongside the script as `*.test.mjs`. Run them directly with `node --test .github/scripts/<name>.test.mjs`. These files are excluded from the Vitest config (`vite.config.ts`) and do not appear in `pnpm run test:unit` output.
+Scripts in `.github/scripts/` that expose pure functions use the Node.js built-in test runner (`node:test`) rather than Vitest, and live alongside the script as `*.test.mjs`. Run the whole set with `pnpm run test:scripts` (`node --test ".github/scripts/*.test.mjs"`), or a single file directly with `node --test .github/scripts/<name>.test.mjs`. They are excluded from the Vitest config (`vite.config.ts`), so they do not appear in `pnpm run test:unit` output; instead `pnpm run test:scripts` runs them in the `test` job of `ci.yml` (and as the final step of `pnpm run ci`), so a broken assertion blocks merge — see `doc/CI.md`.
 
 Integration tests live in `lilypond/test/*.integration.test.ts` and also follow `*.test.ts`. They typically spawn subprocesses (LilyPond, the build pipeline) and are substantially slower.
 
@@ -98,10 +98,10 @@ If a test needs any of the above, it belongs in the E2E layer.
 
 ## CI Behaviour
 
-The two suites run in separate workflows. See `doc/CI.md` for the canonical description; in summary:
+See `doc/CI.md` for the canonical description; in summary:
 
-- The `test` job (`.github/workflows/ci.yml`) runs `pnpm run check`, `pnpm run build`, and `pnpm run test:unit` on push to `main` and on pull requests targeting `main`, except changes confined to the workflow's `paths-ignore` list (see `ci.yml`; notably `lilypond/**`), plus a nightly cron. It is the required status check.
-- The integration suite (`pnpm run test:lilypond`) runs in the Regenerate SVGs workflow (`.github/workflows/lilypond.yml`) when `lilypond/src/**` or the build scripts listed in the workflow's paths filter change. Changes confined to `lilypond/test/**` trigger neither workflow, so the required `test` check never reports and the PR cannot merge without a ruleset bypass (#558); a local `pnpm run test:lilypond` is the only verification meanwhile.
+- The required `test` job (`.github/workflows/ci.yml`) runs `pnpm run check`, `pnpm run build`, `pnpm run test:unit`, `pnpm run test:lilypond`, and `pnpm run test:scripts` on push to `main` and on pull requests targeting `main`, except changes confined to the workflow's `paths-ignore` list (see `ci.yml`; the LilyPond sources and the three build scripts, mirroring `lilypond.yml`), plus a nightly cron. It is the required status check.
+- `lilypond/test/**` changes are not ignored by `ci.yml`, so they now run the required `test` job here (the #558 fix); the integration suite also runs in the Regenerate SVGs workflow (`.github/workflows/lilypond.yml`) when `lilypond/src/**` or the three build scripts change. LilyPond source-only PRs still report no required check (their only trigger is the non-required SVG workflow); that residue is tracked in #563.
 
 ## Key Dependencies
 

@@ -5,18 +5,36 @@ on:
     branches: [main]
     paths-ignore:
       - "*.md"
+      # Mirror lilypond.yml's `paths` so the two workflows are complementary:
+      # source and build-script changes regenerate SVGs there; everything
+      # else under lilypond/ (tests, type declarations) runs the test job
+      # here. A blanket lilypond/** ignore left test-only PRs with no
+      # required check at all (#558). Edit both files together —
+      # lilypond/test/workflowPathsMirror.test.ts enforces the mirror, and
+      # lilypond.yml is deliberately NOT ignored here so that editing it
+      # runs that test at PR time.
       - "lilypond/src/**"
-      - "lilypond/build/**"
-      - ".github/workflows/lilypond.yml"
+      - "lilypond/build/buildScores.mjs"
+      - "lilypond/build/postprocessSvg.mjs"
+      - "lilypond/build/install-lilypond.sh"
       - ".github/workflows/e2e.yml"
       - ".github/workflows/monitor-resources.yml"
   pull_request:
     branches: [main]
     paths-ignore:
       - "*.md"
+      # Mirror lilypond.yml's `paths` so the two workflows are complementary:
+      # source and build-script changes regenerate SVGs there; everything
+      # else under lilypond/ (tests, type declarations) runs the test job
+      # here. A blanket lilypond/** ignore left test-only PRs with no
+      # required check at all (#558). Edit both files together —
+      # lilypond/test/workflowPathsMirror.test.ts enforces the mirror, and
+      # lilypond.yml is deliberately NOT ignored here so that editing it
+      # runs that test at PR time.
       - "lilypond/src/**"
-      - "lilypond/build/**"
-      - ".github/workflows/lilypond.yml"
+      - "lilypond/build/buildScores.mjs"
+      - "lilypond/build/postprocessSvg.mjs"
+      - "lilypond/build/install-lilypond.sh"
       - ".github/workflows/e2e.yml"
       - ".github/workflows/monitor-resources.yml"
   # Daily at 00:00 UTC — catches drift in the test suite on days when no PR
@@ -42,4 +60,16 @@ jobs:
 
       - name: Run unit tests
         run: pnpm run test:unit
+
+      # The integration suite fakes LilyPond (no install needed). For changes
+      # confined to lilypond/test/** this is the only workflow that runs any
+      # test (#558); lilypond.yml also runs the suite when it triggers.
+      - name: Run lilypond integration tests
+        run: pnpm run test:lilypond
+
+      # The .github/scripts node:test suites (e.g. monitor-resources) run
+      # nowhere else — without this a PR to those scripts passes the required
+      # check without exercising their tests (#564).
+      - name: Run script tests
+        run: pnpm run test:scripts
 

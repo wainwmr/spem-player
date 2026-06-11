@@ -4,15 +4,21 @@ on:
   push:
     branches: [main]
     paths:
+      # Mirrored by ci.yml's paths-ignore: paths listed here are excluded
+      # there, so each lilypond path triggers exactly one of the two
+      # workflows. Edit both files together —
+      # lilypond/test/workflowPathsMirror.test.ts enforces the mirror (#558).
       - "lilypond/src/**"
-      - "lilypond/test/**"
       - "lilypond/build/buildScores.mjs"
       - "lilypond/build/postprocessSvg.mjs"
       - "lilypond/build/install-lilypond.sh"
   pull_request:
     paths:
+      # Mirrored by ci.yml's paths-ignore: paths listed here are excluded
+      # there, so each lilypond path triggers exactly one of the two
+      # workflows. Edit both files together —
+      # lilypond/test/workflowPathsMirror.test.ts enforces the mirror (#558).
       - "lilypond/src/**"
-      - "lilypond/test/**"
       - "lilypond/build/buildScores.mjs"
       - "lilypond/build/postprocessSvg.mjs"
       - "lilypond/build/install-lilypond.sh"
