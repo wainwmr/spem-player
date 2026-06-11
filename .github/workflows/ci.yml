@@ -5,7 +5,8 @@ on:
     branches: [main]
     paths-ignore:
       - "*.md"
-      - "lilypond/**"
+      - "lilypond/src/**"
+      - "lilypond/build/**"
       - ".github/workflows/lilypond.yml"
       - ".github/workflows/e2e.yml"
       - ".github/workflows/monitor-resources.yml"
@@ -13,7 +14,8 @@ on:
     branches: [main]
     paths-ignore:
       - "*.md"
-      - "lilypond/**"
+      - "lilypond/src/**"
+      - "lilypond/build/**"
       - ".github/workflows/lilypond.yml"
       - ".github/workflows/e2e.yml"
       - ".github/workflows/monitor-resources.yml"
