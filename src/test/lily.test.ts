@@ -74,7 +74,7 @@ describe("lilypond parsing tests", () => {
     expect(barCount).toBe(139);
     expect(ranges.size).toBe(40); // 8 choirs * 5 parts
     for (var c = 0; c < 8; c++) {
-      for (var p = 0; p < 1; p++) {
+      for (var p = 0; p < 5; p++) {
         const list = ranges.get(`${c}-${p}`)!;
         const last = list[list.length - 1];
         expect(last.to).toBe(139);

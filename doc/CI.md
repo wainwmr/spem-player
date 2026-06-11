@@ -11,13 +11,13 @@ The repository uses GitHub Actions for automated testing and dependency updates.
 
 ### `ci.yml`
 
-Triggers on every push and pull request to `main`, and nightly at 00:00 UTC via a `schedule` cron.
+Triggers on push and pull request to `main`, nightly at 00:00 UTC via a `schedule` cron, and path-filtered to skip changes that do not affect the application build or unit tests (for example, `lilypond/src/**` and `lilypond/build/**` are ignored).
 
 Defines one job.
 
 #### `test` job
 
-Runs on every trigger. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`, then `pnpm run test:lilypond`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
+Runs on every trigger. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes. The LilyPond integration suite (`pnpm run test:lilypond`) does not run here — it runs in the Regenerate SVGs workflow below. Changes confined to `lilypond/test/**` trigger neither workflow, so the required check never reports and such PRs cannot merge without a ruleset bypass (#558).
 
 ### `e2e.yml`
 
@@ -36,7 +36,7 @@ This workflow is intentionally excluded from the PR gate. Playwright tests are s
 
 ### `lilypond.yml`
 
-Triggers on push to `main` and on `pull_request`, both path-filtered to `lilypond/src/**`, `lilypond/build/buildScores.mjs`, `lilypond/build/postprocessSvg.mjs`, and `lilypond/build/install-lilypond.sh`.
+Triggers on push to `main` and on `pull_request`, both path-filtered to `lilypond/src/**`, `lilypond/test/**`, `lilypond/build/buildScores.mjs`, `lilypond/build/postprocessSvg.mjs`, and `lilypond/build/install-lilypond.sh`.
 
 Permissions: `contents: write`.
 
@@ -97,7 +97,7 @@ Steps:
 - `actions/checkout@v6` — checkout the repository.
 - `node .github/scripts/monitor-resources.mjs` — run the monitor, with `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `GITHUB_TOKEN` passed in the environment.
 
-The script queries the current period's Netlify build-minute usage and GitHub Actions usage. On days with no PRs merged in the past 24 hours and normal resource usage (both services below 50%), the Telegram message is skipped to reduce noise. Watch (≥ 50%), throttle (≥ 75%), and critical (≥ 90%) alerts always send regardless of PR activity. When the message is sent, it takes the form `Netlify <n>% · GitHub <n>% — <status>`, appending `· N PR(s) merged` when at least one PR merged in the past 24 hours. If either service reaches **90%** of its quota, the status becomes `STOP` (with a 🚨 prefix) and the workflow opens a critical GitHub issue containing a runbook for reducing build-minute consumption.
+The script queries the current period's Netlify build-minute usage and GitHub Actions usage. Status thresholds — watch (≥ 50%), throttle (≥ 75%), and critical (≥ 90%) — apply to the higher of actual usage and the linearly projected end-of-period usage, so an unsustainable burn rate raises the alarm early in the billing period. On days with no PRs merged in the past 24 hours and both actual and projected usage below the watch threshold (50%), the Telegram message is skipped to reduce noise; watch and worse always send regardless of PR activity. When the message is sent, it takes the form `Netlify <n>% · GitHub <n>% — <status>` (the percentages are actual usage; the status reflects the worse of actual and projected), appending `· N PR(s) merged` when at least one PR merged in the past 24 hours. If either service reaches, or is projected to reach by period end, **90%** of its quota, the status becomes `STOP` (with a 🚨 prefix) and the workflow opens a critical GitHub issue containing a runbook for reducing build-minute consumption.
 
 ## Node.js Version
 

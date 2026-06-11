@@ -6,3 +6,7 @@ export function postprocessSvg(
   spemLyPath?: string,
   wordsLyPath?: string,
 ): void;
+export function isMainModule(
+  argv1: string | undefined,
+  importMetaUrl: string,
+): boolean;

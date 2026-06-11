@@ -11,8 +11,9 @@
  * deduplicates repeated path shapes via <defs> and <use>.
  */
 
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, realpathSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
 const DEFAULT_SPEM_PATH = "lilypond/src/Hugh Keyte/spem.ly";
@@ -162,8 +163,8 @@ export function deduplicatePaths(doc) {
 
 /**
  * @param {string} svgPath
- * @param {string} spemLyPath
- * @param {string} wordsLyPath
+ * @param {string} [spemLyPath]
+ * @param {string | null} [wordsLyPath]
  */
 export function postprocessSvg(
   svgPath,
@@ -268,12 +269,26 @@ function main() {
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg === "--spem") {
-      spemPath = args[++i];
-    } else if (arg === "--words") {
-      wordsPath = args[++i];
-    } else if (!svgPath && !arg.startsWith("-")) {
+    if (arg === "--spem" || arg === "--words") {
+      const value = args[i + 1];
+      if (value === undefined || value.startsWith("-")) {
+        console.error(`Error: ${arg} requires a value.`);
+        process.exit(1);
+      }
+      i++;
+      if (arg === "--spem") {
+        spemPath = value;
+      } else {
+        wordsPath = value;
+      }
+    } else if (arg.startsWith("-")) {
+      console.error(`Error: unknown option ${arg}.`);
+      process.exit(1);
+    } else if (svgPath === null) {
       svgPath = arg;
+    } else {
+      console.error(`Error: unexpected argument ${arg}.`);
+      process.exit(1);
     }
   }
 
@@ -286,6 +301,28 @@ function main() {
   postprocessSvg(svgPath, spemPath, wordsLyPath);
 }
 
-if (import.meta.url === new URL(process.argv[1], "file://").href) {
+/**
+ * True when the module at `importMetaUrl` is the script Node was invoked
+ * with. `argv1` may be missing (REPL, --eval, embedders) or name a path
+ * that no longer exists; both mean "not the entry point" — the guard must
+ * fail safe towards "imported", never crash the importer. Other fs errors
+ * stay loud.
+ * @param {string | undefined} argv1
+ * @param {string} importMetaUrl
+ * @returns {boolean}
+ */
+export function isMainModule(argv1, importMetaUrl) {
+  if (!argv1) return false;
+  try {
+    return realpathSync(argv1) === realpathSync(fileURLToPath(importMetaUrl));
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err;
+    return false;
+  }
+}
+
+// Only run main() when this file is invoked directly from the CLI, not when
+// imported by buildScores.mjs or tests.
+if (isMainModule(process.argv[1], import.meta.url)) {
   main();
 }
