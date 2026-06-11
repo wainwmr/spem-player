@@ -5,11 +5,12 @@ MusicCanvas.define("music-canvas");
 
 var canvas: MusicCanvas | null;
 describe("MusicCanvas custom element", () => {
-  beforeAll(async () => {
+  beforeAll(() => {
     document.body.innerHTML = `<music-canvas></music-canvas>`;
     canvas = document.querySelector("music-canvas");
-    // Wait for connectedCallback -> #init -> processLilypond -> draw
-    await new Promise((r) => setTimeout(r, 500));
+    // No wait needed: the innerHTML setter upgrades the element synchronously
+    // ([CEReactions]) and #init contains no awaits, so the element is fully
+    // initialised here. A genuinely async #init would break this assumption.
   });
 
   afterAll(() => {
@@ -18,7 +19,6 @@ describe("MusicCanvas custom element", () => {
 
   it("Check that the canvasent contains a canvas", async () => {
     expect(canvas).not.toBeNull();
-    console.log(canvas?.innerHTML);
     expect(canvas?.querySelector("canvas")).not.toBe(null);
   });
 
