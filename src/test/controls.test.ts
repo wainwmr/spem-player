@@ -148,7 +148,7 @@ describe("MusicControls custom element", () => {
     return new Promise((resolve, reject) => {
       try {
         // Perform assertions
-        expect((event as CustomEvent).detail).not.toBeNull;
+        expect((event as CustomEvent).detail).not.toBeNull();
 
         resolve(true); // Resolve if assertions pass
       } catch (error) {
