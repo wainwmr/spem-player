@@ -11,13 +11,13 @@ The repository uses GitHub Actions for automated testing and dependency updates.
 
 ### `ci.yml`
 
-Triggers on every push and pull request to `main`, and nightly at 00:00 UTC via a `schedule` cron.
+Triggers on push and pull request to `main`, nightly at 00:00 UTC via a `schedule` cron, and path-filtered to skip changes that do not affect the application build or unit tests (for example, `lilypond/src/**` and `lilypond/build/**` are ignored).
 
 Defines one job.
 
 #### `test` job
 
-Runs on every trigger. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`, then `pnpm run test:lilypond`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
+Runs on every trigger. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
 
 ### `e2e.yml`
 
@@ -36,7 +36,7 @@ This workflow is intentionally excluded from the PR gate. Playwright tests are s
 
 ### `lilypond.yml`
 
-Triggers on push to `main` and on `pull_request`, both path-filtered to `lilypond/src/**`, `lilypond/build/buildScores.mjs`, `lilypond/build/postprocessSvg.mjs`, and `lilypond/build/install-lilypond.sh`.
+Triggers on push to `main` and on `pull_request`, both path-filtered to `lilypond/src/**`, `lilypond/test/**`, `lilypond/build/buildScores.mjs`, `lilypond/build/postprocessSvg.mjs`, and `lilypond/build/install-lilypond.sh`.
 
 Permissions: `contents: write`.
 
