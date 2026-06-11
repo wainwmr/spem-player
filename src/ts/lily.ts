@@ -254,8 +254,8 @@ function setupLilypondParser(): ohm.Semantics {
 
 // A continuous singing interval for one part: bar positions from start to end.
 export type Range = {
-  from: number;
-  to: number;
+  readonly from: number;
+  readonly to: number;
 };
 
 // HACK: barCount is still exported as a module-level variable consumed by MusicControls.ts
@@ -271,7 +271,8 @@ export var barCount: number = 0;
 // readonly because canvas.test.ts deliberately mutates `notesByQuant` to
 // exercise seek()'s defensive path (restoring at end-of-test); deep readonly
 // would force a wider refactor. Callers MUST treat `notesByQuant`, `ranges`,
-// and `frLocations` as immutable in non-test code.
+// and `frLocations` as immutable in non-test code (Range fields are
+// compiler-enforced readonly since #551; the Map and array levels are not).
 export type LilypondData = {
   readonly notesByQuant: Map<number, NoteEntry[]>;
   readonly ranges: Map<string, Range[]>;

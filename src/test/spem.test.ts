@@ -1,4 +1,4 @@
-import { processLilypond } from "../ts/lily";
+import { processLilypond, type Range } from "../ts/lily";
 
 describe("Check that spem notes looks good", () => {
   const { notesByQuant, ranges } = processLilypond();
@@ -77,5 +77,20 @@ describe("Check that spem notes looks good", () => {
       }
     }
     expect(notesByQuant.get(121.75)).toBeUndefined();
+  });
+
+  it("Range fields are readonly at compile time (#551)", () => {
+    // Pins the readonly invariant in both directions: while it holds, the
+    // ts-expect-error directives below suppress the TS2540 these writes
+    // produce; if someone removes readonly, the directives become "unused
+    // directive" errors in check:types. Writes go to a fresh literal, never
+    // the cached fixture (readonly is compile-time only — the assignments
+    // execute at runtime).
+    const r: Range = { from: 1, to: 2 };
+    // @ts-expect-error -- Range.from is readonly (#551)
+    r.from = 0;
+    // @ts-expect-error -- Range.to is readonly (#551)
+    r.to = 0;
+    expect(r.from).toBe(0);
   });
 });
