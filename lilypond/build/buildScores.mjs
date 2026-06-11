@@ -93,9 +93,13 @@ function checkLilypond(version) {
   let output;
   try {
     output = execSync("lilypond --version", { encoding: "utf-8", stdio: "pipe" });
-  } catch {
+  } catch (error) {
     console.error("Error: lilypond is not installed or not on PATH.");
     console.error("Please install LilyPond before building scores.");
+    console.error(String(error?.message ?? error));
+    console.error(
+      `(status: ${error?.status ?? "none"}, signal: ${error?.signal ?? "none"})`
+    );
     process.exit(1);
   }
 
@@ -106,6 +110,11 @@ function checkLilypond(version) {
       `Error: LilyPond ${lilypondVersion || "unknown"} is installed, but ${minVersion} or later is required.`
     );
     console.error("Please upgrade LilyPond before building scores.");
+    if (!lilypondVersion) {
+      console.error(
+        `'lilypond --version' stdout was:\n${output.trim() || "(empty)"}`
+      );
+    }
     process.exit(1);
   }
 }

@@ -439,6 +439,44 @@ describe("buildScores.mjs integration", () => {
     expect(result.status).not.toBe(0);
     const output = (result.stdout + result.stderr).toLowerCase();
     expect(output).toContain("lilypond");
+    // Node's checkExecSyncError prefix is platform-stable; shell wordings
+    // are not (cmd "not recognized", bash "command not found", dash plain
+    // "not found" or — via the empty-PATH-element cwd trap — "Permission
+    // denied"). Both branches reach stderr only through the evidence line
+    // #549 added, so this still pins that line. ENOENT covers the one
+    // remaining class: the shell binary itself failing to spawn.
+    expect(result.stderr).toMatch(/Command failed: lilypond --version|ENOENT/);
+    expect(result.stderr).toMatch(/\(status: (?:\d+|none), signal: none\)/);
+  });
+
+  it("reports the raw --version output when the version cannot be parsed (#549)", () => {
+    // createWorkspace() containment: if the guarded regression ever occurs
+    // (parse failure not detected), the build proceeds and the fake would
+    // overwrite real gitignored src/scores SVGs with stubs. Contain it.
+    const ws = createWorkspace();
+    try {
+      const envWeird = {
+        ...env,
+        FAKE_LILYPOND_VERSION: "weird-build",
+      };
+
+      const result = spawnSync(
+        process.execPath,
+        [join(ws, "build", "buildScores.mjs")],
+        {
+          cwd: ws,
+          env: envWeird,
+          encoding: "utf-8",
+        }
+      );
+
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain("LilyPond unknown is installed");
+      expect(result.stderr).toContain("'lilypond --version' stdout was");
+      expect(result.stderr).toContain("weird-build");
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+    }
   });
 
   it("fails when lilypond version is too old", () => {
