@@ -443,9 +443,7 @@ export class MusicCanvas extends MusicElement {
         const startY =
           this.canvasPadding + c * this.choirHeight + p * this.partHeight;
 
-        const list: { from: number; to: number }[] = this.ranges.get(
-          `${c}-${p}`
-        )!;
+        const list = this.ranges.get(`${c}-${p}`)!;
         list.forEach((r) => {
           const from = r.from;
           const to = r.to;
