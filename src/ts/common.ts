@@ -142,6 +142,26 @@ if (config.recording.length !== 2) {
   );
 }
 
+// Fail fast at import time: the score-SVG fallback (MusicScore.choirSvgNames)
+// resolves the ALC name `config.choirs[0][choir]` for any recording's choir,
+// which only holds if every recording row exists and all rows are of equal
+// length. Assert one row per recording, all of equal length, so a future edit
+// that makes a row short cannot silently break the "render rather than go
+// blank" fallback (it would resolve `undefined`). Mirrors the other fail-fast
+// config guards in this file.
+if (config.choirs.length !== config.recording.length) {
+  throw new Error(
+    `config.choirs must have one row per recording: got ${config.choirs.length} rows for ${config.recording.length} recordings`
+  );
+}
+for (let v = 0; v < config.choirs.length; v++) {
+  if (config.choirs[v].length !== config.choirs[0].length) {
+    throw new Error(
+      `config.choirs[${v}] must have the same length as config.choirs[0]`
+    );
+  }
+}
+
 // Fail fast at import time: mismatched lengths would silently corrupt
 // getBarFromTime/getTimeFromBar interval lookups. Throwing at module scope
 // breaks the whole app on bad config — intentional, since the alternative

@@ -737,4 +737,198 @@ describe("MusicScore custom element", () => {
 
     MusicScore.testSvgLoader = originalLoader;
   });
+
+  it("observes the recording attribute and updates the recording property (#237)", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    // Connect and load once so the element is live; recording defaults to 0.
+    const waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem.setAttribute("choir", "0");
+    await waitingForLoaded;
+    expect(elem.recording).toBe(0);
+
+    // Observing "recording" must both update the property and trigger a reload.
+    // Awaiting the reload asserts the observed-attribute contract (the
+    // attributeChangedCallback oldValue==newValue guard does not suppress a
+    // genuine 0->1 change) and leaves no #loadScore() promise dangling past the
+    // test boundary.
+    const reloaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem.setAttribute("recording", "1");
+    await reloaded;
+    expect(elem.recording).toBe(1);
+  });
+
+  it("reloads the score with the new recording when recording changes (#237)", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    const recordings: number[] = [];
+    const originalLoader = MusicScore.testSvgLoader;
+    MusicScore.testSvgLoader = (scoreType, _choir, recording) => {
+      recordings.push(recording);
+      return makeFixtureSvg(scoreType);
+    };
+
+    // Initial choir load happens at recording 0.
+    let loaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem.setAttribute("choir", "0");
+    await loaded;
+    const countAfterChoir = recordings.length;
+
+    // Changing recording alone (no choir change) must trigger a fresh load
+    // carrying the new recording value.
+    loaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem.setAttribute("recording", "1");
+    await loaded;
+
+    expect(recordings.length).toBeGreaterThan(countAfterChoir);
+    expect(recordings[recordings.length - 1]).toBe(1);
+
+    MusicScore.testSvgLoader = originalLoader;
+  });
+
+  it("resolves the CotE choir name with an ALC fallback (#237)", () => {
+    // CotE (recording 1): the primary filename uses the CotE name, the
+    // fallback is always the ALC name for the same choir, so the score can
+    // fall back to the ALC SVG while CotE SVGs do not exist (until #573).
+    expect(MusicScore.choirSvgNames(1, 0)).toEqual({
+      primary: "1",
+      fallback: "I A",
+    });
+    expect(MusicScore.choirSvgNames(1, 2)).toEqual({
+      primary: "3",
+      fallback: "II A",
+    });
+    // ALC (recording 0): primary and fallback are identical.
+    expect(MusicScore.choirSvgNames(0, 0)).toEqual({
+      primary: "I A",
+      fallback: "I A",
+    });
+  });
+
+  it("loadWithFallback returns the primary when it loads, without trying the fallback (#237)", async () => {
+    const calls: string[] = [];
+    const importer = async (stem: string) => {
+      calls.push(stem);
+      return `<svg data-stem="${stem}"/>`;
+    };
+    const svg = await MusicScore.loadWithFallback("1", "I A", importer);
+    expect(svg).toBe('<svg data-stem="1"/>');
+    expect(calls).toEqual(["1"]); // fallback never attempted
+  });
+
+  it("loadWithFallback falls back to the ALC name when the primary import fails (#237)", async () => {
+    const calls: string[] = [];
+    const importer = async (stem: string) => {
+      calls.push(stem);
+      if (stem === "1") throw new Error("missing CotE file");
+      return `<svg data-stem="${stem}"/>`;
+    };
+    const svg = await MusicScore.loadWithFallback("1", "I A", importer);
+    expect(svg).toBe('<svg data-stem="I A"/>');
+    expect(calls).toEqual(["1", "I A"]); // primary then fallback
+  });
+
+  it("loadWithFallback returns null when both primary and fallback fail (#237)", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const importer = async () => {
+      throw new Error("nope");
+    };
+    const svg = await MusicScore.loadWithFallback("1", "I A", importer);
+    expect(svg).toBeNull();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
+  });
+
+  it("loadWithFallback does not re-import when primary === fallback (ALC) (#237)", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const calls: string[] = [];
+    const importer = async (stem: string) => {
+      calls.push(stem);
+      throw new Error("missing");
+    };
+    const svg = await MusicScore.loadWithFallback("I A", "I A", importer);
+    expect(svg).toBeNull();
+    expect(calls).toEqual(["I A"]); // single attempt, no redundant retry
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
+  });
+
+  it("aborts a stale choir load when a newer recording load resolves first (#237)", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    let resolveChoir: (svg: string) => void = () => {};
+    let resolveRecording: (svg: string) => void = () => {};
+
+    const originalLoader = MusicScore.testSvgLoader;
+    // The two interleaved loads are told apart by the recording argument:
+    // setChoir(0) loads at recording 0, setRecording(1) loads at recording 1.
+    // Both drive the shared #loadGeneration guard (#391), so a recording change
+    // racing a choir change must resolve consistently.
+    MusicScore.testSvgLoader = (scoreType, _choir, recording) => {
+      if (recording === 0) {
+        return new Promise((resolve) => {
+          resolveChoir = resolve;
+        }) as unknown as string;
+      }
+      if (recording === 1) {
+        return new Promise((resolve) => {
+          resolveRecording = resolve;
+        }) as unknown as string;
+      }
+      return makeFixtureSvg(scoreType);
+    };
+
+    const pChoir = elem.setChoir(0); // generation 1, recording 0
+    const pRecording = elem.setRecording(1); // generation 2 (newer), recording 1
+
+    // The newer load (recording) resolves first and wins.
+    resolveRecording(
+      makeFixtureSvg("modern").replace("<svg ", '<svg data-rec="1" ')
+    );
+    await new Promise((r) => setTimeout(r, 10));
+
+    // The stale choir load resolves last and must be discarded by the guard.
+    resolveChoir(
+      makeFixtureSvg("modern").replace("<svg ", '<svg data-rec="0" ')
+    );
+
+    await Promise.all([pChoir, pRecording]);
+
+    expect(elem.recording).toBe(1);
+    expect(elem.svg).not.toBeNull();
+    expect(elem.svg!.getAttribute("data-rec")).toBe("1"); // newer load won
+
+    MusicScore.testSvgLoader = originalLoader;
+  });
 });

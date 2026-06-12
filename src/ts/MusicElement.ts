@@ -80,7 +80,7 @@ export class MusicElement extends HTMLElement {
     this.fireEvent("music-controls-changed");
   }
 
-  setRecording(v: number | string) {
+  setRecording(v: string | number) {
     this.recording = toRecordingIndex(v);
     this.fireEvent("music-controls-changed");
   }

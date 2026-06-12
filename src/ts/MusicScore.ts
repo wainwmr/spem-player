@@ -2,12 +2,94 @@
 // SPDX-License-Identifier: MIT
 
 import config from "./config";
-import { colors, toNum, TestSvgLoader } from "./common";
+import { colors, toNum, RecordingIndex, TestSvgLoader } from "./common";
 
 import { MusicElement } from "./MusicElement";
 
+/**
+ * The SVG filename stems for a choir under a given recording: `primary` is the
+ * selected recording's own naming, `fallback` is always the ALC name for the
+ * same choir. Both are stems of `config.choirs[*][choir]`, so for an in-range
+ * `choir` a `fallback` load always resolves a real file: the row-parity assert
+ * in `common.ts` guarantees the ALC name exists. (Clamping `choir` is the
+ * caller's responsibility — see `choirSvgNames`.)
+ */
+export interface ChoirSvgNames {
+  primary: string;
+  fallback: string;
+}
+
 export class MusicScore extends MusicElement {
-  static observedAttributes = ["choir", "part", "bar", "playing", "score-type"];
+  static observedAttributes = [
+    "choir",
+    "part",
+    "bar",
+    "playing",
+    "score-type",
+    "recording",
+  ];
+
+  /**
+   * Resolve the SVG filename stems for a recording and choir: the primary
+   * (the recording's own naming, `config.choirs[recording]`) and the ALC
+   * fallback (`config.choirs[0]`) for the same choir.
+   *
+   * CotE-named SVGs do not exist until #573, so a CotE selection resolves a
+   * primary that `#loadSvg()` cannot import and falls back to the ALC file
+   * rather than going blank; once #573 lands the primary loads directly.
+   *
+   * Precondition: `choir` must be in range (`0..config.choirs[0].length - 1`).
+   * The caller (`#loadScore` via the base `setChoir`) clamps it; this static
+   * helper does not, so an out-of-range `choir` yields an unusable stem.
+   */
+  static choirSvgNames(
+    recording: RecordingIndex,
+    choir: number
+  ): ChoirSvgNames {
+    return {
+      primary: config.choirs[recording][choir],
+      fallback: config.choirs[0][choir],
+    };
+  }
+
+  /**
+   * Load an SVG by choir-name stem, trying `primary` first and falling back to
+   * `fallback` when the primary cannot be loaded. `importer` performs the
+   * actual load (production passes a Vite `?raw` dynamic import; tests inject a
+   * stub), which keeps the try / fallback / null branching testable without
+   * the real bundler.
+   *
+   * The primary may legitimately be absent (e.g. CotE SVGs until #573), so a
+   * primary failure tries `fallback` rather than surfacing. When
+   * `primary === fallback` there is no alternative, so the single failure is
+   * logged and `null` returned with no redundant re-import. A both-failed load
+   * logs and returns `null`; the caller then renders nothing.
+   */
+  static async loadWithFallback(
+    primary: string,
+    fallback: string,
+    importer: (stem: string) => Promise<string>
+  ): Promise<string | null> {
+    try {
+      return await importer(primary);
+    } catch (primaryError) {
+      if (primary === fallback) {
+        console.error(`Error loading score SVG "${primary}": ${primaryError}`);
+        return null;
+      }
+      try {
+        return await importer(fallback);
+      } catch (fallbackError) {
+        // Both failed: log the primary error too — when the primary is a real
+        // file (not the expected-absent CotE case) its failure is the more
+        // diagnostic one.
+        console.error(
+          `Error loading score SVG "${primary}" (${primaryError}); fallback "${fallback}" also failed (${fallbackError})`
+        );
+        return null;
+      }
+    }
+  }
 
   /**
    * Test-only hook: when set, #loadSvg() bypasses the dynamic import and
@@ -204,17 +286,26 @@ export class MusicScore extends MusicElement {
       }
     }
 
-    try {
-      const choirName = config.choirs[this.recording][this.choir];
-      const svgModule = await import(
-        `../scores/Hugh Keyte/${this.scoreType}/Choir ${choirName}.svg?raw`
-      );
+    const { primary, fallback } = MusicScore.choirSvgNames(
+      this.recording,
+      this.choir
+    );
+    // The primary stem may name a file that does not exist (CotE SVGs until
+    // #573), so loadWithFallback tries the ALC fallback before giving up. This
+    // is a general "primary may be absent" guard, not a CotE-only workaround:
+    // it keeps the score rendering for any missing or renamed primary.
+    const svg = await MusicScore.loadWithFallback(primary, fallback, (stem) =>
+      import(
+        `../scores/Hugh Keyte/${this.scoreType}/Choir ${stem}.svg?raw`
+      ).then((svgModule) => svgModule.default as string)
+    );
+    // Guard on `typeof === "string"` (matching the test-seam branch above), not
+    // merely non-null, so a degenerate import resolving without a string
+    // `default` cannot fire a spurious loaded event.
+    if (typeof svg === "string") {
       this.fireEvent("music-score-loaded");
-      return svgModule.default;
-    } catch (error) {
-      console.error(`Error loading SVG: ${error}`);
-      return null;
     }
+    return svg;
   };
 
   async #loadScore() {
@@ -291,6 +382,16 @@ export class MusicScore extends MusicElement {
 
     // set the border color to match
     this.style.borderColor = `hsla(${colors().choir[this.choir]}, 80%, 55%, 1)`;
+  }
+
+  async setRecording(v: string | number) {
+    super.setRecording(v);
+
+    // The choir label is baked into the SVG file, which #loadSvg() selects
+    // from the recording, so a recording change must reload the score
+    // (mirrors setChoir and setScoreType). #loadScore()'s generation guard
+    // (#391) keeps a recording change racing a choir change consistent.
+    await this.#loadScore();
   }
 
   setBar(b: string | number) {

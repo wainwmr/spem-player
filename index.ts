@@ -125,9 +125,6 @@ async function setChoir(c: number, forceChange = false) {
   // Update the score for this choir
   score.setAttribute("choir", String(current.choir));
 
-  // Set the recording of the audio to use
-  score.setAttribute("recording", String(current.recording));
-
   // Update the canvas
   canvas.setAttribute("choir", String(current.choir));
 }
@@ -511,6 +508,11 @@ async function setRecording(r: number) {
 
   // Update the input field
   controls.setAttribute("recording", String(current.recording));
+
+  // Propagate to the score so it reloads with the selected recording's naming
+  // (#237). This is the only place recording reaches the score, so toggling
+  // recording without a choir change updates it.
+  score.setAttribute("recording", String(current.recording));
 }
 
 function toggleRecording() {
