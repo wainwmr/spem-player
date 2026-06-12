@@ -1,5 +1,8 @@
-import { test, after } from "node:test";
+import { test, after, describe } from "node:test";
 import assert from "node:assert/strict";
+import { mkdtempSync, writeFileSync, rmSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 import {
   projectedPct,
   computeUsageStatus,
@@ -11,6 +14,14 @@ import {
   formatMessage,
   getReportingSince,
   parseRepo,
+  todayISO,
+  loadSeries,
+  saveSeries,
+  appendOrReplaceDay,
+  buildLoggedEntry,
+  githubRunsToDailySeries,
+  netlifyPercentagesToBackfill,
+  buildBackfillSeries,
 } from "./monitor-resources.mjs";
 
 // projectedPct: linear burn-rate projection
@@ -287,4 +298,161 @@ test("parseRepo throws when GITHUB_REPOSITORY is empty string", () => {
     () => parseRepo(),
     /GITHUB_REPOSITORY must be owner\/repo format, got: /
   );
+});
+
+// todayISO: returns UTC calendar date
+test("todayISO returns YYYY-MM-DD from a UTC timestamp", () => {
+  assert.equal(todayISO(new Date("2026-06-12T14:23:00Z")), "2026-06-12");
+});
+
+describe("loadSeries / saveSeries", () => {
+  let tmpDir;
+  after(() => {
+    if (tmpDir) rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  test("loadSeries returns empty array for missing file", () => {
+    tmpDir = mkdtempSync(join(tmpdir(), "monitor-series-"));
+    const result = loadSeries(join(tmpDir, "does-not-exist.json"));
+    assert.deepEqual(result, []);
+  });
+
+  test("loadSeries returns empty array for empty file", () => {
+    tmpDir = mkdtempSync(join(tmpdir(), "monitor-series-"));
+    const path = join(tmpDir, "empty.json");
+    writeFileSync(path, "", "utf8");
+    const result = loadSeries(path);
+    assert.deepEqual(result, []);
+  });
+
+  test("loadSeries throws on malformed JSON", () => {
+    tmpDir = mkdtempSync(join(tmpdir(), "monitor-series-"));
+    const path = join(tmpDir, "bad.json");
+    writeFileSync(path, "not json", "utf8");
+    assert.throws(() => loadSeries(path), /Unexpected token/);
+  });
+
+  test("loadSeries throws on non-array JSON", () => {
+    tmpDir = mkdtempSync(join(tmpdir(), "monitor-series-"));
+    const path = join(tmpDir, "object.json");
+    writeFileSync(path, JSON.stringify({ foo: 1 }), "utf8");
+    assert.throws(() => loadSeries(path), /must contain a JSON array/);
+  });
+
+  test("saveSeries round-trips through loadSeries", () => {
+    tmpDir = mkdtempSync(join(tmpdir(), "monitor-series-"));
+    const path = join(tmpDir, "series.json");
+    const series = [
+      { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, source: "logged" },
+    ];
+    saveSeries(series, path);
+    const loaded = loadSeries(path);
+    assert.deepEqual(loaded, series);
+  });
+});
+
+// appendOrReplaceDay: idempotent per date and sorted
+test("appendOrReplaceDay appends a new date", () => {
+  const series = [
+    { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, source: "logged" },
+  ];
+  const entry = { date: "2026-06-11", netlifyCurrent: 15, githubMinutes: 25, source: "logged" };
+  const result = appendOrReplaceDay(series, entry);
+  assert.equal(result.length, 2);
+  assert.equal(result[1].date, "2026-06-11");
+});
+
+test("appendOrReplaceDay replaces an existing date", () => {
+  const series = [
+    { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, source: "logged" },
+  ];
+  const entry = { date: "2026-06-10", netlifyCurrent: 99, githubMinutes: 99, source: "logged" };
+  const result = appendOrReplaceDay(series, entry);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].netlifyCurrent, 99);
+});
+
+test("appendOrReplaceDay keeps series sorted", () => {
+  const series = [
+    { date: "2026-06-12", netlifyCurrent: 12, githubMinutes: 22, source: "logged" },
+  ];
+  const entry = { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, source: "logged" };
+  const result = appendOrReplaceDay(series, entry);
+  assert.equal(result[0].date, "2026-06-10");
+  assert.equal(result[1].date, "2026-06-12");
+});
+
+// buildLoggedEntry: shapes a logged entry from usage records
+test("buildLoggedEntry uses current values and source logged", () => {
+  const netlify = { current: 30, limit: 300, periodStartDate: "2026-06-12", periodEndDate: "2026-07-11" };
+  const github = { current: 120, limit: 2000, periodStartDate: "2026-06-01", periodEndDate: "2026-06-30" };
+  const entry = buildLoggedEntry("2026-06-12", netlify, github);
+  assert.deepEqual(entry, {
+    date: "2026-06-12",
+    netlifyCurrent: 30,
+    githubMinutes: 120,
+    source: "logged",
+  });
+});
+
+// githubRunsToDailySeries: cumulative minutes per day
+test("githubRunsToDailySeries cumulates runs per day", () => {
+  const runs = [
+    { run_started_at: "2026-06-01T08:00:00Z", run_duration_ms: 60000 },
+    { run_started_at: "2026-06-01T09:00:00Z", run_duration_ms: 120000 },
+    { run_started_at: "2026-06-03T10:00:00Z", run_duration_ms: 180000 },
+  ];
+  const result = githubRunsToDailySeries(runs, "2026-06-01", "2026-06-04");
+  assert.deepEqual(result, [
+    { date: "2026-06-01", githubMinutes: 3 },
+    { date: "2026-06-02", githubMinutes: 3 },
+    { date: "2026-06-03", githubMinutes: 6 },
+    { date: "2026-06-04", githubMinutes: 6 },
+  ]);
+});
+
+test("githubRunsToDailySeries falls back to updated_at when duration missing", () => {
+  const runs = [
+    {
+      run_started_at: "2026-06-02T10:00:00Z",
+      updated_at: "2026-06-02T10:05:30Z",
+    },
+  ];
+  const result = githubRunsToDailySeries(runs, "2026-06-02", "2026-06-02");
+  assert.deepEqual(result, [{ date: "2026-06-02", githubMinutes: 6 }]);
+});
+
+test("githubRunsToDailySeries ignores runs with missing run_started_at", () => {
+  const runs = [{ run_duration_ms: 60000 }];
+  const result = githubRunsToDailySeries(runs, "2026-06-01", "2026-06-01");
+  assert.deepEqual(result, [{ date: "2026-06-01", githubMinutes: 0 }]);
+});
+
+// netlifyPercentagesToBackfill
+test("netlifyPercentagesToBackfill converts percentages to minutes", () => {
+  const percentages = [
+    { date: "2026-06-12", pct: 10 },
+    { date: "2026-06-13", pct: 23 },
+  ];
+  const result = netlifyPercentagesToBackfill(percentages, 300);
+  assert.deepEqual(result, [
+    { date: "2026-06-12", netlifyCurrent: 30 },
+    { date: "2026-06-13", netlifyCurrent: 69 },
+  ]);
+});
+
+// buildBackfillSeries: merges GitHub and Netlify backfill data
+test("buildBackfillSeries combines both sources on matching dates", () => {
+  const github = [
+    { date: "2026-06-12", githubMinutes: 100 },
+    { date: "2026-06-13", githubMinutes: 120 },
+  ];
+  const netlify = [
+    { date: "2026-06-12", netlifyCurrent: 30 },
+  ];
+  const result = buildBackfillSeries(github, netlify);
+  assert.deepEqual(result, [
+    { date: "2026-06-12", netlifyCurrent: 30, githubMinutes: 100, source: "backfill" },
+    { date: "2026-06-13", netlifyCurrent: null, githubMinutes: 120, source: "backfill" },
+  ]);
 });

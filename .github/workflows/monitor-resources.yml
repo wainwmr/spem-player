@@ -10,7 +10,7 @@ on:
 permissions:
   actions: read
   issues: write
-  contents: read
+  contents: write
   pull-requests: read
 
 jobs:
@@ -28,3 +28,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: node .github/scripts/monitor-resources.mjs
+
+      - name: Commit daily resource series
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/monitor-series.json
+          if git diff --cached --quiet; then
+            echo "No series changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: update daily resource series [skip ci]"
+          git push
