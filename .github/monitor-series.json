@@ -4,83 +4,191 @@
     "netlifyCurrent": 0,
     "githubMinutes": 104,
     "source": "backfill",
-    "mergedPRs": 5
+    "mergedPRs": 5,
+    "summary": {
+      "netlifyPct": 0,
+      "netlifyProjected": 0,
+      "netlifyEmoji": "🟢",
+      "githubPct": 5,
+      "githubProjected": 156,
+      "githubEmoji": "🔴",
+      "mergedPRs": 5
+    }
   },
   {
     "date": "2026-06-02",
     "netlifyCurrent": 0,
     "githubMinutes": 205,
     "source": "backfill",
-    "mergedPRs": 7
+    "mergedPRs": 7,
+    "summary": {
+      "netlifyPct": 0,
+      "netlifyProjected": 0,
+      "netlifyEmoji": "🟢",
+      "githubPct": 10,
+      "githubProjected": 154,
+      "githubEmoji": "🔴",
+      "mergedPRs": 7
+    }
   },
   {
     "date": "2026-06-03",
     "netlifyCurrent": 7,
     "githubMinutes": 315,
     "source": "backfill",
-    "mergedPRs": 13
+    "mergedPRs": 13,
+    "summary": {
+      "netlifyPct": 2,
+      "netlifyProjected": 23,
+      "netlifyEmoji": "🟢",
+      "githubPct": 16,
+      "githubProjected": 158,
+      "githubEmoji": "🔴",
+      "mergedPRs": 13
+    }
   },
   {
     "date": "2026-06-04",
     "netlifyCurrent": 14,
     "githubMinutes": 337,
     "source": "backfill",
-    "mergedPRs": 4
+    "mergedPRs": 4,
+    "summary": {
+      "netlifyPct": 5,
+      "netlifyProjected": 35,
+      "netlifyEmoji": "🟢",
+      "githubPct": 17,
+      "githubProjected": 126,
+      "githubEmoji": "🔴",
+      "mergedPRs": 4
+    }
   },
   {
     "date": "2026-06-05",
     "netlifyCurrent": 14,
     "githubMinutes": 343,
     "source": "backfill",
-    "mergedPRs": 0
+    "mergedPRs": 0,
+    "summary": {
+      "netlifyPct": 5,
+      "netlifyProjected": 28,
+      "netlifyEmoji": "🟢",
+      "githubPct": 17,
+      "githubProjected": 103,
+      "githubEmoji": "🔴",
+      "mergedPRs": 0
+    }
   },
   {
     "date": "2026-06-06",
     "netlifyCurrent": 22,
     "githubMinutes": 362,
     "source": "backfill",
-    "mergedPRs": 6
+    "mergedPRs": 6,
+    "summary": {
+      "netlifyPct": 7,
+      "netlifyProjected": 37,
+      "netlifyEmoji": "🟢",
+      "githubPct": 18,
+      "githubProjected": 90,
+      "githubEmoji": "🟡",
+      "mergedPRs": 6
+    }
   },
   {
     "date": "2026-06-07",
     "netlifyCurrent": 24,
     "githubMinutes": 371,
     "source": "backfill",
-    "mergedPRs": 1
+    "mergedPRs": 1,
+    "summary": {
+      "netlifyPct": 8,
+      "netlifyProjected": 34,
+      "netlifyEmoji": "🟢",
+      "githubPct": 19,
+      "githubProjected": 80,
+      "githubEmoji": "🟢",
+      "mergedPRs": 1
+    }
   },
   {
     "date": "2026-06-08",
     "netlifyCurrent": 39,
     "githubMinutes": 412,
     "source": "backfill",
-    "mergedPRs": 7
+    "mergedPRs": 7,
+    "summary": {
+      "netlifyPct": 13,
+      "netlifyProjected": 49,
+      "netlifyEmoji": "🟢",
+      "githubPct": 21,
+      "githubProjected": 77,
+      "githubEmoji": "🟢",
+      "mergedPRs": 7
+    }
   },
   {
     "date": "2026-06-09",
     "netlifyCurrent": 48,
     "githubMinutes": 439,
     "source": "backfill",
-    "mergedPRs": 7
+    "mergedPRs": 7,
+    "summary": {
+      "netlifyPct": 16,
+      "netlifyProjected": 53,
+      "netlifyEmoji": "🟢",
+      "githubPct": 22,
+      "githubProjected": 73,
+      "githubEmoji": "🟢",
+      "mergedPRs": 7
+    }
   },
   {
     "date": "2026-06-10",
     "netlifyCurrent": 66,
     "githubMinutes": 486,
     "source": "backfill",
-    "mergedPRs": 10
+    "mergedPRs": 10,
+    "summary": {
+      "netlifyPct": 22,
+      "netlifyProjected": 66,
+      "netlifyEmoji": "🟢",
+      "githubPct": 24,
+      "githubProjected": 73,
+      "githubEmoji": "🟢",
+      "mergedPRs": 10
+    }
   },
   {
     "date": "2026-06-11",
     "netlifyCurrent": 81,
     "githubMinutes": 545,
     "source": "backfill",
-    "mergedPRs": 10
+    "mergedPRs": 10,
+    "summary": {
+      "netlifyPct": 27,
+      "netlifyProjected": 74,
+      "netlifyEmoji": "🟢",
+      "githubPct": 27,
+      "githubProjected": 74,
+      "githubEmoji": "🟢",
+      "mergedPRs": 10
+    }
   },
   {
     "date": "2026-06-12",
     "netlifyCurrent": 93,
     "githubMinutes": 621,
     "mergedPRs": 21,
-    "source": "logged"
+    "source": "logged",
+    "summary": {
+      "netlifyPct": 31,
+      "netlifyProjected": 78,
+      "netlifyEmoji": "🟢",
+      "githubPct": 31,
+      "githubProjected": 78,
+      "githubEmoji": "🟢",
+      "mergedPRs": 21
+    }
   }
 ]
