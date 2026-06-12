@@ -78,7 +78,22 @@ export function paceBucket(projectedPct) {
  *   far, or `null` when the value is unknown for a backfilled day.
  * @property {number} githubMinutes - GitHub Actions minutes consumed so far.
  * @property {number} mergedPRs - Number of PRs merged on this day.
+ * @property {Summary|null} summary - Pre-computed daily status snapshot, or
+ *   `null` when the underlying data is insufficient.
  * @property {"logged"|"backfill"} source - Provenance of the entry.
+ */
+
+/**
+ * @typedef {object} Summary
+ * @property {number|null} netlifyPct - Netlify actual usage percentage.
+ * @property {number|null} netlifyProjected - Netlify projected end-of-period
+ *   percentage.
+ * @property {string|null} netlifyEmoji - Netlify pace emoji.
+ * @property {number} githubPct - GitHub actual usage percentage.
+ * @property {number} githubProjected - GitHub projected end-of-period
+ *   percentage.
+ * @property {string} githubEmoji - GitHub pace emoji.
+ * @property {number} mergedPRs - Number of PRs merged on this day.
  */
 
 /**
@@ -139,6 +154,33 @@ export function computeUsageStatus(usage, now = new Date()) {
   const period = daysInPeriod(usage.periodStartDate, usage.periodEndDate);
   const projected = projectedPct(rawPct, elapsed, period);
   return { pct, projected, statusPct: Math.max(pct, projected) };
+}
+
+/**
+ * Build a daily summary snapshot from the already-fetched usage records.
+ *
+ * @param {string} date - ISO date (YYYY-MM-DD).
+ * @param {UsageRecord} netlify
+ * @param {UsageRecord} github
+ * @param {number} mergedPRs
+ * @returns {Summary}
+ */
+export function buildSummary(date, netlify, github, mergedPRs) {
+  const day = new Date(date);
+  const githubStatus = computeUsageStatus(github, day);
+  const netlifyStatus =
+    netlify.current == null ? null : computeUsageStatus(netlify, day);
+  return {
+    netlifyPct: netlifyStatus?.pct ?? null,
+    netlifyProjected: netlifyStatus?.projected ?? null,
+    netlifyEmoji: netlifyStatus
+      ? paceBucketEmoji(paceBucket(netlifyStatus.projected))
+      : null,
+    githubPct: githubStatus.pct,
+    githubProjected: githubStatus.projected,
+    githubEmoji: paceBucketEmoji(paceBucket(githubStatus.projected)),
+    mergedPRs,
+  };
 }
 
 async function api(url, opts = {}) {
@@ -301,7 +343,7 @@ export function formatMessage(
  * @param {"green"|"yellow"|"red"} bucket
  * @returns {string}
  */
-function paceBucketEmoji(bucket) {
+export function paceBucketEmoji(bucket) {
   if (bucket === "red") return "🔴";
   if (bucket === "yellow") return "🟡";
   return "🟢";
@@ -571,6 +613,7 @@ export function buildLoggedEntry(date, netlify, github, mergedPRs = 0) {
     netlifyCurrent: netlify.current,
     githubMinutes: github.current,
     mergedPRs,
+    summary: buildSummary(date, netlify, github, mergedPRs),
     source: "logged",
   };
 }
@@ -658,9 +701,18 @@ export function netlifyDailyMinutesToBackfill(dailyMinutes) {
  *
  * @param {{date: string, githubMinutes: number}[]} githubSeries
  * @param {{date: string, netlifyCurrent: number}[]} netlifySeries
+ * @param {UsageRecord} githubUsage - Provides limit and period dates for
+ *   summary calculation.
+ * @param {UsageRecord} netlifyUsage - Provides limit and period dates for
+ *   summary calculation.
  * @returns {SeriesEntry[]}
  */
-export function buildBackfillSeries(githubSeries, netlifySeries) {
+export function buildBackfillSeries(
+  githubSeries,
+  netlifySeries,
+  githubUsage,
+  netlifyUsage
+) {
   /** @type {Map<string, {githubMinutes?: number, netlifyCurrent?: number}>} */
   const byDate = new Map();
   for (const { date, githubMinutes } of githubSeries) {
@@ -675,13 +727,28 @@ export function buildBackfillSeries(githubSeries, netlifySeries) {
   }
 
   return Array.from(byDate.entries())
-    .map(([date, values]) => ({
-      date,
-      netlifyCurrent: values.netlifyCurrent ?? null,
-      githubMinutes: values.githubMinutes ?? 0,
-      mergedPRs: 0,
-      source: "backfill",
-    }))
+    .map(([date, values]) => {
+      const github = {
+        current: values.githubMinutes ?? 0,
+        limit: githubUsage.limit,
+        periodStartDate: githubUsage.periodStartDate,
+        periodEndDate: githubUsage.periodEndDate,
+      };
+      const netlify = {
+        current: values.netlifyCurrent ?? null,
+        limit: netlifyUsage.limit,
+        periodStartDate: netlifyUsage.periodStartDate,
+        periodEndDate: netlifyUsage.periodEndDate,
+      };
+      return {
+        date,
+        netlifyCurrent: values.netlifyCurrent ?? null,
+        githubMinutes: values.githubMinutes ?? 0,
+        mergedPRs: 0,
+        summary: buildSummary(date, netlify, github, 0),
+        source: "backfill",
+      };
+    })
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
@@ -699,7 +766,10 @@ export async function seedBackfillSeries(
   netlifyDailyMinutes,
   filePath = SERIES_FILE
 ) {
-  const runs = await getGitHubRuns();
+  const [runs, netlifyUsage] = await Promise.all([
+    getGitHubRuns(),
+    getNetlifyUsage(),
+  ]);
   const githubUsage = await getGitHubUsage(runs);
 
   const githubSeries = githubRunsToDailySeries(
@@ -708,7 +778,12 @@ export async function seedBackfillSeries(
     githubUsage.periodEndDate
   );
   const netlifySeries = netlifyDailyMinutesToBackfill(netlifyDailyMinutes);
-  const backfill = buildBackfillSeries(githubSeries, netlifySeries);
+  const backfill = buildBackfillSeries(
+    githubSeries,
+    netlifySeries,
+    githubUsage,
+    netlifyUsage
+  );
 
   const existing = loadSeries(filePath);
   const existingDates = new Set(existing.map((entry) => entry.date));
@@ -823,7 +898,11 @@ async function main() {
     const series = loadSeries();
     const todayEntry = series.find((entry) => entry.date === todayISO());
     if (todayEntry) {
-      const updated = { ...todayEntry, mergedPRs: mergedCount };
+      const updated = {
+        ...todayEntry,
+        mergedPRs: mergedCount,
+        summary: { ...todayEntry.summary, mergedPRs: mergedCount },
+      };
       saveSeries(appendOrReplaceDay(series, updated));
     }
   } catch (e) {

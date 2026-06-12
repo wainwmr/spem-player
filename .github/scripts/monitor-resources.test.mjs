@@ -21,6 +21,7 @@ import {
   saveSeries,
   appendOrReplaceDay,
   buildLoggedEntry,
+  buildSummary,
   githubRunsToDailySeries,
   netlifyDailyMinutesToBackfill,
   buildBackfillSeries,
@@ -379,7 +380,22 @@ describe("loadSeries / saveSeries", () => {
     tmpDir = mkdtempSync(join(tmpdir(), "monitor-series-"));
     const path = join(tmpDir, "series.json");
     const series = [
-      { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, mergedPRs: 3, source: "logged" },
+      {
+        date: "2026-06-10",
+        netlifyCurrent: 10,
+        githubMinutes: 20,
+        mergedPRs: 3,
+        summary: {
+          netlifyPct: 3,
+          netlifyProjected: 10,
+          netlifyEmoji: "🟢",
+          githubPct: 1,
+          githubProjected: 3,
+          githubEmoji: "🟢",
+          mergedPRs: 3,
+        },
+        source: "logged",
+      },
     ];
     saveSeries(series, path);
     const loaded = loadSeries(path);
@@ -419,25 +435,72 @@ test("appendOrReplaceDay keeps series sorted", () => {
   assert.equal(result[1].date, "2026-06-12");
 });
 
+// buildSummary: pre-computes daily status snapshot
+test("buildSummary computes percentages, projections and emojis", () => {
+  const netlify = {
+    current: 30,
+    limit: 300,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const github = {
+    current: 120,
+    limit: 2000,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const summary = buildSummary("2026-06-12", netlify, github, 2);
+  assert.equal(summary.netlifyPct, 10);
+  assert.equal(summary.netlifyProjected, 25);
+  assert.equal(summary.netlifyEmoji, "🟢");
+  assert.equal(summary.githubPct, 6);
+  assert.equal(summary.githubProjected, 15);
+  assert.equal(summary.githubEmoji, "🟢");
+  assert.equal(summary.mergedPRs, 2);
+});
+
+test("buildSummary uses null netlify values when current is missing", () => {
+  const netlify = {
+    current: null,
+    limit: 300,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const github = {
+    current: 120,
+    limit: 2000,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const summary = buildSummary("2026-06-12", netlify, github, 0);
+  assert.equal(summary.netlifyPct, null);
+  assert.equal(summary.netlifyProjected, null);
+  assert.equal(summary.netlifyEmoji, null);
+  assert.equal(summary.githubPct, 6);
+  assert.ok(summary.githubEmoji);
+});
+
 // buildLoggedEntry: shapes a logged entry from usage records
 test("buildLoggedEntry uses current values and source logged", () => {
-  const netlify = { current: 30, limit: 300, periodStartDate: "2026-06-12", periodEndDate: "2026-07-11" };
+  const netlify = { current: 30, limit: 300, periodStartDate: "2026-06-01", periodEndDate: "2026-06-30" };
   const github = { current: 120, limit: 2000, periodStartDate: "2026-06-01", periodEndDate: "2026-06-30" };
   const entry = buildLoggedEntry("2026-06-12", netlify, github);
-  assert.deepEqual(entry, {
-    date: "2026-06-12",
-    netlifyCurrent: 30,
-    githubMinutes: 120,
-    mergedPRs: 0,
-    source: "logged",
-  });
+  assert.equal(entry.date, "2026-06-12");
+  assert.equal(entry.netlifyCurrent, 30);
+  assert.equal(entry.githubMinutes, 120);
+  assert.equal(entry.mergedPRs, 0);
+  assert.equal(entry.source, "logged");
+  assert.ok(entry.summary);
+  assert.equal(entry.summary.netlifyPct, 10);
+  assert.equal(entry.summary.githubPct, 6);
 });
 
 test("buildLoggedEntry includes merged PR count", () => {
-  const netlify = { current: 30, limit: 300, periodStartDate: "2026-06-12", periodEndDate: "2026-07-11" };
+  const netlify = { current: 30, limit: 300, periodStartDate: "2026-06-01", periodEndDate: "2026-06-30" };
   const github = { current: 120, limit: 2000, periodStartDate: "2026-06-01", periodEndDate: "2026-06-30" };
   const entry = buildLoggedEntry("2026-06-12", netlify, github, 4);
   assert.equal(entry.mergedPRs, 4);
+  assert.equal(entry.summary.mergedPRs, 4);
 });
 
 // githubRunsToDailySeries: cumulative minutes per day
@@ -497,9 +560,30 @@ test("buildBackfillSeries combines both sources on matching dates", () => {
   const netlify = [
     { date: "2026-06-12", netlifyCurrent: 30 },
   ];
-  const result = buildBackfillSeries(github, netlify);
-  assert.deepEqual(result, [
-    { date: "2026-06-12", netlifyCurrent: 30, githubMinutes: 100, mergedPRs: 0, source: "backfill" },
-    { date: "2026-06-13", netlifyCurrent: null, githubMinutes: 120, mergedPRs: 0, source: "backfill" },
-  ]);
+  const githubUsage = {
+    current: 120,
+    limit: 2000,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const netlifyUsage = {
+    current: 30,
+    limit: 300,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = buildBackfillSeries(github, netlify, githubUsage, netlifyUsage);
+  assert.equal(result.length, 2);
+  assert.equal(result[0].date, "2026-06-12");
+  assert.equal(result[0].netlifyCurrent, 30);
+  assert.equal(result[0].githubMinutes, 100);
+  assert.equal(result[0].mergedPRs, 0);
+  assert.equal(result[0].source, "backfill");
+  assert.ok(result[0].summary);
+  assert.equal(result[0].summary.netlifyPct, 10);
+  assert.equal(result[0].summary.githubPct, 5);
+  assert.equal(result[1].date, "2026-06-13");
+  assert.equal(result[1].netlifyCurrent, null);
+  assert.equal(result[1].summary.netlifyPct, null);
+  assert.equal(result[1].summary.githubPct, 6);
 });
