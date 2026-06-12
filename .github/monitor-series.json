@@ -78,9 +78,9 @@
   },
   {
     "date": "2026-06-12",
-    "netlifyCurrent": 90,
-    "githubMinutes": 601,
-    "source": "logged",
-    "mergedPRs": 9
+    "netlifyCurrent": 93,
+    "githubMinutes": 621,
+    "mergedPRs": 21,
+    "source": "logged"
   }
 ]
