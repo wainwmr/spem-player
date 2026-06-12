@@ -50,7 +50,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['.github/scripts/**/*.mjs', 'scripts/**/*.mjs'],
+    files: ['.github/scripts/**/*.mjs', 'scripts/**/*.mjs', '.kimi/scripts/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',

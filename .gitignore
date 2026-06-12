@@ -21,4 +21,6 @@ __pycache__/
 AGENTS.md
 CLAUDE.md
 /scripts/
-.kimi/
+.kimi/*
+!.kimi/methods/
+!.kimi/scripts/
