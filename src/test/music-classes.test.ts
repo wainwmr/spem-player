@@ -13,8 +13,14 @@ describe("Duration", () => {
     expect(new Duration("64").sfths).toBe(1);
   });
 
-  it("defaults to 0 for unknown duration", () => {
-    expect(new Duration("99").sfths).toBe(0);
+  it("throws on an unknown duration", () => {
+    expect(() => new Duration("99")).toThrow("Unknown duration: 99");
+    // The empty string is not a case label, so a duration-less construction
+    // throws too — the `duration` parameter is required for this reason.
+    expect(() => new Duration("")).toThrow("Unknown duration: ");
+    // The throw fires in the switch, before the dotted/multiplier arithmetic,
+    // so an unknown duration throws regardless of those arguments.
+    expect(() => new Duration("99", ".", 2)).toThrow("Unknown duration: 99");
   });
 
   it("handles dotted notes", () => {

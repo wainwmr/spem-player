@@ -7,7 +7,7 @@ export class Duration {
   multiplier: number;
   sfths = 0; // sixtyfourth note
 
-  constructor(duration = "", dotted = "", multiplier = 1) {
+  constructor(duration: string, dotted = "", multiplier = 1) {
     this.duration = duration;
     this.dotted = dotted;
     this.multiplier = multiplier;
@@ -40,8 +40,13 @@ export class Duration {
         this.sfths = 1;
         break;
       default:
-        this.sfths = 0; // How did you get here??
-        break;
+        // Unreachable via the parser: the Ohm `duration` rule limits parsed
+        // strings to the cases above (grammar-consistency.test.ts enforces the
+        // parity). Only a direct call with an unknown string reaches here.
+        // Throw rather than silently set sfths = 0, which would stall
+        // bar-position advance in lily.ts and corrupt timing without error
+        // (#170).
+        throw new Error(`Unknown duration: ${this.duration}`);
     }
     if (dotted != undefined && this.dotted.length > 0) {
       this.sfths = this.sfths * (2 - 0.5 ** this.dotted.length);
