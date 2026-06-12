@@ -10,7 +10,9 @@
  * @module render-burndown
  */
 
-import { createCanvas } from "canvas";
+import { createCanvas, loadImage } from "canvas";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
 
 /**
  * @typedef {import("./monitor-resources.mjs").UsageRecord} UsageRecord
@@ -18,7 +20,6 @@ import { createCanvas } from "canvas";
  */
 
 const COLORS = {
-  background: "#0f172a",
   panelBg: "#1e293b",
   text: "#f8fafc",
   muted: "#94a3b8",
@@ -37,10 +38,9 @@ const PADDING_Y = 24;
 const GAP = 32;
 const PANEL_WIDTH = (CANVAS_WIDTH - 2 * PADDING_X - GAP) / 2;
 const PANEL_HEIGHT = CANVAS_HEIGHT - 2 * PADDING_Y;
-const HEADER_HEIGHT = 72;
-const CHART_TOP = HEADER_HEIGHT + 16;
-const CHART_BOTTOM = PANEL_HEIGHT - 56;
-const CHART_LEFT = 72;
+const CHART_TOP = 24;
+const CHART_BOTTOM = PANEL_HEIGHT - 24;
+const CHART_LEFT = 24;
 const CHART_RIGHT = PANEL_WIDTH - 24;
 const CHART_HEIGHT = CHART_BOTTOM - CHART_TOP;
 const CHART_WIDTH = CHART_RIGHT - CHART_LEFT;
@@ -169,16 +169,21 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 /**
+ * Base directory of this module, used to resolve icon paths.
+ */
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/**
  * Draw one panel.
  *
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} originX
- * @param {string} serviceName
+ * @param {HTMLImageElement} icon
  * @param {UsageRecord} usage
  * @param {{date: string, dayIndex: number, remaining: number}[]} points
  * @param {Date} now
  */
-function drawPanel(ctx, originX, serviceName, usage, points, now) {
+function drawPanel(ctx, originX, icon, usage, points, now) {
   const today = now.toISOString().slice(0, 10);
   const days = usage.periodDays;
   const todayIndex = Math.min(dayDiff(usage.periodStartDate, today), days - 1);
@@ -189,56 +194,33 @@ function drawPanel(ctx, originX, serviceName, usage, points, now) {
   roundRect(ctx, originX, 0, PANEL_WIDTH, PANEL_HEIGHT, 16);
   ctx.fill();
 
-  // Header
-  ctx.fillStyle = COLORS.text;
-  ctx.font = "bold 36px sans-serif";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-  ctx.fillText(serviceName, originX + 24, HEADER_HEIGHT / 2);
-
-  ctx.fillStyle = COLORS.text;
-  ctx.font = "bold 32px sans-serif";
-  ctx.textAlign = "right";
-  ctx.fillText(
-    `${usage.current}/${usage.limit} min`,
-    originX + PANEL_WIDTH - 24,
-    HEADER_HEIGHT / 2
-  );
-
   // Chart origin
   const ox = originX + CHART_LEFT;
   const oy = CHART_TOP;
 
-  // Gridlines and Y-axis labels
+  // Current total, inside the chart area, top-right
+  ctx.fillStyle = COLORS.text;
+  ctx.font = "bold 42px sans-serif";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+  ctx.fillText(
+    `${usage.current}/${usage.limit} m`,
+    originX + PANEL_WIDTH - 24,
+    CHART_TOP + 12
+  );
+
+  // Gridlines (no axis labels)
   ctx.strokeStyle = COLORS.grid;
   ctx.lineWidth = 1;
-  ctx.fillStyle = COLORS.muted;
-  ctx.font = "18px sans-serif";
-  ctx.textAlign = "right";
-  ctx.textBaseline = "middle";
   for (const pct of [0, 25, 50, 75, 100]) {
-    const y = oy + CHART_HEIGHT * (1 - pct / 100);
+    const y = oy + CHART_HEIGHT * (pct / 100);
     ctx.beginPath();
     ctx.moveTo(ox, y);
     ctx.lineTo(ox + CHART_WIDTH, y);
     ctx.stroke();
-    ctx.fillText(`${pct}`, ox - 10, y);
   }
 
-  // X-axis labels
-  ctx.fillStyle = COLORS.muted;
-  ctx.font = "16px sans-serif";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "top";
-  ctx.fillText(formatDate(usage.periodStartDate), ox, CHART_BOTTOM + 10);
-  ctx.textAlign = "right";
-  ctx.fillText(
-    formatDate(usage.periodEndDate),
-    ox + CHART_WIDTH,
-    CHART_BOTTOM + 10
-  );
-
-  // Critical-pace diagonal (full → 0)
+  // Critical-pace diagonal (0% used → 100% used)
   ctx.strokeStyle = COLORS.diagonal;
   ctx.lineWidth = 2;
   ctx.setLineDash([8, 6]);
@@ -248,7 +230,7 @@ function drawPanel(ctx, originX, serviceName, usage, points, now) {
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Actual-remaining line, coloured per segment
+  // Actual usage line, coloured per segment
   if (points.length >= 2) {
     for (let i = 1; i < points.length; i++) {
       const prev = points[i - 1];
@@ -258,9 +240,9 @@ function drawPanel(ctx, originX, serviceName, usage, points, now) {
       const color = COLORS[paceBucket(projected)];
 
       const x1 = ox + (prev.dayIndex / (days - 1)) * CHART_WIDTH;
-      const y1 = oy + CHART_HEIGHT * (prev.remaining / 100);
+      const y1 = oy + CHART_HEIGHT * (1 - prev.remaining / 100);
       const x2 = ox + (curr.dayIndex / (days - 1)) * CHART_WIDTH;
-      const y2 = oy + CHART_HEIGHT * (curr.remaining / 100);
+      const y2 = oy + CHART_HEIGHT * (1 - curr.remaining / 100);
 
       ctx.strokeStyle = color;
       ctx.lineWidth = 5;
@@ -273,7 +255,7 @@ function drawPanel(ctx, originX, serviceName, usage, points, now) {
     }
   }
 
-  // You-are-here line + dot
+  // You-are-here vertical line
   const xNow = ox + (todayIndex / (days - 1)) * CHART_WIDTH;
   ctx.strokeStyle = COLORS.youAreHere;
   ctx.lineWidth = 2;
@@ -282,41 +264,45 @@ function drawPanel(ctx, originX, serviceName, usage, points, now) {
   ctx.lineTo(xNow, CHART_BOTTOM);
   ctx.stroke();
 
-  const currentRemaining = remainingPct(usage.current, usage.limit);
-  const yNow = oy + CHART_HEIGHT * (currentRemaining / 100);
-  ctx.fillStyle = COLORS.youAreHere;
-  ctx.beginPath();
-  ctx.arc(xNow, yNow, 8, 0, Math.PI * 2);
-  ctx.fill();
+  // Place the dot at the last actual data point so the projection starts
+  // exactly where the cumulative line finishes.
+  const lastPoint = points.length > 0 ? points[points.length - 1] : null;
+  const currentUsed = lastPoint
+    ? 100 - lastPoint.remaining
+    : 100 - remainingPct(usage.current, usage.limit);
+  const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
 
-  // Projection from today to period-end
-  const projectedConsumed = 100 - currentRemaining;
-  const projected = projectedEndPct(projectedConsumed, todayIndex + 1, days);
+  // Projection from today to period-end (drawn before the dot so the dot sits on top)
+  const projected = projectedEndPct(currentUsed, todayIndex + 1, days);
   const projectionColor = COLORS[paceBucket(projected)];
   ctx.strokeStyle = projectionColor;
   ctx.lineWidth = 4;
   ctx.setLineDash([10, 6]);
   ctx.beginPath();
   ctx.moveTo(xNow, yNow);
-  ctx.lineTo(ox + CHART_WIDTH, oy + CHART_HEIGHT * Math.max(0, 100 - projected) / 100);
+  ctx.lineTo(ox + CHART_WIDTH, oy + CHART_HEIGHT * Math.min(100, projected) / 100);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  ctx.restore();
-}
+  // White dot on top of the projection line
+  ctx.fillStyle = COLORS.youAreHere;
+  ctx.beginPath();
+  ctx.arc(xNow, yNow, 8, 0, Math.PI * 2);
+  ctx.fill();
 
-/**
- * Format an ISO date as `DD Mon`.
- *
- * @param {string} isoDate
- * @returns {string}
- */
-function formatDate(isoDate) {
-  const d = new Date(isoDate);
-  return `${d.getUTCDate()} ${d.toLocaleString("en-GB", {
-    month: "short",
-    timeZone: "UTC",
-  })}`;
+  // Service icon, bottom-left of the chart area, drawn last so it sits on
+  // top of the you-are-here vertical line when they overlap.
+  const iconHeight = 144;
+  const iconWidth = (icon.width / icon.height) * iconHeight;
+  ctx.drawImage(
+    icon,
+    originX + 36,
+    CHART_BOTTOM - iconHeight - 24,
+    iconWidth,
+    iconHeight
+  );
+
+  ctx.restore();
 }
 
 /**
@@ -326,14 +312,18 @@ function formatDate(isoDate) {
  * @param {UsageRecord} netlify
  * @param {SeriesEntry[]} series
  * @param {Date} [now]
- * @returns {Buffer}
+ * @returns {Promise<Buffer>}
  */
-export function renderBurndown(github, netlify, series, now = new Date()) {
+export async function renderBurndown(github, netlify, series, now = new Date()) {
   const canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = COLORS.background;
-  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  // Transparent outer background; only the two panels are filled.
+
+  const [githubIcon, netlifyIcon] = await Promise.all([
+    loadImage(resolve(__dirname, "icons/github.png")),
+    loadImage(resolve(__dirname, "icons/netlify.png")),
+  ]);
 
   const enrichedGithub = { ...github, periodDays: periodDays(github) };
   const enrichedNetlify = { ...netlify, periodDays: periodDays(netlify) };
@@ -346,11 +336,11 @@ export function renderBurndown(github, netlify, series, now = new Date()) {
     now
   );
 
-  drawPanel(ctx, PADDING_X, "GitHub", enrichedGithub, githubPoints, now);
+  drawPanel(ctx, PADDING_X, githubIcon, enrichedGithub, githubPoints, now);
   drawPanel(
     ctx,
     PADDING_X + PANEL_WIDTH + GAP,
-    "Netlify",
+    netlifyIcon,
     enrichedNetlify,
     netlifyPoints,
     now

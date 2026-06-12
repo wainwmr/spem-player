@@ -22,9 +22,9 @@ const series = [
   { date: "2026-06-10", netlifyCurrent: 100, githubMinutes: 500, source: "logged" },
 ];
 
-test("renderBurndown returns a non-empty PNG buffer with correct dimensions", () => {
+test("renderBurndown returns a non-empty PNG buffer with correct dimensions", async () => {
   const now = new Date("2026-06-10T12:00:00Z");
-  const png = renderBurndown(github, netlify, series, now);
+  const png = await renderBurndown(github, netlify, series, now);
   assert.ok(Buffer.isBuffer(png));
   assert.ok(png.length > 0);
   assert.equal(png.toString("hex", 0, 8), "89504e470d0a1a0a"); // PNG magic bytes
@@ -33,20 +33,20 @@ test("renderBurndown returns a non-empty PNG buffer with correct dimensions", ()
   assert.equal(png.readUInt32BE(20), 600);
 });
 
-test("renderBurndown handles empty series using current usage only", () => {
+test("renderBurndown handles empty series using current usage only", async () => {
   const now = new Date("2026-06-15T12:00:00Z");
-  const png = renderBurndown(github, netlify, [], now);
+  const png = await renderBurndown(github, netlify, [], now);
   assert.ok(Buffer.isBuffer(png));
   assert.ok(png.length > 0);
 });
 
-test("renderBurndown tolerates null Netlify values", () => {
+test("renderBurndown tolerates null Netlify values", async () => {
   const sparse = [
     { date: "2026-06-01", netlifyCurrent: null, githubMinutes: 50, source: "backfill" },
     { date: "2026-06-10", netlifyCurrent: 100, githubMinutes: 500, source: "logged" },
   ];
   const now = new Date("2026-06-10T12:00:00Z");
-  const png = renderBurndown(github, netlify, sparse, now);
+  const png = await renderBurndown(github, netlify, sparse, now);
   assert.ok(Buffer.isBuffer(png));
   assert.ok(png.length > 0);
 });

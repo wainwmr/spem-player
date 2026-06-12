@@ -295,6 +295,45 @@ export function formatMessage(
 }
 
 /**
+ * Emoji for a pace bucket.
+ *
+ * @param {"green"|"yellow"|"red"} bucket
+ * @returns {string}
+ */
+function paceBucketEmoji(bucket) {
+  if (bucket === "red") return "🔴";
+  if (bucket === "yellow") return "🟡";
+  return "🟢";
+}
+
+/**
+ * Build the Telegram image caption. Shows the date, a colour indicator per
+ * service based on its projected pace, and the PR merge count.
+ *
+ * @param {string} date - ISO date (YYYY-MM-DD), displayed as "DD Mon".
+ * @param {{pct: number, projected: number, statusPct: number}} githubStatus
+ * @param {{pct: number, projected: number, statusPct: number}} netlifyStatus
+ * @param {number} mergedCount
+ * @returns {string}
+ */
+export function formatCaption(
+  date,
+  githubStatus,
+  netlifyStatus,
+  mergedCount
+) {
+  const d = new Date(date);
+  const day = `${d.getUTCDate()} ${d.toLocaleString("en-GB", {
+    month: "short",
+    timeZone: "UTC",
+  })}`;
+  const githubEmoji = paceBucketEmoji(paceBucket(githubStatus.projected));
+  const netlifyEmoji = paceBucketEmoji(paceBucket(netlifyStatus.projected));
+  const noun = mergedCount === 1 ? "PR" : "PRs";
+  return `${day}: ${githubEmoji} GitHub ${githubStatus.pct}% | ${netlifyEmoji} Netlify ${netlifyStatus.pct}% | ${mergedCount} ${noun} merged`;
+}
+
+/**
  * Returns the start of the 24-hour reporting window as a `YYYY-MM-DD` string.
  *
  * GitHub's Search API `merged:` qualifier requires `YYYY-MM-DD`; passing an
@@ -769,11 +808,17 @@ async function main() {
     status,
     mergedCount
   );
+  const caption = formatCaption(
+    todayISO(),
+    githubStatus,
+    netlifyStatus,
+    mergedCount
+  );
 
   try {
     const series = loadSeries();
-    const chart = renderBurndown(github, netlify, series);
-    await sendTelegramPhoto(chart, message);
+    const chart = await renderBurndown(github, netlify, series);
+    await sendTelegramPhoto(chart, caption);
   } catch (e) {
     try {
       await openIssue("Monitor failure: Telegram chart error", e.message);

@@ -16,6 +16,7 @@ import {
   parseRepo,
   todayISO,
   paceBucket,
+  formatCaption,
   loadSeries,
   saveSeries,
   appendOrReplaceDay,
@@ -320,6 +321,24 @@ test("paceBucket returns yellow at or near critical pace", () => {
 test("paceBucket returns red when over critical pace", () => {
   assert.equal(paceBucket(101), "red");
   assert.equal(paceBucket(150), "red");
+});
+
+// formatCaption: date + per-service colour + PR count
+test("formatCaption builds the image caption", () => {
+  const githubStatus = { pct: 25, projected: 30, statusPct: 30 };
+  const netlifyStatus = { pct: 33, projected: 110, statusPct: 110 };
+  const caption = formatCaption("2026-06-12", githubStatus, netlifyStatus, 2);
+  assert.equal(caption, "12 Jun: 🟢 GitHub 25% | 🔴 Netlify 33% | 2 PRs merged");
+});
+
+test("formatCaption uses singular PR when one merged", () => {
+  const caption = formatCaption(
+    "2026-06-12",
+    { pct: 80, projected: 95, statusPct: 95 },
+    { pct: 10, projected: 20, statusPct: 20 },
+    1
+  );
+  assert.match(caption, /\| 1 PR merged$/);
 });
 
 describe("loadSeries / saveSeries", () => {
