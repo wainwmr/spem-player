@@ -11,7 +11,7 @@ The repository uses GitHub Actions for automated testing and dependency updates.
 
 ### `ci.yml`
 
-Triggers on push and pull request to `main`, nightly at 00:00 UTC via a `schedule` cron, and path-filtered to skip changes that do not affect the application build or unit tests (for example, `lilypond/src/**` and `lilypond/build/**` are ignored).
+Triggers on push and pull request to `main`, nightly at 00:00 UTC via a `schedule` cron, and path-filtered to skip changes that do not affect the application build or unit tests. Ignored paths include `lilypond/src/**`, `lilypond/build/**`, the monitor data file (`.github/monitor-series.json`), the monitor script and its test file (`.github/scripts/monitor-resources.mjs` and `.github/scripts/monitor-resources.test.mjs`), and the sibling workflow files `lilypond.yml`, `e2e.yml`, and `monitor-resources.yml`.
 
 Defines three jobs.
 
@@ -98,14 +98,17 @@ automatically.
 
 ### `monitor-resources.yml`
 
-Triggers daily at 02:29 UTC (`cron: "29 2 * * *"`, deliberately off the top of the hour to avoid GitHub's schedule throttling; GitHub's ~5 h scheduling delay lands the Telegram post around breakfast) and on manual `workflow_dispatch`. Runs one job, `monitor`, on Ubuntu latest with `actions: read`, `issues: write`, and `contents: read` permissions.
+Triggers daily at 02:29 UTC (`cron: "29 2 * * *"`, deliberately off the top of the hour to avoid GitHub's schedule throttling; GitHub's ~5 h scheduling delay lands the Telegram post around breakfast) and on manual `workflow_dispatch`. Runs one job, `monitor`, on Ubuntu latest with `actions: read`, `issues: write`, `contents: write`, and `pull-requests: read` permissions.
 
 Steps:
 
 - `actions/checkout@v6` — checkout the repository.
-- `node .github/scripts/monitor-resources.mjs` — run the monitor, with `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `GITHUB_TOKEN` passed in the environment.
+- `node .github/scripts/monitor-resources.mjs` — run the monitor, with `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `GITHUB_TOKEN` passed in the environment. After fetching usage, the script appends (or replaces) today's entry in `.github/monitor-series.json` with the current Netlify and GitHub build-minute totals.
+- Commit the updated `.github/monitor-series.json` if it changed, with message `chore: update daily resource series [skip ci]`, then push. The workflow triggers only on `schedule` and `workflow_dispatch` (never on `push`), so this self-commit cannot loop the workflow; the `[skip ci]` suffix also prevents it from consuming a `ci.yml` run.
 
 The script queries the current period's Netlify build-minute usage and GitHub Actions usage. Status thresholds — watch (≥ 50%), throttle (≥ 75%), and critical (≥ 90%) — apply to the higher of actual usage and the linearly projected end-of-period usage, so an unsustainable burn rate raises the alarm early in the billing period. On days with no PRs merged in the past 24 hours and both actual and projected usage below the watch threshold (50%), the Telegram message is skipped to reduce noise; watch and worse always send regardless of PR activity. When the message is sent, it takes the form `Netlify <n>% · GitHub <n>% — <status>` (the percentages are actual usage; the status reflects the worse of actual and projected), appending `· N PR(s) merged` when at least one PR merged in the past 24 hours. If either service reaches, or is projected to reach by period end, **90%** of its quota, the status becomes `STOP` (with a 🚨 prefix) and the workflow opens a critical GitHub issue containing a runbook for reducing build-minute consumption.
+
+The `.github/monitor-series.json` file holds the daily `{ date, netlifyCurrent, githubMinutes, source }` series. The `source` field is `"logged"` for entries written by the monitor and `"backfill"` for the one-time seed populated from API/GitHub run history and Netlify daily build minutes.
 
 ### `monitor-resources-test.yml`
 

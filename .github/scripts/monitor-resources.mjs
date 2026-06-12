@@ -25,11 +25,13 @@
  */
 
 import { fileURLToPath } from "url";
-import { realpathSync } from "fs";
+import { realpathSync, readFileSync, writeFileSync, existsSync } from "fs";
+import { resolve } from "path";
 
 const NETLIFY_API = "https://api.netlify.com/api/v1";
 const TELEGRAM_API = "https://api.telegram.org/bot";
 const WATCH_THRESHOLD_PCT = 50;
+const SERIES_FILE = ".github/monitor-series.json";
 
 /**
  * Project current usage to the end of the billing period using a linear
@@ -52,6 +54,21 @@ export function projectedPct(current, daysElapsed, daysInPeriod) {
  * @property {number} limit - Build-minute quota for the period.
  * @property {string} periodStartDate - Billing period start (YYYY-MM-DD).
  * @property {string} periodEndDate - Billing period end (YYYY-MM-DD).
+ */
+
+/**
+ * @typedef {object} SeriesEntry
+ * @property {string} date - ISO date (YYYY-MM-DD).
+ * @property {number|null} netlifyCurrent - Netlify build minutes consumed so
+ *   far, or `null` when the value is unknown for a backfilled day.
+ * @property {number} githubMinutes - GitHub Actions minutes consumed so far.
+ * @property {"logged"|"backfill"} source - Provenance of the entry.
+ */
+
+/**
+ * @typedef {object} NetlifyDailyMinutes
+ * @property {string} date - ISO date (YYYY-MM-DD).
+ * @property {number} minutes - Netlify build minutes used on this day.
  */
 
 /**
@@ -276,39 +293,55 @@ export function getReportingSince(nowMs = Date.now()) {
   return new Date(nowMs - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
-async function getGitHubUsage() {
+/**
+ * Fetch all workflow runs for the current calendar month, paginated.
+ *
+ * @returns {Promise<object[]>} Array of workflow run objects.
+ */
+async function getGitHubRuns() {
   const { owner, repo } = parseRepo();
   const now = new Date();
   const start = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
   ).toISOString();
-  const periodStartDate = start.slice(0, 10);
-  const periodEndDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0))
-    .toISOString()
-    .slice(0, 10);
 
-  let totalMs = 0;
+  const runs = [];
   let page = 1;
   while (true) {
     const data = await api(
       `https://api.github.com/repos/${owner}/${repo}/actions/runs?created=>=${start}&per_page=100&page=${page}`,
       { headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } }
     );
-    const runs = data.workflow_runs || [];
-    if (runs.length === 0) break;
-
-    for (const run of runs) {
-      if (run.run_duration_ms) {
-        totalMs += run.run_duration_ms;
-      } else if (run.run_started_at && run.updated_at) {
-        const s = new Date(run.run_started_at).getTime();
-        const e = new Date(run.updated_at).getTime();
-        totalMs += Math.max(0, e - s);
-      }
-    }
-
-    if (runs.length < 100) break;
+    const pageRuns = data.workflow_runs || [];
+    if (pageRuns.length === 0) break;
+    runs.push(...pageRuns);
+    if (pageRuns.length < 100) break;
     page++;
+  }
+  return runs;
+}
+
+async function getGitHubUsage(preFetchedRuns) {
+  const now = new Date();
+  const periodStartDate = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+  )
+    .toISOString()
+    .slice(0, 10);
+  const periodEndDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0))
+    .toISOString()
+    .slice(0, 10);
+
+  const runs = preFetchedRuns ?? (await getGitHubRuns());
+  let totalMs = 0;
+  for (const run of runs) {
+    if (run.run_duration_ms) {
+      totalMs += run.run_duration_ms;
+    } else if (run.run_started_at && run.updated_at) {
+      const s = new Date(run.run_started_at).getTime();
+      const e = new Date(run.updated_at).getTime();
+      totalMs += Math.max(0, e - s);
+    }
   }
 
   return {
@@ -378,6 +411,233 @@ export function daysInPeriod(startStr, endStr) {
   return Math.floor((endUtc - startUtc) / msPerDay) + 1;
 }
 
+/**
+ * Return today's date as `YYYY-MM-DD` in UTC.
+ *
+ * @param {Date} [now] - Reference date; defaults to `new Date()`.
+ * @returns {string}
+ */
+export function todayISO(now = new Date()) {
+  return now.toISOString().slice(0, 10);
+}
+
+/**
+ * Read the daily resource series from `filePath`. Missing or empty files
+ * return a fresh array; malformed JSON throws so history is never silently
+ * reset (Vera 566-01).
+ *
+ * @param {string} [filePath] - Path to the series JSON file; defaults to
+ *   `.github/monitor-series.json` relative to the repository root.
+ * @returns {SeriesEntry[]}
+ * @throws {Error} If the file exists, is non-empty, and is not valid JSON or
+ *   is not an array.
+ */
+export function loadSeries(filePath = SERIES_FILE) {
+  const resolved = resolve(filePath);
+  if (!existsSync(resolved)) {
+    return [];
+  }
+  const raw = readFileSync(resolved, "utf8").trim();
+  if (raw === "") {
+    return [];
+  }
+  const parsed = JSON.parse(raw);
+  if (!Array.isArray(parsed)) {
+    throw new Error(`series file ${filePath} must contain a JSON array`);
+  }
+  return parsed;
+}
+
+/**
+ * Write the daily resource series to `filePath` as formatted JSON.
+ *
+ * @param {SeriesEntry[]} series
+ * @param {string} [filePath] - Path to the series JSON file; defaults to
+ *   `.github/monitor-series.json` relative to the repository root.
+ */
+export function saveSeries(series, filePath = SERIES_FILE) {
+  const resolved = resolve(filePath);
+  writeFileSync(resolved, JSON.stringify(series, null, 2) + "\n", "utf8");
+}
+
+/**
+ * Return a new series where `entry` replaces any existing entry with the
+ * same date, or is appended if the date is new. The series is kept sorted
+ * by date (Vera 566-01).
+ *
+ * @param {SeriesEntry[]} series
+ * @param {SeriesEntry} entry
+ * @returns {SeriesEntry[]}
+ */
+export function appendOrReplaceDay(series, entry) {
+  const idx = series.findIndex((item) => item.date === entry.date);
+  const next = idx === -1 ? [...series, entry] : series.with(idx, entry);
+  return next.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Build a logged entry from the already-fetched usage records.
+ *
+ * @param {string} date - ISO date string (YYYY-MM-DD).
+ * @param {UsageRecord} netlify
+ * @param {UsageRecord} github
+ * @returns {SeriesEntry}
+ */
+export function buildLoggedEntry(date, netlify, github) {
+  return {
+    date,
+    netlifyCurrent: netlify.current,
+    githubMinutes: github.current,
+    source: "logged",
+  };
+}
+
+/**
+ * Back-calculate GitHub cumulative minutes per day from workflow runs.
+ * Returns one entry per calendar day from `periodStartDate` to
+ * `periodEndDate` inclusive, with `githubMinutes` being the cumulative total
+ * of all runs whose `run_started_at` falls on or before that day. Days with
+ * no runs carry forward the previous cumulative value so the line is
+ * continuous (Vera 566-04).
+ *
+ * @param {object[]} runs - GitHub Actions workflow runs.
+ * @param {string} runs[].run_started_at - ISO timestamp.
+ * @param {number} runs[].run_duration_ms - Run duration in milliseconds.
+ * @param {string} periodStartDate - ISO date (YYYY-MM-DD).
+ * @param {string} periodEndDate - ISO date (YYYY-MM-DD).
+ * @returns {{date: string, githubMinutes: number}[]}
+ */
+export function githubRunsToDailySeries(runs, periodStartDate, periodEndDate) {
+  const start = new Date(periodStartDate);
+  const end = new Date(periodEndDate);
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const startUtc = Date.UTC(
+    start.getUTCFullYear(),
+    start.getUTCMonth(),
+    start.getUTCDate()
+  );
+  const endUtc = Date.UTC(
+    end.getUTCFullYear(),
+    end.getUTCMonth(),
+    end.getUTCDate()
+  );
+
+  /** @type {Map<string, number>} */
+  const dailyMinutes = new Map();
+  for (const run of runs) {
+    if (!run.run_started_at) continue;
+    const date = run.run_started_at.slice(0, 10);
+    const durationMs =
+      run.run_duration_ms ??
+      (run.updated_at
+        ? Math.max(
+            0,
+            new Date(run.updated_at).getTime() - new Date(run.run_started_at).getTime()
+          )
+        : 0);
+    dailyMinutes.set(
+      date,
+      (dailyMinutes.get(date) ?? 0) + durationMs / 60000
+    );
+  }
+
+  const result = [];
+  let cumulative = 0;
+  for (let t = startUtc; t <= endUtc; t += msPerDay) {
+    const date = new Date(t).toISOString().slice(0, 10);
+    cumulative += dailyMinutes.get(date) ?? 0;
+    result.push({ date, githubMinutes: Math.round(cumulative) });
+  }
+  return result;
+}
+
+/**
+ * Convert daily Netlify build minutes into cumulative backfill series entries.
+ * `netlifyCurrent` is the running total of minutes consumed up to and
+ * including each date, matching the shape returned by the Netlify API
+ * (Vera 566-04).
+ *
+ * @param {NetlifyDailyMinutes[]} dailyMinutes
+ * @returns {{date: string, netlifyCurrent: number}[]}
+ */
+export function netlifyDailyMinutesToBackfill(dailyMinutes) {
+  let cumulative = 0;
+  return dailyMinutes.map(({ date, minutes }) => {
+    cumulative += minutes;
+    return { date, netlifyCurrent: cumulative };
+  });
+}
+
+/**
+ * Combine GitHub and Netlify backfill data into a single series. Dates that
+ * appear in only one source keep the other value as `null` so the chart can
+ * render gaps rather than invent points (Vera 566-04).
+ *
+ * @param {{date: string, githubMinutes: number}[]} githubSeries
+ * @param {{date: string, netlifyCurrent: number}[]} netlifySeries
+ * @returns {SeriesEntry[]}
+ */
+export function buildBackfillSeries(githubSeries, netlifySeries) {
+  /** @type {Map<string, {githubMinutes?: number, netlifyCurrent?: number}>} */
+  const byDate = new Map();
+  for (const { date, githubMinutes } of githubSeries) {
+    const existing = byDate.get(date) ?? {};
+    existing.githubMinutes = githubMinutes;
+    byDate.set(date, existing);
+  }
+  for (const { date, netlifyCurrent } of netlifySeries) {
+    const existing = byDate.get(date) ?? {};
+    existing.netlifyCurrent = netlifyCurrent;
+    byDate.set(date, existing);
+  }
+
+  return Array.from(byDate.entries())
+    .map(([date, values]) => ({
+      date,
+      netlifyCurrent: values.netlifyCurrent ?? null,
+      githubMinutes: values.githubMinutes ?? 0,
+      source: "backfill",
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * One-shot backfill seed for the current billing window. Fetches current
+ * usage from the APIs, back-calculates GitHub cumulative minutes per day,
+ * converts the Telegram-reported Netlify percentages into approximate
+ * netlifyCurrent values, and writes the result to the series file. Existing
+ * logged dates are preserved; only missing dates are seeded (Vera 566-04).
+ *
+ * @param {NetlifyDailyMinutes[]} netlifyDailyMinutes - Dated Netlify daily minutes.
+ * @param {string} [filePath] - Optional override for the series file path.
+ */
+export async function seedBackfillSeries(
+  netlifyDailyMinutes,
+  filePath = SERIES_FILE
+) {
+  const runs = await getGitHubRuns();
+  const githubUsage = await getGitHubUsage(runs);
+
+  const githubSeries = githubRunsToDailySeries(
+    runs,
+    githubUsage.periodStartDate,
+    githubUsage.periodEndDate
+  );
+  const netlifySeries = netlifyDailyMinutesToBackfill(netlifyDailyMinutes);
+  const backfill = buildBackfillSeries(githubSeries, netlifySeries);
+
+  const existing = loadSeries(filePath);
+  const existingDates = new Set(existing.map((entry) => entry.date));
+  const merged = [...existing];
+  for (const entry of backfill) {
+    if (!existingDates.has(entry.date)) {
+      merged.push(entry);
+    }
+  }
+
+  saveSeries(merged.sort((a, b) => a.date.localeCompare(b.date)), filePath);
+}
+
 async function main() {
   let netlify, github;
 
@@ -407,6 +667,16 @@ async function main() {
       );
     }
     throw e;
+  }
+
+  try {
+    const series = loadSeries();
+    const entry = buildLoggedEntry(todayISO(), netlify, github);
+    saveSeries(appendOrReplaceDay(series, entry));
+  } catch (e) {
+    // A series-file failure must not break the alert path, but it must be
+    // visible in the workflow log (Vera 566-02).
+    console.error(`Failed to update resource series: ${e.message}`);
   }
 
   const netlifyStatus = computeUsageStatus(netlify);
