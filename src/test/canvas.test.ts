@@ -1,4 +1,4 @@
-import { MusicCanvas } from "../ts/MusicCanvas";
+import { MusicCanvas, exportedForTesting } from "../ts/MusicCanvas";
 import config from "../ts/config";
 import type { Position } from "../ts/common";
 MusicCanvas.define("music-canvas");
@@ -1220,5 +1220,80 @@ describe("MusicCanvas custom element", () => {
     addElemSpy.mockRestore();
     removeElemSpy.mockRestore();
     freshCanvas.remove();
+  });
+
+  it("draws the playhead through draw() only for whole, in-range bars (#419)", () => {
+    expect(canvas).not.toBeNull();
+    const ctx = canvas!.canvas!.getContext("2d")!;
+    // #drawBarHighlight is the only draw path that strokes with lineCap
+    // "square" (#drawSelectionHighlight and #drawVoiceParts use "round"), so a
+    // square-cap stroke is the signature that the playhead was painted. This
+    // exercises the guard wiring in #drawBarHighlight, which the pure
+    // shouldDrawBarHighlight tests cannot reach.
+    const countPlayheadStrokes = () => {
+      let n = 0;
+      const spy = vi.spyOn(ctx, "stroke").mockImplementation(() => {
+        if (ctx.lineCap === "square") n++;
+      });
+      canvas!.draw();
+      spy.mockRestore();
+      return n;
+    };
+
+    const origBar = canvas!.bar;
+    try {
+      canvas!.bar = 0.5; // intro bar — playhead suppressed
+      expect(countPlayheadStrokes()).toBe(0);
+      canvas!.bar = 10; // whole, in-range bar — playhead drawn
+      expect(countPlayheadStrokes()).toBe(1);
+    } finally {
+      canvas!.bar = origBar;
+    }
+  });
+});
+
+describe("shouldDrawBarHighlight (#419)", () => {
+  const { shouldDrawBarHighlight } = exportedForTesting;
+  // 139 is the last bar index in the standard fixture (bars 0–139).
+  const barCount = 139;
+
+  // The playhead is hidden for any bar below the first whole bar (bar < 1 —
+  // the intro bar [0, 1) and any negative value), matching MusicScore which
+  // draws only for bar >= 1; it is drawn for whole bars within the piece and
+  // suppressed past the end (bar > barCount) and for a non-finite bar.
+  it("suppresses the playhead at bar 0 (intro bar start)", () => {
+    expect(shouldDrawBarHighlight(0, barCount)).toBe(false);
+  });
+
+  it("suppresses the playhead at bar 0.5 (mid intro bar)", () => {
+    expect(shouldDrawBarHighlight(0.5, barCount)).toBe(false);
+  });
+
+  it("suppresses the playhead just below the first whole bar", () => {
+    expect(shouldDrawBarHighlight(0.999, barCount)).toBe(false);
+  });
+
+  it("suppresses the playhead for a negative bar", () => {
+    expect(shouldDrawBarHighlight(-1, barCount)).toBe(false);
+  });
+
+  it("draws the playhead at bar 1 (first whole bar)", () => {
+    expect(shouldDrawBarHighlight(1, barCount)).toBe(true);
+  });
+
+  it("draws the playhead at the last bar", () => {
+    expect(shouldDrawBarHighlight(139, barCount)).toBe(true);
+  });
+
+  it("suppresses the playhead past the last bar", () => {
+    expect(shouldDrawBarHighlight(140, barCount)).toBe(false);
+  });
+
+  it("suppresses the playhead for a non-finite bar (NaN)", () => {
+    expect(shouldDrawBarHighlight(NaN, barCount)).toBe(false);
+  });
+
+  it("suppresses the playhead before barCount is populated (barCount 0)", () => {
+    expect(shouldDrawBarHighlight(1, 0)).toBe(false);
   });
 });

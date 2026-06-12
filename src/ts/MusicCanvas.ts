@@ -7,6 +7,16 @@ import { MusicElement } from "./MusicElement";
 
 import { NoteEntry, Range, FRlocation, processLilypond } from "./lily";
 
+// Whether the bar-position playhead should be drawn for a given bar. It is
+// suppressed for any bar below the first whole bar (bar < 1) — both the intro
+// bar [0, 1) and any negative value — to match MusicScore, which draws its
+// playhead only for bar >= 1 (MusicScore.ts). It is also suppressed past the
+// end of the piece (bar > barCount). A non-finite bar (NaN, from an unclamped
+// upstream value) yields false here and so is suppressed too. See #419.
+function shouldDrawBarHighlight(bar: number, barCount: number): boolean {
+  return bar >= 1 && bar <= barCount;
+}
+
 export class MusicCanvas extends MusicElement {
   static observedAttributes = ["choir", "part", "bar", "playing"];
 
@@ -389,7 +399,7 @@ export class MusicCanvas extends MusicElement {
   }
 
   #drawBarHighlight(ctx: CanvasRenderingContext2D) {
-    if (this.bar <= 0 || this.bar > this.barCount) return;
+    if (!shouldDrawBarHighlight(this.bar, this.barCount)) return;
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(
@@ -708,3 +718,7 @@ export class MusicCanvas extends MusicElement {
     this.draw();
   }
 }
+
+export const exportedForTesting = {
+  shouldDrawBarHighlight,
+};
