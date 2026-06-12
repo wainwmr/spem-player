@@ -423,11 +423,13 @@ async function sendTelegram(text) {
  * @param {Buffer} pngBuffer
  * @param {string} caption
  */
-async function sendTelegramPhoto(pngBuffer, caption) {
+async function sendTelegramPhoto(pngBuffer, caption = "") {
   const url = `${TELEGRAM_API}${process.env.TELEGRAM_BOT_TOKEN}/sendPhoto`;
   const form = new FormData();
   form.append("chat_id", process.env.TELEGRAM_CHAT_ID);
-  form.append("caption", caption);
+  if (caption) {
+    form.append("caption", caption);
+  }
   form.append(
     "photo",
     new Blob([pngBuffer], { type: "image/png" }),
@@ -808,17 +810,10 @@ async function main() {
     status,
     mergedCount
   );
-  const caption = formatCaption(
-    todayISO(),
-    githubStatus,
-    netlifyStatus,
-    mergedCount
-  );
-
   try {
     const series = loadSeries();
     const chart = await renderBurndown(github, netlify, series);
-    await sendTelegramPhoto(chart, caption);
+    await sendTelegramPhoto(chart);
   } catch (e) {
     try {
       await openIssue("Monitor failure: Telegram chart error", e.message);
