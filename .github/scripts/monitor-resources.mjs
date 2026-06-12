@@ -66,9 +66,9 @@ export function projectedPct(current, daysElapsed, daysInPeriod) {
  */
 
 /**
- * @typedef {object} NetlifyPercentage
+ * @typedef {object} NetlifyDailyMinutes
  * @property {string} date - ISO date (YYYY-MM-DD).
- * @property {number} pct - Reported usage percentage (0-100).
+ * @property {number} minutes - Netlify build minutes used on this day.
  */
 
 /**
@@ -552,19 +552,20 @@ export function githubRunsToDailySeries(runs, periodStartDate, periodEndDate) {
 }
 
 /**
- * Convert Telegram-reported Netlify percentages into backfill series entries.
- * `netlifyCurrent` is rounded from the percentage and the period limit
+ * Convert daily Netlify build minutes into cumulative backfill series entries.
+ * `netlifyCurrent` is the running total of minutes consumed up to and
+ * including each date, matching the shape returned by the Netlify API
  * (Vera 566-04).
  *
- * @param {NetlifyPercentage[]} percentages
- * @param {number} limit - Netlify build-minute quota for the period.
+ * @param {NetlifyDailyMinutes[]} dailyMinutes
  * @returns {{date: string, netlifyCurrent: number}[]}
  */
-export function netlifyPercentagesToBackfill(percentages, limit) {
-  return percentages.map(({ date, pct }) => ({
-    date,
-    netlifyCurrent: Math.round((pct / 100) * limit),
-  }));
+export function netlifyDailyMinutesToBackfill(dailyMinutes) {
+  let cumulative = 0;
+  return dailyMinutes.map(({ date, minutes }) => {
+    cumulative += minutes;
+    return { date, netlifyCurrent: cumulative };
+  });
 }
 
 /**
@@ -607,14 +608,13 @@ export function buildBackfillSeries(githubSeries, netlifySeries) {
  * netlifyCurrent values, and writes the result to the series file. Existing
  * logged dates are preserved; only missing dates are seeded (Vera 566-04).
  *
- * @param {NetlifyPercentage[]} netlifyPercentages - Dated Telegram percentages.
+ * @param {NetlifyDailyMinutes[]} netlifyDailyMinutes - Dated Netlify daily minutes.
  * @param {string} [filePath] - Optional override for the series file path.
  */
 export async function seedBackfillSeries(
-  netlifyPercentages,
+  netlifyDailyMinutes,
   filePath = SERIES_FILE
 ) {
-  const netlify = await getNetlifyUsage();
   const runs = await getGitHubRuns();
   const githubUsage = await getGitHubUsage(runs);
 
@@ -623,10 +623,7 @@ export async function seedBackfillSeries(
     githubUsage.periodStartDate,
     githubUsage.periodEndDate
   );
-  const netlifySeries = netlifyPercentagesToBackfill(
-    netlifyPercentages,
-    netlify.limit
-  );
+  const netlifySeries = netlifyDailyMinutesToBackfill(netlifyDailyMinutes);
   const backfill = buildBackfillSeries(githubSeries, netlifySeries);
 
   const existing = loadSeries(filePath);

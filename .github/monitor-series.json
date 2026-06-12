@@ -13,62 +13,62 @@
   },
   {
     "date": "2026-06-03",
-    "netlifyCurrent": 21,
+    "netlifyCurrent": 7,
     "githubMinutes": 315,
     "source": "backfill"
   },
   {
     "date": "2026-06-04",
-    "netlifyCurrent": 21,
+    "netlifyCurrent": 14,
     "githubMinutes": 337,
     "source": "backfill"
   },
   {
     "date": "2026-06-05",
-    "netlifyCurrent": 0,
+    "netlifyCurrent": 14,
     "githubMinutes": 343,
     "source": "backfill"
   },
   {
     "date": "2026-06-06",
-    "netlifyCurrent": 24,
+    "netlifyCurrent": 22,
     "githubMinutes": 362,
     "source": "backfill"
   },
   {
     "date": "2026-06-07",
-    "netlifyCurrent": 6,
+    "netlifyCurrent": 24,
     "githubMinutes": 371,
     "source": "backfill"
   },
   {
     "date": "2026-06-08",
-    "netlifyCurrent": 45,
+    "netlifyCurrent": 39,
     "githubMinutes": 412,
     "source": "backfill"
   },
   {
     "date": "2026-06-09",
-    "netlifyCurrent": 27,
+    "netlifyCurrent": 48,
     "githubMinutes": 439,
     "source": "backfill"
   },
   {
     "date": "2026-06-10",
-    "netlifyCurrent": 54,
+    "netlifyCurrent": 66,
     "githubMinutes": 486,
     "source": "backfill"
   },
   {
     "date": "2026-06-11",
-    "netlifyCurrent": 45,
+    "netlifyCurrent": 81,
     "githubMinutes": 545,
     "source": "backfill"
   },
   {
     "date": "2026-06-12",
-    "netlifyCurrent": 21,
-    "githubMinutes": 577,
+    "netlifyCurrent": 88,
+    "githubMinutes": 580,
     "source": "backfill"
   }
 ]

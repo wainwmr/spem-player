@@ -20,7 +20,7 @@ import {
   appendOrReplaceDay,
   buildLoggedEntry,
   githubRunsToDailySeries,
-  netlifyPercentagesToBackfill,
+  netlifyDailyMinutesToBackfill,
   buildBackfillSeries,
 } from "./monitor-resources.mjs";
 
@@ -428,16 +428,18 @@ test("githubRunsToDailySeries ignores runs with missing run_started_at", () => {
   assert.deepEqual(result, [{ date: "2026-06-01", githubMinutes: 0 }]);
 });
 
-// netlifyPercentagesToBackfill
-test("netlifyPercentagesToBackfill converts percentages to minutes", () => {
-  const percentages = [
-    { date: "2026-06-12", pct: 10 },
-    { date: "2026-06-13", pct: 23 },
+// netlifyDailyMinutesToBackfill
+test("netlifyDailyMinutesToBackfill cumulates daily minutes", () => {
+  const dailyMinutes = [
+    { date: "2026-06-12", minutes: 10 },
+    { date: "2026-06-13", minutes: 23 },
+    { date: "2026-06-14", minutes: 0 },
   ];
-  const result = netlifyPercentagesToBackfill(percentages, 300);
+  const result = netlifyDailyMinutesToBackfill(dailyMinutes);
   assert.deepEqual(result, [
-    { date: "2026-06-12", netlifyCurrent: 30 },
-    { date: "2026-06-13", netlifyCurrent: 69 },
+    { date: "2026-06-12", netlifyCurrent: 10 },
+    { date: "2026-06-13", netlifyCurrent: 33 },
+    { date: "2026-06-14", netlifyCurrent: 33 },
   ]);
 });
 
