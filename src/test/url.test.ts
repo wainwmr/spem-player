@@ -61,4 +61,17 @@ describe("parseURLSearch", () => {
   it("parses ?dark=1 as dark mode (#236)", () => {
     expect(parseURLSearch("?dark=1").dark).toBe(true);
   });
+
+  it("uses the requested recording's intro_beats for the default bar (#241)", () => {
+    // intro_beats = [ALC 2, CotE 4]; the initial bar is 1 - intro_beats/4.
+    // The default bar must be keyed off the *parsed* recording, not the
+    // pre-parse default (ALC). CotE with no explicit ?bar= starts at bar 0.
+    expect(parseURLSearch("?recording=cote").bar).toBe(1 - 4 / 4); // 0
+    expect(parseURLSearch("?recording=alc").bar).toBe(1 - 2 / 4); // 0.5
+    // An explicit ?bar= still overrides the recording-derived default.
+    expect(parseURLSearch("?recording=cote&bar=10").bar).toBe(10);
+    // Explicit ?bar=0 is kept, not treated as "unset" — pins the `??` sentinel
+    // boundary against a future `||` regression (0 is falsy but not nullish).
+    expect(parseURLSearch("?recording=alc&bar=0").bar).toBe(0);
+  });
 });
