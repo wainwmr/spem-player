@@ -17,10 +17,9 @@ export function parseURLSearch(search: string): ParsedURL {
   const url = search.substring(1);
   const parms = url.split("&");
 
-  var recording = 0; // ALC
   var choir = 0; // choir 1 because it is zero indexed
   var part: PartType = "all";
-  var bar = 1 - config.intro_beats[recording] / 4;
+  var barParam: number | undefined; // explicit ?bar= override, if any
   var dark = true; // dark mode by default
   var early = false;
   var r = 0; // ALC
@@ -37,7 +36,7 @@ export function parseURLSearch(search: string): ParsedURL {
       if (n >= 0 && n < config.parts.length) part = n;
     } else if (key == "bar") {
       const n = Number(val);
-      if (!Number.isNaN(n)) bar = n;
+      if (!Number.isNaN(n)) barParam = n;
     } else if (key == "dark") {
       dark = val !== "false" && val !== "0";
     } else if (key == "recording") {
@@ -47,6 +46,11 @@ export function parseURLSearch(search: string): ParsedURL {
       early = val == "early";
     }
   }
+
+  // The default initial bar is keyed off the *parsed* recording (#241): the
+  // intro spans intro_beats/4 of a bar, so playback starts at
+  // 1 - intro_beats[r] / 4. An explicit ?bar= overrides it.
+  const bar = barParam ?? 1 - config.intro_beats[r] / 4;
 
   return { recording: r, choir, part, bar, dark, early };
 }
