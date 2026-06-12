@@ -107,6 +107,18 @@ Steps:
 
 The script queries the current period's Netlify build-minute usage and GitHub Actions usage. Status thresholds — watch (≥ 50%), throttle (≥ 75%), and critical (≥ 90%) — apply to the higher of actual usage and the linearly projected end-of-period usage, so an unsustainable burn rate raises the alarm early in the billing period. On days with no PRs merged in the past 24 hours and both actual and projected usage below the watch threshold (50%), the Telegram message is skipped to reduce noise; watch and worse always send regardless of PR activity. When the message is sent, it takes the form `Netlify <n>% · GitHub <n>% — <status>` (the percentages are actual usage; the status reflects the worse of actual and projected), appending `· N PR(s) merged` when at least one PR merged in the past 24 hours. If either service reaches, or is projected to reach by period end, **90%** of its quota, the status becomes `STOP` (with a 🚨 prefix) and the workflow opens a critical GitHub issue containing a runbook for reducing build-minute consumption.
 
+### `monitor-resources-test.yml`
+
+Triggers on push to `main` and on `pull_request`, both path-filtered to the monitor script, its test file, and this workflow file. This is a separate, optional build for repository infrastructure: it runs only the monitor's `node:test` suite and does not install application dependencies or run the Spem Player build. It keeps the monitor's tests out of the main `ci.yml` gate while ensuring monitor changes are exercised before merge.
+
+Steps:
+
+- `actions/checkout@v6` — checkout the repository.
+- `actions/setup-node@v6` from `.nvmrc` — install Node.js.
+- `node --test .github/scripts/monitor-resources.test.mjs` — run the monitor tests.
+
+Run locally with `pnpm run test:monitor`.
+
 ## Node.js Version
 
 The Node.js version is pinned in `.nvmrc`. All GitHub Actions workflows read this file via `node-version-file` in `actions/setup-node`. Netlify should be configured to use the same version.
