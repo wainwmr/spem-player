@@ -509,6 +509,39 @@ describe("buildScores.mjs integration", () => {
     }
   });
 
+  it("rejects a pre-release of the minimum version (#519)", () => {
+    // The #519 bug lived at this call site: compareVersions returned 0 for a
+    // pre-release of the minimum, so 2.26.0-rc1 silently passed the gate.
+    // Pin the rejection end-to-end — a checkLilypond refactor that
+    // reintroduced the bug (e.g. < 0 -> <= 0) would pass every
+    // compareVersions unit test but fail here.
+    const ws = createWorkspace();
+    try {
+      const envRc = {
+        ...env,
+        FAKE_LILYPOND_VERSION: "2.26.0-rc1",
+      };
+
+      const result = spawnSync(
+        process.execPath,
+        [join(ws, "build", "buildScores.mjs")],
+        {
+          cwd: ws,
+          env: envRc,
+          encoding: "utf-8",
+        }
+      );
+
+      expect(result.status).not.toBe(0);
+      const output = (result.stdout + result.stderr).toLowerCase();
+      // The version is parsed (not "unknown") and rejected as too old.
+      expect(output).toContain("2.26.0-rc1");
+      expect(output).toContain("2.26.0 or later is required");
+    } finally {
+      rmSync(ws, { recursive: true, force: true });
+    }
+  });
+
   it("deletes SVG on post-processing failure", () => {
     const ws = createWorkspace();
     try {

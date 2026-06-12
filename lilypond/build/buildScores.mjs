@@ -73,18 +73,46 @@ function validateOptions(options) {
 }
 
 function parseLilypondVersion(output) {
-  const match = output.match(/GNU LilyPond (\d+\.\d+\.\d+)/);
+  // Capture the numeric core PLUS any pre-release suffix (e.g.
+  // "2.26.0-rc1"). The previous `\d+\.\d+\.\d+` silently truncated the
+  // suffix, which masked the pre-release ordering bug in compareVersions
+  // and let a pre-release of the minimum version pass the check (#519).
+  // The trailing `\S*` keeps the suffix while still requiring an X.Y.Z
+  // core, so a non-version banner returns null and is reported as
+  // "unknown" with the raw stdout echoed (#549) — a bare `\S+` would
+  // wrongly accept garbage tokens as a version.
+  const match = output.match(/GNU LilyPond (\d+\.\d+\.\d+\S*)/);
   return match ? match[1] : null;
 }
 
+// Compare two dot-separated version strings. Each part is split into its
+// leading integer run and any trailing suffix; integers compare numerically
+// and a part with no suffix outranks one with a suffix (release > pre-release,
+// per semver precedence), so "2.26.0" > "2.26.0-rc1". Suffixes among
+// themselves compare lexicographically, which orders multi-digit identifiers
+// wrongly — "-rc10" sorts BELOW "-rc2". Not a full semver implementation
+// (no build metadata, no multi-identifier pre-release ordering) — see #519.
 function compareVersions(a, b) {
-  const partsA = a.split(".").map(Number);
-  const partsB = b.split(".").map(Number);
+  const parse = (v) =>
+    v.split(".").map((p) => {
+      // Match the leading digit run explicitly so a part keeps its full
+      // suffix and a leading-zero part is not mis-sliced. The sole caller
+      // feeds X.Y.Z[suffix], but the exported comparator must not mangle a
+      // digit-less or leading-zero part (Vera 519-01).
+      const [, digits, rest] = /^(\d*)(.*)$/.exec(p);
+      return { num: digits === "" ? 0 : parseInt(digits, 10), rest };
+    });
+  const partsA = parse(a);
+  const partsB = parse(b);
   for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
-    const numA = partsA[i] || 0;
-    const numB = partsB[i] || 0;
-    if (numA < numB) return -1;
-    if (numA > numB) return 1;
+    const pa = partsA[i] || { num: 0, rest: "" };
+    const pb = partsB[i] || { num: 0, rest: "" };
+    if (pa.num !== pb.num) return pa.num < pb.num ? -1 : 1;
+    if (pa.rest !== pb.rest) {
+      if (pa.rest === "") return 1;
+      if (pb.rest === "") return -1;
+      return pa.rest < pb.rest ? -1 : 1;
+    }
   }
   return 0;
 }
@@ -261,4 +289,4 @@ if (isMain) {
   main();
 }
 
-export { parseArgs, buildPattern };
+export { parseArgs, buildPattern, parseLilypondVersion, compareVersions };
