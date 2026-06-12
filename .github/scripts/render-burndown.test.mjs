@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { renderBurndown, exportedForTesting } from "./render-burndown.mjs";
 
-const { drawHistogram } = exportedForTesting;
+const { drawHistogram, segmentColor } = exportedForTesting;
 
 const github = {
   current: 500,
@@ -158,4 +158,19 @@ test("drawHistogram skips days with zero PRs", () => {
     (op) => op.type === "fillRect" && op.fill === "#8995a5"
   );
   assert.equal(pastBars.length, 0, "zero-count past day should not draw a bar");
+});
+
+// segmentColor: below the critical-pace diagonal is always red
+
+test("segmentColor returns red when usage is below the diagonal", () => {
+  // Day 5 of 30, steady used = 5/29*100 ≈ 17.24%. Actual 18% is below diagonal.
+  const color = segmentColor(18, 5, 30, 90);
+  assert.equal(color, "#dc2626");
+});
+
+test("segmentColor uses projection when usage is above the diagonal", () => {
+  // Day 5 of 30, steady used ≈ 17.24%. Actual 15% is above diagonal.
+  assert.equal(segmentColor(15, 5, 30, 95), "#ca8a04"); // yellow
+  assert.equal(segmentColor(15, 5, 30, 80), "#16a34a"); // green
+  assert.equal(segmentColor(15, 5, 30, 110), "#dc2626"); // red
 });

@@ -147,6 +147,23 @@ function paceBucket(projectedPct) {
 }
 
 /**
+ * Choose a segment colour. A point below the critical-pace diagonal is using
+ * minutes faster than the steady pace, so it is always red. Points above the
+ * diagonal are coloured by their projected end-of-period percentage.
+ *
+ * @param {number} consumed - Usage percentage at the segment end (0-100+).
+ * @param {number} dayIndex - Day index of the segment end (0-based).
+ * @param {number} days - Total days in the period.
+ * @param {number} projected - Projected end-of-period percentage.
+ * @returns {string} Hex colour.
+ */
+function segmentColor(consumed, dayIndex, days, projected) {
+  const steadyUsed = (dayIndex / (days - 1)) * 100;
+  if (consumed > steadyUsed) return COLORS.red;
+  return COLORS[paceBucket(projected)];
+}
+
+/**
  * Draw a rounded rectangle.
  *
  * @param {CanvasRenderingContext2D} ctx
@@ -212,7 +229,12 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
     ? 100 - lastPoint.remaining
     : 100 - remainingPct(usage.current, usage.limit);
   const projected = projectedEndPct(currentUsed, todayIndex + 1, days);
-  const projectionColor = COLORS[paceBucket(projected)];
+  const projectionColor = segmentColor(
+    currentUsed,
+    todayIndex,
+    days,
+    projected
+  );
 
   ctx.fillStyle = projectionColor;
   ctx.font = "900 52px sans-serif";
@@ -250,7 +272,7 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
       const curr = points[i];
       const consumed = 100 - curr.remaining;
       const projected = projectedEndPct(consumed, curr.dayIndex + 1, days);
-      const color = COLORS[paceBucket(projected)];
+      const color = segmentColor(consumed, curr.dayIndex, days, projected);
 
       const x1 = ox + (prev.dayIndex / (days - 1)) * CHART_WIDTH;
       const y1 = oy + CHART_HEIGHT * (1 - prev.remaining / 100);
@@ -427,4 +449,5 @@ export async function renderBurndown(
  */
 export const exportedForTesting = {
   drawHistogram,
+  segmentColor,
 };
