@@ -2,8 +2,16 @@ import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import globals from 'globals'
 import eslintConfigPrettier from 'eslint-config-prettier'
+import { includeIgnoreFile } from 'eslint/config'
+// URL is imported (rather than used as a global) so ESLint can lint this config
+// file itself under no-undef, which has no node globals in scope here.
+import { fileURLToPath, URL } from 'node:url'
+
+const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url))
 
 export default tseslint.config(
+  // Honour .gitignore so the ignore list is not hand-duplicated here (#509).
+  includeIgnoreFile(gitignorePath),
   js.configs.recommended,
   ...tseslint.configs.recommended,
   eslintConfigPrettier,
@@ -53,16 +61,14 @@ export default tseslint.config(
     },
   },
   {
+    // .gitignore is honoured via includeIgnoreFile above; only paths that are
+    // NOT gitignored need listing here. tests-local/ and probes/ are local-only
+    // (.git/info/exclude, not .gitignore); lilypond/build/ and
+    // .dependency-cruiser.cjs are tracked.
     ignores: [
-      'dist/',
-      'node_modules/',
-      'coverage/',
-      '.netlify/',
       'lilypond/build/',
       'tests-local/',
       'probes/',
-      'src/ohmjs/*.ohm-bundle.js',
-      'src/ohmjs/*.ohm-bundle.d.ts',
       '.dependency-cruiser.cjs',
     ],
   }
