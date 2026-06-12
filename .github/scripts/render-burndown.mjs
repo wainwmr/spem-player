@@ -20,15 +20,15 @@ import { dirname, resolve } from "path";
  */
 
 const COLORS = {
-  panelBg: "#1e293b",
-  text: "#f8fafc",
-  muted: "#94a3b8",
-  grid: "#334155",
-  diagonal: "#64748b",
-  youAreHere: "#f8fafc",
-  green: "#4ade80",
-  yellow: "#facc15",
-  red: "#f87171",
+  panelBg: "#ffffff",
+  text: "#0f172a",
+  muted: "#475569",
+  grid: "#cbd5e1",
+  diagonal: "#94a3b8",
+  youAreHere: "#0f172a",
+  green: "#16a34a",
+  yellow: "#ca8a04",
+  red: "#dc2626",
 };
 
 const CANVAS_WIDTH = 1200;
@@ -198,16 +198,26 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
   const ox = originX + CHART_LEFT;
   const oy = CHART_TOP;
 
-  // Current total, inside the chart area, top-right
-  ctx.fillStyle = COLORS.text;
-  ctx.font = "bold 42px sans-serif";
+  // Current usage label, top-right
+  const valueX = originX + PANEL_WIDTH - 24;
+  const valueY = CHART_TOP + 12;
   ctx.textAlign = "right";
   ctx.textBaseline = "top";
-  ctx.fillText(
-    `${usage.current}/${usage.limit} m`,
-    originX + PANEL_WIDTH - 24,
-    CHART_TOP + 12
-  );
+
+  const lastPoint = points.length > 0 ? points[points.length - 1] : null;
+  const currentUsed = lastPoint
+    ? 100 - lastPoint.remaining
+    : 100 - remainingPct(usage.current, usage.limit);
+  const projected = projectedEndPct(currentUsed, todayIndex + 1, days);
+  const projectionColor = COLORS[paceBucket(projected)];
+
+  ctx.fillStyle = projectionColor;
+  ctx.font = "900 52px sans-serif";
+  ctx.fillText(`${usage.current}/${usage.limit}`, valueX, valueY);
+
+  ctx.fillStyle = COLORS.text;
+  ctx.font = "500 36px sans-serif";
+  ctx.fillText("mins", valueX, valueY + 62);
 
   // Gridlines (no axis labels)
   ctx.strokeStyle = COLORS.grid;
@@ -264,17 +274,8 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
   ctx.lineTo(xNow, CHART_BOTTOM);
   ctx.stroke();
 
-  // Place the dot at the last actual data point so the projection starts
-  // exactly where the cumulative line finishes.
-  const lastPoint = points.length > 0 ? points[points.length - 1] : null;
-  const currentUsed = lastPoint
-    ? 100 - lastPoint.remaining
-    : 100 - remainingPct(usage.current, usage.limit);
-  const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
-
   // Projection from today to period-end (drawn before the dot so the dot sits on top)
-  const projected = projectedEndPct(currentUsed, todayIndex + 1, days);
-  const projectionColor = COLORS[paceBucket(projected)];
+  const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
   ctx.strokeStyle = projectionColor;
   ctx.lineWidth = 4;
   ctx.setLineDash([10, 6]);
@@ -318,7 +319,9 @@ export async function renderBurndown(github, netlify, series, now = new Date()) 
   const canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
   const ctx = canvas.getContext("2d");
 
-  // Transparent outer background; only the two panels are filled.
+  // White outer background; panels are also filled white.
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
   const [githubIcon, netlifyIcon] = await Promise.all([
     loadImage(resolve(__dirname, "icons/github.png")),
@@ -345,6 +348,15 @@ export async function renderBurndown(github, netlify, series, now = new Date()) 
     netlifyPoints,
     now
   );
+
+  // Vertical separator between the two panels.
+  const separatorX = PADDING_X + PANEL_WIDTH + GAP / 2;
+  ctx.strokeStyle = COLORS.grid;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(separatorX, PADDING_Y + 8);
+  ctx.lineTo(separatorX, CANVAS_HEIGHT - PADDING_Y - 8);
+  ctx.stroke();
 
   return canvas.toBuffer("image/png");
 }
