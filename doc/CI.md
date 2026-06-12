@@ -11,7 +11,7 @@ The repository uses GitHub Actions for automated testing and dependency updates.
 
 ### `ci.yml`
 
-Triggers on push and pull request to `main`, nightly at 00:00 UTC via a `schedule` cron, and path-filtered to skip changes that do not affect the application build or unit tests (for example, `lilypond/src/**` and `lilypond/build/**` are ignored).
+Triggers on push and pull request to `main`, nightly at 00:00 UTC via a `schedule` cron, and path-filtered to skip changes that do not affect the application build or unit tests. Ignored paths include `lilypond/src/**`, `lilypond/build/**`, the monitor script and its test file (`.github/scripts/monitor-resources.mjs` and `.github/scripts/monitor-resources.test.mjs`), and the sibling workflow files `lilypond.yml`, `e2e.yml`, and `monitor-resources.yml`.
 
 Defines three jobs.
 
