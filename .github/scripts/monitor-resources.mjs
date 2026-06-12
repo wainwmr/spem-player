@@ -27,6 +27,7 @@
 import { fileURLToPath } from "url";
 import { realpathSync, readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve } from "path";
+import { renderBurndown } from "./render-burndown.mjs";
 
 const NETLIFY_API = "https://api.netlify.com/api/v1";
 const TELEGRAM_API = "https://api.telegram.org/bot";
@@ -46,6 +47,20 @@ const SERIES_FILE = ".github/monitor-series.json";
  */
 export function projectedPct(current, daysElapsed, daysInPeriod) {
   return Math.round((current / Math.max(1, daysElapsed)) * daysInPeriod);
+}
+
+/**
+ * Classify a projected end-of-period percentage against the critical-pace
+ * diagonal (100% at period-end). Distinct from the watch/throttle/critical
+ * budget thresholds.
+ *
+ * @param {number} projectedPct - Projected end-of-period usage percentage.
+ * @returns {"green"|"yellow"|"red"}
+ */
+export function paceBucket(projectedPct) {
+  if (projectedPct > 100) return "red";
+  if (projectedPct >= 90) return "yellow";
+  return "green";
 }
 
 /**
@@ -360,6 +375,30 @@ async function sendTelegram(text) {
     body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text }),
   });
   if (!res.ok) throw new Error(`Telegram HTTP ${res.status}`);
+}
+
+/**
+ * Post a PNG image to Telegram with a text caption. Uses multipart/form-data
+ * so the Bot API receives the image as a file upload.
+ *
+ * @param {Buffer} pngBuffer
+ * @param {string} caption
+ */
+async function sendTelegramPhoto(pngBuffer, caption) {
+  const url = `${TELEGRAM_API}${process.env.TELEGRAM_BOT_TOKEN}/sendPhoto`;
+  const form = new FormData();
+  form.append("chat_id", process.env.TELEGRAM_CHAT_ID);
+  form.append("caption", caption);
+  form.append(
+    "photo",
+    new Blob([pngBuffer], { type: "image/png" }),
+    "burndown.png"
+  );
+  const res = await fetch(url, { method: "POST", body: form });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Telegram sendPhoto HTTP ${res.status}: ${body.slice(0, 200)}`);
+  }
 }
 
 async function openIssue(title, body) {
@@ -732,13 +771,15 @@ async function main() {
   );
 
   try {
-    await sendTelegram(message);
+    const series = loadSeries();
+    const chart = renderBurndown(github, netlify, series);
+    await sendTelegramPhoto(chart, message);
   } catch (e) {
     try {
-      await openIssue("Monitor failure: Telegram API error", e.message);
+      await openIssue("Monitor failure: Telegram chart error", e.message);
     } catch (alertErr) {
       console.error(
-        `Failed to open issue for Telegram failure: ${alertErr.message}`
+        `Failed to open issue for Telegram chart failure: ${alertErr.message}`
       );
     }
     throw e;

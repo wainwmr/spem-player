@@ -6,12 +6,16 @@ on:
     paths:
       - ".github/scripts/monitor-resources.mjs"
       - ".github/scripts/monitor-resources.test.mjs"
+      - ".github/scripts/render-burndown.mjs"
+      - ".github/scripts/render-burndown.test.mjs"
       - ".github/workflows/monitor-resources-test.yml"
   pull_request:
     branches: [main]
     paths:
       - ".github/scripts/monitor-resources.mjs"
       - ".github/scripts/monitor-resources.test.mjs"
+      - ".github/scripts/render-burndown.mjs"
+      - ".github/scripts/render-burndown.test.mjs"
       - ".github/workflows/monitor-resources-test.yml"
 
 jobs:
@@ -19,7 +23,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
-      - run: node --test .github/scripts/monitor-resources.test.mjs
+          cache: pnpm
+      - run: pnpm install
+      - run: node --test .github/scripts/monitor-resources.test.mjs .github/scripts/render-burndown.test.mjs
