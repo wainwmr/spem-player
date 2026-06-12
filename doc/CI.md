@@ -13,11 +13,19 @@ The repository uses GitHub Actions for automated testing and dependency updates.
 
 Triggers on push and pull request to `main`, nightly at 00:00 UTC via a `schedule` cron, and path-filtered to skip changes that do not affect the application build or unit tests (for example, `lilypond/src/**` and `lilypond/build/**` are ignored).
 
-Defines one job.
+Defines three jobs.
+
+#### `changes` job
+
+Runs first on every trigger. For `push` and `schedule` events it always reports that application-relevant files changed. For `pull_request` events it compares the PR branch to the base branch and reports whether any changed file lies outside `ci.yml`'s `paths-ignore` list.
 
 #### `test` job
 
-Runs on every trigger. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes. The LilyPond integration suite (`pnpm run test:lilypond`) does not run here — it runs in the Regenerate SVGs workflow below. Changes confined to `lilypond/test/**` trigger neither workflow, so the required check never reports and such PRs cannot merge without a ruleset bypass (#558).
+Runs only when `changes` reports application-relevant files. Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
+
+#### `test-noop` job
+
+Runs only when `changes` reports that *all* changed files are inside `ci.yml`'s `paths-ignore` list (for example, a PR confined to root-level `*.md` or to one of the ignored sibling workflow files). Reports the same `test` check name as the real job so branch protection is satisfied, without doing any application build or test work. This prevents the blocked-PR problem described in #558 and tracked more generally in #563.
 
 ### `e2e.yml`
 
