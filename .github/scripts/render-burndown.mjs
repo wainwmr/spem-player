@@ -235,7 +235,7 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
 
   // Critical-pace diagonal (0% used → 100% used)
   ctx.strokeStyle = COLORS.diagonal;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 4;
   ctx.setLineDash([8, 6]);
   ctx.beginPath();
   ctx.moveTo(ox, oy);
@@ -258,7 +258,7 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
       const y2 = oy + CHART_HEIGHT * (1 - curr.remaining / 100);
 
       ctx.strokeStyle = color;
-      ctx.lineWidth = 5;
+      ctx.lineWidth = 8;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.beginPath();
@@ -272,8 +272,8 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
   const xNow = ox + (todayIndex / (days - 1)) * CHART_WIDTH;
   const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
   ctx.strokeStyle = projectionColor;
-  ctx.lineWidth = 4;
-  ctx.setLineDash([10, 6]);
+  ctx.lineWidth = 7;
+  ctx.setLineDash([2, 8]);
   ctx.beginPath();
   ctx.moveTo(xNow, yNow);
   ctx.lineTo(ox + CHART_WIDTH, oy + CHART_HEIGHT * Math.min(100, projected) / 100);
@@ -331,7 +331,7 @@ function drawHistogram(ctx, usage, now, prCounts) {
 
   // Baseline
   ctx.strokeStyle = COLORS.grid;
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(histogramLeft, histogramBottom);
   ctx.lineTo(histogramRight, histogramBottom);
@@ -411,7 +411,7 @@ export async function renderBurndown(
   // Vertical separator between the two panels.
   const separatorX = PADDING_X + PANEL_WIDTH + GAP / 2;
   ctx.strokeStyle = COLORS.grid;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 5;
   ctx.beginPath();
   ctx.moveTo(separatorX, PADDING_Y + 8);
   ctx.lineTo(separatorX, PANEL_HEIGHT - 8);
