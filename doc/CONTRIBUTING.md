@@ -247,6 +247,8 @@ The CI pipeline runs `pnpm run check:lint` and `pnpm run check:types`. Pull requ
 
 The project uses an ESLint flat config (`eslint.config.js`) with `typescript-eslint`. Some rules are relaxed because the codebase predates them (for example, `no-var` and `@typescript-eslint/no-explicit-any` are currently off). Follow the existing patterns in the file you are editing rather than refactoring legacy code to meet stricter rules.
 
+ESLint honours `.gitignore` (via `includeIgnoreFile`, bundled with ESLint as `eslint/config`), so gitignored paths are never linted. The `ignores` array in `eslint.config.js` lists only the few paths that are *not* gitignored (for example local-only `tests-local/` and `probes/`, or tracked `lilypond/build/`); the comment there records the current membership. To stop a path being linted, prefer adding it to `.gitignore`; reach for the ESLint `ignores` array only when the path must stay tracked.
+
 The project uses **Prettier** for automatic formatting. Run `pnpm run fix:format` before committing, or configure your editor to format on save. The CI pipeline runs `pnpm run check:format` as part of the build gate.
 
 All `.md` files must pass `markdownlint-cli2` before a PR is opened. Run `npx markdownlint-cli2 <file>` after editing any markdown file.
