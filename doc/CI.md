@@ -112,13 +112,14 @@ The `.github/monitor-series.json` file holds the daily `{ date, netlifyCurrent, 
 
 ### `monitor-resources-test.yml`
 
-Triggers on push to `main` and on `pull_request`, both path-filtered to the monitor script, its test file, and this workflow file. This is a separate, optional build for repository infrastructure: it runs only the monitor's `node:test` suite and does not install application dependencies or run the Spem Player build. It keeps the monitor's tests out of the main `ci.yml` gate while ensuring monitor changes are exercised before merge.
+Triggers on push to `main` and on `pull_request`, both path-filtered to the monitor script, its test file, the burndown render module and its test file, and this workflow file. This is a separate, optional build for repository infrastructure: it runs only the monitor's `node:test` suite and does not run the Spem Player build. It keeps the monitor's tests out of the main `ci.yml` gate while ensuring monitor changes are exercised before merge.
 
 Steps:
 
 - `actions/checkout@v6` — checkout the repository.
-- `actions/setup-node@v6` from `.nvmrc` — install Node.js.
-- `node --test .github/scripts/monitor-resources.test.mjs` — run the monitor tests.
+- `pnpm/action-setup@v4` and `actions/setup-node@v6` from `.nvmrc` — install Node.js and pnpm.
+- `pnpm install` — install project dependencies (required for the `canvas` native module used by the burndown renderer).
+- `node --test .github/scripts/monitor-resources.test.mjs .github/scripts/render-burndown.test.mjs` — run the monitor and burndown tests.
 
 Run locally with `pnpm run test:monitor`.
 

@@ -15,6 +15,8 @@ import {
   getReportingSince,
   parseRepo,
   todayISO,
+  paceBucket,
+  formatCaption,
   loadSeries,
   saveSeries,
   appendOrReplaceDay,
@@ -303,6 +305,40 @@ test("parseRepo throws when GITHUB_REPOSITORY is empty string", () => {
 // todayISO: returns UTC calendar date
 test("todayISO returns YYYY-MM-DD from a UTC timestamp", () => {
   assert.equal(todayISO(new Date("2026-06-12T14:23:00Z")), "2026-06-12");
+});
+
+// paceBucket: classify projected end-of-period percentage against critical pace
+test("paceBucket returns green when well under critical pace", () => {
+  assert.equal(paceBucket(0), "green");
+  assert.equal(paceBucket(89), "green");
+});
+
+test("paceBucket returns yellow at or near critical pace", () => {
+  assert.equal(paceBucket(90), "yellow");
+  assert.equal(paceBucket(100), "yellow");
+});
+
+test("paceBucket returns red when over critical pace", () => {
+  assert.equal(paceBucket(101), "red");
+  assert.equal(paceBucket(150), "red");
+});
+
+// formatCaption: date + per-service colour + PR count
+test("formatCaption builds the image caption", () => {
+  const githubStatus = { pct: 25, projected: 30, statusPct: 30 };
+  const netlifyStatus = { pct: 33, projected: 110, statusPct: 110 };
+  const caption = formatCaption("2026-06-12", githubStatus, netlifyStatus, 2);
+  assert.equal(caption, "12 Jun: 🟢 GitHub 25% | 🔴 Netlify 33% | 2 PRs merged");
+});
+
+test("formatCaption uses singular PR when one merged", () => {
+  const caption = formatCaption(
+    "2026-06-12",
+    { pct: 80, projected: 95, statusPct: 95 },
+    { pct: 10, projected: 20, statusPct: 20 },
+    1
+  );
+  assert.match(caption, /\| 1 PR merged$/);
 });
 
 describe("loadSeries / saveSeries", () => {

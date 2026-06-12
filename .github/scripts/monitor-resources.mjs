@@ -27,6 +27,7 @@
 import { fileURLToPath } from "url";
 import { realpathSync, readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve } from "path";
+import { renderBurndown } from "./render-burndown.mjs";
 
 const NETLIFY_API = "https://api.netlify.com/api/v1";
 const TELEGRAM_API = "https://api.telegram.org/bot";
@@ -46,6 +47,20 @@ const SERIES_FILE = ".github/monitor-series.json";
  */
 export function projectedPct(current, daysElapsed, daysInPeriod) {
   return Math.round((current / Math.max(1, daysElapsed)) * daysInPeriod);
+}
+
+/**
+ * Classify a projected end-of-period percentage against the critical-pace
+ * diagonal (100% at period-end). Distinct from the watch/throttle/critical
+ * budget thresholds.
+ *
+ * @param {number} projectedPct - Projected end-of-period usage percentage.
+ * @returns {"green"|"yellow"|"red"}
+ */
+export function paceBucket(projectedPct) {
+  if (projectedPct > 100) return "red";
+  if (projectedPct >= 90) return "yellow";
+  return "green";
 }
 
 /**
@@ -280,6 +295,45 @@ export function formatMessage(
 }
 
 /**
+ * Emoji for a pace bucket.
+ *
+ * @param {"green"|"yellow"|"red"} bucket
+ * @returns {string}
+ */
+function paceBucketEmoji(bucket) {
+  if (bucket === "red") return "🔴";
+  if (bucket === "yellow") return "🟡";
+  return "🟢";
+}
+
+/**
+ * Build the Telegram image caption. Shows the date, a colour indicator per
+ * service based on its projected pace, and the PR merge count.
+ *
+ * @param {string} date - ISO date (YYYY-MM-DD), displayed as "DD Mon".
+ * @param {{pct: number, projected: number, statusPct: number}} githubStatus
+ * @param {{pct: number, projected: number, statusPct: number}} netlifyStatus
+ * @param {number} mergedCount
+ * @returns {string}
+ */
+export function formatCaption(
+  date,
+  githubStatus,
+  netlifyStatus,
+  mergedCount
+) {
+  const d = new Date(date);
+  const day = `${d.getUTCDate()} ${d.toLocaleString("en-GB", {
+    month: "short",
+    timeZone: "UTC",
+  })}`;
+  const githubEmoji = paceBucketEmoji(paceBucket(githubStatus.projected));
+  const netlifyEmoji = paceBucketEmoji(paceBucket(netlifyStatus.projected));
+  const noun = mergedCount === 1 ? "PR" : "PRs";
+  return `${day}: ${githubEmoji} GitHub ${githubStatus.pct}% | ${netlifyEmoji} Netlify ${netlifyStatus.pct}% | ${mergedCount} ${noun} merged`;
+}
+
+/**
  * Returns the start of the 24-hour reporting window as a `YYYY-MM-DD` string.
  *
  * GitHub's Search API `merged:` qualifier requires `YYYY-MM-DD`; passing an
@@ -360,6 +414,30 @@ async function sendTelegram(text) {
     body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text }),
   });
   if (!res.ok) throw new Error(`Telegram HTTP ${res.status}`);
+}
+
+/**
+ * Post a PNG image to Telegram with a text caption. Uses multipart/form-data
+ * so the Bot API receives the image as a file upload.
+ *
+ * @param {Buffer} pngBuffer
+ * @param {string} caption
+ */
+async function sendTelegramPhoto(pngBuffer, caption) {
+  const url = `${TELEGRAM_API}${process.env.TELEGRAM_BOT_TOKEN}/sendPhoto`;
+  const form = new FormData();
+  form.append("chat_id", process.env.TELEGRAM_CHAT_ID);
+  form.append("caption", caption);
+  form.append(
+    "photo",
+    new Blob([pngBuffer], { type: "image/png" }),
+    "burndown.png"
+  );
+  const res = await fetch(url, { method: "POST", body: form });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Telegram sendPhoto HTTP ${res.status}: ${body.slice(0, 200)}`);
+  }
 }
 
 async function openIssue(title, body) {
@@ -730,15 +808,23 @@ async function main() {
     status,
     mergedCount
   );
+  const caption = formatCaption(
+    todayISO(),
+    githubStatus,
+    netlifyStatus,
+    mergedCount
+  );
 
   try {
-    await sendTelegram(message);
+    const series = loadSeries();
+    const chart = await renderBurndown(github, netlify, series);
+    await sendTelegramPhoto(chart, caption);
   } catch (e) {
     try {
-      await openIssue("Monitor failure: Telegram API error", e.message);
+      await openIssue("Monitor failure: Telegram chart error", e.message);
     } catch (alertErr) {
       console.error(
-        `Failed to open issue for Telegram failure: ${alertErr.message}`
+        `Failed to open issue for Telegram chart failure: ${alertErr.message}`
       );
     }
     throw e;
