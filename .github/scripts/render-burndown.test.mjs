@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { renderBurndown } from "./render-burndown.mjs";
+import { renderBurndown, exportedForTesting } from "./render-burndown.mjs";
+
+const { drawHistogram } = exportedForTesting;
 
 const github = {
   current: 500,
@@ -49,4 +51,111 @@ test("renderBurndown tolerates null Netlify values", async () => {
   const png = await renderBurndown(github, netlify, sparse, now);
   assert.ok(Buffer.isBuffer(png));
   assert.ok(png.length > 0);
+});
+
+function createMockCtx() {
+  return {
+    strokeStyle: "",
+    lineWidth: 0,
+    fillStyle: "",
+    operations: [],
+    beginPath() {
+      this.operations.push({ type: "beginPath" });
+    },
+    moveTo(x, y) {
+      this.operations.push({ type: "moveTo", x, y });
+    },
+    lineTo(x, y) {
+      this.operations.push({ type: "lineTo", x, y });
+    },
+    stroke() {
+      this.operations.push({ type: "stroke" });
+    },
+    fillRect(x, y, w, h) {
+      this.operations.push({ type: "fillRect", x, y, w, h, fill: this.fillStyle });
+    },
+  };
+}
+
+test("drawHistogram draws a baseline and bars for past days with PRs", () => {
+  const ctx = createMockCtx();
+  const usage = {
+    current: 100,
+    limit: 1000,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+    periodDays: 30,
+  };
+  const now = new Date("2026-06-05T12:00:00Z");
+  drawHistogram(ctx, usage, now, [{ dayIndex: 0, count: 3 }]);
+
+  const baseline = ctx.operations.find(
+    (op) => op.type === "moveTo" && op.x > 0
+  );
+  assert.ok(baseline, "baseline moveTo should exist");
+
+  const bars = ctx.operations.filter((op) => op.type === "fillRect");
+  assert.ok(bars.length > 0, "at least one bar should be drawn");
+  assert.ok(
+    bars.some((bar) => bar.fill === "#8995a5"),
+    "past bar should use histogramPast colour"
+  );
+});
+
+test("drawHistogram highlights today in green", () => {
+  const ctx = createMockCtx();
+  const usage = {
+    current: 100,
+    limit: 1000,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+    periodDays: 30,
+  };
+  const now = new Date("2026-06-05T12:00:00Z");
+  drawHistogram(ctx, usage, now, [{ dayIndex: 4, count: 2 }]);
+
+  const todayBar = ctx.operations.find(
+    (op) => op.type === "fillRect" && op.fill === "#16a34a"
+  );
+  assert.ok(todayBar, "today's bar should be green");
+});
+
+test("drawHistogram draws tiny placeholders for future days", () => {
+  const ctx = createMockCtx();
+  const usage = {
+    current: 100,
+    limit: 1000,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+    periodDays: 30,
+  };
+  const now = new Date("2026-06-05T12:00:00Z");
+  drawHistogram(ctx, usage, now, []);
+
+  const futureBars = ctx.operations.filter(
+    (op) => op.type === "fillRect" && op.fill === "#cbd5e1"
+  );
+  assert.ok(futureBars.length > 0, "future placeholders should be drawn");
+  assert.ok(
+    futureBars.every((bar) => bar.h === 6),
+    "future placeholders should be 6 px tall"
+  );
+});
+
+test("drawHistogram skips days with zero PRs", () => {
+  const ctx = createMockCtx();
+  const usage = {
+    current: 100,
+    limit: 1000,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+    periodDays: 30,
+  };
+  const now = new Date("2026-06-05T12:00:00Z");
+  drawHistogram(ctx, usage, now, [{ dayIndex: 0, count: 0 }]);
+
+  const pastBars = ctx.operations.filter(
+    (op) => op.type === "fillRect" && op.fill === "#8995a5"
+  );
+  assert.equal(pastBars.length, 0, "zero-count past day should not draw a bar");
 });

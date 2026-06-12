@@ -27,7 +27,7 @@
 import { fileURLToPath } from "url";
 import { realpathSync, readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve } from "path";
-import { renderBurndown } from "./render-burndown.mjs";
+import { renderBurndown, dayDiff } from "./render-burndown.mjs";
 
 const NETLIFY_API = "https://api.netlify.com/api/v1";
 const TELEGRAM_API = "https://api.telegram.org/bot";
@@ -77,6 +77,7 @@ export function paceBucket(projectedPct) {
  * @property {number|null} netlifyCurrent - Netlify build minutes consumed so
  *   far, or `null` when the value is unknown for a backfilled day.
  * @property {number} githubMinutes - GitHub Actions minutes consumed so far.
+ * @property {number} mergedPRs - Number of PRs merged on this day.
  * @property {"logged"|"backfill"} source - Provenance of the entry.
  */
 
@@ -561,13 +562,15 @@ export function appendOrReplaceDay(series, entry) {
  * @param {string} date - ISO date string (YYYY-MM-DD).
  * @param {UsageRecord} netlify
  * @param {UsageRecord} github
+ * @param {number} [mergedPRs] - Number of PRs merged on this day.
  * @returns {SeriesEntry}
  */
-export function buildLoggedEntry(date, netlify, github) {
+export function buildLoggedEntry(date, netlify, github, mergedPRs = 0) {
   return {
     date,
     netlifyCurrent: netlify.current,
     githubMinutes: github.current,
+    mergedPRs,
     source: "logged",
   };
 }
@@ -676,6 +679,7 @@ export function buildBackfillSeries(githubSeries, netlifySeries) {
       date,
       netlifyCurrent: values.netlifyCurrent ?? null,
       githubMinutes: values.githubMinutes ?? 0,
+      mergedPRs: 0,
       source: "backfill",
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -759,6 +763,10 @@ async function main() {
     console.error(`Failed to update resource series: ${e.message}`);
   }
 
+  // mergedCount is fetched below; once known, the today's entry is updated
+  // with the daily PR count so the burndown histogram can be rendered from
+  // the series file alone.
+
   const netlifyStatus = computeUsageStatus(netlify);
   const githubStatus = computeUsageStatus(github);
   const netlifyPct = netlifyStatus.pct;
@@ -810,9 +818,27 @@ async function main() {
     status,
     mergedCount
   );
+
   try {
     const series = loadSeries();
-    const chart = await renderBurndown(github, netlify, series);
+    const todayEntry = series.find((entry) => entry.date === todayISO());
+    if (todayEntry) {
+      const updated = { ...todayEntry, mergedPRs: mergedCount };
+      saveSeries(appendOrReplaceDay(series, updated));
+    }
+  } catch (e) {
+    console.error(`Failed to update PR count in series: ${e.message}`);
+  }
+
+  try {
+    const series = loadSeries();
+    const prCounts = series
+      .filter((entry) => (entry.mergedPRs ?? 0) > 0)
+      .map((entry) => ({
+        dayIndex: dayDiff(github.periodStartDate, entry.date),
+        count: entry.mergedPRs,
+      }));
+    const chart = await renderBurndown(github, netlify, series, new Date(), prCounts);
     await sendTelegramPhoto(chart);
   } catch (e) {
     try {

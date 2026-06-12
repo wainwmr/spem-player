@@ -29,6 +29,8 @@ const COLORS = {
   green: "#16a34a",
   yellow: "#ca8a04",
   red: "#dc2626",
+  histogramPast: "#8995a5",
+  histogramFuture: "#cbd5e1",
 };
 
 const CANVAS_WIDTH = 1200;
@@ -37,7 +39,8 @@ const PADDING_X = 32;
 const PADDING_Y = 24;
 const GAP = 32;
 const PANEL_WIDTH = (CANVAS_WIDTH - 2 * PADDING_X - GAP) / 2;
-const PANEL_HEIGHT = CANVAS_HEIGHT - 2 * PADDING_Y;
+const HISTOGRAM_HEIGHT = 80;
+const PANEL_HEIGHT = CANVAS_HEIGHT - 2 * PADDING_Y - HISTOGRAM_HEIGHT;
 const CHART_TOP = 24;
 const CHART_BOTTOM = PANEL_HEIGHT - 24;
 const CHART_LEFT = 24;
@@ -92,7 +95,7 @@ function buildPoints(series, key, usage, now) {
  * @param {string} dateStr
  * @returns {number}
  */
-function dayDiff(startStr, dateStr) {
+export function dayDiff(startStr, dateStr) {
   const start = new Date(startStr);
   const date = new Date(dateStr);
   const startUtc = Date.UTC(
@@ -217,7 +220,7 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
 
   ctx.fillStyle = COLORS.text;
   ctx.font = "500 36px sans-serif";
-  ctx.fillText("mins", valueX, valueY + 62);
+  ctx.fillText("mins", valueX, valueY + 54);
 
   // Gridlines (no axis labels)
   ctx.strokeStyle = COLORS.grid;
@@ -265,16 +268,8 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
     }
   }
 
-  // You-are-here vertical line
-  const xNow = ox + (todayIndex / (days - 1)) * CHART_WIDTH;
-  ctx.strokeStyle = COLORS.youAreHere;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(xNow, oy);
-  ctx.lineTo(xNow, CHART_BOTTOM);
-  ctx.stroke();
-
   // Projection from today to period-end (drawn before the dot so the dot sits on top)
+  const xNow = ox + (todayIndex / (days - 1)) * CHART_WIDTH;
   const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
   ctx.strokeStyle = projectionColor;
   ctx.lineWidth = 4;
@@ -291,8 +286,7 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
   ctx.arc(xNow, yNow, 8, 0, Math.PI * 2);
   ctx.fill();
 
-  // Service icon, bottom-left of the chart area, drawn last so it sits on
-  // top of the you-are-here vertical line when they overlap.
+  // Service icon, bottom-left of the chart area.
   const iconHeight = 144;
   const iconWidth = (icon.width / icon.height) * iconHeight;
   ctx.drawImage(
@@ -307,15 +301,80 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
 }
 
 /**
+ * Draw a single PR-count histogram spanning underneath both panels.
+ *
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {UsageRecord} usage
+ * @param {Date} now
+ * @param {{dayIndex: number, count: number}[]} prCounts
+ */
+function drawHistogram(ctx, usage, now, prCounts) {
+  const today = now.toISOString().slice(0, 10);
+  const days = usage.periodDays;
+  const todayIndex = Math.min(dayDiff(usage.periodStartDate, today), days - 1);
+
+  const HISTOGRAM_MAX_COUNT = 15; // observed month max
+  const FUTURE_PLACEHOLDER_HEIGHT = 6;
+  const histogramTop = PANEL_HEIGHT + PADDING_Y;
+  const histogramBottom = CANVAS_HEIGHT - PADDING_Y;
+  const histogramHeight = histogramBottom - histogramTop;
+  const histogramLeft = PADDING_X + CHART_LEFT;
+  const histogramRight =
+    PADDING_X + PANEL_WIDTH + GAP + CHART_RIGHT;
+  const histogramWidth = histogramRight - histogramLeft;
+  const dayWidth = histogramWidth / (days - 1);
+  const barWidth = Math.min(dayWidth * 0.7, 18);
+
+  // Bar centres are inset so the first bar starts at histogramLeft and the
+  // last bar ends at histogramRight.
+  const slotWidth = (histogramWidth - barWidth) / (days - 1);
+
+  // Baseline
+  ctx.strokeStyle = COLORS.grid;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(histogramLeft, histogramBottom);
+  ctx.lineTo(histogramRight, histogramBottom);
+  ctx.stroke();
+
+  for (let dayIndex = 0; dayIndex < days; dayIndex++) {
+    const entry = prCounts.find((c) => c.dayIndex === dayIndex);
+    const count = entry?.count ?? 0;
+    const x = histogramLeft + barWidth / 2 + dayIndex * slotWidth;
+
+    let height;
+    let fill;
+    if (dayIndex > todayIndex) {
+      height = FUTURE_PLACEHOLDER_HEIGHT;
+      fill = COLORS.histogramFuture;
+    } else {
+      height = Math.min(count / HISTOGRAM_MAX_COUNT, 1) * histogramHeight;
+      fill = dayIndex === todayIndex ? COLORS.green : COLORS.histogramPast;
+    }
+
+    if (height <= 0) continue;
+    ctx.fillStyle = fill;
+    ctx.fillRect(x - barWidth / 2, histogramBottom - height, barWidth, height);
+  }
+}
+
+/**
  * Render the burndown chart as a PNG buffer.
  *
  * @param {UsageRecord} github
  * @param {UsageRecord} netlify
  * @param {SeriesEntry[]} series
  * @param {Date} [now]
+ * @param {{dayIndex: number, count: number}[]} [prCounts]
  * @returns {Promise<Buffer>}
  */
-export async function renderBurndown(github, netlify, series, now = new Date()) {
+export async function renderBurndown(
+  github,
+  netlify,
+  series,
+  now = new Date(),
+  prCounts = []
+) {
   const canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
   const ctx = canvas.getContext("2d");
 
@@ -355,8 +414,17 @@ export async function renderBurndown(github, netlify, series, now = new Date()) 
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(separatorX, PADDING_Y + 8);
-  ctx.lineTo(separatorX, CANVAS_HEIGHT - PADDING_Y - 8);
+  ctx.lineTo(separatorX, PANEL_HEIGHT - 8);
   ctx.stroke();
+
+  drawHistogram(ctx, enrichedGithub, now, prCounts);
 
   return canvas.toBuffer("image/png");
 }
+
+/**
+ * Functions exported purely for unit testing. Not part of the public API.
+ */
+export const exportedForTesting = {
+  drawHistogram,
+};

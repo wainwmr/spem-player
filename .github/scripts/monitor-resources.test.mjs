@@ -379,7 +379,7 @@ describe("loadSeries / saveSeries", () => {
     tmpDir = mkdtempSync(join(tmpdir(), "monitor-series-"));
     const path = join(tmpDir, "series.json");
     const series = [
-      { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, source: "logged" },
+      { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, mergedPRs: 3, source: "logged" },
     ];
     saveSeries(series, path);
     const loaded = loadSeries(path);
@@ -390,9 +390,9 @@ describe("loadSeries / saveSeries", () => {
 // appendOrReplaceDay: idempotent per date and sorted
 test("appendOrReplaceDay appends a new date", () => {
   const series = [
-    { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, source: "logged" },
+    { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, mergedPRs: 1, source: "logged" },
   ];
-  const entry = { date: "2026-06-11", netlifyCurrent: 15, githubMinutes: 25, source: "logged" };
+  const entry = { date: "2026-06-11", netlifyCurrent: 15, githubMinutes: 25, mergedPRs: 2, source: "logged" };
   const result = appendOrReplaceDay(series, entry);
   assert.equal(result.length, 2);
   assert.equal(result[1].date, "2026-06-11");
@@ -400,19 +400,20 @@ test("appendOrReplaceDay appends a new date", () => {
 
 test("appendOrReplaceDay replaces an existing date", () => {
   const series = [
-    { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, source: "logged" },
+    { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, mergedPRs: 1, source: "logged" },
   ];
-  const entry = { date: "2026-06-10", netlifyCurrent: 99, githubMinutes: 99, source: "logged" };
+  const entry = { date: "2026-06-10", netlifyCurrent: 99, githubMinutes: 99, mergedPRs: 5, source: "logged" };
   const result = appendOrReplaceDay(series, entry);
   assert.equal(result.length, 1);
   assert.equal(result[0].netlifyCurrent, 99);
+  assert.equal(result[0].mergedPRs, 5);
 });
 
 test("appendOrReplaceDay keeps series sorted", () => {
   const series = [
-    { date: "2026-06-12", netlifyCurrent: 12, githubMinutes: 22, source: "logged" },
+    { date: "2026-06-12", netlifyCurrent: 12, githubMinutes: 22, mergedPRs: 1, source: "logged" },
   ];
-  const entry = { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, source: "logged" };
+  const entry = { date: "2026-06-10", netlifyCurrent: 10, githubMinutes: 20, mergedPRs: 1, source: "logged" };
   const result = appendOrReplaceDay(series, entry);
   assert.equal(result[0].date, "2026-06-10");
   assert.equal(result[1].date, "2026-06-12");
@@ -427,8 +428,16 @@ test("buildLoggedEntry uses current values and source logged", () => {
     date: "2026-06-12",
     netlifyCurrent: 30,
     githubMinutes: 120,
+    mergedPRs: 0,
     source: "logged",
   });
+});
+
+test("buildLoggedEntry includes merged PR count", () => {
+  const netlify = { current: 30, limit: 300, periodStartDate: "2026-06-12", periodEndDate: "2026-07-11" };
+  const github = { current: 120, limit: 2000, periodStartDate: "2026-06-01", periodEndDate: "2026-06-30" };
+  const entry = buildLoggedEntry("2026-06-12", netlify, github, 4);
+  assert.equal(entry.mergedPRs, 4);
 });
 
 // githubRunsToDailySeries: cumulative minutes per day
@@ -490,7 +499,7 @@ test("buildBackfillSeries combines both sources on matching dates", () => {
   ];
   const result = buildBackfillSeries(github, netlify);
   assert.deepEqual(result, [
-    { date: "2026-06-12", netlifyCurrent: 30, githubMinutes: 100, source: "backfill" },
-    { date: "2026-06-13", netlifyCurrent: null, githubMinutes: 120, source: "backfill" },
+    { date: "2026-06-12", netlifyCurrent: 30, githubMinutes: 100, mergedPRs: 0, source: "backfill" },
+    { date: "2026-06-13", netlifyCurrent: null, githubMinutes: 120, mergedPRs: 0, source: "backfill" },
   ]);
 });
