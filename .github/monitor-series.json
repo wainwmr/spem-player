@@ -190,5 +190,21 @@
       "githubEmoji": "🟢",
       "mergedPRs": 21
     }
+  },
+  {
+    "date": "2026-06-13",
+    "netlifyCurrent": 94,
+    "githubMinutes": 636,
+    "mergedPRs": 13,
+    "summary": {
+      "netlifyPct": 31,
+      "netlifyProjected": 75,
+      "netlifyEmoji": "🟢",
+      "githubPct": 32,
+      "githubProjected": 73,
+      "githubEmoji": "🟢",
+      "mergedPRs": 13
+    },
+    "source": "logged"
   }
 ]
