@@ -205,18 +205,18 @@
   },
   {
     "date": "2026-06-13",
-    "netlifyCurrent": 94,
-    "githubMinutes": 636,
-    "mergedPRs": 13,
+    "netlifyCurrent": 95,
+    "githubMinutes": 647,
+    "mergedPRs": 14,
     "summary": {
-      "netlifyPct": 31,
-      "netlifyProjected": 75,
-      "githubPct": 32,
-      "githubProjected": 73,
-      "mergedPRs": 13,
+      "netlifyPct": 32,
+      "netlifyProjected": 76,
       "netlifyStatus": "watch",
-      "githubStatus": "good",
-      "overallStatus": "watch"
+      "githubPct": 32,
+      "githubProjected": 75,
+      "githubStatus": "watch",
+      "overallStatus": "watch",
+      "mergedPRs": 14
     },
     "source": "logged"
   }
