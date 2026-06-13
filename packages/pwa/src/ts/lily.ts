@@ -5,7 +5,7 @@ import config from "./config";
 import lyGrammar from "../ohmjs/ly-grammar.ohm-bundle";
 import * as ohm from "ohm-js";
 import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
-import spem from "../lilypond/spem.ly?raw";
+import spem from "@lilypond/spem.ly?raw";
 
 // A single note entry at a quantised bar position.
 export type NoteEntry = {
