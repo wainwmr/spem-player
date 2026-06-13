@@ -5,8 +5,8 @@
 #
 # Ignore: skip the build when none of the listed paths changed. Exits 0
 # (skip) if no differences; exits 1 (build) if any path changed.
-# src/lilypond/ is intentionally excluded — .ly changes trigger the
-# LilyPond workflow (#462) which commits updated SVGs, and the SVG commit
+# packages/scores/src/ is intentionally excluded — .ly changes trigger the
+# Scores CI workflow (#462) which commits updated SVGs, and the SVG commit
 # then triggers Netlify.
 [build]
   command = "pnpm run build"

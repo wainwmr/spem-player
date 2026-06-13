@@ -6,7 +6,7 @@ on:
     paths-ignore:
       - "packages/pwa/**"
       - "packages/monitor/**"
-      - "lilypond/**"
+      - "packages/scores/**"
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
@@ -19,7 +19,7 @@ on:
     paths-ignore:
       - "packages/pwa/**"
       - "packages/monitor/**"
-      - "lilypond/**"
+      - "packages/scores/**"
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
@@ -33,4 +33,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: No PWA-relevant files changed
-        run: echo "Skipping PWA CI — changed files are outside the PWA path filter."
+        run: echo "Skipping PWA/monitor/scores CI — changed files are outside the path filters."

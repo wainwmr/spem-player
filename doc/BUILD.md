@@ -48,7 +48,7 @@ This runs `vite build` to produce a production bundle into `dist/`.
 
 `pnpm run prebuild` runs automatically before `build` and generates the Ohm.js
 grammar bundle and SVG scores from LilyPond source. The SVG files in
-`src/scores/` are committed source assets generated from LilyPond source.
+`packages/pwa/src/scores/` are committed source assets generated from LilyPond source.
 LilyPond is required only if regenerating SVGs from source.
 
 ## Preview the Production Build
@@ -61,8 +61,8 @@ Serves the contents of `dist/` locally.
 
 ## Regenerate SVG Scores
 
-The SVG files in `src/scores/` are generated from LilyPond source files in
-`lilypond/src/`. They are committed to git as source assets. `pnpm run build`
+The SVG files in `packages/pwa/src/scores/` are generated from LilyPond source files in
+`packages/scores/src/`. They are committed to git as source assets. `pnpm run build`
 regenerates them automatically via the `prebuild` step when `.ly` sources are
 newer than the generated SVGs.
 
@@ -79,14 +79,14 @@ pnpm run build:scores -- --choir="I A"
 pnpm run build:scores -- --version="Hugh Keyte" --notation=early --choir="II B"
 ```
 
-This iterates over matching `Choir*.ly` files under `lilypond/src/` and runs `lilypond --svg` for each, then post-processes the generated SVG with `lilypond/build/postprocessSvg.mjs`.
+This iterates over matching `Choir*.ly` files under `packages/scores/src/` and runs `lilypond --svg` for each, then post-processes the generated SVG with `packages/scores/build/postprocessSvg.mjs`.
 
 ### Timing
 
 LilyPond is the slow part: roughly 60 seconds per choir, 16 choirs across early + modern notations. When `.ly` sources are current, `pnpm run build:scores` (and the `prebuild` step inside `pnpm run build`) completes in a few seconds because `needsRebuild` compares mtimes and skips unchanged files. After a batch edit of `.ly` files — particularly shared includes (`basic.ly`, `layout.ly`) — expect the next full `pnpm run ci` to take 10+ minutes as the affected SVGs regenerate. This is a one-off; the next build after that is fast again.
 
 To force a clean regeneration, delete the directory
-(`rm -rf src/scores/`) and re-run `pnpm run build:scores`.
+(`rm -rf packages/pwa/src/scores/`) and re-run `pnpm run build:scores`.
 
 ## Quality Checks
 
@@ -207,7 +207,7 @@ Two independent caches speed up CI and deploy:
 | Cache    | What                 | Key                      |
 | -------- | -------------------- | ------------------------ |
 | pnpm     | pnpm global store    | `pnpm-lock.yaml` hash    |
-| LilyPond | `~/.local/lilypond/` | `lilypond-2.26.0-{os}`   |
+| LilyPond | `~/.local/lilypond/` | `lilypond-2.26.0-{os}`  |
 
 ### Concurrency
 

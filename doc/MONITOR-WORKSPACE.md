@@ -4,13 +4,13 @@
 
 The Spem Player repository currently contains three largely independent concerns:
 
-1. **Spem Player PWA** (`src/`, `index.html`, Vite build, Vitest tests).
-2. **LilyPond score pipeline** (`lilypond/`, SVG generation).
-3. **Build-resource monitor** (`.github/scripts/monitor-resources.mjs`, `.github/scripts/render-burndown.mjs`, chart tests).
+1. **Spem Player PWA** (`packages/pwa/`, Vite build, Vitest tests).
+2. **LilyPond score pipeline** (`packages/scores/`, SVG generation).
+3. **Build-resource monitor** (`packages/monitor/`, resource charts).
 
 The PWA and monitor share a single root `package.json`. This forces the PWA CI to install `canvas` (a heavy native dependency used only by the monitor's chart renderer) and makes branch-protection rules such as "require `test` to pass" apply to changes that do not touch the PWA at all. Path filters in GitHub Actions are the only thing preventing unnecessary builds, and they are duplicated and easy to get wrong.
 
-This document proposes moving the monitor into its own workspace package as the first step toward proper separation. The LilyPond score pipeline is intentionally out of scope for this migration; see [Future phases](#future-phases).
+This document proposes moving the monitor into its own workspace package as the first step toward proper separation. The LilyPond score pipeline is also extracted into `packages/scores/` as part of #600.
 
 ## Workspaces and monorepos
 
@@ -25,7 +25,7 @@ Workspaces do not require you to publish packages or share code between them. Th
 
 ## Proposed layout
 
-This migration moves the PWA into `packages/pwa/` and the monitor into `packages/monitor/`. The LilyPond score pipeline stays in `lilypond/` and remains a future extraction.
+This migration moves the PWA into `packages/pwa/`, the monitor into `packages/monitor/`, and the LilyPond score pipeline into `packages/scores/`.
 
 ```text
 spem-player/
@@ -41,17 +41,21 @@ spem-player/
 │   │   ├── src/
 │   │   ├── e2e/
 │   │   └── ...
-│   └── monitor/                      # new workspace package
+│   ├── monitor/                      # new workspace package
+│   │   ├── package.json
+│   │   ├── monitor-resources.mjs
+│   │   ├── render-burndown.mjs
+│   │   ├── monitor-resources.test.mjs
+│   │   ├── render-burndown.test.mjs
+│   │   └── icons/
+│   │       ├── github.png
+│   │       ├── netlify.png
+│   │       └── fire.png
+│   └── scores/                       # LilyPond-to-SVG score pipeline
 │       ├── package.json
-│       ├── monitor-resources.mjs
-│       ├── render-burndown.mjs
-│       ├── monitor-resources.test.mjs
-│       ├── render-burndown.test.mjs
-│       └── icons/
-│           ├── github.png
-│           ├── netlify.png
-│           └── fire.png
-├── lilypond/                         # SVG score pipeline (out of scope)
+│       ├── build/
+│       ├── src/
+│       └── test/
 └── doc/
 ```
 
@@ -194,47 +198,12 @@ Once CI is scoped, the branch-protection rule can still require the PWA `test` j
 |---|---|---|
 | PWA code (`packages/pwa/**`, root workspace files) | PWA CI, e2e | Monitor tests |
 | Monitor code (`packages/monitor/`) | Monitor CI | PWA CI |
-| LilyPond code (`lilypond/`) | Regenerate SVGs | PWA CI, Monitor tests |
+| Scores code (`packages/scores/`) | Scores CI | PWA CI, Monitor CI |
 | Documentation only | None (or docs check) | All heavy builds |
 
 ## Future phases
 
-After the monitor and PWA are in workspace packages, the remaining concern is the LilyPond score pipeline. It is deliberately not part of #599 because it introduces a cross-package artifact relationship: the pipeline produces the SVGs that the PWA consumes.
-
-A future issue (#600) will move the score pipeline into its own workspace package, for example `packages/scores/`:
-
-```text
-spem-player/
-├── packages/
-│   ├── pwa/
-│   ├── monitor/
-│   └── scores/                    # future — LilyPond → SVG pipeline
-│       ├── package.json
-│       ├── build/
-│       │   ├── buildScores.mjs
-│       │   └── postprocessSvg.mjs
-│       ├── src/
-│       │   ├── Hugh Keyte/
-│       │   └── OUP/
-│       ├── test/
-│       └── output/                # generated SVGs consumed by PWA
-├── .github/workflows/
-│   ├── pwa-ci.yml
-│   ├── monitor-run.yml
-│   ├── monitor-ci.yml
-│   └── scores-ci.yml              # triggers on packages/scores/**
-└── ...
-```
-
-That issue will need to resolve:
-
-- **Artifact ownership.** Do generated SVGs live in `packages/scores/output/` and get copied/symlinked into `packages/pwa/public/` at build time, or does the PWA import them directly from the workspace?
-- **Vite config changes.** The PWA precache manifest and asset handling must know where the SVGs are.
-- **CI trigger separation.** The existing `.github/workflows/scores-ci.yml` runs when anything under `lilypond/**` changes; for `packages/scores/` it must be retargeted to that package path.
-- **External binary dependency.** The score pipeline needs the `lilypond` binary on the runner, unlike the monitor's `canvas` or the PWA's Node toolchain.
-- **Package naming.** Whether to split source (`.ly` files), build scripts, and generated output into sub-packages or keep them together.
-
-Because the PWA and monitor share no artifacts, the #599 migration is straightforward. The LilyPond extraction is the next natural step, but it deserves its own ticket and design discussion.
+The LilyPond score pipeline was extracted into `packages/scores/` in #600. Generated SVGs remain committed inside `packages/pwa/src/scores/` and are written there by the score package's build script, so the PWA loader and Vite precache configuration did not need to change.
 
 ## Risks and considerations
 
@@ -251,4 +220,4 @@ Because the PWA and monitor share no artifacts, the #599 migration is straightfo
 3. Implement file moves and root/package `package.json` changes.
 4. Update workflows and Netlify build command.
 5. Verify each workflow runs only for its own scope.
-6. Create a separate ticket for the LilyPond workspace extraction (see #600).
+6. Create a ticket/PR for the LilyPond workspace extraction (#600).

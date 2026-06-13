@@ -7,12 +7,12 @@
   "scripts": {
     "dev": "pnpm --filter @spem/pwa dev",
     "build": "pnpm --filter @spem/pwa build",
-    "build:scores": "node lilypond/build/buildScores.mjs --outDir packages/pwa/src/scores",
+    "build:scores": "pnpm --filter @spem/scores build",
     "build:ohm": "pnpm --filter @spem/pwa build:ohm",
     "preview": "pnpm --filter @spem/pwa preview",
     "test": "pnpm --filter @spem/pwa test",
     "test:unit": "pnpm --filter @spem/pwa test:unit",
-    "test:lilypond": "vitest run lilypond/test/*.integration.test.ts",
+    "test:lilypond": "pnpm --filter @spem/scores test:integration",
     "test:monitor": "pnpm --filter @spem/monitor test",
     "test:watch": "pnpm --filter @spem/pwa test:watch",
     "test:coverage": "pnpm --filter @spem/pwa test:coverage",
@@ -22,9 +22,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@xmldom/xmldom": "^0.9.10",
-    "husky": "^9.1.7",
-    "vitest": "^4.1.5"
+    "husky": "^9.1.7"
   },
   "author": "Mark Wainwright",
   "packageManager": "pnpm@11.5.3",

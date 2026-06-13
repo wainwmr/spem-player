@@ -38,8 +38,8 @@ export default defineConfig({
     port: DEV_PORT,
     strictPort: false,
     fs: {
-      // Allow serving files from the repository root (e.g. the
-      // symlinked LilyPond source under src/lilypond).
+      // Allow serving files from outside the PWA package (e.g. the
+      // symlinked score source under src/lilypond).
       allow: ["..", "../.."],
     },
   },

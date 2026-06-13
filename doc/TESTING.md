@@ -55,13 +55,13 @@ pnpm run test:coverage
 
 ## Test File Location and Naming
 
-Unit tests live under `src/test/` and `lilypond/test/` (excluding `*.integration.test.ts`) and follow the naming convention `*.test.ts`. They run in-process under jsdom and should complete in under a few seconds each. In-process tests against `lilypond/build/` code (for example `postprocessSvg.test.ts`) live in `lilypond/test/` alongside the integration suite.
+Unit tests live under `src/test/` and `packages/scores/test/` (excluding `*.integration.test.ts`) and follow the naming convention `*.test.ts`. They run in-process under jsdom and should complete in under a few seconds each. In-process tests against `packages/scores/build/` code (for example `postprocessSvg.test.ts`) live in `packages/scores/test/` alongside the integration suite.
 
 Scripts in `packages/monitor/` that expose pure functions use the Node.js built-in test runner (`node:test`) rather than Vitest, and live alongside the script as `*.test.mjs`. Run them directly with `pnpm --filter monitor test`. These files are excluded from the Vitest config (`packages/pwa/vite.config.ts`) and do not appear in `pnpm run test:unit` output.
 
-Integration tests live in `lilypond/test/*.integration.test.ts` and also follow `*.test.ts`. They typically spawn subprocesses (LilyPond, the build pipeline) and are substantially slower.
+Integration tests live in `packages/scores/test/*.integration.test.ts` and also follow `*.test.ts`. They typically spawn subprocesses (LilyPond, the build pipeline) and are substantially slower.
 
-When changing integration tests, always run `pnpm run test:lilypond` locally — see § CI Behaviour below for which workflows run them in CI and the `lilypond/test/**` trigger gap (#558).
+When changing integration tests, always run `pnpm run test:lilypond` locally — see § CI Behaviour below for which workflows run them in CI and the `packages/scores/test/**` trigger gap (#558).
 
 ## Test Layer Decision Criteria
 
@@ -74,7 +74,7 @@ Choosing the right layer keeps the suite fast and deterministic.
 - build script logic that does not spawn subprocesses
 - pure functions and domain models
 
-**Integration tests** (Vitest/jsdom, `lilypond/test/*.integration.test.ts`) cover cross-module behaviour and subprocess orchestration:
+**Integration tests** (Vitest/jsdom, `packages/scores/test/*.integration.test.ts`) cover cross-module behaviour and subprocess orchestration:
 
 - event flow across multiple custom elements
 - build-pipeline verification that spawns Node scripts, LilyPond, or other external processes
@@ -101,7 +101,7 @@ If a test needs any of the above, it belongs in the E2E layer.
 The two suites run in separate workflows. See `doc/CI.md` for the canonical description; in summary:
 
 - PWA CI (`.github/workflows/pwa-ci.yml`) runs `pnpm run check`, `pnpm run build`, and `pnpm run test:unit` on push/PR to `main` when PWA-relevant paths change (`packages/pwa/**`, root workspace files, and the workflow file), plus a nightly cron. It is one source of the required `test` status check.
-- The integration suite (`pnpm run test:lilypond`) runs in the Scores CI workflow (`.github/workflows/scores-ci.yml`) when anything under `lilypond/**` changes. Its `test` job reports the required `test` status check for LilyPond-only PRs.
+- The integration suite (`pnpm run test:lilypond`) runs in the Scores CI workflow (`.github/workflows/scores-ci.yml`) when anything under `packages/scores/**` changes. Its `test` job reports the required `test` status check for scores-only PRs.
 - For PRs that change only unrelated paths (docs, other workflow files, etc.), `.github/workflows/test-noop.yml` reports a passing `test` status check.
 
 ## Key Dependencies
