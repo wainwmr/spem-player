@@ -31,9 +31,10 @@ import { renderBurndown, dayDiff } from "./render-burndown.mjs";
 
 const NETLIFY_API = "https://api.netlify.com/api/v1";
 const TELEGRAM_API = "https://api.telegram.org/bot";
-const WATCH_THRESHOLD_PCT = 50;
-const PROJECTION_CAP_PCT = 75;
+const WATCH_THRESHOLD_PCT = 75;
+const THROTTLE_THRESHOLD_PCT = 82;
 const CRITICAL_THRESHOLD_PCT = 90;
+const PROJECTION_CAP_PCT = THROTTLE_THRESHOLD_PCT;
 const SERIES_FILE = ".github/monitor-series.json";
 
 /**
@@ -161,7 +162,11 @@ export function computeUsageStatus(usage, now = new Date()) {
   const period = daysInPeriod(usage.periodStartDate, usage.periodEndDate);
   const projected = projectedPct(rawPct, elapsed, period);
   const statusPct =
-    pct >= 90 ? pct : projected >= 90 ? PROJECTION_CAP_PCT : Math.max(pct, projected);
+    pct >= CRITICAL_THRESHOLD_PCT
+      ? pct
+      : projected >= CRITICAL_THRESHOLD_PCT
+        ? PROJECTION_CAP_PCT
+        : Math.max(pct, projected);
   return { pct, projected, statusPct };
 }
 
@@ -182,7 +187,7 @@ export function computeUsageStatus(usage, now = new Date()) {
  */
 export function statusName(statusPct) {
   if (statusPct >= CRITICAL_THRESHOLD_PCT) return "stop";
-  if (statusPct >= PROJECTION_CAP_PCT) return "throttle";
+  if (statusPct >= THROTTLE_THRESHOLD_PCT) return "throttle";
   if (statusPct >= WATCH_THRESHOLD_PCT) return "watch";
   return "good";
 }

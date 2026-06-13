@@ -77,7 +77,7 @@ test("computeUsageStatus on-budget usage is capped at throttle", () => {
   assert.deepEqual(computeUsageStatus(usage, now), {
     pct: 50,
     projected: 100,
-    statusPct: 75,
+    statusPct: 82,
   });
 });
 
@@ -104,7 +104,7 @@ test("computeUsageStatus day-one spike is capped at throttle (#553)", () => {
   const result = computeUsageStatus(usage, now);
   assert.equal(result.pct, 7);
   assert.equal(result.projected, 200);
-  assert.equal(result.statusPct, 75);
+  assert.equal(result.statusPct, 82);
 });
 
 // Projection-damping policy (#553): projection-driven STOP is capped at
@@ -119,7 +119,7 @@ test("computeUsageStatus caps day-1 spike at throttle", () => {
   const result = computeUsageStatus(usage, new Date("2026-06-01T12:00:00Z"));
   assert.equal(result.pct, 30);
   assert.equal(result.projected, 900);
-  assert.equal(result.statusPct, 75);
+  assert.equal(result.statusPct, 82);
 });
 
 test("computeUsageStatus actual breach overrides projection cap", () => {
@@ -145,7 +145,7 @@ test("computeUsageStatus caps mid-period projection at throttle", () => {
   const result = computeUsageStatus(usage, new Date("2026-06-15T12:00:00Z"));
   assert.equal(result.pct, 50);
   assert.equal(result.projected, 100);
-  assert.equal(result.statusPct, 75);
+  assert.equal(result.statusPct, 82);
 });
 
 test("computeUsageStatus leaves late-period normal usage unchanged", () => {
@@ -171,7 +171,7 @@ test("computeUsageStatus caps projection at the 90% boundary", () => {
   const result = computeUsageStatus(usage, new Date("2026-06-01T12:00:00Z"));
   assert.equal(result.pct, 89);
   assert.equal(result.projected, 2670);
-  assert.equal(result.statusPct, 75);
+  assert.equal(result.statusPct, 82);
 });
 
 test("computeUsageStatus zero limit yields zeros, no division error", () => {
@@ -268,19 +268,19 @@ test("daysInPeriod handles February and 31-day months", () => {
 });
 
 // shouldSkipReport: skip only when zero PRs AND both actual and projected
-// usage are below 50% — main() passes the actual max and projected max
-// separately; this helper is the single place they are combined.
+// usage are below the watch threshold — main() passes the actual max and
+// projected max separately; this helper is the single place they are combined.
 test("shouldSkipReport skips when zero PRs and low projected usage", () => {
   assert.equal(shouldSkipReport(0, 30, 30), true);
   assert.equal(shouldSkipReport(0, 0, 0), true);
 });
 
 test("shouldSkipReport sends when zero PRs but projected watch threshold reached", () => {
-  assert.equal(shouldSkipReport(0, 30, 50), false);
+  assert.equal(shouldSkipReport(0, 30, 75), false);
 });
 
 test("shouldSkipReport sends when zero PRs but projected throttle threshold reached", () => {
-  assert.equal(shouldSkipReport(0, 30, 75), false);
+  assert.equal(shouldSkipReport(0, 30, 82), false);
 });
 
 test("shouldSkipReport sends when zero PRs but projected STOP threshold reached", () => {
@@ -372,10 +372,10 @@ test("paceBucket returns red when over critical pace", () => {
 // statusName: map status percentage to named signal
  test("statusName maps thresholds to the correct signal", () => {
    assert.equal(statusName(0), "good");
-   assert.equal(statusName(49), "good");
-   assert.equal(statusName(50), "watch");
-   assert.equal(statusName(74), "watch");
-   assert.equal(statusName(75), "throttle");
+   assert.equal(statusName(74), "good");
+   assert.equal(statusName(75), "watch");
+   assert.equal(statusName(81), "watch");
+   assert.equal(statusName(82), "throttle");
    assert.equal(statusName(89), "throttle");
    assert.equal(statusName(90), "stop");
    assert.equal(statusName(120), "stop");

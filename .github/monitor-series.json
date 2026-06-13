@@ -114,8 +114,8 @@
       "githubProjected": 80,
       "mergedPRs": 1,
       "netlifyStatus": "good",
-      "githubStatus": "throttle",
-      "overallStatus": "throttle"
+      "githubStatus": "watch",
+      "overallStatus": "watch"
     }
   },
   {
@@ -131,8 +131,8 @@
       "githubProjected": 77,
       "mergedPRs": 7,
       "netlifyStatus": "good",
-      "githubStatus": "throttle",
-      "overallStatus": "throttle"
+      "githubStatus": "watch",
+      "overallStatus": "watch"
     }
   },
   {
@@ -147,9 +147,9 @@
       "githubPct": 22,
       "githubProjected": 73,
       "mergedPRs": 7,
-      "netlifyStatus": "watch",
-      "githubStatus": "watch",
-      "overallStatus": "watch"
+      "netlifyStatus": "good",
+      "githubStatus": "good",
+      "overallStatus": "good"
     }
   },
   {
@@ -164,9 +164,9 @@
       "githubPct": 24,
       "githubProjected": 73,
       "mergedPRs": 10,
-      "netlifyStatus": "watch",
-      "githubStatus": "watch",
-      "overallStatus": "watch"
+      "netlifyStatus": "good",
+      "githubStatus": "good",
+      "overallStatus": "good"
     }
   },
   {
@@ -181,9 +181,9 @@
       "githubPct": 27,
       "githubProjected": 74,
       "mergedPRs": 10,
-      "netlifyStatus": "watch",
-      "githubStatus": "watch",
-      "overallStatus": "watch"
+      "netlifyStatus": "good",
+      "githubStatus": "good",
+      "overallStatus": "good"
     }
   },
   {
@@ -198,9 +198,9 @@
       "githubPct": 31,
       "githubProjected": 78,
       "mergedPRs": 21,
-      "netlifyStatus": "throttle",
-      "githubStatus": "throttle",
-      "overallStatus": "throttle"
+      "netlifyStatus": "watch",
+      "githubStatus": "watch",
+      "overallStatus": "watch"
     }
   },
   {
@@ -214,9 +214,9 @@
       "githubPct": 32,
       "githubProjected": 73,
       "mergedPRs": 13,
-      "netlifyStatus": "throttle",
-      "githubStatus": "watch",
-      "overallStatus": "throttle"
+      "netlifyStatus": "watch",
+      "githubStatus": "good",
+      "overallStatus": "watch"
     },
     "source": "logged"
   }
