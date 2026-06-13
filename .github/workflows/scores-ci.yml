@@ -4,11 +4,11 @@ on:
   push:
     branches: [main]
     paths:
-      - "lilypond/**"
+      - "packages/scores/**"
       - ".github/workflows/scores-ci.yml"
   pull_request:
     paths:
-      - "lilypond/**"
+      - "packages/scores/**"
       - ".github/workflows/scores-ci.yml"
 
 permissions:
@@ -28,9 +28,9 @@ jobs:
           node-version-file: ".nvmrc"
           cache: pnpm
 
-      - run: pnpm ci
-      - run: pnpm run test:lilypond
-      - run: bash lilypond/build/install-lilypond.sh
+      - run: pnpm install
+      - run: pnpm --filter @spem/scores test
+      - run: bash packages/scores/build/install-lilypond.sh
 
       - run: |
           export PATH="$HOME/.local/lilypond/lilypond-2.26.0/bin:$PATH"

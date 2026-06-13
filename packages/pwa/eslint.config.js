@@ -63,10 +63,8 @@ export default tseslint.config(
   {
     // .gitignore is honoured via includeIgnoreFile above; only paths that are
     // NOT gitignored need listing here. tests-local/ and probes/ are local-only
-    // (.git/info/exclude, not .gitignore); lilypond/build/ and
-    // .dependency-cruiser.cjs are tracked.
+    // (.git/info/exclude, not .gitignore); .dependency-cruiser.cjs is tracked.
     ignores: [
-      'lilypond/build/',
       'tests-local/',
       'probes/',
       '.dependency-cruiser.cjs',

@@ -13,12 +13,17 @@ import {
   writeFileSync,
 } from "fs";
 import { tmpdir } from "os";
-import { join, resolve } from "path";
+import { dirname, join, resolve } from "path";
+import { fileURLToPath } from "url";
+import { createRequire } from "node:module";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 
-const REPO_ROOT = resolve(process.cwd());
-const BUILD_SCRIPT = join(REPO_ROOT, "lilypond", "build", "buildScores.mjs");
-const POSTPROCESS_SCRIPT = join(REPO_ROOT, "lilypond", "build", "postprocessSvg.mjs");
+const require = createRequire(import.meta.url);
+const XMLDOM_PACKAGE_DIR = dirname(require.resolve("@xmldom/xmldom/package.json"));
+
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
+const BUILD_SCRIPT = join(REPO_ROOT, "packages", "scores", "build", "buildScores.mjs");
+const POSTPROCESS_SCRIPT = join(REPO_ROOT, "packages", "scores", "build", "postprocessSvg.mjs");
 const FAKE_LILYPOND_LOG = join(
   REPO_ROOT,
   "temp",
@@ -154,16 +159,16 @@ function createWorkspace(): string {
   const ws = mkdtempSync(join(tmpdir(), "spem-build-test-"));
 
   // Copy build scripts
-  mkdirSync(join(ws, "build"), { recursive: true });
-  copyFileSync(BUILD_SCRIPT, join(ws, "build", "buildScores.mjs"));
-  copyFileSync(POSTPROCESS_SCRIPT, join(ws, "build", "postprocessSvg.mjs"));
+  mkdirSync(join(ws, "packages", "scores", "build"), { recursive: true });
+  copyFileSync(BUILD_SCRIPT, join(ws, "packages", "scores", "build", "buildScores.mjs"));
+  copyFileSync(POSTPROCESS_SCRIPT, join(ws, "packages", "scores", "build", "postprocessSvg.mjs"));
 
   // Copy lilypond files
-  const lilyDir = join(ws, "lilypond", "src", "Hugh Keyte");
+  const lilyDir = join(ws, "packages", "scores", "src", "Hugh Keyte");
   mkdirSync(join(lilyDir, "early"), { recursive: true });
   mkdirSync(join(lilyDir, "modern"), { recursive: true });
 
-  const realLilyDir = join(REPO_ROOT, "lilypond", "src", "Hugh Keyte");
+  const realLilyDir = join(REPO_ROOT, "packages", "scores", "src", "Hugh Keyte");
   for (const f of readdirSync(join(realLilyDir, "early"))) {
     copyFileSync(join(realLilyDir, "early", f), join(lilyDir, "early", f));
   }
@@ -177,19 +182,19 @@ function createWorkspace(): string {
   );
 
   // Create empty scores dirs
-  mkdirSync(join(ws, "src", "scores", "Hugh Keyte", "early"), {
+  mkdirSync(join(ws, "packages", "pwa", "src", "scores", "Hugh Keyte", "early"), {
     recursive: true,
   });
-  mkdirSync(join(ws, "src", "scores", "Hugh Keyte", "modern"), {
+  mkdirSync(join(ws, "packages", "pwa", "src", "scores", "Hugh Keyte", "modern"), {
     recursive: true,
   });
-  mkdirSync(join(ws, "src", "scores", "OUP"), { recursive: true });
+  mkdirSync(join(ws, "packages", "pwa", "src", "scores", "OUP"), { recursive: true });
 
   // Copy @xmldom/xmldom so postprocessSvg.mjs can resolve it
-  mkdirSync(join(ws, "node_modules", "@xmldom"), { recursive: true });
+  mkdirSync(join(ws, "packages", "scores", "node_modules", "@xmldom"), { recursive: true });
   cpSync(
-    join(REPO_ROOT, "node_modules", "@xmldom", "xmldom"),
-    join(ws, "node_modules", "@xmldom", "xmldom"),
+    XMLDOM_PACKAGE_DIR,
+    join(ws, "packages", "scores", "node_modules", "@xmldom", "xmldom"),
     { recursive: true }
   );
 
@@ -214,7 +219,7 @@ describe("buildScores.mjs integration", () => {
     try {
       const result = spawnSync(
         process.execPath,
-        [join(ws, "build", "buildScores.mjs")],
+        [join(ws, "packages", "scores", "build", "buildScores.mjs")],
         {
           cwd: ws,
           env,
@@ -225,10 +230,10 @@ describe("buildScores.mjs integration", () => {
       expect(result.status).toBe(0);
       expect(result.stderr).not.toContain("Error");
 
-      expect(countSvgs(join(ws, "src", "scores", "Hugh Keyte", "early"))).toBe(
+      expect(countSvgs(join(ws, "packages", "pwa", "src", "scores", "Hugh Keyte", "early"))).toBe(
         8
       );
-      expect(countSvgs(join(ws, "src", "scores", "Hugh Keyte", "modern"))).toBe(
+      expect(countSvgs(join(ws, "packages", "pwa", "src", "scores", "Hugh Keyte", "modern"))).toBe(
         8
       );
     } finally {
@@ -245,20 +250,20 @@ describe("buildScores.mjs integration", () => {
     const ws = createWorkspace();
     try {
       // Simulate the clean checkout: remove the pre-created score dirs.
-      rmSync(join(ws, "src", "scores"), { recursive: true, force: true });
+      rmSync(join(ws, "packages", "pwa", "src", "scores"), { recursive: true, force: true });
 
       const result = spawnSync(
         process.execPath,
-        [join(ws, "build", "buildScores.mjs")],
+        [join(ws, "packages", "scores", "build", "buildScores.mjs")],
         { cwd: ws, env, encoding: "utf-8" }
       );
 
       expect(result.status).toBe(0);
       expect(result.stderr).not.toContain("unable to change directory");
-      expect(countSvgs(join(ws, "src", "scores", "Hugh Keyte", "early"))).toBe(
+      expect(countSvgs(join(ws, "packages", "pwa", "src", "scores", "Hugh Keyte", "early"))).toBe(
         8
       );
-      expect(countSvgs(join(ws, "src", "scores", "Hugh Keyte", "modern"))).toBe(
+      expect(countSvgs(join(ws, "packages", "pwa", "src", "scores", "Hugh Keyte", "modern"))).toBe(
         8
       );
     } finally {
@@ -273,7 +278,7 @@ describe("buildScores.mjs integration", () => {
         rmSync(FAKE_LILYPOND_LOG);
       }
 
-      const script = join(ws, "build", "buildScores.mjs");
+      const script = join(ws, "packages", "scores", "build", "buildScores.mjs");
 
       // First run
       const result1 = spawnSync(process.execPath, [script], {
@@ -306,7 +311,7 @@ describe("buildScores.mjs integration", () => {
         rmSync(FAKE_LILYPOND_LOG);
       }
 
-      const script = join(ws, "build", "buildScores.mjs");
+      const script = join(ws, "packages", "scores", "build", "buildScores.mjs");
 
       const result1 = spawnSync(process.execPath, [script], {
         cwd: ws,
@@ -320,7 +325,7 @@ describe("buildScores.mjs integration", () => {
 
       // Touch an edition-root include (spem.ly) two seconds in the future
       // to avoid coarse-FS mtime resolution (FAT/exFAT: 2s).
-      const includePath = join(ws, "lilypond", "src", "Hugh Keyte", "spem.ly");
+      const includePath = join(ws, "packages", "scores", "src", "Hugh Keyte", "spem.ly");
       const future = new Date(Date.now() + 2000);
       utimesSync(includePath, future, future);
 
@@ -345,7 +350,7 @@ describe("buildScores.mjs integration", () => {
         rmSync(FAKE_LILYPOND_LOG);
       }
 
-      const script = join(ws, "build", "buildScores.mjs");
+      const script = join(ws, "packages", "scores", "build", "buildScores.mjs");
 
       const result1 = spawnSync(process.execPath, [script], {
         cwd: ws,
@@ -359,9 +364,7 @@ describe("buildScores.mjs integration", () => {
       // Touch a single choir .ly two seconds in the future.
       const choirPath = join(
         ws,
-        "lilypond",
-        "src",
-        "Hugh Keyte",
+        "packages", "scores", "src", "Hugh Keyte",
         "early",
         "Choir I A.ly"
       );
@@ -390,7 +393,7 @@ describe("buildScores.mjs integration", () => {
         rmSync(FAKE_LILYPOND_LOG);
       }
 
-      const script = join(ws, "build", "buildScores.mjs");
+      const script = join(ws, "packages", "scores", "build", "buildScores.mjs");
 
       const result1 = spawnSync(process.execPath, [script], {
         cwd: ws,
@@ -404,9 +407,7 @@ describe("buildScores.mjs integration", () => {
       // Touch a modern/.ly two seconds in the future.
       const modernPath = join(
         ws,
-        "lilypond",
-        "src",
-        "Hugh Keyte",
+        "packages", "scores", "src", "Hugh Keyte",
         "modern",
         "Choir I A.ly"
       );
@@ -466,7 +467,7 @@ describe("buildScores.mjs integration", () => {
 
       const result = spawnSync(
         process.execPath,
-        [join(ws, "build", "buildScores.mjs")],
+        [join(ws, "packages", "scores", "build", "buildScores.mjs")],
         {
           cwd: ws,
           env: envWeird,
@@ -493,7 +494,7 @@ describe("buildScores.mjs integration", () => {
 
       const result = spawnSync(
         process.execPath,
-        [join(ws, "build", "buildScores.mjs")],
+        [join(ws, "packages", "scores", "build", "buildScores.mjs")],
         {
           cwd: ws,
           env: envOld,
@@ -515,14 +516,14 @@ describe("buildScores.mjs integration", () => {
       // Replace postprocessSvg with a script that throws
       const brokenPostprocess = `export function postprocessSvg(svgPath) { throw new Error("Simulated postprocess failure"); }`;
       writeFileSync(
-        join(ws, "build", "postprocessSvg.mjs"),
+        join(ws, "packages", "scores", "build", "postprocessSvg.mjs"),
         brokenPostprocess,
         "utf-8"
       );
 
       const result = spawnSync(
         process.execPath,
-        [join(ws, "build", "buildScores.mjs")],
+        [join(ws, "packages", "scores", "build", "buildScores.mjs")],
         {
           cwd: ws,
           env,
@@ -533,6 +534,8 @@ describe("buildScores.mjs integration", () => {
       expect(result.status).not.toBe(0);
       const svgPath = join(
         ws,
+        "packages",
+        "pwa",
         "src",
         "scores",
         "Hugh Keyte",
@@ -554,7 +557,7 @@ describe("buildScores.mjs integration", () => {
 
       const result = spawnSync(
         process.execPath,
-        [join(ws, "build", "buildScores.mjs")],
+        [join(ws, "packages", "scores", "build", "buildScores.mjs")],
         {
           cwd: ws,
           env,
@@ -573,7 +576,7 @@ describe("buildScores.mjs integration", () => {
         expect(oupInvocations.length).toBe(0);
       }
 
-      const oupDir = join(ws, "src", "scores", "OUP");
+      const oupDir = join(ws, "packages", "pwa", "src", "scores", "OUP");
       if (existsSync(oupDir)) {
         expect(countSvgsRecursive(oupDir)).toBe(0);
       }
@@ -623,7 +626,7 @@ describe("buildScores.mjs integration", () => {
         rmSync(FAKE_LILYPOND_LOG);
       }
 
-      const script = join(ws, "build", "buildScores.mjs");
+      const script = join(ws, "packages", "scores", "build", "buildScores.mjs");
 
       // First run
       const result1 = spawnSync(process.execPath, [script], {
@@ -636,7 +639,7 @@ describe("buildScores.mjs integration", () => {
       expect(afterFirst).toBe(16);
 
       // Touch postprocessSvg.mjs two seconds in the future
-      const postprocessPath = join(ws, "build", "postprocessSvg.mjs");
+      const postprocessPath = join(ws, "packages", "scores", "build", "postprocessSvg.mjs");
       const future = new Date(Date.now() + 2000);
       utimesSync(postprocessPath, future, future);
 
@@ -662,13 +665,15 @@ describe("buildScores.mjs integration", () => {
       // First, build successfully so SVG exists
       const result1 = spawnSync(
         process.execPath,
-        [join(ws, "build", "buildScores.mjs")],
+        [join(ws, "packages", "scores", "build", "buildScores.mjs")],
         { cwd: ws, env, encoding: "utf-8" }
       );
       expect(result1.status).toBe(0);
 
       const svgPath = join(
         ws,
+        "packages",
+        "pwa",
         "src",
         "scores",
         "Hugh Keyte",
@@ -680,9 +685,7 @@ describe("buildScores.mjs integration", () => {
       // Touch a .ly file to force rebuild
       const lyPath = join(
         ws,
-        "lilypond",
-        "src",
-        "Hugh Keyte",
+        "packages", "scores", "src", "Hugh Keyte",
         "early",
         "Choir I A.ly"
       );
@@ -735,7 +738,7 @@ describe("buildScores.mjs integration", () => {
 
       const result2 = spawnSync(
         process.execPath,
-        [join(ws, "build", "buildScores.mjs")],
+        [join(ws, "packages", "scores", "build", "buildScores.mjs")],
         { cwd: ws, env: envFail, encoding: "utf-8" }
       );
 

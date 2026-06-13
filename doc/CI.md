@@ -40,7 +40,7 @@ This workflow is intentionally excluded from the PR gate. Playwright tests are s
 
 ### `scores-ci.yml`
 
-Triggers on push to `main` and on `pull_request`, both path-filtered to `lilypond/**` and this workflow file.
+Triggers on push to `main` and on `pull_request`, both path-filtered to `packages/scores/**` and this workflow file.
 
 Permissions: `contents: write`.
 
@@ -56,7 +56,7 @@ Steps:
 - `actions/setup-node@v6` from `.nvmrc` — install Node.js.
 - `pnpm ci` — clean install from lockfile.
 - `pnpm run test:lilypond` — run the Lilypond-related test suite.
-- `bash lilypond/build/install-lilypond.sh` — install LilyPond.
+- `bash packages/scores/build/install-lilypond.sh` — install LilyPond.
 - Set `PATH` to include LilyPond 2.26.0, then `pnpm run build:scores` — regenerate SVGs.
 - Commit updated SVGs in `packages/pwa/src/scores/` if changes exist, with message `chore: regenerate SVGs [skip ci]`, then push.
 
@@ -85,8 +85,8 @@ committed) then Vite production build. No LilyPond required.
 
 **Path filter:** `netlify.toml` configures an `ignore` command that skips the
 build when none of the build-relevant paths changed. This preserves the 300
-free monthly build minutes. `lilypond/src/` is intentionally excluded from the
-filter — `.ly` changes trigger the LilyPond workflow (#462) which commits
+free monthly build minutes. `packages/scores/src/` is intentionally excluded from the
+filter — `.ly` changes trigger the Scores CI workflow (#462) which commits
 updated SVGs, and the SVG commit then triggers Netlify.
 
 **Deploy preview:** Netlify posts a preview URL as a comment on each PR

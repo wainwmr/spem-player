@@ -16,7 +16,8 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
 
-const DEFAULT_SPEM_PATH = "lilypond/src/Hugh Keyte/spem.ly";
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DEFAULT_SPEM_PATH = join(__dirname, "..", "src", "Hugh Keyte", "spem.ly");
 const PART_INDICES = {
   Soprano: 0,
   Alto: 1,

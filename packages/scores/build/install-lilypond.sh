@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# Install LilyPond for Netlify builds.
+# Install LilyPond for the Scores CI workflow.
 #
-# Background: ticket #318 removed the tracked SVGs from the repo. Netlify
-# builds now regenerate them from src/lilypond/, which requires LilyPond on
-# PATH. Netlify's build image does not include LilyPond, so this script
-# downloads and caches the generic Linux x86_64 binary at build time.
+# Background: SVGs are committed source assets under packages/pwa/src/scores/.
+# The Scores CI workflow regenerates them from packages/scores/src/ when .ly
+# source changes, which requires LilyPond on PATH. The GitHub Actions runner
+# does not include LilyPond, so this script downloads and caches the generic
+# Linux x86_64 binary at build time.
 #
-# LILYPOND_VERSION must stay in sync with the path in netlify.toml's build
-# command (the explicit `export PATH=...` there is required because this
-# script's own PATH export does not propagate across the `&&` chain).
+# LILYPOND_VERSION must stay in sync with the path used in scores-ci.yml's
+# `export PATH=...` step (the explicit export is required because this script's
+# own PATH export does not propagate across separate run steps).
 
 set -euo pipefail
 

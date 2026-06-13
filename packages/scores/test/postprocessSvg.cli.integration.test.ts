@@ -8,10 +8,11 @@ import { isMainModule } from "../build/postprocessSvg.mjs";
 
 // Module-relative, not process.cwd(): an IDE or non-root vitest invocation
 // must not point the script path at nothing.
-const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const POSTPROCESS_SCRIPT = join(
   REPO_ROOT,
-  "lilypond",
+  "packages",
+  "scores",
   "build",
   "postprocessSvg.mjs"
 );

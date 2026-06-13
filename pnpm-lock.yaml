@@ -8,15 +8,9 @@ importers:
 
   .:
     devDependencies:
-      '@xmldom/xmldom':
-        specifier: ^0.9.10
-        version: 0.9.10
       husky:
         specifier: ^9.1.7
         version: 9.1.7
-      vitest:
-        specifier: ^4.1.5
-        version: 4.1.8(@types/node@25.9.2)(@vitest/coverage-v8@4.1.8)(@vitest/ui@4.1.8)(jsdom@29.1.1(canvas@3.2.3))(vite@8.0.16(@types/node@25.9.2)(jiti@2.7.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(yaml@2.9.0))
 
   packages/monitor:
     devDependencies:
@@ -102,6 +96,15 @@ importers:
       workbox-window:
         specifier: ^7.4.1
         version: 7.4.1
+
+  packages/scores:
+    devDependencies:
+      '@xmldom/xmldom':
+        specifier: ^0.9.10
+        version: 0.9.10
+      vitest:
+        specifier: ^4.1.5
+        version: 4.1.8(@types/node@25.9.2)(@vitest/coverage-v8@4.1.8)(@vitest/ui@4.1.8)(jsdom@29.1.1(canvas@3.2.3))(vite@8.0.16(@types/node@25.9.2)(jiti@2.7.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(yaml@2.9.0))
 
 packages:
 

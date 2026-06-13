@@ -83,8 +83,8 @@ Spem Player is a Progressive Web App (PWA). After visiting the site once, you ca
 - `src/ts/` — TypeScript source: custom elements, shared types, config, LilyPond parser
 - `src/scss/` — SCSS styles with dark/light theme variables
 - `src/ohmjs/` — Ohm.js grammar for LilyPond parsing
-- `lilypond/src/` — LilyPond source files (two editions: Hugh Keyte and OUP)
-- `src/test/` — unit tests (Vitest); `lilypond/test/*.integration.test.ts` — subprocess-heavy integration tests
+- `packages/scores/src/` — LilyPond source files (two editions: Hugh Keyte and OUP)
+- `src/test/` — unit tests (Vitest); `packages/scores/test/*.integration.test.ts` — subprocess-heavy integration tests
 - `public/audio/` — MP3 recordings (ALC and CotE per-part tracks)
 - `public/spem.json` — runtime configuration (choir count, parts, tempo)
 - `build/` — build scripts (LilyPond invocation, SVG post-processing)
@@ -106,12 +106,11 @@ This licence does **not** apply to:
 
 - **Audio recordings** in `public/audio/` — licensed separately by their
   respective copyright holders (Andrew Leslie Cooper and Choir of the Earth).
-- **Generated SVG scores** (build artefacts produced from `lilypond/src/` by
-  `lilypond/build/buildScores.mjs`) — derived from editorial editions with their own
-  copyright status. These are not checked into the repository (see ticket
-  #318) but are written to `src/scores/` at build time and shipped in
-  `dist/`.
-- **Lilypond source files** in `lilypond/src/` — see individual files for
+- **Generated SVG scores** (build artefacts produced from `packages/scores/src/` by
+  `packages/scores/build/buildScores.mjs`) — derived from editorial editions with their own
+  copyright status. These are checked into the repository under `packages/pwa/src/scores/`
+  and shipped in `packages/pwa/dist/`.
+- **Lilypond source files** in `packages/scores/src/` — see individual files for
   attribution.
 
 Score and audio licensing is tracked in ticket #217.

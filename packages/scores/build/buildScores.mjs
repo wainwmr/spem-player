@@ -4,9 +4,12 @@
 
 import { execSync } from "child_process";
 import { existsSync, globSync, mkdirSync, realpathSync, rmSync, statSync } from "fs";
-import { basename, resolve } from "path";
+import { basename, dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { postprocessSvg } from "./postprocessSvg.mjs";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PACKAGE_ROOT = resolve(__dirname, "..");
 
 const POSTPROCESS_SVG_MTIME = (() => {
   try {
@@ -20,7 +23,8 @@ const POSTPROCESS_SVG_MTIME = (() => {
 const defaults = {
   version: "Hugh Keyte",
   notation: null, // null means build all notations
-  outDir: "src/scores",
+  outDir: resolve(PACKAGE_ROOT, "..", "pwa", "src", "scores"),
+  srcDir: resolve(PACKAGE_ROOT, "src"),
 };
 
 /**
@@ -57,7 +61,7 @@ function parseArgs(args = process.argv.slice(2)) {
 }
 
 function validateOptions(options) {
-  const stringFlags = ["version", "notation", "choir", "outDir"];
+  const stringFlags = ["version", "notation", "choir", "outDir", "srcDir"];
   for (const flag of stringFlags) {
     if (options[flag] === true) {
       console.error(`Error: --${flag} requires a value.`);
@@ -176,8 +180,8 @@ function buildPattern(lyDir, choir) {
 
 function buildScore(ly, version, notation, maxLyMtime, outDirBase) {
   const choirName = basename(ly, ".ly");
-  const outDir = `${outDirBase}/${version}/${notation}`;
-  const svg = `${outDir}/${choirName}.svg`;
+  const outDir = resolve(outDirBase, version, notation);
+  const svg = resolve(outDir, `${choirName}.svg`);
 
   if (!needsRebuild(maxLyMtime, svg)) {
     console.log(
@@ -220,14 +224,15 @@ function main() {
 
   const version = options.version || defaults.version;
   const outDirBase = options.outDir || defaults.outDir;
+  const srcRoot = options.srcDir || defaults.srcDir;
   checkLilypond(version);
   const notations = options.notation
     ? [options.notation]
     : ["early", "modern"];
 
   for (const notation of notations) {
-    const lyDir = `lilypond/src/${version}/${notation}`;
-    const versionDir = `lilypond/src/${version}`;
+    const lyDir = resolve(srcRoot, version, notation);
+    const versionDir = resolve(srcRoot, version);
     const pattern = buildPattern(lyDir, options.choir);
 
     const files = globSync(pattern);
