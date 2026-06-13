@@ -32,6 +32,7 @@ import { renderBurndown, dayDiff } from "./render-burndown.mjs";
 const NETLIFY_API = "https://api.netlify.com/api/v1";
 const TELEGRAM_API = "https://api.telegram.org/bot";
 const WATCH_THRESHOLD_PCT = 50;
+const PROJECTION_CAP_PCT = 75;
 const SERIES_FILE = ".github/monitor-series.json";
 
 /**
@@ -142,8 +143,9 @@ export function validatePeriod(startStr, endStr) {
  * @param {UsageRecord} usage
  * @param {Date} [now] - Reference date; defaults to `new Date()`.
  * @returns {{pct: number, projected: number, statusPct: number}} Actual
- *   percentage, linearly projected end-of-period percentage, and the worse
- *   of the two (which drives status).
+ *   percentage, linearly projected end-of-period percentage, and the driver
+ *   of status. Projection-driven STOP is capped at throttle (75%) unless
+ *   actual usage already breaches the critical threshold (90%).
  */
 export function computeUsageStatus(usage, now = new Date()) {
   // Project from the unrounded percentage: rounding first would scale the
@@ -153,7 +155,9 @@ export function computeUsageStatus(usage, now = new Date()) {
   const elapsed = daysSince(usage.periodStartDate, now);
   const period = daysInPeriod(usage.periodStartDate, usage.periodEndDate);
   const projected = projectedPct(rawPct, elapsed, period);
-  return { pct, projected, statusPct: Math.max(pct, projected) };
+  const statusPct =
+    pct >= 90 ? pct : projected >= 90 ? PROJECTION_CAP_PCT : Math.max(pct, projected);
+  return { pct, projected, statusPct };
 }
 
 /**

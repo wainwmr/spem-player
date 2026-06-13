@@ -66,7 +66,7 @@ test("computeUsageStatus projects percentages, not minutes (Vera 536-01)", () =>
   });
 });
 
-test("computeUsageStatus on-budget usage projects to exactly 100", () => {
+test("computeUsageStatus on-budget usage is capped at throttle", () => {
   const usage = {
     current: 150,
     limit: 300,
@@ -77,7 +77,7 @@ test("computeUsageStatus on-budget usage projects to exactly 100", () => {
   assert.deepEqual(computeUsageStatus(usage, now), {
     pct: 50,
     projected: 100,
-    statusPct: 100,
+    statusPct: 75,
   });
 });
 
@@ -93,7 +93,7 @@ test("computeUsageStatus converges on the period's last day", () => {
   assert.equal(result.projected, result.pct);
 });
 
-test("computeUsageStatus day-one extrapolation is linear (damping tracked in #553)", () => {
+test("computeUsageStatus day-one spike is capped at throttle (#553)", () => {
   const usage = {
     current: 20,
     limit: 300,
@@ -104,7 +104,74 @@ test("computeUsageStatus day-one extrapolation is linear (damping tracked in #55
   const result = computeUsageStatus(usage, now);
   assert.equal(result.pct, 7);
   assert.equal(result.projected, 200);
-  assert.equal(result.statusPct, 200);
+  assert.equal(result.statusPct, 75);
+});
+
+// Projection-damping policy (#553): projection-driven STOP is capped at
+// throttle unless actual usage already breaches the critical threshold.
+test("computeUsageStatus caps day-1 spike at throttle", () => {
+  const usage = {
+    current: 30,
+    limit: 100,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-01T12:00:00Z"));
+  assert.equal(result.pct, 30);
+  assert.equal(result.projected, 900);
+  assert.equal(result.statusPct, 75);
+});
+
+test("computeUsageStatus actual breach overrides projection cap", () => {
+  const usage = {
+    current: 92,
+    limit: 100,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-01T12:00:00Z"));
+  assert.equal(result.pct, 92);
+  assert.equal(result.projected, 2760);
+  assert.equal(result.statusPct, 92);
+});
+
+test("computeUsageStatus caps mid-period projection at throttle", () => {
+  const usage = {
+    current: 100,
+    limit: 200,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-15T12:00:00Z"));
+  assert.equal(result.pct, 50);
+  assert.equal(result.projected, 100);
+  assert.equal(result.statusPct, 75);
+});
+
+test("computeUsageStatus leaves late-period normal usage unchanged", () => {
+  const usage = {
+    current: 170,
+    limit: 200,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-29T12:00:00Z"));
+  assert.equal(result.pct, 85);
+  assert.equal(result.projected, 88);
+  assert.equal(result.statusPct, 88);
+});
+
+test("computeUsageStatus caps projection at the 90% boundary", () => {
+  const usage = {
+    current: 89,
+    limit: 100,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-01T12:00:00Z"));
+  assert.equal(result.pct, 89);
+  assert.equal(result.projected, 2670);
+  assert.equal(result.statusPct, 75);
 });
 
 test("computeUsageStatus zero limit yields zeros, no division error", () => {
