@@ -51,7 +51,7 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
-    exclude: [".github/**", "e2e/**", "node_modules/**"],
+    exclude: [".github/**", "e2e/**", "node_modules/**", "probes/**"],
     maxWorkers: 4,
     testTimeout: 10000,
     coverage: {
