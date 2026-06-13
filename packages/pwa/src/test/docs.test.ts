@@ -2,7 +2,13 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { describe, it, expect } from "vitest";
 
-const CONTRIBUTING_PATH = resolve(process.cwd(), "doc", "CONTRIBUTING.md");
+const CONTRIBUTING_PATH = resolve(
+  process.cwd(),
+  "..",
+  "..",
+  "doc",
+  "CONTRIBUTING.md"
+);
 
 describe("CONTRIBUTING.md", () => {
   it("does not contain the obsolete Tracked Generated Files section", () => {

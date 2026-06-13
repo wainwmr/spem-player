@@ -26,7 +26,7 @@
 
 import { fileURLToPath } from "url";
 import { realpathSync, readFileSync, writeFileSync, existsSync } from "fs";
-import { resolve } from "path";
+import { resolve, dirname } from "path";
 import { renderBurndown, dayDiff } from "./render-burndown.mjs";
 
 const NETLIFY_API = "https://api.netlify.com/api/v1";
@@ -35,7 +35,11 @@ const WATCH_THRESHOLD_PCT = 75;
 const THROTTLE_THRESHOLD_PCT = 82;
 const CRITICAL_THRESHOLD_PCT = 90;
 const PROJECTION_CAP_PCT = THROTTLE_THRESHOLD_PCT;
-const SERIES_FILE = ".github/monitor-series.json";
+const SERIES_FILE = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../..",
+  ".github/monitor-series.json"
+);
 
 /**
  * Project current usage to the end of the billing period using a linear

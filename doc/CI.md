@@ -11,7 +11,7 @@ The repository uses GitHub Actions for automated testing and dependency updates.
 
 ### `ci.yml`
 
-Triggers on push and pull request to `main`, nightly at 00:00 UTC via a `schedule` cron, and path-filtered to skip changes that do not affect the application build or unit tests. Ignored paths include `lilypond/src/**`, `lilypond/build/**`, the monitor data file (`.github/monitor-series.json`), the monitor script and its test file (`.github/scripts/monitor-resources.mjs` and `.github/scripts/monitor-resources.test.mjs`), and the sibling workflow files `lilypond.yml`, `e2e.yml`, and `monitor-resources.yml`.
+Triggers on push and pull request to `main`, nightly at 00:00 UTC via a `schedule` cron, and path-filtered to skip changes that do not affect the application build or unit tests. Ignored paths include `lilypond/src/**`, `lilypond/build/**`, the monitor data file (`.github/monitor-series.json`), the monitor package (`packages/monitor/**`), and the sibling workflow files `lilypond.yml`, `e2e.yml`, and `monitor-resources.yml`.
 
 Defines three jobs.
 
@@ -62,7 +62,7 @@ Steps:
 - `pnpm run test:lilypond` — run the Lilypond-related test suite.
 - `bash lilypond/build/install-lilypond.sh` — install LilyPond.
 - Set `PATH` to include LilyPond 2.26.0, then `pnpm run build:scores` — regenerate SVGs.
-- Commit updated SVGs in `src/scores/` if changes exist, with message `chore: regenerate SVGs [skip ci]`, then push.
+- Commit updated SVGs in `packages/pwa/src/scores/` if changes exist, with message `chore: regenerate SVGs [skip ci]`, then push.
 
 If no SVGs changed, the job exits cleanly without committing.
 
@@ -103,7 +103,7 @@ Triggers daily at 02:29 UTC (`cron: "29 2 * * *"`, deliberately off the top of t
 Steps:
 
 - `actions/checkout@v6` — checkout the repository.
-- `node .github/scripts/monitor-resources.mjs` — run the monitor, with `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `GITHUB_TOKEN` passed in the environment. After fetching usage, the script appends (or replaces) today's entry in `.github/monitor-series.json` with the current Netlify and GitHub build-minute totals.
+- `pnpm --filter monitor exec node monitor-resources.mjs` — run the monitor, with `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `GITHUB_TOKEN` passed in the environment. After fetching usage, the script appends (or replaces) today's entry in `.github/monitor-series.json` with the current Netlify and GitHub build-minute totals.
 - Commit the updated `.github/monitor-series.json` if it changed, with message `chore: update daily resource series [skip ci]`, then push. The workflow triggers only on `schedule` and `workflow_dispatch` (never on `push`), so this self-commit cannot loop the workflow; the `[skip ci]` suffix also prevents it from consuming a `ci.yml` run.
 
 The script queries the current period's Netlify build-minute usage and GitHub Actions usage. Status thresholds — good (< 75%), watch (≥ 75%), throttle (≥ 82%), and stop (≥ 90%) — apply to actual usage, while a linearly projected end-of-period usage can raise an early warning up to throttle (82%) when actual usage is below 90%. This prevents a single high-burn day early in the period from opening a false critical issue while still surfacing an unsustainable burn rate. On days with no PRs merged in the past 24 hours and both actual and projected usage below the watch threshold (50%), the Telegram post is skipped to reduce noise; watch and worse always send regardless of PR activity. The monitor posts only the burndown chart image — no caption and no separate text message — because the chart encodes the full signal: green for good, yellow/amber for watch, red for throttle, and red with a fire icon for stop. If either service actually reaches **90%** of its quota, the status becomes `stop` and the workflow opens a critical GitHub issue containing a runbook for reducing build-minute consumption; projection alone cannot open a critical issue.
@@ -118,8 +118,8 @@ Steps:
 
 - `actions/checkout@v6` — checkout the repository.
 - `pnpm/action-setup@v4` and `actions/setup-node@v6` from `.nvmrc` — install Node.js and pnpm.
-- `pnpm install` — install project dependencies (required for the `canvas` native module used by the burndown renderer).
-- `node --test .github/scripts/monitor-resources.test.mjs .github/scripts/render-burndown.test.mjs` — run the monitor and burndown tests.
+- `pnpm install --filter monitor` — install monitor dependencies (required for the `canvas` native module used by the burndown renderer).
+- `pnpm --filter monitor test` — run the monitor and burndown tests.
 
 Run locally with `pnpm run test:monitor`.
 

@@ -7,7 +7,7 @@ import { includeIgnoreFile } from 'eslint/config'
 // file itself under no-undef, which has no node globals in scope here.
 import { fileURLToPath, URL } from 'node:url'
 
-const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url))
+const gitignorePath = fileURLToPath(new URL('../../.gitignore', import.meta.url))
 
 export default tseslint.config(
   // Honour .gitignore so the ignore list is not hand-duplicated here (#509).
@@ -50,7 +50,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['.github/scripts/**/*.mjs', 'scripts/**/*.mjs'],
+    files: ['../packages/monitor/*.mjs', '../scripts/*.mjs'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',

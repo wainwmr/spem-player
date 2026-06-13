@@ -4,18 +4,18 @@ on:
   push:
     branches: [main]
     paths:
-      - ".github/scripts/monitor-resources.mjs"
-      - ".github/scripts/monitor-resources.test.mjs"
-      - ".github/scripts/render-burndown.mjs"
-      - ".github/scripts/render-burndown.test.mjs"
+      - "packages/monitor/monitor-resources.mjs"
+      - "packages/monitor/monitor-resources.test.mjs"
+      - "packages/monitor/render-burndown.mjs"
+      - "packages/monitor/render-burndown.test.mjs"
       - ".github/workflows/monitor-resources-test.yml"
   pull_request:
     branches: [main]
     paths:
-      - ".github/scripts/monitor-resources.mjs"
-      - ".github/scripts/monitor-resources.test.mjs"
-      - ".github/scripts/render-burndown.mjs"
-      - ".github/scripts/render-burndown.test.mjs"
+      - "packages/monitor/monitor-resources.mjs"
+      - "packages/monitor/monitor-resources.test.mjs"
+      - "packages/monitor/render-burndown.mjs"
+      - "packages/monitor/render-burndown.test.mjs"
       - ".github/workflows/monitor-resources-test.yml"
 
 jobs:
@@ -28,5 +28,5 @@ jobs:
         with:
           node-version-file: ".nvmrc"
           cache: pnpm
-      - run: pnpm install
-      - run: node --test .github/scripts/monitor-resources.test.mjs .github/scripts/render-burndown.test.mjs
+      - run: pnpm install --filter @spem/monitor
+      - run: pnpm --filter @spem/monitor test
