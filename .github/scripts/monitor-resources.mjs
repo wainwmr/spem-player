@@ -33,6 +33,7 @@ const NETLIFY_API = "https://api.netlify.com/api/v1";
 const TELEGRAM_API = "https://api.telegram.org/bot";
 const WATCH_THRESHOLD_PCT = 50;
 const PROJECTION_CAP_PCT = 75;
+const CRITICAL_THRESHOLD_PCT = 90;
 const SERIES_FILE = ".github/monitor-series.json";
 
 /**
@@ -89,11 +90,15 @@ export function paceBucket(projectedPct) {
  * @property {number|null} netlifyPct - Netlify actual usage percentage.
  * @property {number|null} netlifyProjected - Netlify projected end-of-period
  *   percentage.
- * @property {string|null} netlifyEmoji - Netlify pace emoji.
+ * @property {"good"|"watch"|"throttle"|"stop"|null} netlifyStatus - Netlify
+ *   signal status.
  * @property {number} githubPct - GitHub actual usage percentage.
  * @property {number} githubProjected - GitHub projected end-of-period
  *   percentage.
- * @property {string} githubEmoji - GitHub pace emoji.
+ * @property {"good"|"watch"|"throttle"|"stop"} githubStatus - GitHub signal
+ *   status.
+ * @property {"good"|"watch"|"throttle"|"stop"} overallStatus - Worse of the
+ *   two service statuses.
  * @property {number} mergedPRs - Number of PRs merged on this day.
  */
 
@@ -169,20 +174,49 @@ export function computeUsageStatus(usage, now = new Date()) {
  * @param {number} mergedPRs
  * @returns {Summary}
  */
+/**
+ * Map a status percentage to the named monitor signal.
+ *
+ * @param {number} statusPct
+ * @returns {"good"|"watch"|"throttle"|"stop"}
+ */
+export function statusName(statusPct) {
+  if (statusPct >= CRITICAL_THRESHOLD_PCT) return "stop";
+  if (statusPct >= PROJECTION_CAP_PCT) return "throttle";
+  if (statusPct >= WATCH_THRESHOLD_PCT) return "watch";
+  return "good";
+}
+
+/**
+ * Compute the overall status from two service statuses.
+ *
+ * @param {"good"|"watch"|"throttle"|"stop"|null} a
+ * @param {"good"|"watch"|"throttle"|"stop"|null} b
+ * @returns {"good"|"watch"|"throttle"|"stop"}
+ */
+export function overallStatusName(a, b) {
+  const ranks = { good: 0, watch: 1, throttle: 2, stop: 3 };
+  const aRank = a == null ? -1 : ranks[a];
+  const bRank = b == null ? -1 : ranks[b];
+  const worst = Math.max(aRank, bRank);
+  return worst === 3 ? "stop" : worst === 2 ? "throttle" : worst === 1 ? "watch" : "good";
+}
+
 export function buildSummary(date, netlify, github, mergedPRs) {
   const day = new Date(date);
   const githubStatus = computeUsageStatus(github, day);
   const netlifyStatus =
     netlify.current == null ? null : computeUsageStatus(netlify, day);
+  const githubStatusName = statusName(githubStatus.statusPct);
+  const netlifyStatusName = netlifyStatus ? statusName(netlifyStatus.statusPct) : null;
   return {
     netlifyPct: netlifyStatus?.pct ?? null,
     netlifyProjected: netlifyStatus?.projected ?? null,
-    netlifyEmoji: netlifyStatus
-      ? paceBucketEmoji(paceBucket(netlifyStatus.projected))
-      : null,
+    netlifyStatus: netlifyStatusName,
     githubPct: githubStatus.pct,
     githubProjected: githubStatus.projected,
-    githubEmoji: paceBucketEmoji(paceBucket(githubStatus.projected)),
+    githubStatus: githubStatusName,
+    overallStatus: overallStatusName(netlifyStatusName, githubStatusName),
     mergedPRs,
   };
 }
@@ -315,69 +349,6 @@ export function formatCriticalIssue(netlifyStatus, githubStatus) {
     title: `BUILD MINUTES CRITICAL: ${svc} ${headline}`,
     body: `Daily monitoring detected ${svc} build minutes ${detail}.\n\nRunbook:\n1. Confirm Netlify auto-builds remain disabled.\n2. Disable non-essential scheduled workflows.\n3. Batch commits to reduce push frequency.\n4. Review open PRs for unnecessary preview deploys.\n5. Consider a 24-hour code freeze on non-urgent work.`,
   };
-}
-
-/**
- * Builds the one-line Telegram summary message.
- * Appends "· N PR(s) merged" only when mergedCount > 0.
- *
- * @param {string} emoji - Status emoji (🟢/🟡/🔴/🚨).
- * @param {number} netlifyPct - Netlify usage percentage (0–100).
- * @param {number} githubPct - GitHub Actions usage percentage (0–100).
- * @param {string} status - Status label ("normal"/"watch"/"throttle"/"STOP").
- * @param {number} mergedCount - Number of PRs merged in the reporting window.
- * @returns {string}
- */
-export function formatMessage(
-  emoji,
-  netlifyPct,
-  githubPct,
-  status,
-  mergedCount
-) {
-  const base = `${emoji} Netlify ${netlifyPct}% · GitHub ${githubPct}% — ${status}`;
-  if (mergedCount === 0) return base;
-  const noun = mergedCount === 1 ? "PR" : "PRs";
-  return `${base} · ${mergedCount} ${noun} merged`;
-}
-
-/**
- * Emoji for a pace bucket.
- *
- * @param {"green"|"yellow"|"red"} bucket
- * @returns {string}
- */
-export function paceBucketEmoji(bucket) {
-  if (bucket === "red") return "🔴";
-  if (bucket === "yellow") return "🟡";
-  return "🟢";
-}
-
-/**
- * Build the Telegram image caption. Shows the date, a colour indicator per
- * service based on its projected pace, and the PR merge count.
- *
- * @param {string} date - ISO date (YYYY-MM-DD), displayed as "DD Mon".
- * @param {{pct: number, projected: number, statusPct: number}} githubStatus
- * @param {{pct: number, projected: number, statusPct: number}} netlifyStatus
- * @param {number} mergedCount
- * @returns {string}
- */
-export function formatCaption(
-  date,
-  githubStatus,
-  netlifyStatus,
-  mergedCount
-) {
-  const d = new Date(date);
-  const day = `${d.getUTCDate()} ${d.toLocaleString("en-GB", {
-    month: "short",
-    timeZone: "UTC",
-  })}`;
-  const githubEmoji = paceBucketEmoji(paceBucket(githubStatus.projected));
-  const netlifyEmoji = paceBucketEmoji(paceBucket(netlifyStatus.projected));
-  const noun = mergedCount === 1 ? "PR" : "PRs";
-  return `${day}: ${githubEmoji} GitHub ${githubStatus.pct}% | ${netlifyEmoji} Netlify ${netlifyStatus.pct}% | ${mergedCount} ${noun} merged`;
 }
 
 /**
@@ -852,20 +823,9 @@ async function main() {
   const githubPct = githubStatus.pct;
   const maxActual = Math.max(netlifyPct, githubPct);
   const maxProjected = Math.max(netlifyStatus.projected, githubStatus.projected);
-  const maxPct = Math.max(netlifyStatus.statusPct, githubStatus.statusPct);
-
-  let emoji = "🟢";
-  let status = "normal";
-  if (maxPct >= 90) {
-    emoji = "🚨";
-    status = "STOP";
-  } else if (maxPct >= 75) {
-    emoji = "🔴";
-    status = "throttle";
-  } else if (maxPct >= WATCH_THRESHOLD_PCT) {
-    emoji = "🟡";
-    status = "watch";
-  }
+  const netlifyStatusName = statusName(netlifyStatus.statusPct);
+  const githubStatusName = statusName(githubStatus.statusPct);
+  const overallStatus = overallStatusName(netlifyStatusName, githubStatusName);
 
   const since = getReportingSince();
   let mergedCount;
@@ -890,14 +850,6 @@ async function main() {
     return;
   }
 
-  const message = formatMessage(
-    emoji,
-    netlifyPct,
-    githubPct,
-    status,
-    mergedCount
-  );
-
   try {
     const series = loadSeries();
     const todayEntry = series.find((entry) => entry.date === todayISO());
@@ -921,7 +873,14 @@ async function main() {
         dayIndex: dayDiff(github.periodStartDate, entry.date),
         count: entry.mergedPRs,
       }));
-    const chart = await renderBurndown(github, netlify, series, new Date(), prCounts);
+    const chart = await renderBurndown(
+      github,
+      netlify,
+      series,
+      new Date(),
+      prCounts,
+      { github: githubStatusName, netlify: netlifyStatusName, overall: overallStatus }
+    );
     await sendTelegramPhoto(chart);
   } catch (e) {
     try {
@@ -934,12 +893,12 @@ async function main() {
     throw e;
   }
 
-  if (maxPct >= 90) {
+  if (overallStatus === "stop") {
     const { title, body } = formatCriticalIssue(netlifyStatus, githubStatus);
     await openIssue(title, body);
   }
 
-  console.log(message);
+  console.log(`monitor-resources: ${overallStatus} (Netlify ${netlifyPct}%, GitHub ${githubPct}%)`);
 }
 
 // Only run main() when invoked directly, not when imported by tests.

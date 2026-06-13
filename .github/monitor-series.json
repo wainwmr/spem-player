@@ -8,11 +8,12 @@
     "summary": {
       "netlifyPct": 0,
       "netlifyProjected": 0,
-      "netlifyEmoji": "🟢",
       "githubPct": 5,
       "githubProjected": 156,
-      "githubEmoji": "🔴",
-      "mergedPRs": 5
+      "mergedPRs": 5,
+      "netlifyStatus": "good",
+      "githubStatus": "throttle",
+      "overallStatus": "throttle"
     }
   },
   {
@@ -24,11 +25,12 @@
     "summary": {
       "netlifyPct": 0,
       "netlifyProjected": 0,
-      "netlifyEmoji": "🟢",
       "githubPct": 10,
       "githubProjected": 154,
-      "githubEmoji": "🔴",
-      "mergedPRs": 7
+      "mergedPRs": 7,
+      "netlifyStatus": "good",
+      "githubStatus": "throttle",
+      "overallStatus": "throttle"
     }
   },
   {
@@ -40,11 +42,12 @@
     "summary": {
       "netlifyPct": 2,
       "netlifyProjected": 23,
-      "netlifyEmoji": "🟢",
       "githubPct": 16,
       "githubProjected": 158,
-      "githubEmoji": "🔴",
-      "mergedPRs": 13
+      "mergedPRs": 13,
+      "netlifyStatus": "good",
+      "githubStatus": "throttle",
+      "overallStatus": "throttle"
     }
   },
   {
@@ -56,11 +59,12 @@
     "summary": {
       "netlifyPct": 5,
       "netlifyProjected": 35,
-      "netlifyEmoji": "🟢",
       "githubPct": 17,
       "githubProjected": 126,
-      "githubEmoji": "🔴",
-      "mergedPRs": 4
+      "mergedPRs": 4,
+      "netlifyStatus": "good",
+      "githubStatus": "throttle",
+      "overallStatus": "throttle"
     }
   },
   {
@@ -72,11 +76,12 @@
     "summary": {
       "netlifyPct": 5,
       "netlifyProjected": 28,
-      "netlifyEmoji": "🟢",
       "githubPct": 17,
       "githubProjected": 103,
-      "githubEmoji": "🔴",
-      "mergedPRs": 0
+      "mergedPRs": 0,
+      "netlifyStatus": "good",
+      "githubStatus": "throttle",
+      "overallStatus": "throttle"
     }
   },
   {
@@ -88,11 +93,12 @@
     "summary": {
       "netlifyPct": 7,
       "netlifyProjected": 37,
-      "netlifyEmoji": "🟢",
       "githubPct": 18,
       "githubProjected": 90,
-      "githubEmoji": "🟡",
-      "mergedPRs": 6
+      "mergedPRs": 6,
+      "netlifyStatus": "good",
+      "githubStatus": "throttle",
+      "overallStatus": "throttle"
     }
   },
   {
@@ -104,11 +110,12 @@
     "summary": {
       "netlifyPct": 8,
       "netlifyProjected": 34,
-      "netlifyEmoji": "🟢",
       "githubPct": 19,
       "githubProjected": 80,
-      "githubEmoji": "🟢",
-      "mergedPRs": 1
+      "mergedPRs": 1,
+      "netlifyStatus": "good",
+      "githubStatus": "throttle",
+      "overallStatus": "throttle"
     }
   },
   {
@@ -120,11 +127,12 @@
     "summary": {
       "netlifyPct": 13,
       "netlifyProjected": 49,
-      "netlifyEmoji": "🟢",
       "githubPct": 21,
       "githubProjected": 77,
-      "githubEmoji": "🟢",
-      "mergedPRs": 7
+      "mergedPRs": 7,
+      "netlifyStatus": "good",
+      "githubStatus": "throttle",
+      "overallStatus": "throttle"
     }
   },
   {
@@ -136,11 +144,12 @@
     "summary": {
       "netlifyPct": 16,
       "netlifyProjected": 53,
-      "netlifyEmoji": "🟢",
       "githubPct": 22,
       "githubProjected": 73,
-      "githubEmoji": "🟢",
-      "mergedPRs": 7
+      "mergedPRs": 7,
+      "netlifyStatus": "watch",
+      "githubStatus": "watch",
+      "overallStatus": "watch"
     }
   },
   {
@@ -152,11 +161,12 @@
     "summary": {
       "netlifyPct": 22,
       "netlifyProjected": 66,
-      "netlifyEmoji": "🟢",
       "githubPct": 24,
       "githubProjected": 73,
-      "githubEmoji": "🟢",
-      "mergedPRs": 10
+      "mergedPRs": 10,
+      "netlifyStatus": "watch",
+      "githubStatus": "watch",
+      "overallStatus": "watch"
     }
   },
   {
@@ -168,11 +178,12 @@
     "summary": {
       "netlifyPct": 27,
       "netlifyProjected": 74,
-      "netlifyEmoji": "🟢",
       "githubPct": 27,
       "githubProjected": 74,
-      "githubEmoji": "🟢",
-      "mergedPRs": 10
+      "mergedPRs": 10,
+      "netlifyStatus": "watch",
+      "githubStatus": "watch",
+      "overallStatus": "watch"
     }
   },
   {
@@ -184,11 +195,12 @@
     "summary": {
       "netlifyPct": 31,
       "netlifyProjected": 78,
-      "netlifyEmoji": "🟢",
       "githubPct": 31,
       "githubProjected": 78,
-      "githubEmoji": "🟢",
-      "mergedPRs": 21
+      "mergedPRs": 21,
+      "netlifyStatus": "throttle",
+      "githubStatus": "throttle",
+      "overallStatus": "throttle"
     }
   },
   {
@@ -199,11 +211,12 @@
     "summary": {
       "netlifyPct": 31,
       "netlifyProjected": 75,
-      "netlifyEmoji": "🟢",
       "githubPct": 32,
       "githubProjected": 73,
-      "githubEmoji": "🟢",
-      "mergedPRs": 13
+      "mergedPRs": 13,
+      "netlifyStatus": "throttle",
+      "githubStatus": "watch",
+      "overallStatus": "throttle"
     },
     "source": "logged"
   }
