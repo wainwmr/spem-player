@@ -20,12 +20,16 @@ body[data-branch]:not([data-branch=""])::before {
   position: fixed;
   top: 0;
   left: 200px;
+  max-width: calc(100vw - 220px);
   background: var(--color-title);
   color: var(--color-background);
   padding: 2px 8px;
   font-size: 10px;
   font-weight: bold;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   z-index: 9999;
   border-bottom-left-radius: 4px;
   opacity: 0.8;
@@ -198,10 +202,11 @@ header {
   padding: 0 5px;
   border: 2px solid var(--color-border);
   border-radius: 10px;
+  box-sizing: border-box;
   position: absolute;
   top: 50px;
   background: var(--color-background-lighter);
-  max-width: 80%;
+  max-width: min(80%, 480px);
   left: 10%;
   z-index: 12;
 
@@ -240,12 +245,18 @@ header {
     margin-top: 0.5rem;
 
     .bmc-wrapper {
+      width: 220px;
+      min-width: 0;
+      flex-shrink: 0;
+      overflow: hidden;
       transform: scale(0.75);
       transform-origin: left center;
     }
 
     .help-footer-right {
       text-align: right;
+      min-width: 0;
+      overflow: hidden;
     }
   }
 
@@ -253,6 +264,12 @@ header {
   .version {
     font-size: smaller;
     margin: 0;
+  }
+
+  .version {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 

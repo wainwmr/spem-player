@@ -7,6 +7,24 @@ settings:
 importers:
 
   .:
+    devDependencies:
+      '@xmldom/xmldom':
+        specifier: ^0.9.10
+        version: 0.9.10
+      husky:
+        specifier: ^9.1.7
+        version: 9.1.7
+      vitest:
+        specifier: ^4.1.5
+        version: 4.1.8(@types/node@25.9.2)(@vitest/coverage-v8@4.1.8)(@vitest/ui@4.1.8)(jsdom@29.1.1(canvas@3.2.3))(vite@8.0.16(@types/node@25.9.2)(jiti@2.7.0)(sass-embedded@1.100.0)(sass@1.100.0)(terser@5.48.0)(yaml@2.9.0))
+
+  packages/monitor:
+    devDependencies:
+      canvas:
+        specifier: ^3.2.0
+        version: 3.2.3
+
+  packages/pwa:
     dependencies:
       ohm-js:
         specifier: ^17.2.1
@@ -33,15 +51,9 @@ importers:
       '@vitest/ui':
         specifier: ^4.1.5
         version: 4.1.8(vitest@4.1.8)
-      '@xmldom/xmldom':
-        specifier: ^0.9.10
-        version: 0.9.10
       autoprefixer:
         specifier: ^10.4.21
         version: 10.5.0(postcss@8.5.15)
-      canvas:
-        specifier: ^3.2.0
-        version: 3.2.3
       dependency-cruiser:
         specifier: ^17.4.3
         version: 17.4.3
@@ -54,9 +66,6 @@ importers:
       globals:
         specifier: ^17.6.0
         version: 17.6.0
-      husky:
-        specifier: ^9.1.7
-        version: 9.1.7
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1(canvas@3.2.3)

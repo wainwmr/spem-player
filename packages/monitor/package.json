@@ -1,0 +1,13 @@
+{
+  "name": "@spem/monitor",
+  "private": true,
+  "version": "2.8.3",
+  "description": "Daily build-resource monitor for Spem Player",
+  "type": "module",
+  "scripts": {
+    "test": "node --test monitor-resources.test.mjs render-burndown.test.mjs"
+  },
+  "devDependencies": {
+ "canvas": "^3.2.0"
+  }
+}

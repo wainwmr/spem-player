@@ -1,1 +1,1 @@
-npx lint-staged
+pnpm --filter @spem/pwa exec lint-staged

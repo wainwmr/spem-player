@@ -10,8 +10,8 @@
 # then triggers Netlify.
 [build]
   command = "pnpm run build"
-  publish = "dist"
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- index.ts src/ts src/scss src/ohmjs src/scores public index.html vite.config.ts package.json pnpm-lock.yaml netlify.toml"
+  publish = "packages/pwa/dist"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- packages/pwa/index.ts packages/pwa/src/ts packages/pwa/src/scss packages/pwa/src/ohmjs packages/pwa/src/scores packages/pwa/public packages/pwa/index.html packages/pwa/vite.config.ts packages/pwa/package.json pnpm-lock.yaml netlify.toml"
   functions = "netlify/functions"
 
   ## Uncomment to use this redirect for Single Page Applications like create-react-app.
@@ -26,6 +26,6 @@
   #[dev]
   #  command = "yarn start" # Command to start your dev server
   #  port = 3000 # Port that the dev server will be listening on
-  #  publish = "dist" # Folder with the static content for _redirect file
+  #  publish = "dist" # Folder with the static content for your _redirect file
 
   ## more info on configuring this file: https://ntl.fyi/file-based-config

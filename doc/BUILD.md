@@ -221,7 +221,7 @@ Production deploys and PR previews are handled by Netlify's native git
 integration. Netlify builds automatically on every push to `main` and on
 every pull request update.
 
-- `.github/workflows/ci.yml` — builds the site and runs tests on every push
+- `.github/workflows/pwa-ci.yml` — builds the site and runs tests on every push
   and pull request.
 - Netlify — deploys production from `main` and generates preview builds for
   open pull requests.

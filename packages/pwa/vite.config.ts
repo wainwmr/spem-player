@@ -37,6 +37,11 @@ export default defineConfig({
     // human ergonomics, not a test contract.
     port: DEV_PORT,
     strictPort: false,
+    fs: {
+      // Allow serving files from the repository root (e.g. the
+      // symlinked LilyPond source under src/lilypond).
+      allow: ["..", "../.."],
+    },
   },
   preview: {
     // Preview hard-fails on collision. `strictPort: true` is
@@ -51,7 +56,7 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
-    exclude: [".github/**", "e2e/**", "node_modules/**"],
+    exclude: ["e2e/**", "node_modules/**"],
     maxWorkers: 4,
     testTimeout: 10000,
     coverage: {

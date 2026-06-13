@@ -1,4 +1,4 @@
-name: Monitor Build Resources
+name: Monitor Run
 
 on:
   schedule:
@@ -25,7 +25,7 @@ jobs:
         with:
           node-version-file: ".nvmrc"
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --filter @spem/monitor
 
       - name: Check usage and notify
         env:
@@ -35,7 +35,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: node .github/scripts/monitor-resources.mjs
+        run: pnpm --filter @spem/monitor exec node monitor-resources.mjs
 
       - name: Commit daily resource series
         run: |

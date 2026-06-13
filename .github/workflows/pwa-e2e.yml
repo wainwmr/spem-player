@@ -1,4 +1,4 @@
-name: E2E
+name: PWA E2E
 
 on:
   schedule:
@@ -17,11 +17,11 @@ jobs:
           cache: pnpm
       - run: pnpm ci
       - run: pnpm run build
-      - run: pnpm exec playwright install --with-deps
+      - run: pnpm --filter @spem/pwa exec playwright install --with-deps
       - run: pnpm run e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: playwright-report
-          path: playwright-report/
+          path: packages/pwa/playwright-report/
           retention-days: 7

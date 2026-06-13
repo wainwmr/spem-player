@@ -20,6 +20,7 @@ const POSTPROCESS_SVG_MTIME = (() => {
 const defaults = {
   version: "Hugh Keyte",
   notation: null, // null means build all notations
+  outDir: "src/scores",
 };
 
 /**
@@ -56,7 +57,7 @@ function parseArgs(args = process.argv.slice(2)) {
 }
 
 function validateOptions(options) {
-  const stringFlags = ["version", "notation", "choir"];
+  const stringFlags = ["version", "notation", "choir", "outDir"];
   for (const flag of stringFlags) {
     if (options[flag] === true) {
       console.error(`Error: --${flag} requires a value.`);
@@ -173,9 +174,9 @@ function buildPattern(lyDir, choir) {
   return choir ? `${lyDir}/Choir ${choir}.ly` : `${lyDir}/Choir*.ly`;
 }
 
-function buildScore(ly, version, notation, maxLyMtime) {
+function buildScore(ly, version, notation, maxLyMtime, outDirBase) {
   const choirName = basename(ly, ".ly");
-  const outDir = `src/scores/${version}/${notation}`;
+  const outDir = `${outDirBase}/${version}/${notation}`;
   const svg = `${outDir}/${choirName}.svg`;
 
   if (!needsRebuild(maxLyMtime, svg)) {
@@ -218,6 +219,7 @@ function main() {
   validateOptions(options);
 
   const version = options.version || defaults.version;
+  const outDirBase = options.outDir || defaults.outDir;
   checkLilypond(version);
   const notations = options.notation
     ? [options.notation]
@@ -245,7 +247,7 @@ function main() {
     }
 
     for (const ly of files.sort()) {
-      buildScore(ly, version, notation, maxLyMtime);
+      buildScore(ly, version, notation, maxLyMtime, outDirBase);
     }
   }
 
