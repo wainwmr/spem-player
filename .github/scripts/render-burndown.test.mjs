@@ -2,7 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { renderBurndown, exportedForTesting } from "./render-burndown.mjs";
 
-const { drawHistogram, segmentColor } = exportedForTesting;
+const { drawHistogram, statusColor } = exportedForTesting;
+
+const statuses = { github: "good", netlify: "watch", overall: "watch" };
 
 const github = {
   current: 500,
@@ -26,7 +28,7 @@ const series = [
 
 test("renderBurndown returns a non-empty PNG buffer with correct dimensions", async () => {
   const now = new Date("2026-06-10T12:00:00Z");
-  const png = await renderBurndown(github, netlify, series, now);
+  const png = await renderBurndown(github, netlify, series, now, [], statuses);
   assert.ok(Buffer.isBuffer(png));
   assert.ok(png.length > 0);
   assert.equal(png.toString("hex", 0, 8), "89504e470d0a1a0a"); // PNG magic bytes
@@ -37,7 +39,7 @@ test("renderBurndown returns a non-empty PNG buffer with correct dimensions", as
 
 test("renderBurndown handles empty series using current usage only", async () => {
   const now = new Date("2026-06-15T12:00:00Z");
-  const png = await renderBurndown(github, netlify, [], now);
+  const png = await renderBurndown(github, netlify, [], now, [], statuses);
   assert.ok(Buffer.isBuffer(png));
   assert.ok(png.length > 0);
 });
@@ -48,7 +50,7 @@ test("renderBurndown tolerates null Netlify values", async () => {
     { date: "2026-06-10", netlifyCurrent: 100, githubMinutes: 500, source: "logged" },
   ];
   const now = new Date("2026-06-10T12:00:00Z");
-  const png = await renderBurndown(github, netlify, sparse, now);
+  const png = await renderBurndown(github, netlify, sparse, now, [], statuses);
   assert.ok(Buffer.isBuffer(png));
   assert.ok(png.length > 0);
 });
@@ -160,17 +162,15 @@ test("drawHistogram skips days with zero PRs", () => {
   assert.equal(pastBars.length, 0, "zero-count past day should not draw a bar");
 });
 
-// segmentColor: below the critical-pace diagonal is always red
+// statusColor: maps named statuses to chart colours
 
-test("segmentColor returns red when usage is below the diagonal", () => {
-  // Day 5 of 30, steady used = 5/29*100 ≈ 17.24%. Actual 18% is below diagonal.
-  const color = segmentColor(18, 5, 30, 90);
-  assert.equal(color, "#dc2626");
+test("statusColor maps each status to the expected colour", () => {
+  assert.equal(statusColor("good"), "#16a34a");
+  assert.equal(statusColor("watch"), "#ca8a04");
+  assert.equal(statusColor("throttle"), "#dc2626");
+  assert.equal(statusColor("stop"), "#dc2626");
 });
 
-test("segmentColor uses projection when usage is above the diagonal", () => {
-  // Day 5 of 30, steady used ≈ 17.24%. Actual 15% is above diagonal.
-  assert.equal(segmentColor(15, 5, 30, 95), "#ca8a04"); // yellow
-  assert.equal(segmentColor(15, 5, 30, 80), "#16a34a"); // green
-  assert.equal(segmentColor(15, 5, 30, 110), "#dc2626"); // red
+test("statusColor falls back to green for unknown status", () => {
+  assert.equal(statusColor("unknown"), "#16a34a");
 });

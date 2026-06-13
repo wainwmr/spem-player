@@ -11,12 +11,12 @@ import {
   daysSince,
   daysInPeriod,
   shouldSkipReport,
-  formatMessage,
   getReportingSince,
   parseRepo,
   todayISO,
   paceBucket,
-  formatCaption,
+  statusName,
+  overallStatusName,
   loadSeries,
   saveSeries,
   appendOrReplaceDay,
@@ -66,7 +66,7 @@ test("computeUsageStatus projects percentages, not minutes (Vera 536-01)", () =>
   });
 });
 
-test("computeUsageStatus on-budget usage projects to exactly 100", () => {
+test("computeUsageStatus on-budget usage is capped at throttle", () => {
   const usage = {
     current: 150,
     limit: 300,
@@ -77,7 +77,7 @@ test("computeUsageStatus on-budget usage projects to exactly 100", () => {
   assert.deepEqual(computeUsageStatus(usage, now), {
     pct: 50,
     projected: 100,
-    statusPct: 100,
+    statusPct: 82,
   });
 });
 
@@ -93,7 +93,7 @@ test("computeUsageStatus converges on the period's last day", () => {
   assert.equal(result.projected, result.pct);
 });
 
-test("computeUsageStatus day-one extrapolation is linear (damping tracked in #553)", () => {
+test("computeUsageStatus day-one spike is capped at throttle (#553)", () => {
   const usage = {
     current: 20,
     limit: 300,
@@ -104,7 +104,74 @@ test("computeUsageStatus day-one extrapolation is linear (damping tracked in #55
   const result = computeUsageStatus(usage, now);
   assert.equal(result.pct, 7);
   assert.equal(result.projected, 200);
-  assert.equal(result.statusPct, 200);
+  assert.equal(result.statusPct, 82);
+});
+
+// Projection-damping policy (#553): projection-driven STOP is capped at
+// throttle unless actual usage already breaches the critical threshold.
+test("computeUsageStatus caps day-1 spike at throttle", () => {
+  const usage = {
+    current: 30,
+    limit: 100,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-01T12:00:00Z"));
+  assert.equal(result.pct, 30);
+  assert.equal(result.projected, 900);
+  assert.equal(result.statusPct, 82);
+});
+
+test("computeUsageStatus actual breach overrides projection cap", () => {
+  const usage = {
+    current: 92,
+    limit: 100,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-01T12:00:00Z"));
+  assert.equal(result.pct, 92);
+  assert.equal(result.projected, 2760);
+  assert.equal(result.statusPct, 92);
+});
+
+test("computeUsageStatus caps mid-period projection at throttle", () => {
+  const usage = {
+    current: 100,
+    limit: 200,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-15T12:00:00Z"));
+  assert.equal(result.pct, 50);
+  assert.equal(result.projected, 100);
+  assert.equal(result.statusPct, 82);
+});
+
+test("computeUsageStatus leaves late-period normal usage unchanged", () => {
+  const usage = {
+    current: 170,
+    limit: 200,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-29T12:00:00Z"));
+  assert.equal(result.pct, 85);
+  assert.equal(result.projected, 88);
+  assert.equal(result.statusPct, 88);
+});
+
+test("computeUsageStatus caps projection at the 90% boundary", () => {
+  const usage = {
+    current: 89,
+    limit: 100,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-01T12:00:00Z"));
+  assert.equal(result.pct, 89);
+  assert.equal(result.projected, 2670);
+  assert.equal(result.statusPct, 82);
 });
 
 test("computeUsageStatus zero limit yields zeros, no division error", () => {
@@ -201,19 +268,19 @@ test("daysInPeriod handles February and 31-day months", () => {
 });
 
 // shouldSkipReport: skip only when zero PRs AND both actual and projected
-// usage are below 50% — main() passes the actual max and projected max
-// separately; this helper is the single place they are combined.
+// usage are below the watch threshold — main() passes the actual max and
+// projected max separately; this helper is the single place they are combined.
 test("shouldSkipReport skips when zero PRs and low projected usage", () => {
   assert.equal(shouldSkipReport(0, 30, 30), true);
   assert.equal(shouldSkipReport(0, 0, 0), true);
 });
 
 test("shouldSkipReport sends when zero PRs but projected watch threshold reached", () => {
-  assert.equal(shouldSkipReport(0, 30, 50), false);
+  assert.equal(shouldSkipReport(0, 30, 75), false);
 });
 
 test("shouldSkipReport sends when zero PRs but projected throttle threshold reached", () => {
-  assert.equal(shouldSkipReport(0, 30, 75), false);
+  assert.equal(shouldSkipReport(0, 30, 82), false);
 });
 
 test("shouldSkipReport sends when zero PRs but projected STOP threshold reached", () => {
@@ -228,28 +295,6 @@ test("shouldSkipReport sends when PRs merged regardless of usage", () => {
   assert.equal(shouldSkipReport(1, 30, 30), false);
   assert.equal(shouldSkipReport(3, 10, 10), false);
   assert.equal(shouldSkipReport(1, 95, 95), false);
-});
-
-// formatMessage: append PR count only when > 0
-test("formatMessage omits PR suffix when no PRs", () => {
-  assert.equal(
-    formatMessage("🟢", 23, 45, "normal", 0),
-    "🟢 Netlify 23% · GitHub 45% — normal"
-  );
-});
-
-test("formatMessage uses singular when one PR merged", () => {
-  assert.equal(
-    formatMessage("🟢", 23, 45, "normal", 1),
-    "🟢 Netlify 23% · GitHub 45% — normal · 1 PR merged"
-  );
-});
-
-test("formatMessage uses plural when multiple PRs merged", () => {
-  assert.equal(
-    formatMessage("🟡", 51, 30, "watch", 3),
-    "🟡 Netlify 51% · GitHub 30% — watch · 3 PRs merged"
-  );
 });
 
 // getReportingSince: must produce YYYY-MM-DD for GitHub Search API
@@ -324,23 +369,30 @@ test("paceBucket returns red when over critical pace", () => {
   assert.equal(paceBucket(150), "red");
 });
 
-// formatCaption: date + per-service colour + PR count
-test("formatCaption builds the image caption", () => {
-  const githubStatus = { pct: 25, projected: 30, statusPct: 30 };
-  const netlifyStatus = { pct: 33, projected: 110, statusPct: 110 };
-  const caption = formatCaption("2026-06-12", githubStatus, netlifyStatus, 2);
-  assert.equal(caption, "12 Jun: 🟢 GitHub 25% | 🔴 Netlify 33% | 2 PRs merged");
-});
+// statusName: map status percentage to named signal
+ test("statusName maps thresholds to the correct signal", () => {
+   assert.equal(statusName(0), "good");
+   assert.equal(statusName(74), "good");
+   assert.equal(statusName(75), "watch");
+   assert.equal(statusName(81), "watch");
+   assert.equal(statusName(82), "throttle");
+   assert.equal(statusName(89), "throttle");
+   assert.equal(statusName(90), "stop");
+   assert.equal(statusName(120), "stop");
+ });
 
-test("formatCaption uses singular PR when one merged", () => {
-  const caption = formatCaption(
-    "2026-06-12",
-    { pct: 80, projected: 95, statusPct: 95 },
-    { pct: 10, projected: 20, statusPct: 20 },
-    1
-  );
-  assert.match(caption, /\| 1 PR merged$/);
-});
+ // overallStatusName: worse of two service statuses wins
+ test("overallStatusName returns the worse service status", () => {
+   assert.equal(overallStatusName("good", "watch"), "watch");
+   assert.equal(overallStatusName("throttle", "watch"), "throttle");
+   assert.equal(overallStatusName("stop", "throttle"), "stop");
+   assert.equal(overallStatusName("good", "good"), "good");
+ });
+
+ test("overallStatusName treats null as good", () => {
+   assert.equal(overallStatusName(null, "watch"), "watch");
+   assert.equal(overallStatusName(null, null), "good");
+ });
 
 describe("loadSeries / saveSeries", () => {
   let tmpDir;
@@ -388,10 +440,11 @@ describe("loadSeries / saveSeries", () => {
         summary: {
           netlifyPct: 3,
           netlifyProjected: 10,
-          netlifyEmoji: "🟢",
+          netlifyStatus: "good",
           githubPct: 1,
           githubProjected: 3,
-          githubEmoji: "🟢",
+          githubStatus: "good",
+          overallStatus: "good",
           mergedPRs: 3,
         },
         source: "logged",
@@ -436,7 +489,7 @@ test("appendOrReplaceDay keeps series sorted", () => {
 });
 
 // buildSummary: pre-computes daily status snapshot
-test("buildSummary computes percentages, projections and emojis", () => {
+test("buildSummary computes percentages, projections and statuses", () => {
   const netlify = {
     current: 30,
     limit: 300,
@@ -452,10 +505,11 @@ test("buildSummary computes percentages, projections and emojis", () => {
   const summary = buildSummary("2026-06-12", netlify, github, 2);
   assert.equal(summary.netlifyPct, 10);
   assert.equal(summary.netlifyProjected, 25);
-  assert.equal(summary.netlifyEmoji, "🟢");
+  assert.equal(summary.netlifyStatus, "good");
   assert.equal(summary.githubPct, 6);
   assert.equal(summary.githubProjected, 15);
-  assert.equal(summary.githubEmoji, "🟢");
+  assert.equal(summary.githubStatus, "good");
+  assert.equal(summary.overallStatus, "good");
   assert.equal(summary.mergedPRs, 2);
 });
 
@@ -475,9 +529,10 @@ test("buildSummary uses null netlify values when current is missing", () => {
   const summary = buildSummary("2026-06-12", netlify, github, 0);
   assert.equal(summary.netlifyPct, null);
   assert.equal(summary.netlifyProjected, null);
-  assert.equal(summary.netlifyEmoji, null);
+  assert.equal(summary.netlifyStatus, null);
   assert.equal(summary.githubPct, 6);
-  assert.ok(summary.githubEmoji);
+  assert.equal(summary.githubStatus, "good");
+  assert.equal(summary.overallStatus, "good");
 });
 
 // buildLoggedEntry: shapes a logged entry from usage records

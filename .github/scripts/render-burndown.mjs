@@ -33,6 +33,13 @@ const COLORS = {
   histogramFuture: "#cbd5e1",
 };
 
+const STATUS_COLORS = {
+  good: COLORS.green,
+  watch: COLORS.yellow,
+  throttle: COLORS.red,
+  stop: COLORS.red,
+};
+
 const CANVAS_WIDTH = 1200;
 const CANVAS_HEIGHT = 600;
 const PADDING_X = 32;
@@ -134,33 +141,13 @@ function projectedEndPct(currentPct, daysElapsed, daysInPeriod) {
 }
 
 /**
- * Classify a projected end-of-period percentage against the critical-pace
- * diagonal. Mirrors monitor-resources.mjs paceBucket for offline rendering.
+ * Hex colour for a named monitor status.
  *
- * @param {number} projectedPct
- * @returns {"green"|"yellow"|"red"}
+ * @param {"good"|"watch"|"throttle"|"stop"} status
+ * @returns {string}
  */
-function paceBucket(projectedPct) {
-  if (projectedPct > 100) return "red";
-  if (projectedPct >= 90) return "yellow";
-  return "green";
-}
-
-/**
- * Choose a segment colour. A point below the critical-pace diagonal is using
- * minutes faster than the steady pace, so it is always red. Points above the
- * diagonal are coloured by their projected end-of-period percentage.
- *
- * @param {number} consumed - Usage percentage at the segment end (0-100+).
- * @param {number} dayIndex - Day index of the segment end (0-based).
- * @param {number} days - Total days in the period.
- * @param {number} projected - Projected end-of-period percentage.
- * @returns {string} Hex colour.
- */
-function segmentColor(consumed, dayIndex, days, projected) {
-  const steadyUsed = (dayIndex / (days - 1)) * 100;
-  if (consumed > steadyUsed) return COLORS.red;
-  return COLORS[paceBucket(projected)];
+function statusColor(status) {
+  return STATUS_COLORS[status] ?? COLORS.green;
 }
 
 /**
@@ -199,11 +186,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} originX
  * @param {HTMLImageElement} icon
+ * @param {HTMLImageElement|null} fireIcon
  * @param {UsageRecord} usage
  * @param {{date: string, dayIndex: number, remaining: number}[]} points
  * @param {Date} now
+ * @param {"good"|"watch"|"throttle"|"stop"} status
  */
-function drawPanel(ctx, originX, icon, usage, points, now) {
+function drawPanel(ctx, originX, icon, fireIcon, usage, points, now, status) {
   const today = now.toISOString().slice(0, 10);
   const days = usage.periodDays;
   const todayIndex = Math.min(dayDiff(usage.periodStartDate, today), days - 1);
@@ -229,20 +218,28 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
     ? 100 - lastPoint.remaining
     : 100 - remainingPct(usage.current, usage.limit);
   const projected = projectedEndPct(currentUsed, todayIndex + 1, days);
-  const projectionColor = segmentColor(
-    currentUsed,
-    todayIndex,
-    days,
-    projected
-  );
+  const panelColor = statusColor(status);
 
-  ctx.fillStyle = projectionColor;
+  ctx.fillStyle = panelColor;
   ctx.font = "900 52px sans-serif";
   ctx.fillText(`${usage.current}/${usage.limit}`, valueX, valueY);
 
   ctx.fillStyle = COLORS.text;
   ctx.font = "500 36px sans-serif";
   ctx.fillText("mins", valueX, valueY + 54);
+
+  // Fire icon for stop status, underneath "mins" and right-justified.
+  if (status === "stop" && fireIcon) {
+    const fireHeight = 28;
+    const fireWidth = (fireIcon.width / fireIcon.height) * fireHeight;
+    ctx.drawImage(
+      fireIcon,
+      valueX - fireWidth,
+      valueY + 54 + 40,
+      fireWidth,
+      fireHeight
+    );
+  }
 
   // Gridlines (no axis labels)
   ctx.strokeStyle = COLORS.grid;
@@ -270,9 +267,7 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
     for (let i = 1; i < points.length; i++) {
       const prev = points[i - 1];
       const curr = points[i];
-      const consumed = 100 - curr.remaining;
-      const projected = projectedEndPct(consumed, curr.dayIndex + 1, days);
-      const color = segmentColor(consumed, curr.dayIndex, days, projected);
+      const color = panelColor;
 
       const x1 = ox + (prev.dayIndex / (days - 1)) * CHART_WIDTH;
       const y1 = oy + CHART_HEIGHT * (1 - prev.remaining / 100);
@@ -293,7 +288,7 @@ function drawPanel(ctx, originX, icon, usage, points, now) {
   // Projection from today to period-end (drawn before the dot so the dot sits on top)
   const xNow = ox + (todayIndex / (days - 1)) * CHART_WIDTH;
   const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
-  ctx.strokeStyle = projectionColor;
+  ctx.strokeStyle = panelColor;
   ctx.lineWidth = 7;
   ctx.setLineDash([2, 8]);
   ctx.beginPath();
@@ -388,6 +383,7 @@ function drawHistogram(ctx, usage, now, prCounts) {
  * @param {SeriesEntry[]} series
  * @param {Date} [now]
  * @param {{dayIndex: number, count: number}[]} [prCounts]
+ * @param {{github: "good"|"watch"|"throttle"|"stop", netlify: "good"|"watch"|"throttle"|"stop", overall: "good"|"watch"|"throttle"|"stop"}} statuses
  * @returns {Promise<Buffer>}
  */
 export async function renderBurndown(
@@ -395,7 +391,8 @@ export async function renderBurndown(
   netlify,
   series,
   now = new Date(),
-  prCounts = []
+  prCounts = [],
+  statuses
 ) {
   const canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
   const ctx = canvas.getContext("2d");
@@ -404,9 +401,10 @@ export async function renderBurndown(
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-  const [githubIcon, netlifyIcon] = await Promise.all([
+  const [githubIcon, netlifyIcon, fireIcon] = await Promise.all([
     loadImage(resolve(__dirname, "icons/github.png")),
     loadImage(resolve(__dirname, "icons/netlify.png")),
+    loadImage(resolve(__dirname, "icons/fire.png")),
   ]);
 
   const enrichedGithub = { ...github, periodDays: periodDays(github) };
@@ -420,14 +418,16 @@ export async function renderBurndown(
     now
   );
 
-  drawPanel(ctx, PADDING_X, githubIcon, enrichedGithub, githubPoints, now);
+  drawPanel(ctx, PADDING_X, githubIcon, fireIcon, enrichedGithub, githubPoints, now, statuses.github);
   drawPanel(
     ctx,
     PADDING_X + PANEL_WIDTH + GAP,
     netlifyIcon,
+    fireIcon,
     enrichedNetlify,
     netlifyPoints,
-    now
+    now,
+    statuses.netlify
   );
 
   // Vertical separator between the two panels.
@@ -449,5 +449,5 @@ export async function renderBurndown(
  */
 export const exportedForTesting = {
   drawHistogram,
-  segmentColor,
+  statusColor,
 };
