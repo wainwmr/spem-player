@@ -1,27 +1,21 @@
-name: Regenerate SVGs
+name: Scores CI
 
 on:
   push:
     branches: [main]
     paths:
-      - "lilypond/src/**"
-      - "lilypond/test/**"
-      - "lilypond/build/buildScores.mjs"
-      - "lilypond/build/postprocessSvg.mjs"
-      - "lilypond/build/install-lilypond.sh"
+      - "lilypond/**"
+      - ".github/workflows/scores-ci.yml"
   pull_request:
     paths:
-      - "lilypond/src/**"
-      - "lilypond/test/**"
-      - "lilypond/build/buildScores.mjs"
-      - "lilypond/build/postprocessSvg.mjs"
-      - "lilypond/build/install-lilypond.sh"
+      - "lilypond/**"
+      - ".github/workflows/scores-ci.yml"
 
 permissions:
   contents: write
 
 jobs:
-  regenerate-svgs:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

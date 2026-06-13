@@ -1,4 +1,4 @@
-name: E2E
+name: PWA E2E
 
 on:
   schedule:

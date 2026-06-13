@@ -1,0 +1,36 @@
+name: Test noop
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "packages/pwa/**"
+      - "packages/monitor/**"
+      - "lilypond/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".nvmrc"
+      - ".github/workflows/pwa-ci.yml"
+      - ".github/workflows/monitor-ci.yml"
+      - ".github/workflows/scores-ci.yml"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "packages/pwa/**"
+      - "packages/monitor/**"
+      - "lilypond/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".nvmrc"
+      - ".github/workflows/pwa-ci.yml"
+      - ".github/workflows/monitor-ci.yml"
+      - ".github/workflows/scores-ci.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: No PWA-relevant files changed
+        run: echo "Skipping PWA CI — changed files are outside the PWA path filter."

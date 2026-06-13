@@ -139,7 +139,7 @@ Move the existing root `package.json` (minus monitor scripts and `canvas`) to `p
 
 ### 4. Update workflow files
 
-`.github/workflows/monitor-resources-test.yml` changes from:
+`.github/workflows/monitor-run.yml` changes from:
 
 ```yaml
 - run: pnpm install
@@ -153,7 +153,7 @@ to:
 - run: pnpm --filter @spem/monitor test
 ```
 
-`.github/workflows/monitor-resources.yml` changes from:
+`.github/workflows/monitor-ci.yml` changes from:
 
 ```yaml
 - run: pnpm install --frozen-lockfile
@@ -167,7 +167,7 @@ to:
 - run: pnpm --filter @spem/monitor exec node monitor-resources.mjs
 ```
 
-`.github/workflows/ci.yml` can drop the long `paths-ignore` list for monitor files because the `test` job in that workflow will run `pnpm --filter pwa test`, which no longer sees the monitor package. The path filter can be simplified to ignore only markdown and LilyPond files.
+`.github/workflows/pwa-ci.yml` can use a `paths` filter that includes `packages/pwa/**`, root workspace files that affect the PWA build (`package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `.nvmrc`), and the workflow file, so it runs only when PWA-relevant files change.
 
 ### 5. Update repository scripts
 
@@ -186,14 +186,14 @@ The series file stays in `.github/monitor-series.json` because it is consumed by
 
 ### 7. Update branch protection
 
-Once CI is scoped, the branch-protection rule can require the PWA `test` job only when PWA-relevant files change. Because the PWA workflow's own path filter drives this, GitHub's "required status checks" will skip the check for monitor-only PRs rather than block them.
+Once CI is scoped, the branch-protection rule can still require the PWA `test` job. The `monitor-ci.yml` and `scores-ci.yml` workflows also report a `test` job, satisfying the check for monitor-only and LilyPond-only PRs. A companion `test-noop.yml` workflow reports the same `test` check for PRs that change only other non-PWA files (docs, unrelated workflow files, etc.), so those PRs are not blocked.
 
 ## CI outcomes after migration
 
 | Change | Workflows that run | Workflows that skip |
 |---|---|---|
-| PWA code (`packages/pwa/`, `public/`, etc.) | PWA CI, e2e | Monitor tests |
-| Monitor code (`packages/monitor/`) | Monitor Resources Tests | PWA CI |
+| PWA code (`packages/pwa/**`, root workspace files) | PWA CI, e2e | Monitor tests |
+| Monitor code (`packages/monitor/`) | Monitor CI | PWA CI |
 | LilyPond code (`lilypond/`) | Regenerate SVGs | PWA CI, Monitor tests |
 | Documentation only | None (or docs check) | All heavy builds |
 
@@ -219,10 +219,10 @@ spem-player/
 │       ├── test/
 │       └── output/                # generated SVGs consumed by PWA
 ├── .github/workflows/
-│   ├── ci.yml
-│   ├── monitor-resources.yml
-│   ├── monitor-resources-test.yml
-│   └── lilypond.yml               # triggers on packages/scores/**
+│   ├── pwa-ci.yml
+│   ├── monitor-run.yml
+│   ├── monitor-ci.yml
+│   └── scores-ci.yml              # triggers on packages/scores/**
 └── ...
 ```
 
@@ -230,7 +230,7 @@ That issue will need to resolve:
 
 - **Artifact ownership.** Do generated SVGs live in `packages/scores/output/` and get copied/symlinked into `packages/pwa/public/` at build time, or does the PWA import them directly from the workspace?
 - **Vite config changes.** The PWA precache manifest and asset handling must know where the SVGs are.
-- **CI trigger separation.** The existing `.github/workflows/lilypond.yml` runs only when `.ly` files or build scripts change; it must be retargeted to `packages/scores/**`.
+- **CI trigger separation.** The existing `.github/workflows/scores-ci.yml` runs when anything under `lilypond/**` changes; for `packages/scores/` it must be retargeted to that package path.
 - **External binary dependency.** The score pipeline needs the `lilypond` binary on the runner, unlike the monitor's `canvas` or the PWA's Node toolchain.
 - **Package naming.** Whether to split source (`.ly` files), build scripts, and generated output into sub-packages or keep them together.
 

@@ -100,8 +100,9 @@ If a test needs any of the above, it belongs in the E2E layer.
 
 The two suites run in separate workflows. See `doc/CI.md` for the canonical description; in summary:
 
-- The `test` job (`.github/workflows/ci.yml`) runs `pnpm run check`, `pnpm run build`, and `pnpm run test:unit` on push to `main` and on pull requests targeting `main`, except changes confined to the workflow's `paths-ignore` list (see `ci.yml`; notably `lilypond/**`), plus a nightly cron. It is the required status check.
-- The integration suite (`pnpm run test:lilypond`) runs in the Regenerate SVGs workflow (`.github/workflows/lilypond.yml`) when `lilypond/src/**` or the build scripts listed in the workflow's paths filter change. Changes confined to `lilypond/test/**` trigger neither workflow, so the required `test` check never reports and the PR cannot merge without a ruleset bypass (#558); a local `pnpm run test:lilypond` is the only verification meanwhile.
+- PWA CI (`.github/workflows/pwa-ci.yml`) runs `pnpm run check`, `pnpm run build`, and `pnpm run test:unit` on push/PR to `main` when PWA-relevant paths change (`packages/pwa/**`, root workspace files, and the workflow file), plus a nightly cron. It is one source of the required `test` status check.
+- The integration suite (`pnpm run test:lilypond`) runs in the Scores CI workflow (`.github/workflows/scores-ci.yml`) when anything under `lilypond/**` changes. Its `test` job reports the required `test` status check for LilyPond-only PRs.
+- For PRs that change only unrelated paths (docs, other workflow files, etc.), `.github/workflows/test-noop.yml` reports a passing `test` status check.
 
 ## Key Dependencies
 

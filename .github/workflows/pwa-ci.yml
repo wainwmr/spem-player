@@ -1,0 +1,44 @@
+name: PWA CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/pwa/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".nvmrc"
+      - ".github/workflows/pwa-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "packages/pwa/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".nvmrc"
+      - ".github/workflows/pwa-ci.yml"
+  # Daily at 00:00 UTC — catches drift in the test suite on days when no PR
+  # triggered the job. GitHub may delay scheduled runs by up to ~15 min during
+  # peak load.
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+      - run: pnpm ci
+
+      - name: Run checks and build
+        run: pnpm run check && pnpm run build
+
+      - name: Run unit tests
+        run: pnpm run test:unit
