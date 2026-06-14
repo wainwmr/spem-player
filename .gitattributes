@@ -8,4 +8,5 @@
 *.scss text eol=lf
 *.css text eol=lf
 *.html text eol=lf
+*.ohm text eol=lf
 .husky/pre-commit text eol=lf
