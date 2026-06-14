@@ -4,6 +4,50 @@
 
 See `doc/BUILD.md` for development setup, prerequisites, and build commands.
 
+## Principles
+
+These principles guide what we fix, how much we fix, and when we decline a fix. They are the bar Mark ratified for what lands on the board.
+
+### What we fix
+
+- **TDD**: a fix starts with the failing test.
+- **Fix real bugs and tooling bugs.** A bug is a real, user-facing defect that is broken *now* and realistically reachable in normal use. A tooling bug is the same, but contributor-/CI-facing rather than user-facing. Sound that should play but does not counts as user-facing; a failure only reachable by a corrupted build does not.
+- **Documentation is an artifact that can be broken.** Wrong, misleading, or out-of-date docs that lead a realistic reader to a wrong result are a defect: user-facing docs -> **Bug**; contributor / CI / build docs -> **Tooling bug** (Area Docs). Sparse-but-not-wrong docs, where better docs would only make a future change safer, are **Maintainable** tech debt, not a defect.
+- **Tech debt is not fixed on its own**; it rides along with adjacent real work.
+- Preserve existing user-facing behaviour unless changing it is the point of the work.
+
+### How much we fix
+
+- The simplest fix that does not cost quality.
+- Follow existing patterns in the file rather than re-standardising legacy code.
+- Prefer incremental changes over monolithic refactors.
+- Report scope creep rather than silently upgrading difficulty.
+
+### When we decline
+
+- Decline a fix whose cost is disproportionate to the harm. Cost includes new abstraction, infrastructure, complexity, and ongoing maintenance burden.
+- Prefer the simpler rule when the residual cost is small.
+
+### Tech debt that earns a board ticket
+
+Tech debt is refactor-report-only by default and rides along with adjacent work. It may become its own board ticket (`Type: tech debt`) only if it demonstrably and now does one of:
+
+- **Performance**: a measurable win on responsiveness, build/CI time or cost, or bundle size.
+- **Simplify**: a net reduction in the production *code* — fewer lines, branches, abstractions, or indirection; dead code or a redundant layer removed. The test is the *code* diff coming out smaller and flatter, not the file size. Comments or fast tests added alongside do not count against it.
+- **Maintainable**: a *specific* future change made safer, or a *specific* way the code is easy to use wrongly removed — for example a compiler-enforced invariant, or a fragile structure made robust. "Feels cleaner" is not enough; naming the future risk removed does. Two cases count explicitly:
+  - **Comments**: replacing misleading, verbose, or needlessly complex comments with clear ones.
+  - **Tests**: pinning a specific, currently-unverified behaviour with a fast test, shown to fail if that behaviour breaks. The win is the named regression it now catches, not a coverage percentage.
+
+### Harm floor (never accepted)
+
+A defect is never tagged `accepted` or declined if it is:
+
+- Data loss.
+- Security exposure, injection, auth/credential, or privacy defect.
+- Crash on a common user path.
+
+Floor defects that look expensive to fix are escalated to Andrew, not accepted.
+
 ## Architecture
 
 The UI is built around five custom HTML elements extending `MusicElement`:
