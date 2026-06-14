@@ -25,15 +25,15 @@ These principles guide what we fix, how much we fix, and when we decline a fix. 
 
 ### When we decline
 
-- Decline a fix whose cost is disproportionate to the harm. Cost includes new abstraction, infrastructure, complexity, and ongoing maintenance burden.
-- Prefer the simpler rule when the residual cost is small.
+- A fix earns a board ticket only when the harm it removes (likelihood x severity) justifies its cost — new abstraction, infrastructure, complexity, ongoing maintenance. What earns it is the harm removed, not how little the fix costs; cheapness alone is never the reason.
+- Once justified, prefer the simpler shape where the extra cost is small — choosing between shapes of a worthwhile fix, not licensing a low-value one.
 
 ### Tech debt that earns a board ticket
 
 Tech debt is refactor-report-only by default and rides along with adjacent work. It may become its own board ticket (`Type: tech debt`) only if it demonstrably and now does one of:
 
-- **Performance**: a measurable win on responsiveness, build/CI time or cost, or bundle size.
-- **Simplify**: a net reduction in the production *code* — fewer lines, branches, abstractions, or indirection; dead code or a redundant layer removed. The test is the *code* diff coming out smaller and flatter, not the file size. Comments or fast tests added alongside do not count against it.
+- **Performance**: a discernible benefit to responsiveness, build/CI time or cost, or bundle size — discernible meaning you can name the specific waste removed (a redundant per-file program build, an O(n^2) where O(n) suffices, repeated recomputation), not a win you'd need a benchmark to believe or could merely assert. No number is required to qualify; a probe can confirm magnitude when it's genuinely in doubt.
+- **Simplify**: a net reduction in production-code complexity — fewer lines, branches, abstractions, or indirection; dead code or a redundant layer removed; or fewer distinct cases / special-cases / divergent variants (e.g. two divergent config regimes collapsed into one). The test is a countable drop — in lines/branches or in distinct cases — not "feels cleaner"; the case-count may fall even if line-count holds or rises slightly. Comments or fast tests added alongside do not count against it.
 - **Maintainable**: a *specific* future change made safer, or a *specific* way the code is easy to use wrongly removed — for example a compiler-enforced invariant, or a fragile structure made robust. "Feels cleaner" is not enough; naming the future risk removed does. Two cases count explicitly:
   - **Comments**: replacing misleading, verbose, or needlessly complex comments with clear ones.
   - **Tests**: pinning a specific, currently-unverified behaviour with a fast test, shown to fail if that behaviour breaks. The win is the named regression it now catches, not a coverage percentage.
