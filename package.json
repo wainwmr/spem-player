@@ -17,7 +17,7 @@
     "test:watch": "pnpm --filter @spem/pwa test:watch",
     "test:coverage": "pnpm --filter @spem/pwa test:coverage",
     "e2e": "pnpm --filter @spem/pwa e2e",
-    "check": "pnpm --filter @spem/pwa check",
+    "check": "pnpm --filter @spem/pwa check && pnpm --filter @spem/monitor lint",
     "ci": "pnpm run check && pnpm run build && pnpm run test:unit",
     "prepare": "husky"
   },

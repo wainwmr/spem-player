@@ -5,9 +5,13 @@
   "description": "Daily build-resource monitor for Spem Player",
   "type": "module",
   "scripts": {
-    "test": "node --test monitor-resources.test.mjs render-burndown.test.mjs"
+    "test": "node --test monitor-resources.test.mjs render-burndown.test.mjs",
+    "lint": "eslint . --max-warnings 0"
   },
   "devDependencies": {
- "canvas": "^3.2.0"
+    "@eslint/js": "^10.0.1",
+    "canvas": "^3.2.0",
+    "eslint": "^10.4.1",
+    "globals": "^17.6.0"
   }
 }

@@ -50,17 +50,6 @@ export default tseslint.config(
     },
   },
   {
-    files: ['../packages/monitor/*.mjs', '../scripts/*.mjs'],
-    languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      globals: {
-        ...globals.node,
-        fetch: 'readonly',
-      },
-    },
-  },
-  {
     // .gitignore is honoured via includeIgnoreFile above; only paths that are
     // NOT gitignored need listing here. tests-local/ and probes/ are local-only
     // (.git/info/exclude, not .gitignore); .dependency-cruiser.cjs is tracked.
