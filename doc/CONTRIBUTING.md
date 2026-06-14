@@ -289,7 +289,7 @@ The repository owner may push directly to `main` only for **non-code changes**: 
 
 The CI pipeline runs `pnpm run check:lint` and `pnpm run check:types`. Pull requests must pass both.
 
-The project uses an ESLint flat config (`eslint.config.js`) with `typescript-eslint`. Some rules are relaxed because the codebase predates them (for example, `no-var` and `@typescript-eslint/no-explicit-any` are currently off). Follow the existing patterns in the file you are editing rather than refactoring legacy code to meet stricter rules.
+The project uses an ESLint flat config (`eslint.config.js`) with `typescript-eslint`. Some rules are relaxed because the codebase predates them (for example, `no-var` and `@typescript-eslint/no-explicit-any` are currently off). Follow the existing patterns in the file you are editing rather than refactoring legacy code to meet stricter rules. `packages/monitor` has its own config for Node `.mjs` files and is linted via `pnpm --filter @spem/monitor lint`.
 
 ESLint honours `.gitignore` (via `includeIgnoreFile`, bundled with ESLint as `eslint/config`), so gitignored paths are never linted. The `ignores` array in `eslint.config.js` lists only the few paths that are *not* gitignored (for example local-only `tests-local/` and `probes/`); the comment there records the current membership. To stop a path being linted, prefer adding it to `.gitignore`; reach for the ESLint `ignores` array only when the path must stay tracked.
 

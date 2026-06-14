@@ -96,6 +96,8 @@ Run the full quality gate locally (Ohm grammar bundle, unused-export check, form
 pnpm run check
 ```
 
+`pnpm run check` now also lints `packages/monitor` via its own `lint` script.
+
 Fix formatting and lint issues automatically:
 
 ```console
@@ -207,7 +209,7 @@ Two independent caches speed up CI and deploy:
 | Cache    | What                 | Key                      |
 | -------- | -------------------- | ------------------------ |
 | pnpm     | pnpm global store    | `pnpm-lock.yaml` hash    |
-| LilyPond | `~/.local/lilypond/` | `lilypond-2.26.0-{os}`  |
+| LilyPond | `~/.local/lilypond/` | `lilypond-2.26.0-{os}`   |
 
 ### Concurrency
 
