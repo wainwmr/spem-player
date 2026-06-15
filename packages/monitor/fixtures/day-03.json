@@ -1,0 +1,23 @@
+[
+  {
+    "date": "2026-06-01",
+    "netlifyCurrent": 5,
+    "githubMinutes": 50,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-02",
+    "netlifyCurrent": 10,
+    "githubMinutes": 98,
+    "source": "logged",
+    "mergedPRs": 6
+  },
+  {
+    "date": "2026-06-03",
+    "netlifyCurrent": 14,
+    "githubMinutes": 140,
+    "source": "logged",
+    "mergedPRs": 7
+  }
+]

@@ -146,7 +146,7 @@ function fmtProjected(usage, now) {
     dayDiff(usage.periodStartDate, now.toISOString().slice(0, 10)) + 1;
   const { pct, projected } = computeUsageStatus(usage, now, thresholds);
   const base = `${usage.current}/${usage.limit} mins (${pct}%)`;
-  if (todayPlotDay < 3) {
+  if (todayPlotDay < 4) {
     return base;
   }
   const projectedMins = Math.round((projected / 100) * usage.limit);

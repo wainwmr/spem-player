@@ -306,9 +306,9 @@ function drawPanel(ctx, originX, icon, fireIcon, usage, points, now, status) {
   const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
 
   // Projection from today to period-end (drawn before the dot so the dot sits on top).
-  // Skip it until we have at least three days of data — projecting from one
-  // or two days is not reliable.
-  if (todayPlotDay >= 3) {
+  // Skip it until we have more than three days of data — projecting from one,
+  // two or three days is not reliable.
+  if (todayPlotDay > 3) {
     ctx.strokeStyle = panelColor;
     ctx.lineWidth = 7;
     ctx.setLineDash([2, 8]);
@@ -592,8 +592,8 @@ function drawCombinedPanel(
   // the past line, but at reduced opacity so the future reads as a lighter
   // continuation of the same identity. Draw GitHub last so its solid line
   // sits on top where the two projections overlap. Only draw projections once
-  // we have at least three days of data.
-  if (todayPlotDay >= 3) {
+  // we have more than three days of data.
+  if (todayPlotDay > 3) {
     for (const { usage, status, lineDash, lineWidth } of [...services].reverse()) {
       const currentUsed = 100 - remainingPct(usage.current, usage.limit);
       const projected = projectedEndPct(currentUsed, todayPlotDay, days);

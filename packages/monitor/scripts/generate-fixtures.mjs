@@ -55,6 +55,23 @@ const scenarios = [
     description: "Only the first day (1 June).",
   },
   {
+    name: "day-03",
+    series: makeSeries(moderateGenerator(), 2),
+    description: "Three days of data; no projection rendered.",
+  },
+  {
+    name: "day-04-divergent",
+    series: makeSeries(
+      {
+        github: (d) => Math.round(80 + d * 120),
+        netlify: (d) => Math.round(1 + d * 2),
+        prs: (d) => 2 + d,
+      },
+      3
+    ),
+    description: "Four days with GitHub burning fast and Netlify burning slowly.",
+  },
+  {
     name: "day-07",
     series: makeSeries(moderateGenerator(), 6),
     description: "One week into the period, moderate burn.",
