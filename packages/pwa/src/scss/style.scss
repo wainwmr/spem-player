@@ -10,6 +10,8 @@ html {
 /* Default colors (dark theme) */
 body {
   --color-background: hsl(210, 65%, 20%);
+  // stays dark in both themes: ink for elements on fixed light surfaces (#569)
+  --color-on-light: hsl(210, 65%, 20%);
   --color-text: hsl(0, 0%, 92%);
   --color-title: hsl(210, 65%, 80%);
   --color-highlight: hsl(210, 65%, 25%);
@@ -227,7 +229,7 @@ header {
   }
 
   a {
-    color: var(--color-background);
+    color: var(--color-on-light);
     text-decoration: none;
     &:hover {
       text-decoration: underline;
@@ -661,12 +663,12 @@ kbd {
 
       &[type="submit"] {
         background: var(--color-active-button);
-        color: var(--color-background);
+        color: var(--color-on-light);
       }
 
       &[type="button"] {
         background: transparent;
-        color: var(--color-background);
+        color: var(--color-on-light);
       }
 
       &:hover {
@@ -707,7 +709,7 @@ kbd {
   label {
     cursor: pointer;
     font-size: 2rem;
-    color: var(--color-background);
+    color: var(--color-on-light);
     opacity: 0.4;
 
     &::before {
