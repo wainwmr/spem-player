@@ -655,16 +655,19 @@ function drawCombinedPanel(
       const xNow = ox + (todayPlotDay / days) * chartWidth;
       const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
       const xEnd = ox + chartWidth;
-      const yOptimistic = oy + CHART_HEIGHT * Math.min(100, optimisticUsed) / 100;
-      const yPessimistic = oy + CHART_HEIGHT * Math.min(100, pessimisticUsed) / 100;
+      // Don't clamp to 100% usage; let the cone continue beyond the chart
+      // bottom when the projection overshoots the quota.
+      const yOptimistic = oy + CHART_HEIGHT * (optimisticUsed / 100);
+      const yPessimistic = oy + CHART_HEIGHT * (pessimisticUsed / 100);
 
       const panelColor = statusColor(status);
 
       ctx.save();
 
-      // Fill the cone between the optimistic and pessimistic projections.
-      ctx.fillStyle = markerFill;
-      ctx.globalAlpha = 0.25;
+      // Fill the cone between the optimistic and pessimistic projections with
+      // the signal colour.
+      ctx.fillStyle = panelColor;
+      ctx.globalAlpha = 0.2;
       ctx.beginPath();
       ctx.moveTo(xNow, yNow);
       ctx.lineTo(xEnd, yOptimistic);
@@ -672,12 +675,12 @@ function drawCombinedPanel(
       ctx.closePath();
       ctx.fill();
 
-      // Boundary lines for the cone.
-      ctx.strokeStyle = panelColor;
+      // Boundary lines for the cone in the service brand colour.
+      ctx.strokeStyle = markerFill;
       ctx.lineWidth = 3;
       ctx.setLineDash([4, 6]);
       ctx.lineCap = "round";
-      ctx.globalAlpha = 0.6;
+      ctx.globalAlpha = 0.85;
       ctx.beginPath();
       ctx.moveTo(xNow, yNow);
       ctx.lineTo(xEnd, yOptimistic);
