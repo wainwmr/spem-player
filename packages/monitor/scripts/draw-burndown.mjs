@@ -5,6 +5,7 @@
 //   node scripts/draw-burndown.mjs
 //   node scripts/draw-burndown.mjs --data packages/monitor/fixtures/fast.json
 //   node scripts/draw-burndown.mjs --data packages/monitor/fixtures/full.json --thresholds 75-82-90
+//   node scripts/draw-burndown.mjs -o temp/out.png
 //
 // Edit the hardcoded usage values below to experiment with different states.
 
@@ -53,6 +54,7 @@ function parseThresholds(args) {
 }
 
 const dataPath = parseDataPath(process.argv.slice(2));
+const outPath = parseOutputPath(process.argv.slice(2));
 
 const series = JSON.parse(readFileSync(dataPath, "utf8"));
 
@@ -73,6 +75,28 @@ function parseDataPath(args) {
   if (!value) {
     console.error("Missing value for --data; using real series file.");
     return resolve(repoRoot, ".github/monitor-series.json");
+  }
+  return resolve(repoRoot, value);
+}
+
+/**
+ * Parse an optional "--output <path>" or "-o <path>" argument.
+ * Defaults to `temp/burndown.png`.
+ *
+ * @param {string[]} args
+ * @returns {string}
+ */
+function parseOutputPath(args) {
+  const longIdx = args.findIndex((a) => a === "--output");
+  const shortIdx = args.findIndex((a) => a === "-o");
+  const idx = longIdx !== -1 ? longIdx : shortIdx;
+  if (idx === -1) {
+    return resolve(repoRoot, "temp/burndown.png");
+  }
+  const value = args[idx + 1];
+  if (!value) {
+    console.error("Missing value for --output/-o; using default.");
+    return resolve(repoRoot, "temp/burndown.png");
   }
   return resolve(repoRoot, value);
 }
@@ -137,7 +161,6 @@ const png = await renderCombinedBurndown(github, netlify, series, now, prCounts,
   overall,
 });
 
-const outPath = resolve(repoRoot, "temp/burndown.png");
 writeFileSync(outPath, png);
 console.log(`wrote ${outPath}`);
 
