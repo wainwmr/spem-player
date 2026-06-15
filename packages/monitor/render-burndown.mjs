@@ -639,18 +639,6 @@ function drawCombinedPanel(
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // PR histogram overlaid in the middle
-  drawCombinedOverlayHistogram(
-    ctx,
-    ox,
-    chartWidth,
-    github,
-    now,
-    prCounts,
-    chartBottom,
-    CHART_HEIGHT
-  );
-
   // Projection cone (behind actual lines). Rather than a single falsely
   // precise trend line, we use the 1st and 3rd quartiles of the observed
   // daily burn rate to draw an optimistic/pessimistic range. Only draw the
@@ -714,6 +702,19 @@ function drawCombinedPanel(
       ctx.restore();
     }
   }
+
+  // PR histogram overlaid on top of the projection cone so the bars are not
+  // tinted by the cone fill and remain easy to count.
+  drawCombinedOverlayHistogram(
+    ctx,
+    ox,
+    chartWidth,
+    github,
+    now,
+    prCounts,
+    chartBottom,
+    CHART_HEIGHT
+  );
 
   // Actual usage lines (at the front). GitHub is drawn last so its solid
   // line dominates where the two lines overlap.
@@ -908,7 +909,7 @@ function drawCombinedOverlayHistogram(
   const histogramWidth = chartWidth;
   // Histogram bars occupy day columns 1..days; day 0 has no bar.
   const dayWidth = histogramWidth / days;
-  const barWidth = dayWidth * 0.5;
+  const barWidth = dayWidth * 0.75;
 
   // Scale so the tallest bar reaches the 50% level of the chart area.
   const maxCount = Math.max(...prCounts.map((c) => c.count), 1);

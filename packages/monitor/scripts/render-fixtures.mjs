@@ -6,7 +6,7 @@
 //   node scripts/render-fixtures.mjs --output-dir temp/fixtures
 //   node scripts/render-fixtures.mjs --open
 
-import { readdirSync, mkdirSync, writeFileSync } from "fs";
+import { readdirSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { basename, extname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { execFile } from "child_process";
@@ -48,11 +48,12 @@ for (const fixtureFile of fixtureFiles) {
   const dataPath = resolve(fixturesDir, fixtureFile);
   const outPath = resolve(outputDir, `burndown-${name}.png`);
 
-  const { stdout, stderr } = await execFileAsync(
-    "node",
-    [drawScript, "--data", dataPath, "-o", outPath],
-    { cwd: repoRoot }
-  );
+  const fixtureData = JSON.parse(readFileSync(dataPath, "utf8"));
+  const lastDate = fixtureData[fixtureData.length - 1]?.date;
+  const args = [drawScript, "--data", dataPath, "-o", outPath];
+  if (lastDate) args.push("--as-of", lastDate);
+
+  const { stdout, stderr } = await execFileAsync("node", args, { cwd: repoRoot });
 
   rendered.push({ name, png: `burndown-${name}.png` });
   console.log(`✓ ${name}`);

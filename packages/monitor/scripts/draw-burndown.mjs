@@ -55,6 +55,7 @@ function parseThresholds(args) {
 
 const dataPath = parseDataPath(process.argv.slice(2));
 const outPath = parseOutputPath(process.argv.slice(2));
+const asOf = parseAsOf(process.argv.slice(2));
 
 const series = JSON.parse(readFileSync(dataPath, "utf8"));
 
@@ -101,7 +102,30 @@ function parseOutputPath(args) {
   return resolve(repoRoot, value);
 }
 
-const todayISO = new Date().toISOString().slice(0, 10);
+/**
+ * Parse an optional "--as-of <YYYY-MM-DD>" argument.
+ * When supplied, the renderer treats that date as "today" instead of the real
+ * clock. Useful for reviewing fixtures whose data runs beyond the current date.
+ *
+ * @param {string[]} args
+ * @returns {string | undefined}
+ */
+function parseAsOf(args) {
+  const idx = args.findIndex((a) => a === "--as-of");
+  if (idx === -1) return undefined;
+  const value = args[idx + 1];
+  if (!value) {
+    console.error("Missing value for --as-of; ignoring.");
+    return undefined;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    console.error(`Invalid --as-of "${value}". Expected YYYY-MM-DD; ignoring.`);
+    return undefined;
+  }
+  return value;
+}
+
+const todayISO = asOf ?? new Date().toISOString().slice(0, 10);
 
 // Seed current usage from the latest series entry on or before today so the
 // plotted line and the current dot stay aligned. (If the JSON contains a
@@ -143,7 +167,7 @@ const prCounts = series
 // Render the chart as-of the latest data point. This keeps the current dot
 // and the line endpoint on the same day; otherwise the dot sits at the real
 // "today" while the line only reaches the last logged day.
-const now = latest.date ? new Date(latest.date) : new Date();
+const now = asOf ? new Date(asOf) : latest.date ? new Date(latest.date) : new Date();
 
 const githubStatusName = statusName(
   computeUsageStatus(github, now, thresholds).statusPct,
