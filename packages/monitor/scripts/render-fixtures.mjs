@@ -72,10 +72,10 @@ const html = `<!doctype html>
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; margin: 1rem; background: #f8fafc; color: #0f172a; }
     h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(640px, 1fr)); gap: 1rem; }
-    figure { margin: 0; background: #fff; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 3px rgb(0 0 0 / 0.1); }
-    figcaption { font-weight: 600; margin-bottom: 0.5rem; }
-    img { max-width: 100%; height: auto; display: block; border-radius: 8px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    figure { margin: 0; background: #fff; border-radius: 12px; padding: 0.75rem; box-shadow: 0 1px 3px rgb(0 0 0 / 0.1); }
+    figcaption { font-weight: 600; margin-bottom: 0.5rem; font-size: 0.875rem; }
+    img { width: 240px; height: auto; display: block; border-radius: 8px; }
   </style>
 </head>
 <body>
