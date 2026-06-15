@@ -2,7 +2,7 @@
 // Copyright (c) 2024-2026 Mark Wainwright
 // SPDX-License-Identifier: MIT
 
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { existsSync, globSync, mkdirSync, realpathSync, rmSync, statSync } from "fs";
 import { basename, dirname, resolve } from "path";
 import { fileURLToPath } from "url";
@@ -75,6 +75,23 @@ function validateOptions(options) {
       process.exit(1);
     }
   }
+
+  // Whitelist version/notation because they become directory-path segments in
+  // the build output (resolve(outDirBase, version, notation)); this bounds them
+  // to known values. It is NOT the shell-injection defence — execFileSync (no
+  // shell) is, and that covers every argument regardless of this list. Omitted
+  // (undefined/null) is fine — the defaults are applied later; bare flags (true)
+  // are handled above (#624).
+  const allowedValues = { version: ["Hugh Keyte", "OUP"], notation: ["early", "modern"] };
+  for (const [flag, values] of Object.entries(allowedValues)) {
+    const value = options[flag];
+    if (value === undefined || value === null || value === true) continue;
+    if (!values.includes(value)) {
+      console.error(`Error: --${flag} "${value}" is not a valid value.`);
+      console.error(`  Valid values: ${values.join(", ")}`);
+      process.exit(1);
+    }
+  }
 }
 
 function parseLilypondVersion(output) {
@@ -94,10 +111,44 @@ function compareVersions(a, b) {
   return 0;
 }
 
+/**
+ * The command used to invoke LilyPond, as `[binary, ...prefixArgs]`.
+ *
+ * Defaults to `["lilypond"]`. Override with the `LILYPOND_CMD` env var (a JSON
+ * array of strings) to point at a wrapped install — e.g.
+ * `["flatpak","run","org.lilypond.LilyPond"]`, `["wsl","lilypond"]`, or a test
+ * fake `["node","/path/to/fake.js"]`. The command is always invoked via
+ * `execFileSync` (no shell), so the override is not a shell-injection surface.
+ */
+function lilypondCommand() {
+  const raw = process.env.LILYPOND_CMD;
+  if (!raw) return ["lilypond"];
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    console.error('Error: LILYPOND_CMD must be a JSON array of strings, e.g. ["lilypond"].');
+    process.exit(1);
+  }
+  if (!Array.isArray(parsed) || parsed.length === 0 || !parsed.every((s) => typeof s === "string")) {
+    console.error("Error: LILYPOND_CMD must be a non-empty JSON array of strings.");
+    process.exit(1);
+  }
+  return parsed;
+}
+
 function checkLilypond(version) {
   let output;
   try {
-    output = execSync("lilypond --version", { encoding: "utf-8", stdio: "pipe" });
+    const [bin, ...prefix] = lilypondCommand();
+    // Pipe (don't inherit) the child's stderr: without an explicit stdio,
+    // execFileSync leaks LilyPond's startup/Guile noise to the build console
+    // and muddies the catch block's "is not installed" message. stdout stays
+    // piped so the version string below can be parsed (#624).
+    output = execFileSync(bin, [...prefix, "--version"], {
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
   } catch (error) {
     console.error("Error: lilypond is not installed or not on PATH.");
     console.error("Please install LilyPond before building scores.");
@@ -197,7 +248,11 @@ function buildScore(ly, version, notation, maxLyMtime, outDirBase) {
     // LilyPond does not create its output directory; on a clean checkout
     // (src/scores/ is gitignored post-#318) it aborts. Create it first.
     mkdirSync(outDir, { recursive: true });
-    execSync(`lilypond --svg -o "${outDir}/" "${ly}"`, { stdio: "inherit" });
+    // execFileSync (no shell) so user-controlled path segments in `outDir`
+    // (from --version/--notation/--outDir) and `ly` cannot break out of a quoted
+    // argument and inject shell commands (#624). Each value is passed literally.
+    const [bin, ...prefix] = lilypondCommand();
+    execFileSync(bin, [...prefix, "--svg", "-o", `${outDir}/`, ly], { stdio: "inherit" });
   } catch (error) {
     rmSync(svg, { force: true });
     console.error(`\nError building ${choirName}:\n${error.message}`);
@@ -268,4 +323,4 @@ if (isMain) {
   main();
 }
 
-export { parseArgs, buildPattern };
+export { parseArgs, buildPattern, validateOptions, buildScore, lilypondCommand };

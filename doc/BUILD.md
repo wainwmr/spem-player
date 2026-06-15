@@ -81,6 +81,8 @@ pnpm run build:scores -- --version="Hugh Keyte" --notation=early --choir="II B"
 
 This iterates over matching `Choir*.ly` files under `packages/scores/src/` and runs `lilypond --svg` for each, then post-processes the generated SVG with `packages/scores/build/postprocessSvg.mjs`.
 
+LilyPond is invoked via `execFileSync` (no shell), so no option value — `--version`, `--notation`, `--outDir`, the resolved `.ly` path, or `LILYPOND_CMD` — can inject shell commands: each is passed as a literal argument. Separately, `--version` and `--notation` are whitelisted to their known values because they become output-directory path segments. By default the `lilypond` binary on `PATH` is used; set the `LILYPOND_CMD` environment variable to a JSON array to point at a wrapped install — for example `LILYPOND_CMD='["flatpak","run","org.lilypond.LilyPond"]'` or `LILYPOND_CMD='["wsl","lilypond"]'` (POSIX shell syntax; in PowerShell use `$env:LILYPOND_CMD='[...]'`). The array is `[binary, ...prefixArgs]`; the build appends LilyPond's own arguments.
+
 ### Timing
 
 LilyPond is the slow part: roughly 60 seconds per choir, 16 choirs across early + modern notations. When `.ly` sources are current, `pnpm run build:scores` (and the `prebuild` step inside `pnpm run build`) completes in a few seconds because `needsRebuild` compares mtimes and skips unchanged files. After a batch edit of `.ly` files — particularly shared includes (`basic.ly`, `layout.ly`) — expect the next full `pnpm run ci` to take 10+ minutes as the affected SVGs regenerate. This is a one-off; the next build after that is fast again.
