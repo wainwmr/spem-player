@@ -655,8 +655,8 @@ function drawCombinedPanel(
       const xNow = ox + (todayPlotDay / days) * chartWidth;
       const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
       const xEnd = ox + chartWidth;
-      // Don't clamp to 100% usage; let the cone continue beyond the chart
-      // bottom when the projection overshoots the quota.
+      // Don't clamp the trajectory to 100% usage; let the Q1/Q3 lines continue
+      // beyond the chart bottom when the projection overshoots the quota.
       const yOptimistic = oy + CHART_HEIGHT * (optimisticUsed / 100);
       const yPessimistic = oy + CHART_HEIGHT * (pessimisticUsed / 100);
 
@@ -665,7 +665,12 @@ function drawCombinedPanel(
       ctx.save();
 
       // Fill the cone between the optimistic and pessimistic projections with
-      // the signal colour.
+      // the signal colour, but clip the fill to the chart area so the region
+      // below used=100% stays as plain panel background.
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(ox, oy, chartWidth, CHART_HEIGHT);
+      ctx.clip();
       ctx.fillStyle = panelColor;
       ctx.globalAlpha = 0.2;
       ctx.beginPath();
@@ -674,8 +679,10 @@ function drawCombinedPanel(
       ctx.lineTo(xEnd, yPessimistic);
       ctx.closePath();
       ctx.fill();
+      ctx.restore();
 
-      // Boundary lines for the cone in the service brand colour.
+      // Boundary lines for the cone in the service brand colour. Drawn after
+      // the clip restore so they can continue below the chart bottom.
       ctx.strokeStyle = markerFill;
       ctx.lineWidth = 3;
       ctx.setLineDash([4, 6]);
