@@ -15,6 +15,11 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   eslintConfigPrettier,
+  // Relaxations below are scoped to legacy `src/` (and root `*.ts`) only: the
+  // codebase predates these conventions. Newer code such as `e2e/` is
+  // intentionally not listed here, so it keeps the shared recommended baseline
+  // rather than these relaxations. Do not widen this glob to unify the regimes;
+  // that would only loosen the newer code (#621).
   {
     files: ['src/**/*.ts', '*.ts'],
     languageOptions: {
@@ -24,9 +29,10 @@ export default tseslint.config(
         ...globals.browser,
         ...globals.es2021,
       },
-      parserOptions: {
-        project: true,
-      },
+      // No type-aware lint rules are enabled (the non-type-checked `recommended`
+      // set only), so `parserOptions.project` is intentionally omitted: it would
+      // build a TypeScript program per file for no consuming rule. Re-add it only
+      // if a type-aware rule is enabled (#621).
     },
     rules: {
       // Style rules: codebase predates these conventions
