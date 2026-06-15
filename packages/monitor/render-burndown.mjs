@@ -560,7 +560,7 @@ function drawCombinedPanel(
       lineDash: [],
       lineWidth: 8,
       marker: "diamond",
-      markerFill: "#00c7b7",
+      markerFill: "#014847",
     },
   ];
 
@@ -646,15 +646,11 @@ function drawCombinedPanel(
   }
   ctx.setLineDash([]);
 
-  // Per-service markers at each data point. Each marker is filled with the
-  // service's brand colour and stroked with the signal colour. Netlify
-  // diamonds are drawn first (larger) so the smaller GitHub circles sit on top
-  // and the diamond outline remains visible where the two lines overlap.
-  for (const { points, status, marker, markerFill } of [...services].reverse()) {
-    const panelColor = statusColor(status);
+  // Per-service markers at each data point. Netlify diamonds are drawn first
+  // so the smaller GitHub circles sit on top; the diamond's corners remain
+  // visible around the circle where the two lines overlap.
+  for (const { points, marker, markerFill } of [...services].reverse()) {
     ctx.fillStyle = markerFill;
-    ctx.strokeStyle = panelColor;
-    ctx.lineWidth = 2;
 
     for (const point of points) {
       const x = ox + (point.dayIndex / days) * chartWidth;
@@ -662,11 +658,10 @@ function drawCombinedPanel(
 
       if (marker === "circle") {
         ctx.beginPath();
-        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.arc(x, y, 7, 0, Math.PI * 2);
         ctx.fill();
-        ctx.stroke();
       } else if (marker === "diamond") {
-        const r = 7;
+        const r = 9;
         ctx.beginPath();
         ctx.moveTo(x, y - r);
         ctx.lineTo(x + r, y);
@@ -674,7 +669,6 @@ function drawCombinedPanel(
         ctx.lineTo(x - r, y);
         ctx.closePath();
         ctx.fill();
-        ctx.stroke();
       }
     }
   }
