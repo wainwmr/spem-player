@@ -165,6 +165,49 @@ function statusColor(status) {
 }
 
 /**
+ * Daily burn rates (units per day) between consecutive series entries up to
+ * and including `today`. Used to build an optimistic/pessimistic projection
+ * cone from the 1st and 3rd quartiles of past burn rates.
+ *
+ * @param {SeriesEntry[]} series
+ * @param {keyof SeriesEntry} key
+ * @param {string} today
+ * @returns {number[]}
+ */
+function dailyBurnRates(series, key, today) {
+  const rates = [];
+  const filtered = series.filter(
+    (entry) => entry.date <= today && entry[key] != null && !Number.isNaN(entry[key])
+  );
+  for (let i = 1; i < filtered.length; i++) {
+    const prev = filtered[i - 1];
+    const curr = filtered[i];
+    const days = dayDiff(prev.date, curr.date);
+    if (days <= 0) continue;
+    rates.push((curr[key] - prev[key]) / days);
+  }
+  return rates;
+}
+
+/**
+ * Linear-interpolation percentile of a sorted numeric array.
+ *
+ * @param {number[]} sorted
+ * @param {number} q - Quantile in the range [0, 1].
+ * @returns {number}
+ */
+function percentile(sorted, q) {
+  if (sorted.length === 0) return 0;
+  if (sorted.length === 1) return sorted[0];
+  const pos = (sorted.length - 1) * q;
+  const base = Math.floor(pos);
+  const rest = pos - base;
+  const next = sorted[base + 1];
+  if (next === undefined) return sorted[base];
+  return sorted[base] + rest * (next - sorted[base]);
+}
+
+/**
  * Draw a rounded rectangle.
  *
  * @param {CanvasRenderingContext2D} ctx
@@ -500,6 +543,7 @@ export async function renderBurndown(
  * @param {UsageRecord} netlify
  * @param {{date: string, dayIndex: number, remaining: number}[]} githubPoints
  * @param {{date: string, dayIndex: number, remaining: number}[]} netlifyPoints
+ * @param {SeriesEntry[]} series
  * @param {Date} now
  * @param {{dayIndex: number, count: number}[]} prCounts
  * @param {{github: "good"|"watch"|"throttle"|"stop", netlify: "good"|"watch"|"throttle"|"stop"}} statuses
@@ -514,6 +558,7 @@ function drawCombinedPanel(
   netlify,
   githubPoints,
   netlifyPoints,
+  series,
   now,
   prCounts,
   statuses
@@ -551,6 +596,7 @@ function drawCombinedPanel(
       lineWidth: 8,
       marker: "circle",
       markerFill: "#8b5cf6",
+      seriesKey: "githubMinutes",
     },
     {
       usage: netlify,
@@ -561,6 +607,7 @@ function drawCombinedPanel(
       lineWidth: 8,
       marker: "diamond",
       markerFill: "#014847",
+      seriesKey: "netlifyCurrent",
     },
   ];
 
@@ -588,33 +635,56 @@ function drawCombinedPanel(
   // PR histogram overlaid in the middle
   drawCombinedOverlayHistogram(ctx, ox, chartWidth, github, now, prCounts);
 
-  // Projection lines (behind actual lines) use the same per-service style as
-  // the past line, but at reduced opacity so the future reads as a lighter
-  // continuation of the same identity. Draw GitHub last so its solid line
-  // sits on top where the two projections overlap. Only draw projections once
-  // we have more than three days of data.
+  // Projection cone (behind actual lines). Rather than a single falsely
+  // precise trend line, we use the 1st and 3rd quartiles of the observed
+  // daily burn rate to draw an optimistic/pessimistic range. Only draw the
+  // cone once we have more than three days of data.
   if (todayPlotDay > 3) {
-    for (const { usage, status, lineDash, lineWidth } of [...services].reverse()) {
+    for (const { usage, status, seriesKey, markerFill } of [...services].reverse()) {
+      const rates = dailyBurnRates(series, seriesKey, today).sort((a, b) => a - b);
+      if (rates.length === 0) continue;
+
       const currentUsed = 100 - remainingPct(usage.current, usage.limit);
-      const projected = projectedEndPct(currentUsed, todayPlotDay, days);
-      const panelColor = statusColor(status);
+      const remainingDays = days - todayPlotDay;
+      const q1Rate = percentile(rates, 0.25);
+      const q3Rate = percentile(rates, 0.75);
+
+      const optimisticUsed = currentUsed + (q1Rate / usage.limit) * 100 * remainingDays;
+      const pessimisticUsed = currentUsed + (q3Rate / usage.limit) * 100 * remainingDays;
 
       const xNow = ox + (todayPlotDay / days) * chartWidth;
       const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
+      const xEnd = ox + chartWidth;
+      const yOptimistic = oy + CHART_HEIGHT * Math.min(100, optimisticUsed) / 100;
+      const yPessimistic = oy + CHART_HEIGHT * Math.min(100, pessimisticUsed) / 100;
+
+      const panelColor = statusColor(status);
 
       ctx.save();
-      ctx.strokeStyle = panelColor;
-      ctx.lineWidth = lineWidth;
-      ctx.setLineDash(lineDash);
-      ctx.lineCap = "round";
-      ctx.globalAlpha = 0.45;
+
+      // Fill the cone between the optimistic and pessimistic projections.
+      ctx.fillStyle = markerFill;
+      ctx.globalAlpha = 0.25;
       ctx.beginPath();
       ctx.moveTo(xNow, yNow);
-      ctx.lineTo(
-        ox + chartWidth,
-        oy + CHART_HEIGHT * Math.min(100, projected) / 100
-      );
+      ctx.lineTo(xEnd, yOptimistic);
+      ctx.lineTo(xEnd, yPessimistic);
+      ctx.closePath();
+      ctx.fill();
+
+      // Boundary lines for the cone.
+      ctx.strokeStyle = panelColor;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([4, 6]);
+      ctx.lineCap = "round";
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(xNow, yNow);
+      ctx.lineTo(xEnd, yOptimistic);
+      ctx.moveTo(xNow, yNow);
+      ctx.lineTo(xEnd, yPessimistic);
       ctx.stroke();
+
       ctx.restore();
     }
   }
@@ -895,6 +965,7 @@ export async function renderCombinedBurndown(
     enrichedNetlify,
     githubPoints,
     netlifyPoints,
+    series,
     now,
     prCounts,
     statuses
