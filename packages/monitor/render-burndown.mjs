@@ -572,14 +572,21 @@ function drawCombinedPanel(
   const chartRight = panelWidth - CHART_LEFT;
   const chartWidth = chartRight - CHART_LEFT;
 
+  // Use the full canvas height for the single combined panel; the histogram
+  // is overlaid inside the chart area, so it does not need its own vertical
+  // slice as in the two-panel layout.
+  const panelHeight = CANVAS_HEIGHT - 2 * PADDING_Y;
+  const chartBottom = panelHeight;
+  const CHART_HEIGHT = panelHeight - CHART_TOP;
+
   // Panel background
   ctx.save();
   ctx.fillStyle = COLORS.panelBg;
-  roundRect(ctx, PADDING_X, 0, panelWidth, PANEL_HEIGHT, 16);
+  roundRect(ctx, PADDING_X, 0, panelWidth, panelHeight, 16);
   ctx.fill();
   // Clip subsequent drawing to the rounded panel so the overlaid histogram
   // stays inside the panel bounds.
-  roundRect(ctx, PADDING_X, 0, panelWidth, PANEL_HEIGHT, 16);
+  roundRect(ctx, PADDING_X, 0, panelWidth, panelHeight, 16);
   ctx.clip();
 
   // Chart origin
@@ -633,7 +640,16 @@ function drawCombinedPanel(
   ctx.setLineDash([]);
 
   // PR histogram overlaid in the middle
-  drawCombinedOverlayHistogram(ctx, ox, chartWidth, github, now, prCounts);
+  drawCombinedOverlayHistogram(
+    ctx,
+    ox,
+    chartWidth,
+    github,
+    now,
+    prCounts,
+    chartBottom,
+    CHART_HEIGHT
+  );
 
   // Projection cone (behind actual lines). Rather than a single falsely
   // precise trend line, we use the 1st and 3rd quartiles of the observed
@@ -869,7 +885,16 @@ function drawCombinedPanel(
 /**
  * Draw a PR-count histogram overlaid at the bottom of the chart area.
  */
-function drawCombinedOverlayHistogram(ctx, ox, chartWidth, usage, now, prCounts) {
+function drawCombinedOverlayHistogram(
+  ctx,
+  ox,
+  chartWidth,
+  usage,
+  now,
+  prCounts,
+  histogramBottom,
+  chartHeight
+) {
   const today = now.toISOString().slice(0, 10);
   const days = usage.periodDays;
   const todayRawIndex = Math.min(
@@ -878,8 +903,6 @@ function drawCombinedOverlayHistogram(ctx, ox, chartWidth, usage, now, prCounts)
   );
 
   const FUTURE_PLACEHOLDER_HEIGHT = 6;
-  // Share the graph's horizontal axis (100% used / 0% remaining line).
-  const histogramBottom = CHART_BOTTOM;
   const histogramLeft = ox;
   const histogramRight = ox + chartWidth;
   const histogramWidth = chartWidth;
@@ -889,7 +912,7 @@ function drawCombinedOverlayHistogram(ctx, ox, chartWidth, usage, now, prCounts)
 
   // Scale so the tallest bar reaches the 50% level of the chart area.
   const maxCount = Math.max(...prCounts.map((c) => c.count), 1);
-  const maxBarHeight = CHART_HEIGHT * 0.5;
+  const maxBarHeight = chartHeight * 0.5;
 
   ctx.strokeStyle = COLORS.grid;
   ctx.lineWidth = 3;
