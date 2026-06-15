@@ -664,13 +664,15 @@ function drawCombinedPanel(
 
       ctx.save();
 
-      // Fill the cone between the optimistic and pessimistic projections with
-      // the signal colour, but clip the fill to the chart area so the region
-      // below used=100% stays as plain panel background.
-      ctx.save();
+      // Clip the cone to the chart area so neither the fill nor the boundary
+      // lines are drawn below the used=100% line. The underlying trajectory is
+      // unchanged; only the visible portion is rendered.
       ctx.beginPath();
       ctx.rect(ox, oy, chartWidth, CHART_HEIGHT);
       ctx.clip();
+
+      // Fill the cone between the optimistic and pessimistic projections with
+      // the signal colour.
       ctx.fillStyle = panelColor;
       ctx.globalAlpha = 0.2;
       ctx.beginPath();
@@ -679,10 +681,8 @@ function drawCombinedPanel(
       ctx.lineTo(xEnd, yPessimistic);
       ctx.closePath();
       ctx.fill();
-      ctx.restore();
 
-      // Boundary lines for the cone in the service brand colour. Drawn after
-      // the clip restore so they can continue below the chart bottom.
+      // Boundary lines for the cone in the service brand colour.
       ctx.strokeStyle = markerFill;
       ctx.lineWidth = 3;
       ctx.setLineDash([4, 6]);
