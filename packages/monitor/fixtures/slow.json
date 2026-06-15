@@ -1,0 +1,212 @@
+[
+  {
+    "date": "2026-06-01",
+    "netlifyCurrent": 2,
+    "githubMinutes": 20,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-02",
+    "netlifyCurrent": 3,
+    "githubMinutes": 29,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-03",
+    "netlifyCurrent": 4,
+    "githubMinutes": 38,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-04",
+    "netlifyCurrent": 5,
+    "githubMinutes": 46,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-05",
+    "netlifyCurrent": 6,
+    "githubMinutes": 53,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-06",
+    "netlifyCurrent": 7,
+    "githubMinutes": 60,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-07",
+    "netlifyCurrent": 8,
+    "githubMinutes": 65,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-08",
+    "netlifyCurrent": 9,
+    "githubMinutes": 71,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-09",
+    "netlifyCurrent": 10,
+    "githubMinutes": 76,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-10",
+    "netlifyCurrent": 11,
+    "githubMinutes": 81,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-11",
+    "netlifyCurrent": 12,
+    "githubMinutes": 86,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-12",
+    "netlifyCurrent": 13,
+    "githubMinutes": 92,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-13",
+    "netlifyCurrent": 15,
+    "githubMinutes": 99,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-14",
+    "netlifyCurrent": 16,
+    "githubMinutes": 107,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-15",
+    "netlifyCurrent": 17,
+    "githubMinutes": 115,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-16",
+    "netlifyCurrent": 19,
+    "githubMinutes": 124,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-17",
+    "netlifyCurrent": 20,
+    "githubMinutes": 133,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-18",
+    "netlifyCurrent": 22,
+    "githubMinutes": 141,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-19",
+    "netlifyCurrent": 23,
+    "githubMinutes": 150,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-20",
+    "netlifyCurrent": 25,
+    "githubMinutes": 158,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-21",
+    "netlifyCurrent": 26,
+    "githubMinutes": 165,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-22",
+    "netlifyCurrent": 27,
+    "githubMinutes": 171,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-23",
+    "netlifyCurrent": 28,
+    "githubMinutes": 177,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-24",
+    "netlifyCurrent": 29,
+    "githubMinutes": 182,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-25",
+    "netlifyCurrent": 30,
+    "githubMinutes": 187,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-26",
+    "netlifyCurrent": 31,
+    "githubMinutes": 192,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-27",
+    "netlifyCurrent": 32,
+    "githubMinutes": 198,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-28",
+    "netlifyCurrent": 33,
+    "githubMinutes": 204,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-29",
+    "netlifyCurrent": 34,
+    "githubMinutes": 211,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-30",
+    "netlifyCurrent": 35,
+    "githubMinutes": 219,
+    "source": "logged",
+    "mergedPRs": 3
+  }
+]

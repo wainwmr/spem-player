@@ -542,16 +542,20 @@ function drawCombinedPanel(
       points: githubPoints,
       icon: githubIcon,
       status: statuses.github,
-      lineDash: [0, 14],
+      lineDash: [],
       lineWidth: 8,
+      marker: "circle",
+      markerFill: "#8b5cf6",
     },
     {
       usage: netlify,
       points: netlifyPoints,
       icon: netlifyIcon,
       status: statuses.netlify,
-      lineDash: [10, 8],
+      lineDash: [],
       lineWidth: 8,
+      marker: "diamond",
+      markerFill: "#00c7b7",
     },
   ];
 
@@ -581,7 +585,7 @@ function drawCombinedPanel(
 
   // Projection lines (behind actual lines) use the same per-service style as
   // the past line, but at reduced opacity so the future reads as a lighter
-  // continuation of the same identity. Draw GitHub last so its dotted line
+  // continuation of the same identity. Draw GitHub last so its solid line
   // sits on top where the two projections overlap.
   for (const { usage, status, lineDash, lineWidth } of [...services].reverse()) {
     const currentUsed = 100 - remainingPct(usage.current, usage.limit);
@@ -607,8 +611,8 @@ function drawCombinedPanel(
     ctx.restore();
   }
 
-  // Actual usage lines (at the front). GitHub is drawn last so its dotted
-  // style dominates where the two lines overlap.
+  // Actual usage lines (at the front). GitHub is drawn last so its solid
+  // line dominates where the two lines overlap.
   for (const { points, status, lineDash, lineWidth } of [...services].reverse()) {
     const panelColor = statusColor(status);
     if (points.length >= 2) {
@@ -633,6 +637,39 @@ function drawCombinedPanel(
     }
   }
   ctx.setLineDash([]);
+
+  // Per-service markers at each data point. Each marker is filled with the
+  // service's brand colour and stroked with the signal colour. Netlify
+  // diamonds are drawn first (larger) so the smaller GitHub circles sit on top
+  // and the diamond outline remains visible where the two lines overlap.
+  for (const { points, status, marker, markerFill } of [...services].reverse()) {
+    const panelColor = statusColor(status);
+    ctx.fillStyle = markerFill;
+    ctx.strokeStyle = panelColor;
+    ctx.lineWidth = 2;
+
+    for (const point of points) {
+      const x = ox + (point.dayIndex / days) * chartWidth;
+      const y = oy + CHART_HEIGHT * (1 - point.remaining / 100);
+
+      if (marker === "circle") {
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (marker === "diamond") {
+        const r = 7;
+        ctx.beginPath();
+        ctx.moveTo(x, y - r);
+        ctx.lineTo(x + r, y);
+        ctx.lineTo(x, y + r);
+        ctx.lineTo(x - r, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+  }
 
   // Dots on top of the lines
   for (const { usage, status } of services) {

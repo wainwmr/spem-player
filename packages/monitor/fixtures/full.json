@@ -1,0 +1,212 @@
+[
+  {
+    "date": "2026-06-01",
+    "netlifyCurrent": 5,
+    "githubMinutes": 50,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-02",
+    "netlifyCurrent": 10,
+    "githubMinutes": 98,
+    "source": "logged",
+    "mergedPRs": 6
+  },
+  {
+    "date": "2026-06-03",
+    "netlifyCurrent": 14,
+    "githubMinutes": 140,
+    "source": "logged",
+    "mergedPRs": 7
+  },
+  {
+    "date": "2026-06-04",
+    "netlifyCurrent": 17,
+    "githubMinutes": 172,
+    "source": "logged",
+    "mergedPRs": 7
+  },
+  {
+    "date": "2026-06-05",
+    "netlifyCurrent": 21,
+    "githubMinutes": 197,
+    "source": "logged",
+    "mergedPRs": 6
+  },
+  {
+    "date": "2026-06-06",
+    "netlifyCurrent": 25,
+    "githubMinutes": 218,
+    "source": "logged",
+    "mergedPRs": 6
+  },
+  {
+    "date": "2026-06-07",
+    "netlifyCurrent": 29,
+    "githubMinutes": 243,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-08",
+    "netlifyCurrent": 34,
+    "githubMinutes": 275,
+    "source": "logged",
+    "mergedPRs": 4
+  },
+  {
+    "date": "2026-06-09",
+    "netlifyCurrent": 40,
+    "githubMinutes": 317,
+    "source": "logged",
+    "mergedPRs": 7
+  },
+  {
+    "date": "2026-06-10",
+    "netlifyCurrent": 46,
+    "githubMinutes": 365,
+    "source": "logged",
+    "mergedPRs": 8
+  },
+  {
+    "date": "2026-06-11",
+    "netlifyCurrent": 53,
+    "githubMinutes": 413,
+    "source": "logged",
+    "mergedPRs": 8
+  },
+  {
+    "date": "2026-06-12",
+    "netlifyCurrent": 59,
+    "githubMinutes": 455,
+    "source": "logged",
+    "mergedPRs": 7
+  },
+  {
+    "date": "2026-06-13",
+    "netlifyCurrent": 65,
+    "githubMinutes": 487,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-14",
+    "netlifyCurrent": 70,
+    "githubMinutes": 511,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-15",
+    "netlifyCurrent": 74,
+    "githubMinutes": 533,
+    "source": "logged",
+    "mergedPRs": 5
+  },
+  {
+    "date": "2026-06-16",
+    "netlifyCurrent": 78,
+    "githubMinutes": 557,
+    "source": "logged",
+    "mergedPRs": 8
+  },
+  {
+    "date": "2026-06-17",
+    "netlifyCurrent": 82,
+    "githubMinutes": 590,
+    "source": "logged",
+    "mergedPRs": 9
+  },
+  {
+    "date": "2026-06-18",
+    "netlifyCurrent": 85,
+    "githubMinutes": 633,
+    "source": "logged",
+    "mergedPRs": 9
+  },
+  {
+    "date": "2026-06-19",
+    "netlifyCurrent": 89,
+    "githubMinutes": 681,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-20",
+    "netlifyCurrent": 94,
+    "githubMinutes": 728,
+    "source": "logged",
+    "mergedPRs": 2
+  },
+  {
+    "date": "2026-06-21",
+    "netlifyCurrent": 99,
+    "githubMinutes": 770,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-22",
+    "netlifyCurrent": 106,
+    "githubMinutes": 802,
+    "source": "logged",
+    "mergedPRs": 6
+  },
+  {
+    "date": "2026-06-23",
+    "netlifyCurrent": 112,
+    "githubMinutes": 826,
+    "source": "logged",
+    "mergedPRs": 9
+  },
+  {
+    "date": "2026-06-24",
+    "netlifyCurrent": 118,
+    "githubMinutes": 847,
+    "source": "logged",
+    "mergedPRs": 10
+  },
+  {
+    "date": "2026-06-25",
+    "netlifyCurrent": 125,
+    "githubMinutes": 872,
+    "source": "logged",
+    "mergedPRs": 4
+  },
+  {
+    "date": "2026-06-26",
+    "netlifyCurrent": 130,
+    "githubMinutes": 905,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-27",
+    "netlifyCurrent": 135,
+    "githubMinutes": 948,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-28",
+    "netlifyCurrent": 139,
+    "githubMinutes": 996,
+    "source": "logged",
+    "mergedPRs": 5
+  },
+  {
+    "date": "2026-06-29",
+    "netlifyCurrent": 142,
+    "githubMinutes": 1044,
+    "source": "logged",
+    "mergedPRs": 7
+  },
+  {
+    "date": "2026-06-30",
+    "netlifyCurrent": 146,
+    "githubMinutes": 1085,
+    "source": "logged",
+    "mergedPRs": 10
+  }
+]

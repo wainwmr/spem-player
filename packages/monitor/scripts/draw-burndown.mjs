@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 // Local, offline renderer for the resource burndown graphic.
+//
+// Usage:
+//   node scripts/draw-burndown.mjs
+//   node scripts/draw-burndown.mjs --data packages/monitor/fixtures/fast.json
+//   node scripts/draw-burndown.mjs --data packages/monitor/fixtures/full.json --thresholds 75-82-90
+//
 // Edit the hardcoded usage values below to experiment with different states.
 
 import { readFileSync, writeFileSync } from "fs";
@@ -46,9 +52,30 @@ function parseThresholds(args) {
   return { watch: parts[0], throttle: parts[1], critical: parts[2], projectionCap: parts[2] };
 }
 
-const series = JSON.parse(
-  readFileSync(resolve(repoRoot, ".github/monitor-series.json"), "utf8")
-);
+const dataPath = parseDataPath(process.argv.slice(2));
+
+const series = JSON.parse(readFileSync(dataPath, "utf8"));
+
+/**
+ * Parse an optional "--data <path>" argument.
+ * Relative paths are resolved from the repository root so fixtures can be
+ * referenced as `packages/monitor/fixtures/<name>.json`.
+ *
+ * @param {string[]} args
+ * @returns {string}
+ */
+function parseDataPath(args) {
+  const idx = args.findIndex((a) => a === "--data");
+  if (idx === -1) {
+    return resolve(repoRoot, ".github/monitor-series.json");
+  }
+  const value = args[idx + 1];
+  if (!value) {
+    console.error("Missing value for --data; using real series file.");
+    return resolve(repoRoot, ".github/monitor-series.json");
+  }
+  return resolve(repoRoot, value);
+}
 
 const todayISO = new Date().toISOString().slice(0, 10);
 

@@ -1,0 +1,100 @@
+[
+  {
+    "date": "2026-06-01",
+    "netlifyCurrent": 5,
+    "githubMinutes": 50,
+    "source": "logged",
+    "mergedPRs": 3
+  },
+  {
+    "date": "2026-06-02",
+    "netlifyCurrent": 10,
+    "githubMinutes": 98,
+    "source": "logged",
+    "mergedPRs": 6
+  },
+  {
+    "date": "2026-06-03",
+    "netlifyCurrent": 14,
+    "githubMinutes": 140,
+    "source": "logged",
+    "mergedPRs": 7
+  },
+  {
+    "date": "2026-06-04",
+    "netlifyCurrent": 17,
+    "githubMinutes": 172,
+    "source": "logged",
+    "mergedPRs": 7
+  },
+  {
+    "date": "2026-06-05",
+    "netlifyCurrent": 21,
+    "githubMinutes": 197,
+    "source": "logged",
+    "mergedPRs": 6
+  },
+  {
+    "date": "2026-06-06",
+    "netlifyCurrent": 25,
+    "githubMinutes": 218,
+    "source": "logged",
+    "mergedPRs": 6
+  },
+  {
+    "date": "2026-06-07",
+    "netlifyCurrent": 29,
+    "githubMinutes": 243,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-08",
+    "netlifyCurrent": 34,
+    "githubMinutes": 275,
+    "source": "logged",
+    "mergedPRs": 4
+  },
+  {
+    "date": "2026-06-09",
+    "netlifyCurrent": 40,
+    "githubMinutes": 317,
+    "source": "logged",
+    "mergedPRs": 7
+  },
+  {
+    "date": "2026-06-10",
+    "netlifyCurrent": 46,
+    "githubMinutes": 365,
+    "source": "logged",
+    "mergedPRs": 8
+  },
+  {
+    "date": "2026-06-11",
+    "netlifyCurrent": 53,
+    "githubMinutes": 413,
+    "source": "logged",
+    "mergedPRs": 8
+  },
+  {
+    "date": "2026-06-12",
+    "netlifyCurrent": 59,
+    "githubMinutes": 455,
+    "source": "logged",
+    "mergedPRs": 7
+  },
+  {
+    "date": "2026-06-13",
+    "netlifyCurrent": 65,
+    "githubMinutes": 487,
+    "source": "logged",
+    "mergedPRs": 1
+  },
+  {
+    "date": "2026-06-14",
+    "netlifyCurrent": 70,
+    "githubMinutes": 511,
+    "source": "logged",
+    "mergedPRs": 2
+  }
+]
