@@ -282,22 +282,52 @@ export class MusicCanvas extends MusicElement {
     return c * ((t = t / d - 1) * t * t + 1) + b;
   }
 
-  seek(pos: Position, direction: 1 | -1) {
-    var intbar = Math.floor(pos.bar);
-    const choirnotes = (this.notesByQuant.get(intbar) ?? []).filter(
-      (x) => x.c == pos.choir
-    );
-    const singing = choirnotes.length != 0;
+  seek(pos: Position, direction: 1 | -1): number {
+    // A choir is "singing" wherever ANY of its parts has a range covering the
+    // bar, so its state changes at the edges of those ranges. Those edges can
+    // fall on fractional bars; `notesByQuant` is keyed by fractional quant
+    // positions, so the old integer scan stepped right over them (#598). `ranges`
+    // is the boundary-bearing source, and walking its edges is O(sections), not
+    // O(bars).
+    const singingAt = (bar: number): boolean => {
+      for (let p = 0; p < config.parts.length; p++) {
+        const list = this.ranges.get(`${pos.choir}-${p}`);
+        if (list?.some((r) => bar >= r.from && bar < r.to)) return true;
+      }
+      return false;
+    };
 
-    // loop until we find a bar where choir is not doing what it's doing in currentBar
-    while (intbar + direction >= 0 && intbar + direction <= this.barCount) {
-      intbar = intbar + direction;
-      const newsinging =
-        (this.notesByQuant.get(intbar) ?? []).filter((x) => x.c == pos.choir)
-          .length != 0;
-      if (singing !== newsinging) break;
+    // Every part-range edge for this choir, de-duplicated and sorted.
+    const edges = new Set<number>();
+    for (let p = 0; p < config.parts.length; p++) {
+      for (const r of this.ranges.get(`${pos.choir}-${p}`) ?? []) {
+        edges.add(r.from);
+        edges.add(r.to);
+      }
     }
-    return intbar;
+    const sorted = [...edges].sort((a, b) => a - b);
+
+    // Keep only edges where the COLLECTIVE "any part singing" state actually
+    // flips — contiguous or overlapping parts can leave inner edges that do not
+    // change it. Sample `singingAt` at the MIDPOINT between consecutive edges,
+    // not on an edge itself: ranges are half-open ([from, to)), so a sample
+    // exactly on an edge is ambiguous, whereas the midpoint reads the settled
+    // state of the whole interval below `b`. The first edge is compared against
+    // `false` (i === 0), encoding that a choir is silent before its first edge.
+    const flips = sorted.filter((b, i) => {
+      const below = i === 0 ? false : singingAt((sorted[i - 1] + b) / 2);
+      return singingAt(b) !== below;
+    });
+
+    // Strict `>` / `<`: a seek already sitting exactly on a flip edge advances
+    // PAST it, so repeated key-presses keep moving rather than sticking on the
+    // current bar.
+    if (direction > 0) {
+      const next = flips.find((b) => b > pos.bar);
+      return next === undefined ? this.barCount : Math.min(next, this.barCount);
+    }
+    const prev = [...flips].reverse().find((b) => b < pos.bar);
+    return prev === undefined ? 0 : Math.max(prev, 0);
   }
 
   play() {
