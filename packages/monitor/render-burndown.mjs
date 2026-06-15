@@ -409,7 +409,7 @@ function drawHistogram(ctx, usage, now, prCounts) {
   const histogramWidth = histogramRight - histogramLeft;
   // Histogram bars occupy day columns 1..days; day 0 has no bar.
   const dayWidth = histogramWidth / days;
-  const barWidth = dayWidth * 0.5;
+  const barWidth = dayWidth * 0.75;
 
   // Baseline
   ctx.strokeStyle = COLORS.grid;
