@@ -7,6 +7,7 @@
   "scripts": {
     "test": "node --test monitor-resources.test.mjs render-burndown.test.mjs",
     "draw": "node scripts/draw-burndown.mjs",
+    "draw:fixtures": "node scripts/render-fixtures.mjs",
     "lint": "eslint . --max-warnings 0"
   },
   "devDependencies": {
