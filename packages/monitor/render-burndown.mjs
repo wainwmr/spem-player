@@ -655,10 +655,16 @@ function drawCombinedPanel(
       const xNow = ox + (todayPlotDay / days) * chartWidth;
       const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
       const xEnd = ox + chartWidth;
-      // Don't clamp to 100% usage; let the cone continue beyond the chart
-      // bottom when the projection overshoots the quota.
-      const yOptimistic = oy + CHART_HEIGHT * (optimisticUsed / 100);
-      const yPessimistic = oy + CHART_HEIGHT * (pessimisticUsed / 100);
+      const yBottom = oy + CHART_HEIGHT;
+      // Clamp the cone to the 100% usage line; do not draw it below the chart.
+      const yOptimistic = Math.min(
+        yBottom,
+        oy + CHART_HEIGHT * (optimisticUsed / 100)
+      );
+      const yPessimistic = Math.min(
+        yBottom,
+        oy + CHART_HEIGHT * (pessimisticUsed / 100)
+      );
 
       const panelColor = statusColor(status);
 
