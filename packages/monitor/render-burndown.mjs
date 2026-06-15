@@ -673,20 +673,31 @@ function drawCombinedPanel(
     }
   }
 
-  // Dots on top of the lines
-  for (const { usage, status } of services) {
+  // Current-position marker for each service, using the same shape and fill
+  // as the historical markers instead of a separate "you are here" dot.
+  for (const { usage, marker, markerFill } of services) {
     const currentUsed = 100 - remainingPct(usage.current, usage.limit);
     const xNow = ox + (todayPlotDay / days) * chartWidth;
     const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
-    const panelColor = statusColor(status);
 
-    ctx.fillStyle = panelColor;
-    ctx.beginPath();
-    ctx.arc(xNow, yNow, 8, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillStyle = markerFill;
+    if (marker === "circle") {
+      ctx.beginPath();
+      ctx.arc(xNow, yNow, 7, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (marker === "diamond") {
+      const r = 9;
+      ctx.beginPath();
+      ctx.moveTo(xNow, yNow - r);
+      ctx.lineTo(xNow + r, yNow);
+      ctx.lineTo(xNow, yNow + r);
+      ctx.lineTo(xNow - r, yNow);
+      ctx.closePath();
+      ctx.fill();
+    }
   }
 
-  // Small service icons next to the current dots. Ranked by current y so the
+  // Small service icons next to the current markers. Ranked by current y so the
   // higher line gets its icon above the dot and the lower line gets its icon
   // below, preventing overlap while keeping each icon close to its line.
   const rankedServices = [...services]
