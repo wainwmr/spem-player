@@ -302,17 +302,22 @@ function drawPanel(ctx, originX, icon, fireIcon, usage, points, now, status) {
     }
   }
 
-  // Projection from today to period-end (drawn before the dot so the dot sits on top)
   const xNow = ox + (todayPlotDay / days) * CHART_WIDTH;
   const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
-  ctx.strokeStyle = panelColor;
-  ctx.lineWidth = 7;
-  ctx.setLineDash([2, 8]);
-  ctx.beginPath();
-  ctx.moveTo(xNow, yNow);
-  ctx.lineTo(ox + CHART_WIDTH, oy + CHART_HEIGHT * Math.min(100, projected) / 100);
-  ctx.stroke();
-  ctx.setLineDash([]);
+
+  // Projection from today to period-end (drawn before the dot so the dot sits on top).
+  // Skip it until we have at least three days of data — projecting from one
+  // or two days is not reliable.
+  if (todayPlotDay >= 3) {
+    ctx.strokeStyle = panelColor;
+    ctx.lineWidth = 7;
+    ctx.setLineDash([2, 8]);
+    ctx.beginPath();
+    ctx.moveTo(xNow, yNow);
+    ctx.lineTo(ox + CHART_WIDTH, oy + CHART_HEIGHT * Math.min(100, projected) / 100);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
 
   // White dot on top of the projection line
   ctx.fillStyle = COLORS.youAreHere;
@@ -586,29 +591,32 @@ function drawCombinedPanel(
   // Projection lines (behind actual lines) use the same per-service style as
   // the past line, but at reduced opacity so the future reads as a lighter
   // continuation of the same identity. Draw GitHub last so its solid line
-  // sits on top where the two projections overlap.
-  for (const { usage, status, lineDash, lineWidth } of [...services].reverse()) {
-    const currentUsed = 100 - remainingPct(usage.current, usage.limit);
-    const projected = projectedEndPct(currentUsed, todayPlotDay, days);
-    const panelColor = statusColor(status);
+  // sits on top where the two projections overlap. Only draw projections once
+  // we have at least three days of data.
+  if (todayPlotDay >= 3) {
+    for (const { usage, status, lineDash, lineWidth } of [...services].reverse()) {
+      const currentUsed = 100 - remainingPct(usage.current, usage.limit);
+      const projected = projectedEndPct(currentUsed, todayPlotDay, days);
+      const panelColor = statusColor(status);
 
-    const xNow = ox + (todayPlotDay / days) * chartWidth;
-    const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
+      const xNow = ox + (todayPlotDay / days) * chartWidth;
+      const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
 
-    ctx.save();
-    ctx.strokeStyle = panelColor;
-    ctx.lineWidth = lineWidth;
-    ctx.setLineDash(lineDash);
-    ctx.lineCap = "round";
-    ctx.globalAlpha = 0.45;
-    ctx.beginPath();
-    ctx.moveTo(xNow, yNow);
-    ctx.lineTo(
-      ox + chartWidth,
-      oy + CHART_HEIGHT * Math.min(100, projected) / 100
-    );
-    ctx.stroke();
-    ctx.restore();
+      ctx.save();
+      ctx.strokeStyle = panelColor;
+      ctx.lineWidth = lineWidth;
+      ctx.setLineDash(lineDash);
+      ctx.lineCap = "round";
+      ctx.globalAlpha = 0.45;
+      ctx.beginPath();
+      ctx.moveTo(xNow, yNow);
+      ctx.lineTo(
+        ox + chartWidth,
+        oy + CHART_HEIGHT * Math.min(100, projected) / 100
+      );
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   // Actual usage lines (at the front). GitHub is drawn last so its solid

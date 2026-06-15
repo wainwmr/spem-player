@@ -142,9 +142,15 @@ writeFileSync(outPath, png);
 console.log(`wrote ${outPath}`);
 
 function fmtProjected(usage, now) {
+  const todayPlotDay =
+    dayDiff(usage.periodStartDate, now.toISOString().slice(0, 10)) + 1;
   const { pct, projected } = computeUsageStatus(usage, now, thresholds);
+  const base = `${usage.current}/${usage.limit} mins (${pct}%)`;
+  if (todayPlotDay < 3) {
+    return base;
+  }
   const projectedMins = Math.round((projected / 100) * usage.limit);
-  return `${usage.current}/${usage.limit} mins (${pct}%), projected ${projectedMins}/${usage.limit} mins (${projected}%)`;
+  return `${base}, projected ${projectedMins}/${usage.limit} mins (${projected}%)`;
 }
 
 console.log(`GitHub:  ${fmtProjected(github, now)} — ${githubStatusName}`);
