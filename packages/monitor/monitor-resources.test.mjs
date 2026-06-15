@@ -185,6 +185,21 @@ test("computeUsageStatus zero limit yields zeros, no division error", () => {
   assert.deepEqual(result, { pct: 0, projected: 0, statusPct: 0 });
 });
 
+test("computeUsageStatus respects custom thresholds", () => {
+  const usage = {
+    current: 500,
+    limit: 2000,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const now = new Date("2026-06-10T00:00:00Z");
+  const defaults = computeUsageStatus(usage, now);
+  assert.equal(defaults.statusPct, 75); // default watch boundary
+
+  const strict = computeUsageStatus(usage, now, { watch: 50, throttle: 60, critical: 70 });
+  assert.equal(strict.statusPct, 60); // capped at custom throttle
+});
+
 // formatCriticalIssue: binds the critical-issue attribution and wording —
 // the service is named by the quantity that drove the STOP (statusPct), and
 // the title distinguishes an actual breach from a projection (Vera 536-07).
@@ -379,6 +394,16 @@ test("paceBucket returns red when over critical pace", () => {
    assert.equal(statusName(89), "throttle");
    assert.equal(statusName(90), "stop");
    assert.equal(statusName(120), "stop");
+ });
+
+ test("statusName respects custom thresholds", () => {
+   const thresholds = { watch: 30, throttle: 50, critical: 70 };
+   assert.equal(statusName(29, thresholds), "good");
+   assert.equal(statusName(30, thresholds), "watch");
+   assert.equal(statusName(49, thresholds), "watch");
+   assert.equal(statusName(50, thresholds), "throttle");
+   assert.equal(statusName(69, thresholds), "throttle");
+   assert.equal(statusName(70, thresholds), "stop");
  });
 
  // overallStatusName: worse of two service statuses wins

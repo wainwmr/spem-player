@@ -34,7 +34,23 @@ const TELEGRAM_API = "https://api.telegram.org/bot";
 const WATCH_THRESHOLD_PCT = 75;
 const THROTTLE_THRESHOLD_PCT = 82;
 const CRITICAL_THRESHOLD_PCT = 90;
-const PROJECTION_CAP_PCT = THROTTLE_THRESHOLD_PCT;
+
+/**
+ * Default status thresholds. Used by `computeUsageStatus` and `statusName`
+ * when no override is supplied.
+ *
+ * @typedef {object} Thresholds
+ * @property {number} watch
+ * @property {number} throttle
+ * @property {number} critical
+ * @property {number} [projectionCap] - Optional ceiling for projection-driven
+ *   STOP. Defaults to `throttle` to match production behaviour.
+ */
+export const DEFAULT_THRESHOLDS = {
+  watch: WATCH_THRESHOLD_PCT,
+  throttle: THROTTLE_THRESHOLD_PCT,
+  critical: CRITICAL_THRESHOLD_PCT,
+};
 const SERIES_FILE = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../..",
@@ -152,12 +168,17 @@ export function validatePeriod(startStr, endStr) {
  *
  * @param {UsageRecord} usage
  * @param {Date} [now] - Reference date; defaults to `new Date()`.
+ * @param {Thresholds} [thresholds] - Optional threshold override.
  * @returns {{pct: number, projected: number, statusPct: number}} Actual
  *   percentage, linearly projected end-of-period percentage, and the driver
- *   of status. Projection-driven STOP is capped at throttle (75%) unless
- *   actual usage already breaches the critical threshold (90%).
+ *   of status. Projection-driven STOP is capped at throttle unless actual
+ *   usage already breaches the critical threshold.
  */
-export function computeUsageStatus(usage, now = new Date()) {
+export function computeUsageStatus(
+  usage,
+  now = new Date(),
+  thresholds = DEFAULT_THRESHOLDS
+) {
   // Project from the unrounded percentage: rounding first would scale the
   // rounding error by period/elapsed (up to 30x on day one).
   const rawPct = usage.limit > 0 ? (usage.current / usage.limit) * 100 : 0;
@@ -165,11 +186,12 @@ export function computeUsageStatus(usage, now = new Date()) {
   const elapsed = daysSince(usage.periodStartDate, now);
   const period = daysInPeriod(usage.periodStartDate, usage.periodEndDate);
   const projected = projectedPct(rawPct, elapsed, period);
+  const projectionCap = thresholds.projectionCap ?? thresholds.throttle;
   const statusPct =
-    pct >= CRITICAL_THRESHOLD_PCT
+    pct >= thresholds.critical
       ? pct
-      : projected >= CRITICAL_THRESHOLD_PCT
-        ? PROJECTION_CAP_PCT
+      : projected >= thresholds.critical
+        ? projectionCap
         : Math.max(pct, projected);
   return { pct, projected, statusPct };
 }
@@ -187,12 +209,13 @@ export function computeUsageStatus(usage, now = new Date()) {
  * Map a status percentage to the named monitor signal.
  *
  * @param {number} statusPct
+ * @param {Thresholds} [thresholds] - Optional threshold override.
  * @returns {"good"|"watch"|"throttle"|"stop"}
  */
-export function statusName(statusPct) {
-  if (statusPct >= CRITICAL_THRESHOLD_PCT) return "stop";
-  if (statusPct >= THROTTLE_THRESHOLD_PCT) return "throttle";
-  if (statusPct >= WATCH_THRESHOLD_PCT) return "watch";
+export function statusName(statusPct, thresholds = DEFAULT_THRESHOLDS) {
+  if (statusPct >= thresholds.critical) return "stop";
+  if (statusPct >= thresholds.throttle) return "throttle";
+  if (statusPct >= thresholds.watch) return "watch";
   return "good";
 }
 

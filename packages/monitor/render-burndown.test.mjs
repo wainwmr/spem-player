@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { renderBurndown, exportedForTesting } from "./render-burndown.mjs";
 
-const { drawHistogram, statusColor } = exportedForTesting;
+const { buildPoints, drawHistogram, statusColor } = exportedForTesting;
 
 const statuses = { github: "good", netlify: "watch", overall: "watch" };
 
@@ -160,6 +160,59 @@ test("drawHistogram skips days with zero PRs", () => {
     (op) => op.type === "fillRect" && op.fill === "#8995a5"
   );
   assert.equal(pastBars.length, 0, "zero-count past day should not draw a bar");
+});
+
+// buildPoints: converts cumulative minutes to remaining percentages and adds
+// a notional day 0 starting point.
+
+test("buildPoints adds a notional day 0 and shifts actual days by one plot column", () => {
+  const usage = {
+    current: 500,
+    limit: 2000,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+    periodDays: 30,
+  };
+  const series = [
+    { date: "2026-06-01", githubMinutes: 100 },
+    { date: "2026-06-05", githubMinutes: 250 },
+  ];
+  const now = new Date("2026-06-10T12:00:00Z");
+  const points = buildPoints(series, "githubMinutes", usage, now);
+
+  assert.equal(points.length, 3);
+  assert.deepEqual(points[0], { date: "2026-06-01", dayIndex: 0, remaining: 100 });
+  assert.equal(points[1].dayIndex, 1);
+  assert.equal(points[1].remaining, 95);
+  assert.equal(points[2].dayIndex, 5);
+  assert.equal(points[2].remaining, 87.5);
+});
+
+test("buildPoints does not add a synthetic day 0 for an empty series", () => {
+  const usage = {
+    current: 500,
+    limit: 2000,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+    periodDays: 30,
+  };
+  const now = new Date("2026-06-10T12:00:00Z");
+  const points = buildPoints([], "githubMinutes", usage, now);
+  assert.equal(points.length, 0);
+});
+
+test("buildPoints skips future dates", () => {
+  const usage = {
+    current: 500,
+    limit: 2000,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+    periodDays: 30,
+  };
+  const series = [{ date: "2026-06-15", githubMinutes: 100 }];
+  const now = new Date("2026-06-10T12:00:00Z");
+  const points = buildPoints(series, "githubMinutes", usage, now);
+  assert.equal(points.length, 0);
 });
 
 // statusColor: maps named statuses to chart colours

@@ -71,6 +71,11 @@ function remainingPct(current, limit) {
  * Map a service's daily cumulative series into { date, dayIndex, remaining }
  * points, filtering out null/undefined values and capping at today.
  *
+ * `dayIndex` is the plot day: 0 is the notional start-of-period point (100%
+ * remaining, no usage), 1 is the end of the first actual day, and `days` is
+ * the end of the last day. This places day 0 one column to the left of day 1
+ * and aligns the burndown line with the histogram columns.
+ *
  * @param {SeriesEntry[]} series
  * @param {keyof SeriesEntry} key - "githubMinutes" or "netlifyCurrent".
  * @param {UsageRecord} usage
@@ -84,12 +89,21 @@ function buildPoints(series, key, usage, now) {
     if (entry.date > today) continue;
     const value = entry[key];
     if (value == null || Number.isNaN(value)) continue;
-    const dayIndex = dayDiff(usage.periodStartDate, entry.date);
-    if (dayIndex < 0 || dayIndex >= usage.periodDays) continue;
+    const rawDayIndex = dayDiff(usage.periodStartDate, entry.date);
+    if (rawDayIndex < 0 || rawDayIndex >= usage.periodDays) continue;
     points.push({
       date: entry.date,
-      dayIndex,
+      dayIndex: rawDayIndex + 1,
       remaining: remainingPct(value, usage.limit),
+    });
+  }
+  // Burndown charts conventionally start at 100% remaining on the notional
+  // day 0. It sits one column to the left of day 1 and has no histogram bar.
+  if (points.length > 0) {
+    points.unshift({
+      date: usage.periodStartDate,
+      dayIndex: 0,
+      remaining: 100,
     });
   }
   return points;
@@ -195,7 +209,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 function drawPanel(ctx, originX, icon, fireIcon, usage, points, now, status) {
   const today = now.toISOString().slice(0, 10);
   const days = usage.periodDays;
-  const todayIndex = Math.min(dayDiff(usage.periodStartDate, today), days - 1);
+  const todayPlotDay = Math.min(
+    dayDiff(usage.periodStartDate, today) + 1,
+    days
+  );
 
   // Panel background
   ctx.save();
@@ -217,7 +234,7 @@ function drawPanel(ctx, originX, icon, fireIcon, usage, points, now, status) {
   const currentUsed = lastPoint
     ? 100 - lastPoint.remaining
     : 100 - remainingPct(usage.current, usage.limit);
-  const projected = projectedEndPct(currentUsed, todayIndex + 1, days);
+  const projected = projectedEndPct(currentUsed, todayPlotDay, days);
   const panelColor = statusColor(status);
 
   ctx.fillStyle = panelColor;
@@ -269,9 +286,9 @@ function drawPanel(ctx, originX, icon, fireIcon, usage, points, now, status) {
       const curr = points[i];
       const color = panelColor;
 
-      const x1 = ox + (prev.dayIndex / (days - 1)) * CHART_WIDTH;
+      const x1 = ox + (prev.dayIndex / days) * CHART_WIDTH;
       const y1 = oy + CHART_HEIGHT * (1 - prev.remaining / 100);
-      const x2 = ox + (curr.dayIndex / (days - 1)) * CHART_WIDTH;
+      const x2 = ox + (curr.dayIndex / days) * CHART_WIDTH;
       const y2 = oy + CHART_HEIGHT * (1 - curr.remaining / 100);
 
       ctx.strokeStyle = color;
@@ -286,7 +303,7 @@ function drawPanel(ctx, originX, icon, fireIcon, usage, points, now, status) {
   }
 
   // Projection from today to period-end (drawn before the dot so the dot sits on top)
-  const xNow = ox + (todayIndex / (days - 1)) * CHART_WIDTH;
+  const xNow = ox + (todayPlotDay / days) * CHART_WIDTH;
   const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
   ctx.strokeStyle = panelColor;
   ctx.lineWidth = 7;
@@ -328,7 +345,10 @@ function drawPanel(ctx, originX, icon, fireIcon, usage, points, now, status) {
 function drawHistogram(ctx, usage, now, prCounts) {
   const today = now.toISOString().slice(0, 10);
   const days = usage.periodDays;
-  const todayIndex = Math.min(dayDiff(usage.periodStartDate, today), days - 1);
+  const todayRawIndex = Math.min(
+    dayDiff(usage.periodStartDate, today),
+    days - 1
+  );
 
   const HISTOGRAM_MAX_COUNT = 15; // observed month max
   const FUTURE_PLACEHOLDER_HEIGHT = 6;
@@ -339,12 +359,9 @@ function drawHistogram(ctx, usage, now, prCounts) {
   const histogramRight =
     PADDING_X + PANEL_WIDTH + GAP + CHART_RIGHT;
   const histogramWidth = histogramRight - histogramLeft;
-  const dayWidth = histogramWidth / (days - 1);
-  const barWidth = Math.min(dayWidth * 0.7, 18);
-
-  // Bar centres are inset so the first bar starts at histogramLeft and the
-  // last bar ends at histogramRight.
-  const slotWidth = (histogramWidth - barWidth) / (days - 1);
+  // Histogram bars occupy day columns 1..days; day 0 has no bar.
+  const dayWidth = histogramWidth / days;
+  const barWidth = dayWidth * 0.5;
 
   // Baseline
   ctx.strokeStyle = COLORS.grid;
@@ -357,16 +374,18 @@ function drawHistogram(ctx, usage, now, prCounts) {
   for (let dayIndex = 0; dayIndex < days; dayIndex++) {
     const entry = prCounts.find((c) => c.dayIndex === dayIndex);
     const count = entry?.count ?? 0;
-    const x = histogramLeft + barWidth / 2 + dayIndex * slotWidth;
+    // Bars sit at the right edge of each day column, aligned with the line
+    // points and the "you are here" dot.
+    const x = histogramLeft + (dayIndex + 1) * dayWidth;
 
     let height;
     let fill;
-    if (dayIndex > todayIndex) {
+    if (dayIndex > todayRawIndex) {
       height = FUTURE_PLACEHOLDER_HEIGHT;
       fill = COLORS.histogramFuture;
     } else {
       height = Math.min(count / HISTOGRAM_MAX_COUNT, 1) * histogramHeight;
-      fill = dayIndex === todayIndex ? COLORS.green : COLORS.histogramPast;
+      fill = dayIndex === todayRawIndex ? COLORS.green : COLORS.histogramPast;
     }
 
     if (height <= 0) continue;
@@ -445,9 +464,400 @@ export async function renderBurndown(
 }
 
 /**
+ * Draw both services on a single wide panel, with service icons in front of the
+ * usage labels in the top-right. Used for local experimentation; not the
+ * Telegram two-panel layout.
+ *
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} panelWidth
+ * @param {HTMLImageElement} githubIcon
+ * @param {HTMLImageElement} netlifyIcon
+ * @param {HTMLImageElement} fireIcon
+ * @param {UsageRecord} github
+ * @param {UsageRecord} netlify
+ * @param {{date: string, dayIndex: number, remaining: number}[]} githubPoints
+ * @param {{date: string, dayIndex: number, remaining: number}[]} netlifyPoints
+ * @param {Date} now
+ * @param {{github: "good"|"watch"|"throttle"|"stop", netlify: "good"|"watch"|"throttle"|"stop"}} statuses
+ */
+
+/**
+ * Draw both services on a single wide panel, with service icons in front of the
+ * usage labels in the top-right. The PR histogram is overlaid at the bottom of
+ * the chart area. Z-order: diagonal, histogram, projection lines, actual lines,
+ * dots, labels.
+ *
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} panelWidth
+ * @param {HTMLImageElement} githubIcon
+ * @param {HTMLImageElement} netlifyIcon
+ * @param {UsageRecord} github
+ * @param {UsageRecord} netlify
+ * @param {{date: string, dayIndex: number, remaining: number}[]} githubPoints
+ * @param {{date: string, dayIndex: number, remaining: number}[]} netlifyPoints
+ * @param {Date} now
+ * @param {{dayIndex: number, count: number}[]} prCounts
+ * @param {{github: "good"|"watch"|"throttle"|"stop", netlify: "good"|"watch"|"throttle"|"stop"}} statuses
+ */
+function drawCombinedPanel(
+  ctx,
+  panelWidth,
+  githubIcon,
+  netlifyIcon,
+  fireIcon,
+  github,
+  netlify,
+  githubPoints,
+  netlifyPoints,
+  now,
+  prCounts,
+  statuses
+) {
+  const today = now.toISOString().slice(0, 10);
+  const days = github.periodDays;
+  const todayPlotDay = Math.min(
+    dayDiff(github.periodStartDate, today) + 1,
+    days
+  );
+  const chartRight = panelWidth - CHART_LEFT;
+  const chartWidth = chartRight - CHART_LEFT;
+
+  // Panel background
+  ctx.save();
+  ctx.fillStyle = COLORS.panelBg;
+  roundRect(ctx, PADDING_X, 0, panelWidth, PANEL_HEIGHT, 16);
+  ctx.fill();
+  // Clip subsequent drawing to the rounded panel so the overlaid histogram
+  // stays inside the panel bounds.
+  roundRect(ctx, PADDING_X, 0, panelWidth, PANEL_HEIGHT, 16);
+  ctx.clip();
+
+  // Chart origin
+  const ox = PADDING_X + CHART_LEFT;
+  const oy = CHART_TOP;
+
+  const services = [
+    {
+      usage: github,
+      points: githubPoints,
+      icon: githubIcon,
+      status: statuses.github,
+      lineDash: [0, 14],
+      lineWidth: 8,
+    },
+    {
+      usage: netlify,
+      points: netlifyPoints,
+      icon: netlifyIcon,
+      status: statuses.netlify,
+      lineDash: [10, 8],
+      lineWidth: 8,
+    },
+  ];
+
+  // Gridlines
+  ctx.strokeStyle = COLORS.grid;
+  ctx.lineWidth = 1;
+  for (const pct of [0, 25, 50, 75, 100]) {
+    const y = oy + CHART_HEIGHT * (pct / 100);
+    ctx.beginPath();
+    ctx.moveTo(ox, y);
+    ctx.lineTo(ox + chartWidth, y);
+    ctx.stroke();
+  }
+
+  // Critical-pace diagonal (at the back)
+  ctx.strokeStyle = COLORS.diagonal;
+  ctx.lineWidth = 4;
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath();
+  ctx.moveTo(ox, oy);
+  ctx.lineTo(ox + chartWidth, oy + CHART_HEIGHT);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // PR histogram overlaid in the middle
+  drawCombinedOverlayHistogram(ctx, ox, chartWidth, github, now, prCounts);
+
+  // Projection lines (behind actual lines) use the same per-service style as
+  // the past line, but at reduced opacity so the future reads as a lighter
+  // continuation of the same identity. Draw GitHub last so its dotted line
+  // sits on top where the two projections overlap.
+  for (const { usage, status, lineDash, lineWidth } of [...services].reverse()) {
+    const currentUsed = 100 - remainingPct(usage.current, usage.limit);
+    const projected = projectedEndPct(currentUsed, todayPlotDay, days);
+    const panelColor = statusColor(status);
+
+    const xNow = ox + (todayPlotDay / days) * chartWidth;
+    const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
+
+    ctx.save();
+    ctx.strokeStyle = panelColor;
+    ctx.lineWidth = lineWidth;
+    ctx.setLineDash(lineDash);
+    ctx.lineCap = "round";
+    ctx.globalAlpha = 0.45;
+    ctx.beginPath();
+    ctx.moveTo(xNow, yNow);
+    ctx.lineTo(
+      ox + chartWidth,
+      oy + CHART_HEIGHT * Math.min(100, projected) / 100
+    );
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Actual usage lines (at the front). GitHub is drawn last so its dotted
+  // style dominates where the two lines overlap.
+  for (const { points, status, lineDash, lineWidth } of [...services].reverse()) {
+    const panelColor = statusColor(status);
+    if (points.length >= 2) {
+      for (let i = 1; i < points.length; i++) {
+        const prev = points[i - 1];
+        const curr = points[i];
+        const x1 = ox + (prev.dayIndex / days) * chartWidth;
+        const y1 = oy + CHART_HEIGHT * (1 - prev.remaining / 100);
+        const x2 = ox + (curr.dayIndex / days) * chartWidth;
+        const y2 = oy + CHART_HEIGHT * (1 - curr.remaining / 100);
+
+        ctx.strokeStyle = panelColor;
+        ctx.lineWidth = lineWidth;
+        ctx.setLineDash(lineDash);
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.setLineDash([]);
+
+  // Dots on top of the lines
+  for (const { usage, status } of services) {
+    const currentUsed = 100 - remainingPct(usage.current, usage.limit);
+    const xNow = ox + (todayPlotDay / days) * chartWidth;
+    const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
+    const panelColor = statusColor(status);
+
+    ctx.fillStyle = panelColor;
+    ctx.beginPath();
+    ctx.arc(xNow, yNow, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Small service icons next to the current dots. Ranked by current y so the
+  // higher line gets its icon above the dot and the lower line gets its icon
+  // below, preventing overlap while keeping each icon close to its line.
+  const rankedServices = [...services]
+    .map((service) => {
+      const currentUsed = 100 - remainingPct(service.usage.current, service.usage.limit);
+      const xNow = ox + (todayPlotDay / days) * chartWidth;
+      const yNow = oy + CHART_HEIGHT * (currentUsed / 100);
+      return { ...service, xNow, yNow };
+    })
+    .sort((a, b) => a.yNow - b.yNow);
+
+  const lineIconHeight = 52;
+  const lineIconGap = 8;
+  for (let i = 0; i < rankedServices.length; i++) {
+    const { icon, xNow, yNow } = rankedServices[i];
+    const iconWidth = (icon.width / icon.height) * lineIconHeight;
+    const iconX = xNow + lineIconGap;
+    const iconY =
+      i === 0
+        ? yNow - lineIconHeight - lineIconGap
+        : yNow + lineIconGap;
+    ctx.drawImage(icon, iconX, iconY, iconWidth, lineIconHeight);
+  }
+
+  // Service labels, top-right: "<current>/<limit> m <icon>" on one line,
+  // right-justified, icon on the far right.
+  const valueX = PADDING_X + panelWidth - 24;
+  const rowHeight = 64;
+  for (let i = 0; i < services.length; i++) {
+    const { usage, icon, status } = services[i];
+    const valueY = CHART_TOP + 12 + i * rowHeight;
+    const panelColor = statusColor(status);
+
+    const numberText = `${usage.current}/${usage.limit}`;
+    const unitText = "m";
+
+    ctx.font = "900 52px sans-serif";
+    const numberWidth = ctx.measureText(numberText).width;
+    ctx.font = "500 36px sans-serif";
+    const unitWidth = ctx.measureText(unitText).width;
+
+    const iconHeight = 52;
+    const iconWidth = (icon.width / icon.height) * iconHeight;
+    const iconGap = 16;
+    const unitGap = 8;
+
+    const iconX = valueX - iconWidth;
+    const unitX = iconX - iconGap;
+    const numberX = unitX - unitWidth - unitGap;
+
+    // Align number, unit and icon on a common bottom edge.
+    const baselineY = valueY + 52;
+
+    // Fire icon for STOP status, to the left of the minutes.
+    if (status === "stop" && fireIcon) {
+      const fireHeight = 52;
+      const fireWidth = (fireIcon.width / fireIcon.height) * fireHeight;
+      const fireGap = 8;
+      const fireX = numberX - numberWidth - fireGap - fireWidth;
+      ctx.drawImage(
+        fireIcon,
+        fireX,
+        baselineY - fireHeight,
+        fireWidth,
+        fireHeight
+      );
+    }
+
+    // Number (e.g. "647/2000")
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    ctx.fillStyle = panelColor;
+    ctx.font = "900 52px sans-serif";
+    ctx.fillText(numberText, numberX, baselineY);
+
+    // Unit "m"
+    ctx.fillStyle = COLORS.text;
+    ctx.font = "500 36px sans-serif";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(unitText, unitX, baselineY);
+
+    // Service icon on the far right, bottom-aligned with the text
+    ctx.drawImage(icon, iconX, baselineY - iconHeight, iconWidth, iconHeight);
+  }
+
+  ctx.restore();
+}
+
+/**
+ * Draw a PR-count histogram overlaid at the bottom of the chart area.
+ */
+function drawCombinedOverlayHistogram(ctx, ox, chartWidth, usage, now, prCounts) {
+  const today = now.toISOString().slice(0, 10);
+  const days = usage.periodDays;
+  const todayRawIndex = Math.min(
+    dayDiff(usage.periodStartDate, today),
+    days - 1
+  );
+
+  const FUTURE_PLACEHOLDER_HEIGHT = 6;
+  // Share the graph's horizontal axis (100% used / 0% remaining line).
+  const histogramBottom = CHART_BOTTOM;
+  const histogramLeft = ox;
+  const histogramRight = ox + chartWidth;
+  const histogramWidth = chartWidth;
+  // Histogram bars occupy day columns 1..days; day 0 has no bar.
+  const dayWidth = histogramWidth / days;
+  const barWidth = dayWidth * 0.5;
+
+  // Scale so the tallest bar reaches the 50% level of the chart area.
+  const maxCount = Math.max(...prCounts.map((c) => c.count), 1);
+  const maxBarHeight = CHART_HEIGHT * 0.5;
+
+  ctx.strokeStyle = COLORS.grid;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(histogramLeft, histogramBottom);
+  ctx.lineTo(histogramRight, histogramBottom);
+  ctx.stroke();
+
+  for (let dayIndex = 0; dayIndex < days; dayIndex++) {
+    const entry = prCounts.find((c) => c.dayIndex === dayIndex);
+    const count = entry?.count ?? 0;
+    // Bars sit at the right edge of each day column, aligned with the line
+    // points and the "you are here" dot.
+    const x = histogramLeft + (dayIndex + 1) * dayWidth;
+
+    let height;
+    let fill;
+    if (dayIndex > todayRawIndex) {
+      height = FUTURE_PLACEHOLDER_HEIGHT;
+      fill = COLORS.histogramFuture;
+    } else {
+      height = (count / maxCount) * maxBarHeight;
+      fill = dayIndex === todayRawIndex ? COLORS.green : COLORS.histogramPast;
+    }
+
+    if (height <= 0) continue;
+    ctx.fillStyle = fill;
+    ctx.fillRect(x - barWidth / 2, histogramBottom - height, barWidth, height);
+  }
+}
+
+/**
+ * Render a single wide burndown panel with both services overlaid.
+ *
+ * @param {UsageRecord} github
+ * @param {UsageRecord} netlify
+ * @param {SeriesEntry[]} series
+ * @param {Date} [now]
+ * @param {{dayIndex: number, count: number}[]} [prCounts]
+ * @param {{github: "good"|"watch"|"throttle"|"stop", netlify: "good"|"watch"|"throttle"|"stop", overall: "good"|"watch"|"throttle"|"stop"}} statuses
+ * @returns {Promise<Buffer>}
+ */
+export async function renderCombinedBurndown(
+  github,
+  netlify,
+  series,
+  now = new Date(),
+  prCounts = [],
+  statuses
+) {
+  const canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+  const [githubIcon, netlifyIcon, fireIcon] = await Promise.all([
+    loadImage(resolve(__dirname, "icons/github.png")),
+    loadImage(resolve(__dirname, "icons/netlify.png")),
+    loadImage(resolve(__dirname, "icons/fire.png")),
+  ]);
+
+  const enrichedGithub = { ...github, periodDays: periodDays(github) };
+  const enrichedNetlify = { ...netlify, periodDays: periodDays(netlify) };
+
+  const panelWidth = CANVAS_WIDTH - 2 * PADDING_X;
+
+  const githubPoints = buildPoints(series, "githubMinutes", enrichedGithub, now);
+  const netlifyPoints = buildPoints(
+    series,
+    "netlifyCurrent",
+    enrichedNetlify,
+    now
+  );
+
+  drawCombinedPanel(
+    ctx,
+    panelWidth,
+    githubIcon,
+    netlifyIcon,
+    fireIcon,
+    enrichedGithub,
+    enrichedNetlify,
+    githubPoints,
+    netlifyPoints,
+    now,
+    prCounts,
+    statuses
+  );
+
+  return canvas.toBuffer("image/png");
+}
+
+/**
  * Functions exported purely for unit testing. Not part of the public API.
  */
 export const exportedForTesting = {
+  buildPoints,
   drawHistogram,
   statusColor,
 };
