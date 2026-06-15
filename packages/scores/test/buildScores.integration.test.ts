@@ -1,4 +1,4 @@
-import { execSync, spawnSync } from "child_process";
+import { spawnSync } from "child_process";
 import {
   copyFileSync,
   cpSync,
@@ -31,7 +31,9 @@ const FAKE_LILYPOND_LOG = join(
 );
 
 /**
- * Create a fake lilypond executable and return its directory.
+ * Create a fake lilypond helper script and return its directory. The fake is a
+ * plain `_fake_lilypond.js` driven via `LILYPOND_CMD = [node, helper]`, not an
+ * executable on PATH (#624).
  */
 function createFakeLilypond(): string {
   const fakeDir = mkdtempSync(join(tmpdir(), "spem-fake-lilypond-"));
@@ -82,30 +84,20 @@ fs.appendFileSync(logFile, args.join(" ") + "\\n", "utf-8");
     "utf-8"
   );
 
-  // Windows batch file
-  const bat = join(fakeDir, "lilypond.bat");
-  writeFileSync(bat, `@echo off\nnode "${helperJs}" %*\n`, "utf-8");
-
-  // Unix shell script
-  const sh = join(fakeDir, "lilypond");
-  writeFileSync(sh, `#!/bin/sh\nnode "${helperJs}" "$@"\n`, "utf-8");
-  try {
-    execSync(`chmod +x "${sh}"`);
-  } catch (error) {
-    // Windows has no chmod (the .bat fixture is used there). On Unix a
-    // chmod failure would leave the script non-executable and PATH lookup
-    // would silently fall through to another fake — rethrow so the cause
-    // is visible (Vera 539-01).
-    if (process.platform !== "win32") throw error;
-  }
-
+  // The build invokes LilyPond via execFileSync(LILYPOND_CMD) with no shell, so
+  // the fake is driven as [node, helperJs] (see envWithFakeLilypond) rather than
+  // a PATH-resolved .bat/.sh: `node` is a real executable on every platform,
+  // whereas execFileSync cannot run a script or a .bat without a shell (#624).
   return fakeDir;
 }
 
 /**
- * Return an environment object with fake lilypond on PATH and node_modules visible.
+ * Return an environment object that points LILYPOND_CMD at the fake lilypond
+ * (driven as [node, helper], no shell) and makes node_modules visible via
+ * NODE_PATH. The fake is no longer placed on PATH (#624).
  */
 function envWithFakeLilypond(fakeDir: string): NodeJS.ProcessEnv {
+  const helperJs = join(fakeDir, "_fake_lilypond.js");
   const nodePath = process.env.NODE_PATH
     ? join(REPO_ROOT, "node_modules") +
       (process.platform === "win32" ? ";" : ":") +
@@ -113,9 +105,9 @@ function envWithFakeLilypond(fakeDir: string): NodeJS.ProcessEnv {
     : join(REPO_ROOT, "node_modules");
   return {
     ...process.env,
-    PATH:
-      fakeDir + (process.platform === "win32" ? ";" : ":") + process.env.PATH,
     NODE_PATH: nodePath,
+    // Drive the fake via execFileSync([node, helper]) — cross-platform, no shell.
+    LILYPOND_CMD: JSON.stringify([process.execPath, helperJs]),
   };
 }
 
@@ -434,6 +426,9 @@ describe("buildScores.mjs integration", () => {
       ...process.env,
       PATH: "",
     };
+    // Use the default ["lilypond"] (so the spawn fails with ENOENT) even if the
+    // ambient/CI environment has LILYPOND_CMD set — the rest of the suite sets it.
+    delete envNoLilypond.LILYPOND_CMD;
 
     const result = spawnSync(process.execPath, [BUILD_SCRIPT], {
       cwd: REPO_ROOT,
@@ -444,13 +439,11 @@ describe("buildScores.mjs integration", () => {
     expect(result.status).not.toBe(0);
     const output = (result.stdout + result.stderr).toLowerCase();
     expect(output).toContain("lilypond");
-    // Node's checkExecSyncError prefix is platform-stable; shell wordings
-    // are not (cmd "not recognized", bash "command not found", dash plain
-    // "not found" or — via the empty-PATH-element cwd trap — "Permission
-    // denied"). Both branches reach stderr only through the evidence line
-    // #549 added, so this still pins that line. ENOENT covers the one
-    // remaining class: the shell binary itself failing to spawn.
-    expect(result.stderr).toMatch(/Command failed: lilypond --version|ENOENT/);
+    // No shell runs now (execFileSync): an absent lilypond fails to spawn with
+    // ENOENT (status null), not a shell "command not found"/"not recognized".
+    // checkLilypond's evidence line (#549) carries that message to stderr, so
+    // pin ENOENT — the one class an absent binary produces under execFileSync.
+    expect(result.stderr).toMatch(/ENOENT/);
     expect(result.stderr).toMatch(/\(status: (?:\d+|none), signal: none\)/);
   });
 
@@ -707,33 +700,11 @@ describe("buildScores.mjs integration", () => {
         "utf-8"
       );
 
-      const failBat = join(failDir, "lilypond.bat");
-      writeFileSync(
-        failBat,
-        `@echo off\nnode "${failHelperJs}" %*\n`,
-        "utf-8"
-      );
-
-      const failSh = join(failDir, "lilypond");
-      // Delegate to the same helper as the .bat so both platforms execute
-      // identical failure logic by construction (Vera 539-03).
-      writeFileSync(failSh, `#!/bin/sh\nnode "${failHelperJs}" "$@"\n`, "utf-8");
-      try {
-        execSync(`chmod +x "${failSh}"`);
-      } catch (error) {
-        // Windows has no chmod (the .bat fixture is used there). On Unix a
-        // chmod failure would leave the script non-executable and PATH
-        // lookup would silently fall through to the success fake — rethrow
-        // so the cause is visible (Vera 539-01).
-        if (process.platform !== "win32") throw error;
-      }
-
+      // Point LILYPOND_CMD at the failing helper via [node, helper] — the same
+      // no-shell, cross-platform mechanism the success fake uses (#624).
       const envFail = {
         ...env,
-        PATH:
-          failDir +
-          (process.platform === "win32" ? ";" : ":") +
-          env.PATH,
+        LILYPOND_CMD: JSON.stringify([process.execPath, failHelperJs]),
       };
 
       const result2 = spawnSync(
