@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -56,7 +56,7 @@ describe("worktree-ports", () => {
 });
 
 describe("readWorktreeOffset", () => {
-  it("reads the trimmed offset from a .worktree-offset file beside the module", () => {
+  it("reads the trimmed offset from a .worktree-offset file in the module's own directory", () => {
     const dir = mkdtempSync(join(tmpdir(), "wt-offset-"));
     try {
       writeFileSync(join(dir, ".worktree-offset"), "200\n");
@@ -67,9 +67,82 @@ describe("readWorktreeOffset", () => {
     }
   });
 
-  it("returns undefined when no .worktree-offset file sits beside the module", () => {
+  it("reads the offset from an ancestor directory (walks up from the module)", () => {
+    // The offset file lives at the worktree root, while the module sits under
+    // packages/pwa/ after the monorepo move (#620). Resolution must walk up.
+    const root = mkdtempSync(join(tmpdir(), "wt-offset-"));
+    try {
+      writeFileSync(join(root, ".worktree-offset"), "200\n");
+      const moduleDir = join(root, "packages", "pwa");
+      mkdirSync(moduleDir, { recursive: true });
+      const moduleUrl = pathToFileURL(
+        join(moduleDir, "worktree-ports.ts")
+      ).href;
+      expect(readWorktreeOffset(moduleUrl)).toBe("200");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("returns undefined when no .worktree-offset exists in the module dir or any ancestor up to the worktree root", () => {
+    // Hermetic: a `.git` marker bounds the walk at the temp root, so the result
+    // cannot depend on whether some real ancestor of tmpdir() happens to hold an
+    // offset file (the convention is live on this machine).
+    const root = mkdtempSync(join(tmpdir(), "wt-offset-"));
+    try {
+      writeFileSync(join(root, ".git"), "gitdir: /elsewhere\n");
+      const moduleDir = join(root, "packages", "pwa");
+      mkdirSync(moduleDir, { recursive: true });
+      const moduleUrl = pathToFileURL(
+        join(moduleDir, "worktree-ports.ts")
+      ).href;
+      expect(readWorktreeOffset(moduleUrl)).toBeUndefined();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("stops at the worktree root (a dir containing .git) and does not inherit an offset above it", () => {
+    // The offset is a worktree-scoped fact: a stray .worktree-offset above the
+    // worktree root must not leak into an offset-less worktree.
+    const above = mkdtempSync(join(tmpdir(), "wt-offset-"));
+    try {
+      writeFileSync(join(above, ".worktree-offset"), "999\n");
+      const worktree = join(above, "worktree");
+      const moduleDir = join(worktree, "packages", "pwa");
+      mkdirSync(moduleDir, { recursive: true });
+      writeFileSync(join(worktree, ".git"), "gitdir: /elsewhere\n");
+      const moduleUrl = pathToFileURL(
+        join(moduleDir, "worktree-ports.ts")
+      ).href;
+      expect(readWorktreeOffset(moduleUrl)).toBeUndefined();
+    } finally {
+      rmSync(above, { recursive: true, force: true });
+    }
+  });
+
+  it("returns the nearest .worktree-offset, not a farther ancestor's", () => {
+    const root = mkdtempSync(join(tmpdir(), "wt-offset-"));
+    try {
+      writeFileSync(join(root, ".worktree-offset"), "200\n");
+      const moduleDir = join(root, "packages", "pwa");
+      mkdirSync(moduleDir, { recursive: true });
+      writeFileSync(join(moduleDir, ".worktree-offset"), "30\n");
+      const moduleUrl = pathToFileURL(
+        join(moduleDir, "worktree-ports.ts")
+      ).href;
+      expect(readWorktreeOffset(moduleUrl)).toBe("30");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("returns undefined when .worktree-offset is present but unreadable (a directory)", () => {
+    // existsSync() is true for a directory, but readFileSync() throws EISDIR;
+    // the inner catch must degrade to undefined, not propagate.
     const dir = mkdtempSync(join(tmpdir(), "wt-offset-"));
     try {
+      mkdirSync(join(dir, ".worktree-offset"));
       const moduleUrl = pathToFileURL(join(dir, "worktree-ports.ts")).href;
       expect(readWorktreeOffset(moduleUrl)).toBeUndefined();
     } finally {

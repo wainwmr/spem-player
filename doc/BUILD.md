@@ -23,19 +23,15 @@ This serves the application locally with hot module replacement. The `--host` fl
 
 ### Parallel worktrees
 
-Multiple worktrees can run dev and preview servers simultaneously by setting
-`SPEM_PORT_OFFSET` in each worktree's environment (for example, in a
-`.env.local` file). The offset is added to the default ports:
+Multiple worktrees can run dev and preview servers at once without colliding.
+Each declares a port offset, added to the base ports (dev 5173, preview 4173).
+`worktree-ports.ts` resolves it in order: `SPEM_PORT_OFFSET` if set, otherwise a
+gitignored `.worktree-offset` file (just the number) at the worktree root,
+found by walking up from the module. A checkout with neither (CI, a fork, the
+main checkout) gets offset 0 and the base ports. Each checkout keeps its own
+offset locally in its gitignored `.worktree-offset`; there is no central registry.
 
-| Worktree | Offset | Dev port | Preview port |
-| -------- | ------ | -------- | ------------ |
-| default  | 0      | 5173     | 4173         |
-| vera     | 100    | 5273     | 4273         |
-| kimi     | 200    | 5373     | 4373         |
-| copilot  | 300    | 5473     | 4473         |
-| tele     | 400    | 5573     | 4573         |
-
-`vite.config.ts` and `playwright.config.ts` read the offset from
+`vite.config.ts` and `playwright.config.ts` read the resolved offset from
 `worktree-ports.ts` at config-eval time.
 
 ## Build for Production

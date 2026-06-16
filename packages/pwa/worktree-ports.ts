@@ -3,8 +3,8 @@
 //
 // Each worktree declares its own offset, resolved in order from:
 //   1. the SPEM_PORT_OFFSET environment variable, if set; otherwise
-//   2. a gitignored `.worktree-offset` file beside this module, holding
-//      just the number.
+//   2. a gitignored `.worktree-offset` file at the worktree root, found by
+//      walking up from this module, holding just the number.
 // Anything that declares neither — CI, forks, a fresh clone, the main
 // checkout — gets offset 0 and the default ports, so config evaluation
 // can never fail on an unrecognised checkout.
@@ -12,44 +12,60 @@
 // The file fallback exists because the environment variable is not
 // reliably delivered to programmatically-spawned processes (IDE task
 // runners, test harnesses); a child may never see SPEM_PORT_OFFSET. The
-// file is resolved relative to this module's own location, not the
-// process cwd, so it is correct however the process was launched. The
+// file is resolved by walking up from this module's own location (not the
+// process cwd) to the worktree root, so it is correct however the process
+// was launched and wherever the module sits in the tree. The
 // offset is the worktree's own fact to declare; we do not infer it from
 // the directory name (CI checks out into `spem-player`, a fork could be
 // named anything — the name is an unreliable proxy).
 //
-// Per-worktree values in use (offset -> dev / preview):
-//   main / claude  0  -> 5173 / 4173
-//   copilot        10 -> 5183 / 4183
-//   kimi           20 -> 5193 / 4193
-//   tele           30 -> 5203 / 4203
-//   vera           40 -> 5213 / 4213
-//   zimi           50 -> 5223 / 4223
-//
 // vite.config.ts and playwright.config.ts read DEV_PORT / PREVIEW_PORT at
 // config-eval time; the offset is resolved once here at module load.
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * Read the raw offset from a `.worktree-offset` file beside this module.
+ * Read the raw offset from the nearest `.worktree-offset` file, walking up
+ * from this module to the worktree root.
  *
- * @param metaUrl - module URL to resolve the file against (defaults to this
- *   module's own `import.meta.url`). Resolving against the module location,
- *   not `process.cwd()`, keeps it correct however the process was launched.
- * @returns the trimmed file contents, or `undefined` when the file is
- *   absent or unreadable. Never throws.
+ * @param metaUrl - module URL to resolve against (defaults to this module's
+ *   own `import.meta.url`). Walking up from the module location, not
+ *   `process.cwd()`, keeps it correct however the process was launched and
+ *   wherever the module sits in the tree (the file lives at the worktree
+ *   root; this module is under packages/pwa/ after the monorepo move, #620).
+ * @returns the trimmed contents of the first `.worktree-offset` found in the
+ *   module's directory or an ancestor up to and including the worktree root
+ *   (the dir holding `.git`), or `undefined` when none exists (CI, forks, the
+ *   main checkout) or it is unreadable. Never throws.
  */
 export function readWorktreeOffset(
   metaUrl: string = import.meta.url,
 ): string | undefined {
-  try {
-    const dir = dirname(fileURLToPath(metaUrl));
-    return readFileSync(resolve(dir, ".worktree-offset"), "utf-8").trim();
-  } catch {
-    return undefined;
+  let dir = dirname(fileURLToPath(metaUrl));
+  for (;;) {
+    const candidate = resolve(dir, ".worktree-offset");
+    if (existsSync(candidate)) {
+      try {
+        return readFileSync(candidate, "utf-8").trim();
+      } catch {
+        return undefined; // present but unreadable: degrade to default
+      }
+    }
+    // Ceiling: the offset is a worktree-scoped fact, so stop the walk at the
+    // worktree root — the directory holding `.git` (a directory in the main
+    // checkout, a file in a linked worktree; existsSync covers both) — rather
+    // than escaping above it and inheriting a stray ancestor's offset.
+    if (existsSync(resolve(dir, ".git"))) return undefined;
+    // Filesystem-root backstop: a checkout that is not a git tree at all (a
+    // tarball export, a degraded CI checkout with no `.git` anywhere) still
+    // terminates here at offset 0, preserving the never-throw guarantee. Left
+    // deliberately unit-untested — reaching it requires a real filesystem root,
+    // and mocking `dirname` to fake one is more brittle than the two-line guard.
+    const parent = dirname(dir);
+    if (parent === dir) return undefined;
+    dir = parent;
   }
 }
 
@@ -66,8 +82,8 @@ export const parseOffset = (raw: string | undefined): number => {
 
 /**
  * Resolve the per-worktree port offset from `SPEM_PORT_OFFSET`, falling
- * back to a `.worktree-offset` file beside this module, then parse it via
- * {@link parseOffset}.
+ * back to a `.worktree-offset` file found by walking up from this module, then
+ * parse it via {@link parseOffset}.
  *
  * @param raw - the raw offset value (defaults to
  *   `process.env.SPEM_PORT_OFFSET`, falling back to the `.worktree-offset`
