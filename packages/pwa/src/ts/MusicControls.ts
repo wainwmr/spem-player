@@ -20,7 +20,7 @@ export class MusicControls extends MusicElement {
   partselect: HTMLSelectElement | null = null;
   barinput: HTMLInputElement | null = null;
 
-  playpausebutton: HTMLDivElement | null = null;
+  playpausebutton: HTMLButtonElement | null = null;
   svgLoading: SVGElement | null = null;
   svgPlay: SVGElement | null = null;
   svgPause: SVGElement | null = null;
@@ -35,10 +35,16 @@ export class MusicControls extends MusicElement {
   async connectedCallback(): Promise<void> {
     super.connectedCallback();
 
-    // Build a DIV with the play, pause and loading SVG icons
-    this.playpausebutton = document.createElement("div");
+    // Build a BUTTON with the play, pause and loading SVG icons. A native
+    // <button> is keyboard-activatable (Enter/Space fire the click handler) and
+    // exposes the button role and accessible name, unlike the old <div> (#634).
+    // Keep class="control" so the global key handler in packages/pwa/index.ts
+    // returns early and does not toggle playback a second time via its
+    // page-level keydown shortcut.
+    this.playpausebutton = document.createElement("button");
     this.playpausebutton.setAttribute("id", "playpausebutton");
-    this.playpausebutton.setAttribute("tabindex", "0");
+    this.playpausebutton.setAttribute("type", "button");
+    this.playpausebutton.setAttribute("aria-label", "Play or pause");
     this.playpausebutton.setAttribute("class", "control");
     this.svgLoading = new DOMParser()
       .parseFromString(loadingSVG, "image/svg+xml")
