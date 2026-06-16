@@ -253,5 +253,22 @@
       "mergedPRs": 6
     },
     "source": "logged"
+  },
+  {
+    "date": "2026-06-16",
+    "netlifyCurrent": 129,
+    "githubMinutes": 775,
+    "mergedPRs": 5,
+    "summary": {
+      "netlifyPct": 43,
+      "netlifyProjected": 83,
+      "netlifyStatus": "throttle",
+      "githubPct": 39,
+      "githubProjected": 73,
+      "githubStatus": "good",
+      "overallStatus": "throttle",
+      "mergedPRs": 5
+    },
+    "source": "logged"
   }
 ]
