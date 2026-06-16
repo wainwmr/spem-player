@@ -17,6 +17,17 @@ describe("MusicCanvas custom element", () => {
     vi.clearAllMocks();
   });
 
+  // seek() tests overwrite choir ranges on the shared beforeAll canvas; snapshot
+  // and restore the map per test so a fixture never leaks into a later test (#598).
+  let savedRanges: NonNullable<typeof canvas>["ranges"];
+  beforeEach(() => {
+    savedRanges = new Map();
+    for (const [key, value] of canvas!.ranges) savedRanges.set(key, [...value]);
+  });
+  afterEach(() => {
+    canvas!.ranges = savedRanges;
+  });
+
   it("Check that the canvasent contains a canvas", async () => {
     expect(canvas).not.toBeNull();
     expect(canvas?.querySelector("canvas")).not.toBe(null);
@@ -234,22 +245,80 @@ describe("MusicCanvas custom element", () => {
     expect(result).toBeLessThanOrEqual(canvas!.barCount);
   });
 
-  it("seek() does not throw when notesByQuant.get(intbar) is undefined (#244)", () => {
+  it("seek() does not throw when a choir-part range key is absent (#244, now via ranges)", () => {
     expect(canvas).not.toBeNull();
-    const saved = canvas!.notesByQuant.get(2);
-    canvas!.notesByQuant.delete(2);
+    // seek no longer reads notesByQuant (#598); the #244 "no data -> no throw"
+    // intent now applies to the `ranges` lookup, which tolerates an absent
+    // "choir-part" key (?? []).
+    for (let p = 0; p < config.parts.length; p++)
+      canvas!.ranges.delete(`0-${p}`);
     const pos = { choir: 0, part: "all" as const, bar: 1 };
     expect(() => canvas!.seek(pos, +1)).not.toThrow();
-    if (saved) canvas!.notesByQuant.set(2, saved);
   });
 
-  it("seek() backward from bar 1 with empty notesByQuant.get(0) returns 0 (#244)", () => {
+  it("seek() backward from bar 1 with no choir-0 ranges returns 0 (#244, now via ranges)", () => {
     expect(canvas).not.toBeNull();
-    const saved = canvas!.notesByQuant.get(0);
-    canvas!.notesByQuant.delete(0);
+    // With choir 0 silent (no ranges), backward seek finds no flip edge and
+    // clamps to bar 0 — the #244 clamp intent, now asserted against `ranges`.
+    for (let p = 0; p < config.parts.length; p++)
+      canvas!.ranges.set(`0-${p}`, []);
     const pos = { choir: 0, part: "all" as const, bar: 1 };
     expect(canvas!.seek(pos, -1)).toBe(0);
-    if (saved) canvas!.notesByQuant.set(0, saved);
+  });
+
+  it("seek() stops at a section boundary that starts on a fractional bar, forward (#598)", () => {
+    expect(canvas).not.toBeNull();
+    // Choir 0 is silent until 1.5, then sings [1.5, 3.0]; isolate it by clearing
+    // every part of choir 0 first, then declaring the one fractional range.
+    for (let p = 0; p < config.parts.length; p++)
+      canvas!.ranges.set(`0-${p}`, []);
+    canvas!.ranges.set("0-0", [{ from: 1.5, to: 3.0 }]);
+    const pos = { choir: 0, part: "all" as const, bar: 1 };
+    // The old integer scan can only ever return an integer bar; the fractional
+    // boundary 1.5 is reachable only by reading `ranges`.
+    expect(canvas!.seek(pos, +1)).toBe(1.5);
+  });
+
+  it("seek() stops at a fractional section boundary, backward (#598)", () => {
+    expect(canvas).not.toBeNull();
+    for (let p = 0; p < config.parts.length; p++)
+      canvas!.ranges.set(`0-${p}`, []);
+    canvas!.ranges.set("0-0", [{ from: 1.5, to: 3.0 }]);
+    const pos = { choir: 0, part: "all" as const, bar: 2.5 };
+    expect(canvas!.seek(pos, -1)).toBe(1.5);
+  });
+
+  it("seek() suppresses an inner edge where the collective state does not flip (#598)", () => {
+    expect(canvas).not.toBeNull();
+    // Two contiguous parts sing back-to-back: part 0 [1.5, 3.0], part 1 [3.0, 4.5].
+    // "Any part singing" never changes at the shared edge 3.0, so seek must skip
+    // it. Seeking forward from 2.0 (inside part 0's range, BELOW the shared edge)
+    // must land on 4.5: if the collective-flip filter regressed, the unsuppressed
+    // 3.0 would be returned instead. (A start above 3.0 would not bite — 3.0 is
+    // already behind it.)
+    for (let p = 0; p < config.parts.length; p++)
+      canvas!.ranges.set(`0-${p}`, []);
+    canvas!.ranges.set("0-0", [{ from: 1.5, to: 3.0 }]);
+    canvas!.ranges.set("0-1", [{ from: 3.0, to: 4.5 }]);
+    expect(canvas!.seek({ choir: 0, part: "all" as const, bar: 2.0 }, +1)).toBe(
+      4.5
+    );
+    // Forward from 1 still finds the genuine first flip at 1.5.
+    expect(canvas!.seek({ choir: 0, part: "all" as const, bar: 1 }, +1)).toBe(
+      1.5
+    );
+  });
+
+  it("seek() unions ranges across parts, not just part 0 (#598)", () => {
+    expect(canvas).not.toBeNull();
+    // The only singing part of choir 0 is part 3; its boundary must still be
+    // found via the "any part" union, not just part 0.
+    for (let p = 0; p < config.parts.length; p++)
+      canvas!.ranges.set(`0-${p}`, []);
+    canvas!.ranges.set("0-3", [{ from: 2.5, to: 4.0 }]);
+    expect(canvas!.seek({ choir: 0, part: "all" as const, bar: 1 }, +1)).toBe(
+      2.5
+    );
   });
 
   it("canvas click fires music-canvas-click event", async () => {
