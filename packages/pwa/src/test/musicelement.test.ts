@@ -1,5 +1,6 @@
 import { MusicElement } from "../ts/MusicElement";
 import { MusicControls } from "../ts/MusicControls";
+import type { MusicEventDetail } from "../ts/common";
 
 // Create a concrete subclass for testing
 class TestElement extends MusicElement {
@@ -99,5 +100,27 @@ describe("MusicElement", () => {
     ).not.toThrow();
     // First registration wins; the catch swallowed the duplicate.
     expect(customElements.get("test-control-duplicate")).toBe(TestControlFirst);
+  });
+
+  it("types the event name and the detail payload (#646)", () => {
+    // Pins the compile-time event contract that #646 introduces. While it holds,
+    // the @ts-expect-error below suppresses the error a bad event name now
+    // produces; if someone widens `fireEvent`'s type back to `string`, the
+    // directive becomes unused and `tsc` (check:types) fails (same compile-time
+    // guard pattern as the #551 readonly-Range test in spem.test.ts). The listener
+    // body proves the HTMLElementEventMap augmentation narrows `e` so `e.detail` is
+    // typed without a cast.
+    const elem = document.createElement("test-element") as MusicElement;
+    document.body.appendChild(elem);
+    const received: MusicEventDetail[] = [];
+    elem.addEventListener("music-controls-changed", (e) => {
+      received.push(e.detail);
+    });
+    elem.setChoir(3);
+    expect(received).toHaveLength(1);
+    expect(received[0].position.choir).toBe(3);
+    // @ts-expect-error -- fireEvent rejects names outside MusicEventType (#646)
+    elem.fireEvent("not-a-music-event");
+    document.body.removeChild(elem);
   });
 });

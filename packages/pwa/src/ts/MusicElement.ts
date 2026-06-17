@@ -3,6 +3,8 @@
 
 import config from "./config";
 import {
+  MusicEventDetail,
+  MusicEventType,
   PartType,
   Position,
   toNum,
@@ -89,15 +91,15 @@ export class MusicElement extends HTMLElement {
     return this.playing;
   }
 
-  fireEvent(type: string, pos?: Position) {
-    var position: Position = pos
+  fireEvent(type: MusicEventType, pos?: Position) {
+    const position: Position = pos
       ? pos
       : {
           choir: this.choir,
           part: this.voicePart,
           bar: this.bar,
         };
-    const myEvent = new CustomEvent(type, {
+    const myEvent = new CustomEvent<MusicEventDetail>(type, {
       detail: { position: position },
       bubbles: true,
       cancelable: true,
