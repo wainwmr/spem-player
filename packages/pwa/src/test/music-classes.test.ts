@@ -1,4 +1,11 @@
-import { Duration, Note, Rest, BarLine, Command } from "../ts/music-classes";
+import {
+  Duration,
+  Note,
+  Rest,
+  BarLine,
+  Command,
+  Component,
+} from "../ts/music-classes";
 
 describe("Duration", () => {
   it("creates durations for all note values", () => {
@@ -33,6 +40,12 @@ describe("Duration", () => {
     expect(new Duration("4", ".", 2).sfths).toBe(48);
   });
 
+  it("handles a negative multiplier", () => {
+    const d = new Duration("4", "", -2);
+    expect(d.sfths).toBe(-32); // 16 * -2
+    expect(d.toString()).toBe("4*-2");
+  });
+
   it("toString formats correctly", () => {
     expect(new Duration("4").toString()).toBe("4");
     expect(new Duration("4", ".").toString()).toBe("4.");
@@ -59,6 +72,12 @@ describe("Note", () => {
     const n = new Note("e", null, null, d, "(");
     expect(n.toString(false)).toBe("e(");
   });
+
+  it("toString concatenates all fields in order", () => {
+    const d = new Duration("4");
+    const n = new Note("c", "is", "'", d, "(");
+    expect(n.toString()).toBe("cis'4(");
+  });
 });
 
 describe("Rest", () => {
@@ -73,6 +92,13 @@ describe("Rest", () => {
     const r = new Rest("R", d);
     expect(r.toString(false)).toBe("R");
   });
+
+  it("toString with a null duration returns only the restname", () => {
+    // The constructor types `duration` as Duration, but the toString guard
+    // (`this.duration != null`) defends a null at runtime; pin that behaviour.
+    const r = new Rest("r", null as unknown as Duration);
+    expect(r.toString()).toBe("r");
+  });
 });
 
 describe("BarLine", () => {
@@ -84,5 +110,23 @@ describe("BarLine", () => {
 describe("Command", () => {
   it("toString returns Command", () => {
     expect(new Command().toString()).toBe("Command");
+  });
+});
+
+describe("Component", () => {
+  it("base toString returns the legacy placeholder", () => {
+    expect(new Component(null).toString()).toBe("huh");
+  });
+
+  it("the four concrete subclasses override Component's toString", () => {
+    // The "huh" placeholder is a legacy base-class value that production code
+    // must not rely on. Assert the override directly: each subclass defines its
+    // own toString, so an instance never inherits the base placeholder. A
+    // subclass that silently lost its override would inherit
+    // Component.prototype.toString and fail here.
+    expect(BarLine.prototype.toString).not.toBe(Component.prototype.toString);
+    expect(Note.prototype.toString).not.toBe(Component.prototype.toString);
+    expect(Rest.prototype.toString).not.toBe(Component.prototype.toString);
+    expect(Command.prototype.toString).not.toBe(Component.prototype.toString);
   });
 });
