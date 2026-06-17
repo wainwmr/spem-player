@@ -96,11 +96,11 @@ pnpm run check
 
 `pnpm run check` now also lints `packages/monitor` via its own `lint` script.
 
-Fix formatting and lint issues automatically:
+Fix formatting and lint issues automatically in the PWA package:
 
 ```console
-pnpm run fix:format
-pnpm run fix:lint
+pnpm --filter @spem/pwa fix:format
+pnpm --filter @spem/pwa fix:lint
 ```
 
 ## Testing
