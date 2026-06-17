@@ -11,7 +11,6 @@ coverage
 temp/*
 src/scss/*.css
 src/scss/*.css.map
-src/ohmjs/ly-grammar.ohm-bundle.*
 publish.py
 playwright-output/
 playwright-report/
