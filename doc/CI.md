@@ -15,7 +15,7 @@ Triggers on push and pull request to `main`, nightly at 00:00 UTC via a `schedul
 
 Defines one job.
 
-#### `test` job
+#### `test` job (`pwa-ci.yml`)
 
 Executes `pnpm run check` (lint, format, type check, unused, deps) and `pnpm run build`, then `pnpm run test:unit`. This is the required status check for the `main` branch ruleset; pull requests cannot merge until it passes.
 
@@ -46,7 +46,7 @@ Permissions: `contents: write`.
 
 Defines one job.
 
-#### `test` job
+#### `test` job (`scores-ci.yml`)
 
 Runs on `ubuntu-latest`.
 
@@ -54,7 +54,7 @@ Steps:
 
 - `actions/checkout@v6` with `ref: ${{ github.head_ref || github.ref_name }}` — checkout the target branch so commits can be pushed back.
 - `actions/setup-node@v6` from `.nvmrc` — install Node.js.
-- `pnpm ci` — clean install from lockfile.
+- `pnpm install` — clean install from lockfile.
 - `pnpm run test:lilypond` — run the Lilypond-related test suite.
 - `bash packages/scores/build/install-lilypond.sh` — install LilyPond.
 - Set `PATH` to include LilyPond 2.26.0, then `pnpm run build:scores` — regenerate SVGs.
