@@ -36,7 +36,7 @@ describe("index.js", () => {
 
     expect(document.querySelector("svg")).not.toBe(null);
     console.log(score?.innerHTML);
-    expect(document.querySelector("div[id='playpausebutton']")).not.toBe(null);
+    expect(document.querySelector("#playpausebutton")).not.toBe(null);
     // expect(document.querySelector("music-canvas canvas")).not.toBe(null);
   });
 

@@ -51,6 +51,58 @@ test.describe("Playback keyboard toggle", () => {
     await expect(pauseIcon).toBeHidden();
   });
 
+  test("focused play/pause button activates on Enter (#634)", async ({ page }) => {
+    await page.goto("/");
+
+    await page.evaluate(() => {
+      HTMLAudioElement.prototype.play = function () {
+        (this as HTMLAudioElement).dispatchEvent(new Event("play"));
+        return Promise.resolve();
+      };
+    });
+
+    const controls = page.locator("music-controls");
+    const pauseIcon = controls.locator("#playpausebutton svg").nth(1);
+
+    await page.locator("#playpausebutton").focus();
+    await expect(pauseIcon).toBeHidden();
+
+    await page.keyboard.press("Enter");
+    await expect(pauseIcon).toBeVisible();
+
+    await page.keyboard.press("Enter");
+    await expect(pauseIcon).toBeHidden();
+  });
+
+  test("focused play/pause button activates on Space without scrolling (#634)", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    await page.evaluate(() => {
+      HTMLAudioElement.prototype.play = function () {
+        (this as HTMLAudioElement).dispatchEvent(new Event("play"));
+        return Promise.resolve();
+      };
+      // Make the page tall enough that a stray Space-scroll would move it.
+      document.body.style.minHeight = "3000px";
+      window.scrollTo(0, 0);
+    });
+
+    const controls = page.locator("music-controls");
+    const pauseIcon = controls.locator("#playpausebutton svg").nth(1);
+
+    await page.locator("#playpausebutton").focus();
+    await expect(pauseIcon).toBeHidden();
+
+    await page.keyboard.press("Space");
+    await expect(pauseIcon).toBeVisible();
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
+    await page.keyboard.press("Space");
+    await expect(pauseIcon).toBeHidden();
+  });
+
   test("play/pause button stays circular when the recording changes (#398)", async ({
     page,
   }) => {

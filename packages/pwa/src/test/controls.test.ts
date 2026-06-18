@@ -128,7 +128,8 @@ describe("MusicControls custom element", () => {
   it("MusicControls has the loading, play and pause SVGs", () => {
     const ppbutton = document.getElementById("playpausebutton");
     expect(ppbutton, document.body.innerHTML).not.toBeNull();
-    expect(ppbutton?.getAttribute("tabindex")).toBe("0");
+    expect(ppbutton?.tagName).toBe("BUTTON");
+    expect(ppbutton?.getAttribute("aria-label")).toBe("Play or pause");
 
     const spinner = document.getElementById("spinner");
     expect(spinner, document.body.innerHTML).not.toBeNull();
