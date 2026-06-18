@@ -52,17 +52,17 @@ Floor defects that look expensive to fix are escalated to Andrew, not accepted.
 
 The UI is built around five custom HTML elements extending `MusicElement`:
 
-- `music-score` (`src/ts/MusicScore.ts`) — SVG sheet music display, bar-position parsing, auto-scroll
-- `music-canvas` (`src/ts/MusicCanvas.ts`) — Canvas 2D overview of all 8 choirs × 5 parts × 140 bars
-- `music-controls` (`src/ts/MusicControls.ts`) — HTML5 Audio playback, choir/part/bar input widgets
-- `music-canvas-watcher` (`src/ts/MusicCanvasWatcher.ts`) — footer status line for hovered position
-- `music-element` (`src/ts/MusicElement.ts`) — abstract base class holding shared state and event dispatch
+- `music-score` (`packages/pwa/src/ts/MusicScore.ts`) — SVG sheet music display, bar-position parsing, auto-scroll
+- `music-canvas` (`packages/pwa/src/ts/MusicCanvas.ts`) — Canvas 2D overview of all 8 choirs × 5 parts × 140 bars
+- `music-controls` (`packages/pwa/src/ts/MusicControls.ts`) — HTML5 Audio playback, choir/part/bar input widgets
+- `music-canvas-watcher` (`packages/pwa/src/ts/MusicCanvasWatcher.ts`) — footer status line for hovered position
+- `music-element` (`packages/pwa/src/ts/MusicElement.ts`) — abstract base class holding shared state and event dispatch
 
 The entry point is `index.ts`, which wires events between components and manages global state.
 
 ### State
 
-The central `State` interface (`src/ts/common.ts`) tracks:
+The central `State` interface (`packages/pwa/src/ts/common.ts`) tracks:
 
 - `recording` — `0` (ALC) or `1` (CotE)
 - `viewmode` — `"dark"` or `"light"`
@@ -228,12 +228,12 @@ A well-formed ticket body contains:
    pnpm run check
    ```
 
-   Or run individual checks:
+   Or run individual checks in the PWA package:
 
    ```console
-   pnpm run check:format
-   pnpm run check:lint
-   pnpm run check:types
+   pnpm --filter @spem/pwa check:format
+   pnpm --filter @spem/pwa check:lint
+   pnpm --filter @spem/pwa check:types
    ```
 
 5. Commit with a clear message referencing the ticket number.
@@ -287,13 +287,13 @@ The repository owner may push directly to `main` only for **non-code changes**: 
 
 ### Lint and Type Checking
 
-The CI pipeline runs `pnpm run check:lint` and `pnpm run check:types`. Pull requests must pass both.
+The CI pipeline runs `pnpm run check`, which runs lint and type checking (among other checks) in the PWA package. Pull requests must pass the full check gate.
 
 The project uses an ESLint flat config (`eslint.config.js`) with `typescript-eslint`. Some rules are relaxed because the codebase predates them (for example, `no-var` and `@typescript-eslint/no-explicit-any` are currently off). Follow the existing patterns in the file you are editing rather than refactoring legacy code to meet stricter rules. `packages/monitor` has its own config for Node `.mjs` files and is linted via `pnpm --filter @spem/monitor lint`.
 
 ESLint honours `.gitignore` (via `includeIgnoreFile`, bundled with ESLint as `eslint/config`), so gitignored paths are never linted. The `ignores` array in `eslint.config.js` lists only the few paths that are *not* gitignored (for example local-only `tests-local/` and `probes/`); the comment there records the current membership. To stop a path being linted, prefer adding it to `.gitignore`; reach for the ESLint `ignores` array only when the path must stay tracked.
 
-The project uses **Prettier** for automatic formatting. Run `pnpm run fix:format` before committing, or configure your editor to format on save. The CI pipeline runs `pnpm run check:format` as part of the build gate.
+The project uses **Prettier** for automatic formatting. Run `pnpm --filter @spem/pwa fix:format` before committing, or configure your editor to format on save. The CI pipeline runs `pnpm --filter @spem/pwa check:format` as part of the build gate.
 
 All `.md` files must pass `markdownlint-cli2` before a PR is opened. Run `npx markdownlint-cli2 <file>` after editing any markdown file.
 
@@ -313,12 +313,12 @@ When creating or modifying a component:
 
 - **Bar numbering** — bars run 0–139 (140 total). Bar 0 is an intro bar; its beat count varies
   by recording (`intro_beats` in `public/spem.json`).
-- **Time mapping** — `bartime` and `barno` arrays in `src/ts/config.ts` convert between real
+- **Time mapping** — `bartime` and `barno` arrays in `packages/pwa/src/ts/config.ts` convert between real
   audio time and bar numbers, accounting for tempo changes per recording.
 - **SVG bar detection** — `MusicScore.getBars()` parses `translate` attributes on `<g>` elements
   containing numeric `<tspan>` text. Values near the left edge are filtered to avoid false matches
   from tenor clef symbols.
-- **LilyPond parsing** — the Ohm grammar (`src/ohmjs/ly-grammar.ohm`) covers only the subset of
+- **LilyPond parsing** — the Ohm grammar (`packages/pwa/src/ohmjs/ly-grammar.ohm`) covers only the subset of
   LilyPond syntax used by `spem.ly`. Do not assume it generalises to other LilyPond files.
 - **Version injection** — `package.json` version is injected into `index.html` at build time.
   Non-`main` branches append the branch name (e.g. `2.4.0-fix-123`).

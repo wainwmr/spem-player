@@ -19,7 +19,7 @@ isolation you may need:
 pnpm run build:ohm
 ```
 
-Without this step, any test importing `src/ohmjs/ly-grammar.ohm-bundle` will fail.
+Without this step, any test importing `packages/pwa/src/ohmjs/ly-grammar.ohm-bundle` will fail.
 
 ## Running Tests
 
@@ -55,7 +55,7 @@ pnpm run test:coverage
 
 ## Test File Location and Naming
 
-Unit tests live under `src/test/` and `packages/scores/test/` (excluding `*.integration.test.ts`) and follow the naming convention `*.test.ts`. They run in-process under jsdom and should complete in under a few seconds each. In-process tests against `packages/scores/build/` code (for example `postprocessSvg.test.ts`) live in `packages/scores/test/` alongside the integration suite.
+Unit tests live under `packages/pwa/src/test/` and `packages/scores/test/` (excluding `*.integration.test.ts`) and follow the naming convention `*.test.ts`. They run in-process under jsdom and should complete in under a few seconds each. In-process tests against `packages/scores/build/` code (for example `postprocessSvg.test.ts`) live in `packages/scores/test/` alongside the integration suite.
 
 Scripts in `packages/monitor/` that expose pure functions use the Node.js built-in test runner (`node:test`) rather than Vitest, and live alongside the script as `*.test.mjs`. Run them directly with `pnpm --filter monitor test` and lint them with `pnpm --filter @spem/monitor lint`. These files are excluded from the Vitest config (`packages/pwa/vite.config.ts`) and do not appear in `pnpm run test:unit` output.
 
@@ -67,7 +67,7 @@ When changing integration tests, always run `pnpm run test:lilypond` locally —
 
 Choosing the right layer keeps the suite fast and deterministic.
 
-**Unit tests** (Vitest/jsdom, `src/test/`) cover single modules in isolation:
+**Unit tests** (Vitest/jsdom, `packages/pwa/src/test/`) cover single modules in isolation:
 
 - custom element behaviour and state helpers
 - parser logic (LilyPond, Ohm grammar)
