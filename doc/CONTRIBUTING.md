@@ -157,7 +157,7 @@ builds the site and posts a preview URL as a comment on each PR automatically.
 2. **Assess**: Set Type, Area, and Difficulty. Write a clear
    Description. Assessment does not change Status. The ticket stays in **Todo**.
 3. **Specify**: Write Recommended fix, Test plan, and Dependencies. Add the
-   `specified` label. Ticket remains in **Todo**.
+   `.WS1` label. Ticket remains in **Todo**.
 4. **Assign** (optional): The ticket can be assigned to a developer.
 5. **Develop**: The developer claims or is assigned the ticket, moves Status
    to **In Progress**, implements the fix on a feature branch, runs tests, and
@@ -248,7 +248,7 @@ A well-formed ticket body contains:
 #### What has changed
 
 - **Board columns:** `Todo`, `In Progress`, `Review`, `Done`.
-- **`Specified` is a label, not a column.** Tickets stay in `Todo` after specification; the `specified` label indicates readiness.
+- **`.WS1` is a label, not a column.** Tickets stay in `Todo` after specification; the `.WS1` label indicates readiness.
 - **Auto-close keywords:** PR descriptions may use `Fixes #NNN`, `Closes #NNN`,
   `Resolves #NNN`, or `See #NNN`. `Fixes`, `Closes`, and `Resolves` close the
   ticket on merge; `See` links the PR without closing.
