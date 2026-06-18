@@ -51,7 +51,6 @@ export default tseslint.config(
   {
     files: ['src/**/*.test.ts'],
     rules: {
-      '@typescript-eslint/no-unused-expressions': 'off',
       '@typescript-eslint/ban-ts-comment': 'off',
     },
   },
