@@ -2,7 +2,7 @@
 // Stage 3: render the burndown from the current series and post it to Telegram.
 //
 // Usage:
-//   node scripts/notify-telegram.mjs
+//   NETLIFY_AUTH_TOKEN=... NETLIFY_SITE_ID=... TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=... GITHUB_TOKEN=... GITHUB_REPOSITORY=owner/repo pnpm notify
 //
 // Required env vars:
 //   NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID,
@@ -20,6 +20,30 @@ import {
   sendTelegramPhoto,
 } from "../monitor-resources.mjs";
 import { renderBurndown } from "../render-burndown.mjs";
+
+const required = [
+  "NETLIFY_AUTH_TOKEN",
+  "NETLIFY_SITE_ID",
+  "TELEGRAM_BOT_TOKEN",
+  "TELEGRAM_CHAT_ID",
+  "GITHUB_TOKEN",
+  "GITHUB_REPOSITORY",
+];
+
+const missing = required.filter((key) => !process.env[key]);
+if (missing.length > 0) {
+  console.error(
+    `Missing required environment variables: ${missing.join(", ")}`
+  );
+  process.exit(1);
+}
+
+if (!process.env.GITHUB_REPOSITORY?.includes("/")) {
+  console.error(
+    `GITHUB_REPOSITORY must be in owner/repo format, got: ${process.env.GITHUB_REPOSITORY}`
+  );
+  process.exit(1);
+}
 
 const netlify = await getNetlifyUsage();
 const github = await getGitHubUsage();
