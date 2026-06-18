@@ -6,8 +6,10 @@
   "type": "module",
   "scripts": {
     "test": "node --test monitor-resources.test.mjs render-burndown.test.mjs",
+    "update-series": "node scripts/update-series.mjs",
     "draw": "node scripts/draw-burndown.mjs",
     "draw:fixtures": "node scripts/render-fixtures.mjs",
+    "notify": "node scripts/notify-telegram.mjs",
     "lint": "eslint . --max-warnings 0"
   },
   "devDependencies": {

@@ -262,7 +262,7 @@ async function api(url, opts = {}) {
   return res.json();
 }
 
-async function getNetlifyUsage() {
+export async function getNetlifyUsage() {
   const site = await api(
     `${NETLIFY_API}/sites/${process.env.NETLIFY_SITE_ID}`,
     { headers: { Authorization: `Bearer ${process.env.NETLIFY_AUTH_TOKEN}` } }
@@ -312,7 +312,7 @@ export function parseRepo() {
   return { owner, repo };
 }
 
-async function getMergedPRCount(since) {
+export async function getMergedPRCount(since) {
   const { owner, repo } = parseRepo();
   const data = await api(
     `https://api.github.com/search/issues?q=repo:${owner}/${repo}+is:pr+is:merged+merged:>=${since}&per_page=1`,
@@ -425,7 +425,7 @@ async function getGitHubRuns() {
   return runs;
 }
 
-async function getGitHubUsage(preFetchedRuns) {
+export async function getGitHubUsage(preFetchedRuns) {
   const now = new Date();
   const periodStartDate = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
@@ -456,7 +456,7 @@ async function getGitHubUsage(preFetchedRuns) {
   };
 }
 
-async function sendTelegram(text) {
+export async function sendTelegram(text) {
   const url = `${TELEGRAM_API}${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
   const res = await fetch(url, {
     method: "POST",
@@ -473,7 +473,7 @@ async function sendTelegram(text) {
  * @param {Buffer} pngBuffer
  * @param {string} caption
  */
-async function sendTelegramPhoto(pngBuffer, caption = "") {
+export async function sendTelegramPhoto(pngBuffer, caption = "") {
   const url = `${TELEGRAM_API}${process.env.TELEGRAM_BOT_TOKEN}/sendPhoto`;
   const form = new FormData();
   form.append("chat_id", process.env.TELEGRAM_CHAT_ID);
