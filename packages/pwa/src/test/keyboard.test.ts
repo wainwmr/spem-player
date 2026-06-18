@@ -108,6 +108,22 @@ describe("Space bar play/pause", () => {
     document.body.removeChild(select);
   });
 
+  it("Space does not toggle play/pause when the play/pause button is focused (#634)", () => {
+    const controls = document.querySelector("music-controls") as MusicControls;
+    const button = document.getElementById("playpausebutton");
+    expect(button).not.toBeNull();
+
+    controls.playing = false;
+    // The button carries class="control", so the global keydown handler returns
+    // early and never toggles. The native button click that would toggle once is
+    // not synthesised by jsdom from a dispatched keydown, so isPlaying stays put.
+    // This pins the no-double-toggle invariant the <button> change relies on.
+    button!.dispatchEvent(
+      new KeyboardEvent("keydown", { code: "Space", bubbles: true })
+    );
+    expect(controls.isPlaying()).toBe(false);
+  });
+
   it("Space does not toggle play/pause when a textarea is focused", () => {
     const controls = document.querySelector("music-controls") as MusicControls;
     const textarea = document.createElement("textarea");
