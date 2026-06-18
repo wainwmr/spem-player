@@ -6,7 +6,7 @@
 //   node scripts/render-fixtures.mjs --output-dir temp/fixtures
 //   node scripts/render-fixtures.mjs --open
 
-import { readdirSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readdirSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { basename, extname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { execFile } from "child_process";
@@ -42,6 +42,24 @@ if (fixtureFiles.length === 0) {
 }
 
 const rendered = [];
+
+// Render the live/current series first.
+const currentSeriesPath = resolve(repoRoot, ".github/monitor-series.json");
+if (existsSync(currentSeriesPath)) {
+  const currentOutPath = resolve(outputDir, "burndown-current.png");
+  const { stdout: currentStdout, stderr: currentStderr } =
+    await execFileAsync(
+      "node",
+      [drawScript, "--data", currentSeriesPath, "-o", currentOutPath],
+      { cwd: repoRoot }
+    );
+  rendered.push({ name: "current", png: "burndown-current.png" });
+  console.log("✓ current");
+  if (currentStderr) console.error(currentStderr.trim());
+  for (const line of currentStdout.trim().split("\n").slice(1)) {
+    console.log(`  ${line}`);
+  }
+}
 
 for (const fixtureFile of fixtureFiles) {
   const name = basename(fixtureFile, ".json");
