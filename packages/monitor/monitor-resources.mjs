@@ -145,6 +145,28 @@ export function validatePeriod(startStr, endStr) {
 }
 
 /**
+ * Build the current calendar month's period from a reference date. Exposes the
+ * start-of-month `Date` (for a caller needing a full ISO timestamp) and both
+ * boundaries as `YYYY-MM-DD` strings (for callers needing date strings), so the
+ * places that derived these share one construction instead of repeating it. The
+ * end-of-month boundary is computed only to produce `periodEndDate`; it is not
+ * returned as a `Date`, since no caller needs one and a midnight-on-the-last-day
+ * `Date` is an easy end-of-period footgun.
+ *
+ * @param {Date} [now] - Reference date; defaults to `new Date()`.
+ * @returns {{start: Date, periodStartDate: string, periodEndDate: string}}
+ */
+export function calendarMonthPeriod(now = new Date()) {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
+  return {
+    start,
+    periodStartDate: start.toISOString().slice(0, 10),
+    periodEndDate: end.toISOString().slice(0, 10),
+  };
+}
+
+/**
  * Compute actual, projected, and status percentages for one service from
  * its raw usage record. The single place raw minutes are converted to
  * percentages before projection — the projection always operates on a
@@ -230,7 +252,7 @@ export function buildSummary(date, netlify, github, mergedPRs) {
   };
 }
 
-async function api(url, opts = {}) {
+export async function api(url, opts = {}) {
   const res = await fetch(url, opts);
   if (!res.ok) {
     const body = await res.text().catch(() => "");
@@ -239,7 +261,7 @@ async function api(url, opts = {}) {
   return res.json();
 }
 
-async function getNetlifyUsage() {
+export async function getNetlifyUsage() {
   const site = await api(
     `${NETLIFY_API}/sites/${process.env.NETLIFY_SITE_ID}`,
     { headers: { Authorization: `Bearer ${process.env.NETLIFY_AUTH_TOKEN}` } }
@@ -248,13 +270,8 @@ async function getNetlifyUsage() {
     `${NETLIFY_API}/${site.account_slug}/builds/status`,
     { headers: { Authorization: `Bearer ${process.env.NETLIFY_AUTH_TOKEN}` } }
   );
-  const now = new Date();
-  const fallbackStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
-    .toISOString()
-    .slice(0, 10);
-  const fallbackEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0))
-    .toISOString()
-    .slice(0, 10);
+  const { periodStartDate: fallbackStart, periodEndDate: fallbackEnd } =
+    calendarMonthPeriod();
   if (!status.minutes?.period_start_date || !status.minutes?.period_end_date) {
     // Netlify billing periods anchor to the account day, often mid-month; a
     // calendar-month assumption can skew the projection in either direction,
@@ -289,7 +306,7 @@ export function parseRepo() {
   return { owner, repo };
 }
 
-async function getMergedPRCount(since) {
+export async function getMergedPRCount(since) {
   const { owner, repo } = parseRepo();
   const data = await api(
     `https://api.github.com/search/issues?q=repo:${owner}/${repo}+is:pr+is:merged+merged:>=${since}&per_page=1`,
@@ -379,12 +396,9 @@ export function getReportingSince(nowMs = Date.now()) {
  *
  * @returns {Promise<object[]>} Array of workflow run objects.
  */
-async function getGitHubRuns() {
+export async function getGitHubRuns() {
   const { owner, repo } = parseRepo();
-  const now = new Date();
-  const start = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
-  ).toISOString();
+  const start = calendarMonthPeriod().start.toISOString();
 
   const runs = [];
   let page = 1;
@@ -402,16 +416,8 @@ async function getGitHubRuns() {
   return runs;
 }
 
-async function getGitHubUsage(preFetchedRuns) {
-  const now = new Date();
-  const periodStartDate = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
-  )
-    .toISOString()
-    .slice(0, 10);
-  const periodEndDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0))
-    .toISOString()
-    .slice(0, 10);
+export async function getGitHubUsage(preFetchedRuns) {
+  const { periodStartDate, periodEndDate } = calendarMonthPeriod();
 
   const runs = preFetchedRuns ?? (await getGitHubRuns());
   let totalMs = 0;
@@ -433,7 +439,7 @@ async function getGitHubUsage(preFetchedRuns) {
   };
 }
 
-async function sendTelegram(text) {
+export async function sendTelegram(text) {
   const url = `${TELEGRAM_API}${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
   const res = await fetch(url, {
     method: "POST",
@@ -450,7 +456,7 @@ async function sendTelegram(text) {
  * @param {Buffer} pngBuffer
  * @param {string} caption
  */
-async function sendTelegramPhoto(pngBuffer, caption = "") {
+export async function sendTelegramPhoto(pngBuffer, caption = "") {
   const url = `${TELEGRAM_API}${process.env.TELEGRAM_BOT_TOKEN}/sendPhoto`;
   const form = new FormData();
   form.append("chat_id", process.env.TELEGRAM_CHAT_ID);
@@ -469,7 +475,7 @@ async function sendTelegramPhoto(pngBuffer, caption = "") {
   }
 }
 
-async function openIssue(title, body) {
+export async function openIssue(title, body) {
   const { owner, repo } = parseRepo();
   const res = await fetch(
     `https://api.github.com/repos/${owner}/${repo}/issues`,
@@ -483,6 +489,34 @@ async function openIssue(title, body) {
     }
   );
   if (!res.ok) throw new Error(`Issues API HTTP ${res.status}`);
+}
+
+/**
+ * Dispatch a monitor alert: optionally send a Telegram message, then open a
+ * tracking issue. A failure in either is logged with `onErrorLog` and
+ * swallowed, so a secondary alert failure never masks the caller's own in-flight
+ * error.
+ *
+ * @param {object} alert
+ * @param {string} [alert.telegramText] - Telegram message. Omit it (or pass any
+ *   falsy value) to open an issue only — used when Telegram itself is the failing
+ *   service.
+ * @param {string} alert.issueTitle
+ * @param {string} alert.issueBody
+ * @param {string} alert.onErrorLog - Prefix for the swallowed-failure log line.
+ */
+export async function dispatchAlert({
+  telegramText,
+  issueTitle,
+  issueBody,
+  onErrorLog,
+}) {
+  try {
+    if (telegramText) await sendTelegram(telegramText);
+    await openIssue(issueTitle, issueBody);
+  } catch (alertErr) {
+    console.error(`${onErrorLog}: ${alertErr.message}`);
+  }
 }
 
 /**
@@ -781,41 +815,37 @@ export async function seedBackfillSeries(
   saveSeries(merged.sort((a, b) => a.date.localeCompare(b.date)), filePath);
 }
 
-async function main() {
+export async function main(seriesFile = SERIES_FILE) {
   let netlify, github;
 
   try {
     netlify = await getNetlifyUsage();
   } catch (e) {
-    try {
-      await sendTelegram(`🚨 Monitor: Netlify API failed — ${e.message}`);
-      await openIssue("Monitor failure: Netlify API error", e.message);
-    } catch (alertErr) {
-      console.error(
-        `Failed to send alert for Netlify failure: ${alertErr.message}`
-      );
-    }
+    await dispatchAlert({
+      telegramText: `🚨 Monitor: Netlify API failed — ${e.message}`,
+      issueTitle: "Monitor failure: Netlify API error",
+      issueBody: e.message,
+      onErrorLog: "Failed to send alert for Netlify failure",
+    });
     throw e;
   }
 
   try {
     github = await getGitHubUsage();
   } catch (e) {
-    try {
-      await sendTelegram(`🚨 Monitor: GitHub API failed — ${e.message}`);
-      await openIssue("Monitor failure: GitHub API error", e.message);
-    } catch (alertErr) {
-      console.error(
-        `Failed to send alert for GitHub failure: ${alertErr.message}`
-      );
-    }
+    await dispatchAlert({
+      telegramText: `🚨 Monitor: GitHub API failed — ${e.message}`,
+      issueTitle: "Monitor failure: GitHub API error",
+      issueBody: e.message,
+      onErrorLog: "Failed to send alert for GitHub failure",
+    });
     throw e;
   }
 
   try {
-    const series = loadSeries();
+    const series = loadSeries(seriesFile);
     const entry = buildLoggedEntry(todayISO(), netlify, github);
-    saveSeries(appendOrReplaceDay(series, entry));
+    saveSeries(appendOrReplaceDay(series, entry), seriesFile);
   } catch (e) {
     // A series-file failure must not break the alert path, but it must be
     // visible in the workflow log (Vera 566-02).
@@ -841,14 +871,12 @@ async function main() {
   try {
     mergedCount = await getMergedPRCount(since);
   } catch (e) {
-    try {
-      await sendTelegram(`🚨 Monitor: PR search API failed — ${e.message}`);
-      await openIssue("Monitor failure: PR search API error", e.message);
-    } catch (alertErr) {
-      console.error(
-        `Failed to send alert for PR search failure: ${alertErr.message}`
-      );
-    }
+    await dispatchAlert({
+      telegramText: `🚨 Monitor: PR search API failed — ${e.message}`,
+      issueTitle: "Monitor failure: PR search API error",
+      issueBody: e.message,
+      onErrorLog: "Failed to send alert for PR search failure",
+    });
     throw e;
   }
 
@@ -860,7 +888,7 @@ async function main() {
   }
 
   try {
-    const series = loadSeries();
+    const series = loadSeries(seriesFile);
     const todayEntry = series.find((entry) => entry.date === todayISO());
     if (todayEntry) {
       const updated = {
@@ -868,14 +896,14 @@ async function main() {
         mergedPRs: mergedCount,
         summary: { ...todayEntry.summary, mergedPRs: mergedCount },
       };
-      saveSeries(appendOrReplaceDay(series, updated));
+      saveSeries(appendOrReplaceDay(series, updated), seriesFile);
     }
   } catch (e) {
     console.error(`Failed to update PR count in series: ${e.message}`);
   }
 
   try {
-    const series = loadSeries();
+    const series = loadSeries(seriesFile);
     const prCounts = series
       .filter((entry) => (entry.mergedPRs ?? 0) > 0)
       .map((entry) => ({
@@ -892,13 +920,11 @@ async function main() {
     );
     await sendTelegramPhoto(chart);
   } catch (e) {
-    try {
-      await openIssue("Monitor failure: Telegram chart error", e.message);
-    } catch (alertErr) {
-      console.error(
-        `Failed to open issue for Telegram chart failure: ${alertErr.message}`
-      );
-    }
+    await dispatchAlert({
+      issueTitle: "Monitor failure: Telegram chart error",
+      issueBody: e.message,
+      onErrorLog: "Failed to open issue for Telegram chart failure",
+    });
     throw e;
   }
 
