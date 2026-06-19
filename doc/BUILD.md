@@ -168,9 +168,9 @@ When releasing, update `package.json` only. The build will propagate the new ver
 
 ### Ohm Grammar
 
-`pnpm run build:ohm` regenerates `packages/pwa/src/ohmjs/ly-grammar.ohm-bundle.js` and `packages/pwa/src/ohmjs/ly-grammar.ohm-bundle.d.ts` from `packages/pwa/src/ohmjs/ly-grammar.ohm` via `@ohm-js/cli`. If you modify the grammar, rebuild before testing or deploying.
+`pnpm run build:ohm` first normalises `packages/pwa/src/ohmjs/ly-grammar.ohm` to LF (via `packages/pwa/build/build-ohm.mjs`), then regenerates `packages/pwa/src/ohmjs/ly-grammar.ohm-bundle.js` and `packages/pwa/src/ohmjs/ly-grammar.ohm-bundle.d.ts` from it via `@ohm-js/cli`. If you modify the grammar, rebuild before testing or deploying.
 
-`ly-grammar.ohm` is pinned to LF by `.gitattributes` (`*.ohm text eol=lf`) so `build:ohm` is deterministic across platforms. Without the rule, a Windows checkout (e.g. with `core.autocrlf=true`) writes the grammar with CRLF and `build:ohm` bakes those CRLFs into the `source` string literal of the generated bundle, producing a phantom diff on every Windows build, even from a clean tree (#611). The bundle file's own line endings are already LF via the existing `*.js` rule; the `*.ohm` rule is what stops CRLF being baked into that literal.
+`ly-grammar.ohm` is pinned to LF by `.gitattributes` (`*.ohm text eol=lf`) so `build:ohm` is deterministic across platforms. Without the rule, a Windows checkout (e.g. with `core.autocrlf=true`) writes the grammar with CRLF and `build:ohm` bakes those CRLFs into the `source` string literal of the generated bundle, producing a phantom diff on every Windows build, even from a clean tree (#611). The bundle file's own line endings are already LF via the existing `*.js` rule; the `*.ohm` rule is what stops CRLF being baked into that literal. The `.gitattributes` rule only fixes *fresh* checkouts, though: a worktree that already held a CRLF `ly-grammar.ohm` keeps it (git reads it clean against the LF blob, so `git checkout --` never rewrites it). So `build:ohm` also normalises the grammar to LF itself before generating (`packages/pwa/build/build-ohm.mjs`), making the build deterministic regardless of the working copy's line endings (#648).
 
 ## Build Output
 
