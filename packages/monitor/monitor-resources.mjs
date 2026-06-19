@@ -12,8 +12,8 @@
  *
  * All thresholds apply to the higher of actual and projected end-of-period
  * usage. Skips the Telegram message on days with no PR merges when both
- * actual and projected usage are below 50%. Watch (≥ 50%), throttle (≥ 75%),
- * and critical (≥ 90%) alerts always send regardless of PR activity.
+ * actual and projected usage are below 75% (the watch threshold). Watch (≥ 75%),
+ * throttle (≥ 82%), and critical (≥ 90%) alerts always send regardless of PR activity.
  *
  * Environment variables (all required):
  *   NETLIFY_AUTH_TOKEN
