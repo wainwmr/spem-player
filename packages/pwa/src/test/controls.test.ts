@@ -1,6 +1,8 @@
 import { MusicControls } from "../ts/MusicControls";
 import config from "../ts/config";
 import { processLilypond, barCount } from "../ts/lily";
+import playSVG from "../icons/play.svg?raw";
+import pauseSVG from "../icons/pause.svg?raw";
 import {
   expectedBar,
   expectedChoir,
@@ -142,6 +144,22 @@ describe("MusicControls custom element", () => {
     const pause = document.getElementById("pause");
     expect(pause, document.body.innerHTML).not.toBeNull();
     expect(pause?.style.display, document.body.innerHTML).toBe("none");
+  });
+
+  it("play and pause icons are in-house, with no third-party attribution (#643)", () => {
+    for (const [name, svg] of [
+      ["play", playSVG],
+      ["pause", pauseSVG],
+    ] as const) {
+      // Compliance: the source icons must not carry third-party (SVG Repo) provenance.
+      expect(svg.toLowerCase(), `${name} attribution`).not.toContain("svgrepo");
+      expect(svg.toLowerCase(), `${name} attribution`).not.toContain(
+        "svg repo"
+      );
+      // The sibling DOM tests locate these via getElementById("play"/"pause"), so
+      // the id must survive (MusicControls itself toggles the parsed <svg> refs).
+      expect(svg, `${name} id`).toContain(`id="${name}"`);
+    }
   });
 
   const handleAudioStarted = async (event: Event) => {
