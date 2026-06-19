@@ -79,6 +79,13 @@ export class MusicCanvas extends MusicElement {
   // Hotspot: opacity at mid-stop as a fraction of centre alpha.
   static readonly FR_HOTSPOT_GRADIENT_MID_ALPHA_FACTOR = 0.4;
 
+  // Paused idle redraw: minimum gap between shimmer-loop redraws while paused.
+  // ~10fps is enough for the breathing hotspot; the static grid never changes
+  // while paused, so redrawing it every rAF tick is wasted CPU/battery (#649).
+  static readonly SHIMMER_IDLE_INTERVAL_MS = 100;
+  // rAF timestamp of the last paused shimmer redraw, for the idle throttle.
+  #lastShimmerDraw = 0;
+
   #boundCanvasClicked = this.#canvasClicked.bind(this);
   #boundCanvasHovered = this.#canvasHovered.bind(this);
   #boundTouchStarted = this.#touchStarted.bind(this);
@@ -124,9 +131,22 @@ export class MusicCanvas extends MusicElement {
   }
 
   #startShimmerLoop() {
-    const loop = () => {
+    // Nothing animates while paused unless there are false-relation hotspots
+    // to breathe, so skip the loop entirely when there are none (#649).
+    if (this.frLocations.length === 0) return;
+    const loop = (timestamp: number) => {
       if (!this.playing) {
-        this.draw();
+        // Throttle to the idle interval: the breathing hotspot does not need
+        // display-refresh-rate redraws, and the rest of the scene is static
+        // while paused (#649). Use the rAF timestamp, not Date.now(), so the
+        // throttle is tied to the animation-frame clock.
+        if (
+          timestamp - this.#lastShimmerDraw >=
+          MusicCanvas.SHIMMER_IDLE_INTERVAL_MS
+        ) {
+          this.draw();
+          this.#lastShimmerDraw = timestamp;
+        }
       }
       this.shimmerLoopId = requestAnimationFrame(loop);
     };
