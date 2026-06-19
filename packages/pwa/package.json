@@ -37,7 +37,7 @@
     "dev": "vite --host",
     "build": "vite build",
     "prebuild": "pnpm run build:ohm",
-    "build:ohm": "npx ohm generateBundles --withTypes src/ohmjs/ly-grammar.ohm",
+    "build:ohm": "node build/build-ohm.mjs && npx ohm generateBundles --withTypes src/ohmjs/ly-grammar.ohm",
     "preview": "vite preview",
     "test": "vitest run",
     "test:unit": "vitest run",
