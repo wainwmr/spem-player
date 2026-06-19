@@ -8,15 +8,6 @@ describe("Dark/light mode toggle", () => {
   beforeAll(async () => {
     vi.resetModules();
 
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    }));
-
     vi.spyOn(window, "requestAnimationFrame").mockReturnValue(0);
     if (!HTMLElement.prototype.scrollTo) {
       HTMLElement.prototype.scrollTo = () => {};
