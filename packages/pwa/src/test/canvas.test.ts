@@ -225,6 +225,125 @@ describe("MusicCanvas custom element", () => {
     canvas!.draw();
   });
 
+  it("paused shimmer loop throttles its idle redraws (#649)", () => {
+    // The paused shimmer loop used to call draw() on every rAF tick (the
+    // display refresh rate, 60-120Hz+) even though only the FR-hotspot breathing
+    // changes while paused. The throttle must drop most idle redraws. Mirrors
+    // the #554 play-loop test:
+    // mock rAF to collect callbacks, drive ticks manually, and count effective
+    // renders by the one full-canvas fillRect(0,0,w,h) each draw() issues.
+    //
+    // The whole body stays synchronous: a fresh canvas's #init runs to
+    // completion during appendChild (no awaits in #init), scheduling the first
+    // shimmer callback into the mock. Staying synchronous means the real rAF
+    // never fires, so the shared fixture's live shimmer loop cannot reschedule
+    // into this mock and pollute the count.
+    const rAFCallbacks: FrameRequestCallback[] = [];
+    let rafId = 0;
+    const rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((cb: FrameRequestCallback) => {
+        rAFCallbacks.push(cb);
+        return ++rafId;
+      });
+
+    const fresh = document.createElement("music-canvas") as MusicCanvas;
+    let fullClears: number | undefined;
+    try {
+      document.body.appendChild(fresh);
+      // Preconditions: #init completed, the loop will actually run, and draw()
+      // will not early-return on empty data (a dead fixture would report 0
+      // clears and masquerade as a throttle).
+      expect(fresh.frLocations.length).toBeGreaterThan(0);
+      expect(fresh.ranges.size).toBeGreaterThan(0);
+      expect(fresh.notesByQuant.size).toBeGreaterThan(0);
+      expect(fresh.shimmerLoopId).not.toBe(0);
+
+      // Spy after #init so its one-shot draw is not counted.
+      const ctx = fresh.canvas!.getContext("2d")!;
+      const fillRectSpy = vi.spyOn(ctx, "fillRect");
+
+      // Drive 12 ticks 50ms apart (a 550ms span). With a ~100ms idle throttle
+      // only a few ticks redraw; without any throttle all 12 would.
+      const TICKS = 12;
+      const STEP_MS = 50;
+      let ts = 1000;
+      for (let i = 0; i < TICKS; i++) {
+        const cb = rAFCallbacks.shift();
+        expect(cb, `shimmer rAF chain broke at frame ${i}`).toBeDefined();
+        cb!(ts);
+        ts += STEP_MS;
+      }
+
+      fullClears = fillRectSpy.mock.calls.filter(
+        (c) =>
+          c[0] === 0 &&
+          c[1] === 0 &&
+          c[2] === fresh.canvas!.width &&
+          c[3] === fresh.canvas!.height
+      ).length;
+      fillRectSpy.mockRestore();
+    } finally {
+      rafSpy.mockRestore();
+      fresh.remove();
+    }
+
+    // Deterministic: #lastShimmerDraw starts at 0 and the 100ms throttle redraws
+    // at ts 1000, 1100, 1200, 1300, 1400, 1500 of the 12 ticks at 1000..1550 —
+    // exactly 6. The exact count pins the 100ms interval and the `>=` boundary,
+    // not merely "a throttle exists": no throttle gives 12, total suppression
+    // gives 0, a different interval shifts the count.
+    expect(fullClears).toBe(6);
+  });
+
+  it("paused shimmer loop does not start when frLocations is empty (#649)", async () => {
+    // With no false-relation hotspots there is nothing to animate while paused,
+    // so the shimmer loop must not schedule any redraw. The static scene is
+    // still painted on demand by setBar/setChoir/setPart.
+    //
+    // A populated reconnect is used as a positive control: it proves the
+    // microtask flush below is enough for connectedCallback's post-await
+    // loop-start body to actually run, so the empty case's "no schedule" cannot
+    // be a vacuous pass (asserting before the body ran). Both reconnects take
+    // #init's early-return path (the canvas already exists), so only microtasks
+    // need flushing and the real rAF never fires to pollute the spy.
+    const fresh = document.createElement("music-canvas") as MusicCanvas;
+    document.body.appendChild(fresh);
+    await new Promise((r) => setTimeout(r, 500)); // real #init populates FR data
+    const populatedFr = fresh.frLocations;
+    expect(populatedFr.length).toBeGreaterThan(0);
+
+    const rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation(() => 999);
+    try {
+      // Positive control: reconnect WITH hotspots -> the loop starts under this
+      // exact flush regime and schedules one rAF.
+      fresh.remove();
+      expect(fresh.shimmerLoopId).toBe(0);
+      fresh.frLocations = populatedFr;
+      document.body.appendChild(fresh);
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(rafSpy).toHaveBeenCalled();
+      expect(fresh.shimmerLoopId).not.toBe(0);
+      const scheduledWhenPopulated = rafSpy.mock.calls.length;
+
+      // Negative: reconnect with NO hotspots -> no further rAF is scheduled.
+      fresh.remove();
+      expect(fresh.shimmerLoopId).toBe(0);
+      fresh.frLocations = [];
+      document.body.appendChild(fresh);
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(rafSpy.mock.calls.length).toBe(scheduledWhenPopulated);
+      expect(fresh.shimmerLoopId).toBe(0);
+    } finally {
+      rafSpy.mockRestore();
+      fresh.remove();
+    }
+  });
+
   it("seek() clamps to lower bound when seeking backward from bar 0", () => {
     expect(canvas).not.toBeNull();
     const pos = { choir: 0, part: "all" as const, bar: 0 };
