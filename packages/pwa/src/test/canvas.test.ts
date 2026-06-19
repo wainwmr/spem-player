@@ -1290,4 +1290,70 @@ describe("MusicCanvas custom element", () => {
     removeElemSpy.mockRestore();
     freshCanvas.remove();
   });
+
+  it("prevents default on vertical wheel events but not on horizontal/zero scroll (#676)", () => {
+    expect(canvas).not.toBeNull();
+
+    const wheelEvent = new WheelEvent("wheel", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(wheelEvent, "deltaY", { value: 10 });
+
+    const preventDefaultSpy = vi.spyOn(wheelEvent, "preventDefault");
+    canvas!.dispatchEvent(wheelEvent);
+    expect(preventDefaultSpy).toHaveBeenCalledTimes(1);
+
+    const horizontalWheel = new WheelEvent("wheel", {
+      bubbles: true,
+      cancelable: true,
+    });
+    Object.defineProperty(horizontalWheel, "deltaY", { value: 0 });
+    const horizontalPreventSpy = vi.spyOn(horizontalWheel, "preventDefault");
+    canvas!.dispatchEvent(horizontalWheel);
+    expect(horizontalPreventSpy).not.toHaveBeenCalled();
+
+    preventDefaultSpy.mockRestore();
+    horizontalPreventSpy.mockRestore();
+  });
+
+  it("setChoir and setPart redraw the overview (#676)", () => {
+    expect(canvas).not.toBeNull();
+    const drawSpy = vi.spyOn(canvas!, "draw");
+
+    canvas!.setChoir(1);
+    expect(drawSpy).toHaveBeenCalled();
+
+    drawSpy.mockClear();
+    canvas!.setPart(0);
+    expect(drawSpy).toHaveBeenCalled();
+
+    drawSpy.mockRestore();
+  });
+
+  it("play() rAF loop stops itself when playing becomes false (#676)", () => {
+    expect(canvas).not.toBeNull();
+    const rafCallbacks: FrameRequestCallback[] = [];
+    const rafSpy = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((cb: FrameRequestCallback) => {
+        rafCallbacks.push(cb);
+        return rafCallbacks.length;
+      });
+
+    canvas!.playing = true;
+    canvas!.play();
+    expect(rafSpy).toHaveBeenCalledTimes(1);
+
+    canvas!.playing = false;
+    const cb = rafCallbacks.shift();
+    expect(cb).toBeDefined();
+    cb!(performance.now());
+
+    // The loop must not schedule another frame once playing is false.
+    expect(rafSpy).toHaveBeenCalledTimes(1);
+    expect(canvas!.playLoopId).toBe(0);
+
+    rafSpy.mockRestore();
+  });
 });
