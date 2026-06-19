@@ -79,15 +79,15 @@ Spem Player is a Progressive Web App (PWA). After visiting the site once, you ca
 
 ## Source Layout
 
-- `index.html` / `index.ts` — single-page markup and application bootstrap
-- `src/ts/` — TypeScript source: custom elements, shared types, config, LilyPond parser
-- `src/scss/` — SCSS styles with dark/light theme variables
-- `src/ohmjs/` — Ohm.js grammar for LilyPond parsing
+- `packages/pwa/index.html` / `packages/pwa/index.ts` — single-page markup and application bootstrap
+- `packages/pwa/src/ts/` — TypeScript source: custom elements, shared types, config, LilyPond parser
+- `packages/pwa/src/scss/` — SCSS styles with dark/light theme variables
+- `packages/pwa/src/ohmjs/` — Ohm.js grammar for LilyPond parsing
 - `packages/scores/src/` — LilyPond source files (two editions: Hugh Keyte and OUP)
-- `src/test/` — unit tests (Vitest); `packages/scores/test/*.integration.test.ts` — subprocess-heavy integration tests
-- `public/audio/` — MP3 recordings (ALC and CotE per-part tracks)
-- `public/spem.json` — runtime configuration (choir count, parts, tempo)
-- `build/` — build scripts (LilyPond invocation, SVG post-processing)
+- `packages/pwa/src/test/` — unit tests (Vitest); `packages/scores/test/*.integration.test.ts` — subprocess-heavy integration tests
+- `packages/pwa/public/audio/` — MP3 recordings (ALC and CotE per-part tracks)
+- `packages/pwa/public/spem.json` — runtime configuration (choir count, parts, tempo)
+- `packages/scores/build/` — build scripts (LilyPond invocation, SVG post-processing)
 - `doc/` — developer documentation
 
 ## For Developers
