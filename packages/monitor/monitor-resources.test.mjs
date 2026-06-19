@@ -25,6 +25,17 @@ import {
   githubRunsToDailySeries,
   netlifyDailyMinutesToBackfill,
   buildBackfillSeries,
+  calendarMonthPeriod,
+  dispatchAlert,
+  api,
+  getNetlifyUsage,
+  getGitHubRuns,
+  getGitHubUsage,
+  getMergedPRCount,
+  sendTelegram,
+  sendTelegramPhoto,
+  openIssue,
+  main,
 } from "./monitor-resources.mjs";
 
 // projectedPct: linear burn-rate projection
@@ -641,4 +652,519 @@ test("buildBackfillSeries combines both sources on matching dates", () => {
   assert.equal(result[1].netlifyCurrent, null);
   assert.equal(result[1].summary.netlifyPct, null);
   assert.equal(result[1].summary.githubPct, 6);
+});
+
+// ===========================================================================
+// #658: coverage for the network/orchestration paths and the extracted
+// helpers (calendarMonthPeriod, dispatchAlert). Every fetch call is mocked,
+// so these tests never touch the network or the real series file.
+// ===========================================================================
+
+const REAL_FETCH = globalThis.fetch;
+const NET_ENV_KEYS = [
+  "NETLIFY_SITE_ID",
+  "NETLIFY_AUTH_TOKEN",
+  "TELEGRAM_BOT_TOKEN",
+  "TELEGRAM_CHAT_ID",
+  "GITHUB_TOKEN",
+  "GITHUB_REPOSITORY",
+];
+const SAVED_NET_ENV = {};
+
+function setNetEnv() {
+  for (const k of NET_ENV_KEYS) SAVED_NET_ENV[k] = process.env[k];
+  process.env.NETLIFY_SITE_ID = "site-123";
+  process.env.NETLIFY_AUTH_TOKEN = "ntok";
+  process.env.TELEGRAM_BOT_TOKEN = "btok";
+  process.env.TELEGRAM_CHAT_ID = "chat-1";
+  process.env.GITHUB_TOKEN = "gtok";
+  process.env.GITHUB_REPOSITORY = "wainwmr/spem-player";
+}
+
+function restoreNetEnv() {
+  for (const k of NET_ENV_KEYS) {
+    if (SAVED_NET_ENV[k] === undefined) delete process.env[k];
+    else process.env[k] = SAVED_NET_ENV[k];
+  }
+}
+
+/** Build a minimal Response-like object for the fetch stub. */
+function res(body, { ok = true, status = 200 } = {}) {
+  const text = typeof body === "string" ? body : JSON.stringify(body);
+  return {
+    ok,
+    status,
+    json: async () => (typeof body === "string" ? JSON.parse(text) : body),
+    text: async () => text,
+  };
+}
+
+/**
+ * Install a fetch stub that dispatches by the first matching URL substring.
+ * `routes` is an array of [needle, (url, opts) => Response]. Records calls.
+ */
+function routeFetch(routes) {
+  const calls = [];
+  globalThis.fetch = async (url, opts = {}) => {
+    const u = String(url);
+    calls.push({ url: u, opts });
+    for (const [needle, factory] of routes) {
+      if (u.includes(needle)) return factory(u, opts);
+    }
+    throw new Error(`unexpected fetch: ${u}`);
+  };
+  return calls;
+}
+
+/** Set env + install the fetch stub; returns calls and a paired restore(). */
+function startMock(routes) {
+  setNetEnv();
+  const calls = routeFetch(routes);
+  return {
+    calls,
+    restore() {
+      globalThis.fetch = REAL_FETCH;
+      restoreNetEnv();
+    },
+  };
+}
+
+// --- calendarMonthPeriod ---------------------------------------------------
+
+describe("calendarMonthPeriod", () => {
+  test("returns the first and last day of the month for a mid-month date", () => {
+    const p = calendarMonthPeriod(new Date("2026-06-15T12:00:00Z"));
+    assert.equal(p.periodStartDate, "2026-06-01");
+    assert.equal(p.periodEndDate, "2026-06-30");
+    assert.equal(p.start.toISOString(), "2026-06-01T00:00:00.000Z");
+  });
+
+  test("handles February (28 days in 2026)", () => {
+    const p = calendarMonthPeriod(new Date("2026-02-10T00:00:00Z"));
+    assert.equal(p.periodStartDate, "2026-02-01");
+    assert.equal(p.periodEndDate, "2026-02-28");
+  });
+
+  test("handles December without spilling the start into the next year", () => {
+    const p = calendarMonthPeriod(new Date("2026-12-20T00:00:00Z"));
+    assert.equal(p.periodStartDate, "2026-12-01");
+    assert.equal(p.periodEndDate, "2026-12-31");
+  });
+});
+
+// --- dispatchAlert ---------------------------------------------------------
+
+describe("dispatchAlert", () => {
+  test("sends Telegram then opens an issue when telegramText is given", async () => {
+    const m = startMock([
+      ["/sendMessage", () => res({ ok: true })],
+      ["/issues", () => res({ id: 1 })],
+    ]);
+    try {
+      await dispatchAlert({
+        telegramText: "boom",
+        issueTitle: "T",
+        issueBody: "B",
+        onErrorLog: "Failed to send alert for X",
+      });
+      assert.equal(m.calls.length, 2);
+      assert.match(m.calls[0].url, /sendMessage/);
+      assert.match(m.calls[1].url, /\/issues$/);
+    } finally {
+      m.restore();
+    }
+  });
+
+  test("opens only an issue when telegramText is omitted", async () => {
+    const m = startMock([["/issues", () => res({ id: 1 })]]);
+    try {
+      await dispatchAlert({
+        issueTitle: "T",
+        issueBody: "B",
+        onErrorLog: "Failed to open issue for X",
+      });
+      assert.equal(m.calls.length, 1);
+      assert.match(m.calls[0].url, /\/issues$/);
+    } finally {
+      m.restore();
+    }
+  });
+
+  test("swallows a dispatch failure and logs it with the given prefix", async () => {
+    const m = startMock([["/issues", () => res("nope", { ok: false, status: 500 })]]);
+    const errs = [];
+    const origErr = console.error;
+    console.error = (msg) => errs.push(msg);
+    try {
+      await dispatchAlert({
+        issueTitle: "T",
+        issueBody: "B",
+        onErrorLog: "Failed to open issue for chart",
+      });
+      assert.equal(errs.length, 1);
+      assert.match(errs[0], /^Failed to open issue for chart: /);
+    } finally {
+      console.error = origErr;
+      m.restore();
+    }
+  });
+});
+
+// --- api -------------------------------------------------------------------
+
+describe("api", () => {
+  test("returns parsed JSON on a 2xx response", async () => {
+    const m = startMock([["example.test", () => res({ hello: "world" })]]);
+    try {
+      assert.deepEqual(await api("https://example.test/x"), { hello: "world" });
+    } finally {
+      m.restore();
+    }
+  });
+
+  test("throws with status and body on a non-2xx response", async () => {
+    const m = startMock([
+      ["example.test", () => res("bad things", { ok: false, status: 503 })],
+    ]);
+    try {
+      await assert.rejects(
+        () => api("https://example.test/x"),
+        /HTTP 503 on https:\/\/example\.test\/x: bad things/
+      );
+    } finally {
+      m.restore();
+    }
+  });
+});
+
+// --- getNetlifyUsage -------------------------------------------------------
+
+describe("getNetlifyUsage", () => {
+  test("returns usage with the API-provided period dates", async () => {
+    const m = startMock([
+      ["/builds/status", () =>
+        res({
+          minutes: {
+            current: 60,
+            included_minutes_with_packs: "300",
+            period_start_date: "2026-06-01",
+            period_end_date: "2026-06-30",
+          },
+        }),
+      ],
+      ["/sites/", () => res({ account_slug: "acct" })],
+    ]);
+    try {
+      const out = await getNetlifyUsage();
+      assert.equal(out.current, 60);
+      assert.equal(out.limit, 300);
+      assert.equal(out.periodStartDate, "2026-06-01");
+      assert.equal(out.periodEndDate, "2026-06-30");
+    } finally {
+      m.restore();
+    }
+  });
+
+  test("falls back to the calendar month and warns when period dates are missing", async () => {
+    const m = startMock([
+      ["/builds/status", () => res({ minutes: { current: 10 } })],
+      ["/sites/", () => res({ account_slug: "acct" })],
+    ]);
+    const warns = [];
+    const origWarn = console.warn;
+    console.warn = (msg) => warns.push(msg);
+    try {
+      const out = await getNetlifyUsage();
+      const expected = calendarMonthPeriod(new Date());
+      assert.equal(out.current, 10);
+      assert.equal(out.limit, 300);
+      assert.equal(out.periodStartDate, expected.periodStartDate);
+      assert.equal(out.periodEndDate, expected.periodEndDate);
+      assert.equal(warns.length, 1);
+    } finally {
+      console.warn = origWarn;
+      m.restore();
+    }
+  });
+});
+
+// --- getGitHubRuns ---------------------------------------------------------
+
+describe("getGitHubRuns", () => {
+  test("collects workflow runs across pages until a short page ends it", async () => {
+    const page1 = { workflow_runs: Array.from({ length: 100 }, (_, i) => ({ id: i })) };
+    const page2 = { workflow_runs: [{ id: 100 }] };
+    const m = startMock([
+      ["page=2", () => res(page2)],
+      ["/actions/runs", () => res(page1)],
+    ]);
+    try {
+      const runs = await getGitHubRuns();
+      assert.equal(runs.length, 101);
+      assert.ok(m.calls.some((c) => c.url.includes("page=2")));
+    } finally {
+      m.restore();
+    }
+  });
+});
+
+// --- getGitHubUsage --------------------------------------------------------
+
+describe("getGitHubUsage", () => {
+  test("sums run durations into minutes against the 2000-minute limit", async () => {
+    const runs = [
+      { run_duration_ms: 600000 },
+      { run_started_at: "2026-06-02T10:00:00Z", updated_at: "2026-06-02T10:05:00Z" },
+    ];
+    const out = await getGitHubUsage(runs);
+    const expected = calendarMonthPeriod(new Date());
+    assert.equal(out.current, 15);
+    assert.equal(out.limit, 2000);
+    assert.equal(out.periodStartDate, expected.periodStartDate);
+    assert.equal(out.periodEndDate, expected.periodEndDate);
+  });
+
+  test("fetches runs itself when none are pre-supplied", async () => {
+    const m = startMock([
+      ["/actions/runs", () => res({ workflow_runs: [{ run_duration_ms: 120000 }] })],
+    ]);
+    try {
+      const out = await getGitHubUsage();
+      assert.equal(out.current, 2);
+    } finally {
+      m.restore();
+    }
+  });
+});
+
+// --- getMergedPRCount ------------------------------------------------------
+
+describe("getMergedPRCount", () => {
+  test("returns total_count from the search API", async () => {
+    const m = startMock([["/search/issues", () => res({ total_count: 4 })]]);
+    try {
+      assert.equal(await getMergedPRCount("2026-06-10"), 4);
+    } finally {
+      m.restore();
+    }
+  });
+
+  test("throws on a non-integer total_count", async () => {
+    const m = startMock([["/search/issues", () => res({ total_count: "many" })]]);
+    try {
+      await assert.rejects(
+        () => getMergedPRCount("2026-06-10"),
+        /unexpected total_count/
+      );
+    } finally {
+      m.restore();
+    }
+  });
+});
+
+// --- sendTelegram / sendTelegramPhoto / openIssue --------------------------
+
+describe("Telegram and issue posting", () => {
+  test("sendTelegram posts the chat id and text on ok", async () => {
+    const m = startMock([["/sendMessage", () => res({ ok: true })]]);
+    try {
+      await sendTelegram("hi");
+      assert.equal(m.calls.length, 1);
+      const sent = JSON.parse(m.calls[0].opts.body);
+      assert.equal(sent.text, "hi");
+      assert.equal(sent.chat_id, "chat-1");
+    } finally {
+      m.restore();
+    }
+  });
+
+  test("sendTelegram throws on a non-ok response", async () => {
+    const m = startMock([["/sendMessage", () => res("", { ok: false, status: 400 })]]);
+    try {
+      await assert.rejects(() => sendTelegram("hi"), /Telegram HTTP 400/);
+    } finally {
+      m.restore();
+    }
+  });
+
+  test("sendTelegramPhoto uploads a PNG buffer as multipart form data", async () => {
+    const m = startMock([["/sendPhoto", () => res({ ok: true })]]);
+    try {
+      await sendTelegramPhoto(Buffer.from([1, 2, 3]), "caption");
+      assert.equal(m.calls.length, 1);
+      assert.equal(m.calls[0].opts.method, "POST");
+      assert.ok(m.calls[0].opts.body instanceof FormData);
+    } finally {
+      m.restore();
+    }
+  });
+
+  test("sendTelegramPhoto throws on a non-ok response", async () => {
+    const m = startMock([["/sendPhoto", () => res("err", { ok: false, status: 500 })]]);
+    try {
+      await assert.rejects(
+        () => sendTelegramPhoto(Buffer.from([1]), ""),
+        /sendPhoto HTTP 500/
+      );
+    } finally {
+      m.restore();
+    }
+  });
+
+  test("openIssue posts title and body on ok", async () => {
+    const m = startMock([["/issues", () => res({ id: 1 })]]);
+    try {
+      await openIssue("Title", "Body");
+      assert.equal(m.calls.length, 1);
+      const sent = JSON.parse(m.calls[0].opts.body);
+      assert.equal(sent.title, "Title");
+      assert.equal(sent.body, "Body");
+    } finally {
+      m.restore();
+    }
+  });
+
+  test("openIssue throws on a non-ok response", async () => {
+    const m = startMock([["/issues", () => res("", { ok: false, status: 422 })]]);
+    try {
+      await assert.rejects(() => openIssue("T", "B"), /Issues API HTTP 422/);
+    } finally {
+      m.restore();
+    }
+  });
+});
+
+// --- main ------------------------------------------------------------------
+
+// These tests are clock-independent by construction, even though `main` reads
+// the real clock internally (todayISO/getReportingSince): the skip case forces
+// `current: 0` and `total_count: 0`, so usage is 0 regardless of the date, and
+// the stop case pins `run_duration_ms` to 95% of the budget, which is stop-level
+// on any date. Keep that property if you raise the fixture numbers, or inject a
+// fixed reference date instead.
+describe("main", () => {
+  test("skips the report when no PRs merged and usage is zero", async () => {
+    const tmp = mkdtempSync(join(tmpdir(), "monitor-main-"));
+    const seriesFile = join(tmp, "series.json");
+    const logs = [];
+    const origLog = console.log;
+    console.log = (msg) => logs.push(msg);
+    const m = startMock([
+      ["/sites/", () => res({ account_slug: "acct" })],
+      ["/builds/status", () =>
+        res({
+          minutes: {
+            current: 0,
+            included_minutes_with_packs: "300",
+            period_start_date: "2026-06-01",
+            period_end_date: "2026-06-30",
+          },
+        }),
+      ],
+      ["/actions/runs", () => res({ workflow_runs: [] })],
+      ["/search/issues", () => res({ total_count: 0 })],
+    ]);
+    try {
+      await main(seriesFile);
+      assert.ok(logs.some((msg) => /Skipping report/.test(msg)));
+    } finally {
+      console.log = origLog;
+      m.restore();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  test("dispatches an alert and rethrows when the Netlify API fails", async () => {
+    const tmp = mkdtempSync(join(tmpdir(), "monitor-main-"));
+    const seriesFile = join(tmp, "series.json");
+    const m = startMock([
+      ["/sendMessage", () => res({ ok: true })],
+      ["/issues", () => res({ id: 1 })],
+      ["/sites/", () => res("netlify down", { ok: false, status: 500 })],
+    ]);
+    try {
+      await assert.rejects(() => main(seriesFile), /HTTP 500/);
+      assert.ok(m.calls.some((c) => /sendMessage/.test(c.url)));
+      assert.ok(m.calls.some((c) => /\/issues$/.test(c.url)));
+    } finally {
+      m.restore();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  test("renders a report and opens a critical issue at stop-level usage", async () => {
+    const tmp = mkdtempSync(join(tmpdir(), "monitor-main-"));
+    const seriesFile = join(tmp, "series.json");
+    const logs = [];
+    const origLog = console.log;
+    console.log = (msg) => logs.push(msg);
+    const m = startMock([
+      ["/sites/", () => res({ account_slug: "acct" })],
+      ["/builds/status", () =>
+        res({
+          minutes: {
+            current: 10,
+            included_minutes_with_packs: "300",
+            period_start_date: "2026-06-01",
+            period_end_date: "2026-06-30",
+          },
+        }),
+      ],
+      ["/actions/runs", () => res({ workflow_runs: [{ run_duration_ms: 114000000 }] })],
+      ["/search/issues", () => res({ total_count: 2 })],
+      ["/sendPhoto", () => res({ ok: true })],
+      ["/issues", () => res({ id: 1 })],
+    ]);
+    try {
+      await main(seriesFile);
+      assert.ok(m.calls.some((c) => /sendPhoto/.test(c.url)));
+      assert.ok(m.calls.some((c) => /\/issues$/.test(c.url)));
+      assert.ok(logs.some((msg) => /stop/.test(msg)));
+    } finally {
+      console.log = origLog;
+      m.restore();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  test("a series-write failure does not break the run (Vera 566-02)", async () => {
+    // seriesFile sits under a directory that does not exist: loadSeries reads an
+    // absent file (-> []), but saveSeries throws on write. The 566-02 invariant
+    // is that main() logs the failure and still completes the run rather than
+    // propagating it. Pins that behaviour so a future change cannot regress it.
+    const tmp = mkdtempSync(join(tmpdir(), "monitor-main-"));
+    const seriesFile = join(tmp, "missing-dir", "series.json");
+    const logs = [];
+    const errs = [];
+    const origLog = console.log;
+    const origErr = console.error;
+    console.log = (msg) => logs.push(msg);
+    console.error = (msg) => errs.push(msg);
+    const m = startMock([
+      ["/sites/", () => res({ account_slug: "acct" })],
+      ["/builds/status", () =>
+        res({
+          minutes: {
+            current: 0,
+            included_minutes_with_packs: "300",
+            period_start_date: "2026-06-01",
+            period_end_date: "2026-06-30",
+          },
+        }),
+      ],
+      ["/actions/runs", () => res({ workflow_runs: [] })],
+      ["/search/issues", () => res({ total_count: 0 })],
+    ]);
+    try {
+      // Must resolve, not reject: the series-write failure is swallowed.
+      await main(seriesFile);
+      assert.ok(errs.some((msg) => /Failed to update resource series/.test(msg)));
+      assert.ok(logs.some((msg) => /Skipping report/.test(msg)));
+    } finally {
+      console.log = origLog;
+      console.error = origErr;
+      m.restore();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
 });
