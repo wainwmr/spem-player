@@ -11,6 +11,24 @@ export interface Position {
   bar: number;
 }
 
+/** The detail payload carried by every `music-*` CustomEvent (#646). */
+export type MusicEventDetail = { position: Position };
+
+/** Every custom event name dispatched by `MusicElement.fireEvent` (#646). */
+export type MusicEventType =
+  | "music-controls-changed"
+  | "music-controls-loading"
+  | "music-controls-playing"
+  | "music-controls-paused"
+  | "music-canvas-click"
+  | "music-canvas-hover"
+  | "music-canvas-touchstart"
+  | "music-canvas-touchmove"
+  | "music-canvas-touchend"
+  | "music-score-click"
+  | "music-score-loaded"
+  | "music-score-ready";
+
 export type Brightness = "dark" | "light";
 export type ScoreType = "early" | "modern";
 
@@ -28,6 +46,25 @@ export type TestSvgLoader = (
 
 declare global {
   var __SPEM_TEST_SVG_LOADER: TestSvgLoader | undefined;
+  // Narrows `addEventListener` and `e.detail` for every music-* event so consumers
+  // get a typed `CustomEvent<MusicEventDetail>` without a cast (#646). Keep these
+  // keys in lockstep with the `MusicEventType` union above; the eslint
+  // `no-empty-object-type` rule rules out the DRYer `extends Record<MusicEventType,
+  // ...>` form, so the two lists are deliberately explicit.
+  interface HTMLElementEventMap {
+    "music-controls-changed": CustomEvent<MusicEventDetail>;
+    "music-controls-loading": CustomEvent<MusicEventDetail>;
+    "music-controls-playing": CustomEvent<MusicEventDetail>;
+    "music-controls-paused": CustomEvent<MusicEventDetail>;
+    "music-canvas-click": CustomEvent<MusicEventDetail>;
+    "music-canvas-hover": CustomEvent<MusicEventDetail>;
+    "music-canvas-touchstart": CustomEvent<MusicEventDetail>;
+    "music-canvas-touchmove": CustomEvent<MusicEventDetail>;
+    "music-canvas-touchend": CustomEvent<MusicEventDetail>;
+    "music-score-click": CustomEvent<MusicEventDetail>;
+    "music-score-loaded": CustomEvent<MusicEventDetail>;
+    "music-score-ready": CustomEvent<MusicEventDetail>;
+  }
 }
 
 export type Status = "playing" | "paused" | "loading";

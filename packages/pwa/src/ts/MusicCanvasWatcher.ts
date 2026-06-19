@@ -3,6 +3,7 @@
 
 import config from "./config";
 import { MusicElement } from "./MusicElement";
+import { MusicEventDetail } from "./common";
 
 export class MusicCanvasWatcher extends MusicElement {
   choiroutput: HTMLSpanElement | null = null;
@@ -24,18 +25,18 @@ export class MusicCanvasWatcher extends MusicElement {
     this.baroutput.setAttribute("id", "bar-output");
     this.append(this.baroutput);
 
-    const canvi = document.querySelectorAll("music-canvas");
+    const canvi = document.querySelectorAll<HTMLElement>("music-canvas");
     canvi.forEach((c) => {
       c.addEventListener(
         "music-canvas-hover",
-        this.handleCanvasHover.bind(this) as (e: Event) => void
+        this.handleCanvasHover.bind(this)
       );
     });
   }
 
   intId: ReturnType<typeof setTimeout> | null = null;
 
-  handleCanvasHover(e: CustomEvent) {
+  handleCanvasHover(e: CustomEvent<MusicEventDetail>) {
     if (!this.choiroutput || !this.partoutput || !this.baroutput) return;
     const pos = e.detail.position;
 

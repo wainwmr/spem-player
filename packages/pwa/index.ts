@@ -5,7 +5,14 @@ import "./src/scss/style.scss";
 
 import config from "./src/ts/config";
 
-import { PartType, State, colors, toNum, toRecordingIndex } from "./src/ts/common";
+import {
+  MusicEventDetail,
+  PartType,
+  State,
+  colors,
+  toNum,
+  toRecordingIndex,
+} from "./src/ts/common";
 import { parseURLSearch } from "./src/ts/url";
 
 import { MusicCanvas } from "./src/ts/MusicCanvas";
@@ -193,7 +200,7 @@ function parseURL() {
 // Field events (chaning choir, part or bar)
 // -----------------------------------------------------
 
-function handleControlChange(e: CustomEvent) {
+function handleControlChange(e: CustomEvent<MusicEventDetail>) {
   const pos = e.detail.position;
   setChoir(Number(pos.choir));
   setPart(pos.part == "all" ? "all" : Number(pos.part));
@@ -522,7 +529,7 @@ function setVH() {
   document.documentElement.style.setProperty("--vh", `${vh}px`);
 }
 
-function handleCanvasClick(e: CustomEvent) {
+function handleCanvasClick(e: CustomEvent<MusicEventDetail>) {
   const pos = e.detail.position;
 
   setChoir(pos.choir);
@@ -555,36 +562,15 @@ function init(): void {
   // read choir, part and bar from the URL
   parseURL();
 
-  score.addEventListener(
-    "music-score-click",
-    handleControlChange as (e: Event) => void
-  );
+  score.addEventListener("music-score-click", handleControlChange);
 
-  controls.addEventListener(
-    "music-controls-changed",
-    handleControlChange as (e: Event) => void
-  );
-  controls.addEventListener(
-    "music-controls-playing",
-    handleAudioPlaying as (e: Event) => void
-  );
-  controls.addEventListener(
-    "music-controls-paused",
-    handleAudioPaused as (e: Event) => void
-  );
+  controls.addEventListener("music-controls-changed", handleControlChange);
+  controls.addEventListener("music-controls-playing", handleAudioPlaying);
+  controls.addEventListener("music-controls-paused", handleAudioPaused);
 
-  canvas.addEventListener(
-    "music-canvas-click",
-    handleCanvasClick as (e: Event) => void
-  );
-  canvas.addEventListener(
-    "music-canvas-touchstart",
-    handleCanvasClick as (e: Event) => void
-  );
-  canvas.addEventListener(
-    "music-canvas-touchend",
-    handleCanvasClick as (e: Event) => void
-  );
+  canvas.addEventListener("music-canvas-click", handleCanvasClick);
+  canvas.addEventListener("music-canvas-touchstart", handleCanvasClick);
+  canvas.addEventListener("music-canvas-touchend", handleCanvasClick);
 
   document.addEventListener(
     "keydown",
