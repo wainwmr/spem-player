@@ -92,32 +92,13 @@ updated SVGs, and the SVG commit then triggers Netlify.
 **Deploy preview:** Netlify posts a preview URL as a comment on each PR
 automatically.
 
-### `monitor-run.yml`
+### `monitor-run.yml` and `monitor-ci.yml`
 
-Triggers daily at 02:29 UTC (`cron: "29 2 * * *"`, deliberately off the top of the hour to avoid GitHub's schedule throttling; GitHub's ~5 h scheduling delay lands the Telegram post around breakfast) and on manual `workflow_dispatch`. Runs one job, `monitor`, on Ubuntu latest with `actions: read`, `issues: write`, `contents: write`, and `pull-requests: read` permissions.
-
-Steps:
-
-- `actions/checkout@v6` — checkout the repository.
-- `pnpm --filter monitor exec node monitor-resources.mjs` — run the monitor, with `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `GITHUB_TOKEN` passed in the environment. After fetching usage, the script appends (or replaces) today's entry in `.github/monitor-series.json` with the current Netlify and GitHub build-minute totals.
-- Commit the updated `.github/monitor-series.json` if it changed, with message `chore: update daily resource series [skip ci]`, then push. The workflow triggers only on `schedule` and `workflow_dispatch` (never on `push`), so this self-commit cannot loop the workflow; the `[skip ci]` suffix also prevents it from consuming a `pwa-ci.yml` run.
-
-The script queries the current period's Netlify build-minute usage and GitHub Actions usage. Status thresholds — good (< 75%), watch (≥ 75%), throttle (≥ 82%), and stop (≥ 90%) — apply to actual usage, while a linearly projected end-of-period usage can raise an early warning up to throttle (82%) when actual usage is below 90%. This prevents a single high-burn day early in the period from opening a false critical issue while still surfacing an unsustainable burn rate. On days with no PRs merged in the past 24 hours and both actual and projected usage below the watch threshold (50%), the Telegram post is skipped to reduce noise; watch and worse always send regardless of PR activity. The monitor posts only the burndown chart image — no caption and no separate text message — because the chart encodes the full signal: green for good, yellow/amber for watch, red for throttle, and red with a fire icon for stop. If either service actually reaches **90%** of its quota, the status becomes `stop` and the workflow opens a critical GitHub issue containing a runbook for reducing build-minute consumption; projection alone cannot open a critical issue.
-
-The `.github/monitor-series.json` file holds the daily `{ date, netlifyCurrent, githubMinutes, mergedPRs, summary, source }` series. `mergedPRs` is the number of PRs merged on that day; `summary` is a pre-computed snapshot `{ netlifyPct, netlifyProjected, netlifyStatus, githubPct, githubProjected, githubStatus, overallStatus, mergedPRs }` so agents can read status without recalculating. Status values are `"good"`, `"watch"`, `"throttle"`, or `"stop"`. The `source` field is `"logged"` for entries written by the monitor and `"backfill"` for the one-time seed populated from API/GitHub run history and Netlify daily build minutes.
-
-### `monitor-ci.yml`
-
-Triggers on push to `main` and on `pull_request`, both path-filtered to `packages/monitor/**` and this workflow file. This is a separate, optional build for repository infrastructure: it runs only the monitor's `node:test` suite and does not run the Spem Player build. It keeps the monitor's tests out of the main `pwa-ci.yml` gate while ensuring monitor changes are exercised before merge.
-
-Steps:
-
-- `actions/checkout@v6` — checkout the repository.
-- `pnpm/action-setup@v4` and `actions/setup-node@v6` from `.nvmrc` — install Node.js and pnpm.
-- `pnpm install --filter monitor` — install monitor dependencies (required for the `canvas` native module used by the burndown renderer).
-- `pnpm --filter monitor test` — run the monitor and burndown tests.
-
-Run locally with `pnpm run test:monitor`.
+The build-resource monitor tracks Netlify and GitHub Actions usage, posts a daily
+burndown chart to Telegram, and opens a critical issue if usage nears quota. See
+[`doc/MONITOR.md`](./MONITOR.md) for the full monitor documentation, including
+status thresholds, workflow permissions, required secrets, and how to run the
+monitor locally.
 
 ## Node.js Version
 
