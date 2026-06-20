@@ -138,6 +138,21 @@ Headless run:
 pnpm run e2e
 ```
 
+### E2E Type-Checking
+
+E2e specs are type-checked separately from the app and unit-test code via
+`pnpm run check:types:e2e` (`tsc --noEmit -p tsconfig.e2e.json`), which
+`pnpm run check` runs as part of the CI gate. The e2e program uses its own
+`packages/pwa/tsconfig.e2e.json`. It sets `types` to `@playwright/test` only,
+dropping the base config's Vitest and Vite ambient globals: a spec that relied
+on a Vitest global instead of importing `test`/`expect` from `@playwright/test`
+now fails the typecheck, catching at the gate what would otherwise be a runtime
+error.
+
+The e2e program type-checks only `e2e/`; `playwright.config.ts` stays under the
+base `pnpm run check:types`. The two `include` sets are disjoint by design — keep
+every e2e spec under `e2e/` so the gate covers it.
+
 ### E2E Key Dependencies
 
 - `@playwright/test`: test runner and browser automation

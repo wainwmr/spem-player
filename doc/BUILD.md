@@ -88,7 +88,7 @@ To force a clean regeneration, delete the directory
 
 ## Quality Checks
 
-Run the full quality gate locally (Ohm grammar bundle, unused-export check, formatting, lint, typecheck, dependency checks):
+Run the full quality gate locally (Ohm grammar bundle, unused-export check, formatting, lint, typecheck, e2e-spec typecheck, dependency checks):
 
 ```console
 pnpm run check
