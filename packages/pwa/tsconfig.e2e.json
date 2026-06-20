@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    /* Playwright types only. Replacing the base `types` drops `vitest/globals`,
+       so a spec that leans on a Vitest global instead of importing `test`/`expect`
+       from `@playwright/test` fails this typecheck. */
+    "types": ["@playwright/test"]
+  },
+  /* e2e/ only — keep every e2e spec under e2e/ so the gate covers it.
+     `playwright.config.ts` stays under the base tsconfig's check:types. */
+  "include": ["e2e"]
+}
