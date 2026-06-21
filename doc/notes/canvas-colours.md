@@ -1,7 +1,7 @@
 # Canvas Colour System
 
 > **Scope:** `MusicCanvas.ts` — how colour is used for choir strips, selection, active-singing pulses, false-relation hotspots and false-relation pulses.  
-> **Last updated:** 2026-05-08
+> **Last updated:** 2026-06
 
 ---
 
@@ -9,9 +9,7 @@
 
 The eight choirs are distinguished by **hue only**.  Hues are read from CSS custom properties (`--color-c1` … `--color-c8`) at runtime; the JavaScript supplies saturation and lightness dynamically.
 
-| Choir | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
-|-------|---|---|---|---|---|---|---|---|
-| Hue   | 360 | 320 | 30 | 50 | 110 | 150 | 190 | 220 |
+- Hue - 360 - 320 - 30 - 50 - 110 - 150 - 190 - 220
 
 *Source:* `src/scss/style.scss` (defaults) and `src/ts/common.ts` → `colors().choir[]`.
 
@@ -21,7 +19,7 @@ The eight choirs are distinguished by **hue only**.  Hues are read from CSS cust
 
 Each choir × part is drawn as a horizontal line for every `{from, to}` singing range (`this.ranges[c][p]`).  The stroke colour is:
 
-```
+```text
 hsla(hue, saturation%, lightness%, 1)
 ```
 
@@ -29,10 +27,8 @@ hsla(hue, saturation%, lightness%, 1)
 
 Lightness depends on **theme**, **selection state**, and the **part index** `p` (0 = Soprano … 4 = Bass).
 
-| State | Light mode | Dark mode |
-|-------|-----------|-----------|
-| Unselected, dull | `80 − 3p` | `38 − 3p` |
-| Selected (or intro / end-credits) | `67 − 3p` | `67 − 3p` |
+- Unselected, dull - `80 − 3p` - `38 − 3p`
+- Selected (or intro / end-credits) - `45 − 3p` - `45 − 3p`
 
 The `− 3p` term creates a subtle top-to-bottom gradient within each choir: higher parts are slightly lighter.
 
@@ -62,7 +58,7 @@ Because lightness is multiplied by the pulse, light mode shows a brief dim-to-br
 
 A horizontal band is drawn behind the selected part (or across all five parts when `voicePart == "all"`).  It uses a single CSS-derived colour independent of choir hue:
 
-```
+```text
 colors().highlight
 ```
 
@@ -74,24 +70,22 @@ colors().highlight
 
 Every entry in `frLocations` renders a small radial-gradient circle at the midpoint of its `{from, to}` interval.
 
-| Property | Value |
-|----------|-------|
-| Hue | Choir’s own hue |
-| Saturation | 100 % |
-| Lightness | Adaptive (see below) |
-| Alpha | `0.8 + 0.2·sin(6t + phase)` — perpetual breathing |
-| Radius | `partHeight × 0.6` |
+- Hue - Choir’s own hue
+- Saturation - 100 %
+- Lightness - Adaptive (see below)
+- Alpha - `0.8 + 0.2·sin(6t + phase)` — perpetual breathing
+- Radius - `partHeight × 0.6`
 
 ### Hotspot lightness formula
 
-```
-base = isSelected ? 67 − 3p : dullBase − 3p
+```text
+base = isSelected ? 45 − 3p : dullBase − 3p
 lightness = (base + 50) % 100
 ```
 
 The `+ 50 % 100` rotation pushes hotspots into a complementary lightness range so they remain visible against the underlying voice strip.  Same-part selection rules apply as for voice strips.
 
-### Gradient stops
+### Hotspot gradient stops
 
 1. **Centre** — full opacity at the computed lightness.
 2. **Mid-stop** (25 % of radius) — 40 % of centre opacity.
@@ -105,27 +99,25 @@ The `+ 50 % 100` rotation pushes hotspots into a complementary lightness range s
 
 When playback reaches `loc.from`, a pulse triggers and fades over **0.4 bars** (`FR_PULSE_FADE_BARS`).
 
-| Property | Value |
-|----------|-------|
-| Hue | Choir’s own hue |
-| Saturation | 100 % |
-| Lightness | Fixed at **67 %** (`SELECTED_BASE_LIGHTNESS`) |
-| Radius | `partHeight × 3 × pulseStrength` |
-| Peak alpha | `pulseStrength × 0.85`, clamped to 1.0 |
+- Hue - Choir’s own hue
+- Saturation - 100 %
+- Lightness - Fixed at **45 %** (`SELECTED_BASE_LIGHTNESS`)
+- Radius - `partHeight × 2.5 × pulseStrength`
+- Peak alpha - `pulseStrength × 1`, clamped to 1.0
 
 ### Decay curve
 
-```
+```text
 pulseStrength = √(1 − t)   where t = elapsed / 0.4
 ```
 
-### Gradient stops
+### Pulse gradient stops
 
-1. **Centre** — full alpha at lightness 67 %.
-2. **Mid-stop** (60 % of radius) — 70 % of centre opacity.
+1. **Centre** — full alpha at lightness 45 %.
+2. **Mid-stop** (50 % of radius) — 70 % of centre opacity.
 3. **Edge** — transparent.
 
-The mid-stop at 0.6 and 70 % opacity creates a flatter, more visible disc than the hotspot’s tighter gradient.
+The mid-stop at 0.5 and 70 % opacity creates a flatter, more visible disc than the hotspot’s tighter gradient.
 
 *Source:* `#drawFalseRelationPulses()` in `src/ts/MusicCanvas.ts`.
 
@@ -133,22 +125,20 @@ The mid-stop at 0.6 and 70 % opacity creates a flatter, more visible disc than t
 
 ## Constants reference
 
-| Constant | Value | Used by |
-|----------|-------|---------|
-| `DULL_BASE_LIGHTNESS_LIGHT` | 80 | Unselected parts (light theme) |
-| `DULL_BASE_LIGHTNESS_DARK` | 38 | Unselected parts (dark theme) |
-| `SELECTED_BASE_LIGHTNESS` | 67 | Selected parts + FR pulses |
-| `FR_PULSE_FADE_BARS` | 0.4 | Pulse decay duration |
-| `FR_PULSE_RADIUS_MULTIPLIER` | 3 | Pulse size relative to part height |
-| `FR_PULSE_SATURATION` | 100 | Pulse colour saturation |
-| `FR_PULSE_MAX_ALPHA` | 1.0 | Pulse alpha ceiling |
-| `FR_PULSE_ALPHA_FACTOR` | 0.85 | Pulse alpha multiplier |
-| `FR_PULSE_GRADIENT_MID_STOP` | 0.6 | Pulse gradient mid-point |
-| `FR_PULSE_GRADIENT_MID_ALPHA_FACTOR` | 0.7 | Pulse mid-stop opacity ratio |
-| `FR_HOTSPOT_SHIMMER_SPEED` | 6 rad/s | Hotspot breathing frequency |
-| `FR_HOTSPOT_BASE_ALPHA` | 0.8 | Hotspot mean opacity |
-| `FR_HOTSPOT_ALPHA_RANGE` | 0.2 | Hotspot opacity amplitude |
-| `FR_HOTSPOT_RADIUS_MULTIPLIER` | 0.6 | Hotspot size relative to part height |
-| `FR_HOTSPOT_SATURATION` | 100 | Hotspot colour saturation |
-| `FR_HOTSPOT_GRADIENT_MID_STOP` | 0.25 | Hotspot gradient mid-point |
-| `FR_HOTSPOT_GRADIENT_MID_ALPHA_FACTOR` | 0.4 | Hotspot mid-stop opacity ratio |
+- `DULL_BASE_LIGHTNESS_LIGHT` - 80 - Unselected parts (light theme)
+- `DULL_BASE_LIGHTNESS_DARK` - 38 - Unselected parts (dark theme)
+- `SELECTED_BASE_LIGHTNESS` - 45 - Selected parts + FR pulses
+- `FR_PULSE_FADE_BARS` - 0.4 - Pulse decay duration
+- `FR_PULSE_RADIUS_MULTIPLIER` - 2.5 - Pulse size relative to part height
+- `FR_PULSE_SATURATION` - 100 - Pulse colour saturation
+- `FR_PULSE_MAX_ALPHA` - 1.0 - Pulse alpha ceiling
+- `FR_PULSE_ALPHA_FACTOR` - 1 - Pulse alpha multiplier
+- `FR_PULSE_GRADIENT_MID_STOP` - 0.5 - Pulse gradient mid-point
+- `FR_PULSE_GRADIENT_MID_ALPHA_FACTOR` - 0.7 - Pulse mid-stop opacity ratio
+- `FR_HOTSPOT_SHIMMER_SPEED` - 6 rad/s - Hotspot breathing frequency
+- `FR_HOTSPOT_BASE_ALPHA` - 0.8 - Hotspot mean opacity
+- `FR_HOTSPOT_ALPHA_RANGE` - 0.2 - Hotspot opacity amplitude
+- `FR_HOTSPOT_RADIUS_MULTIPLIER` - 0.6 - Hotspot size relative to part height
+- `FR_HOTSPOT_SATURATION` - 100 - Hotspot colour saturation
+- `FR_HOTSPOT_GRADIENT_MID_STOP` - 0.25 - Hotspot gradient mid-point
+- `FR_HOTSPOT_GRADIENT_MID_ALPHA_FACTOR` - 0.4 - Hotspot mid-stop opacity ratio
