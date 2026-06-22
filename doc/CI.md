@@ -62,6 +62,20 @@ Steps:
 
 If no SVGs changed, the job exits cleanly without committing.
 
+### `reset-spine-on-close.yml`
+
+Triggers on `issues: closed`. Repaints the terminal `.WSx` spine label when
+GitHub closes a ticket, a transition where no agent is in the loop to repaint it,
+so the label does not drift until a later audit. It maps the close reason to the
+spine as follows: a `completed` close becomes `.WS4`, and anything else (not
+planned, duplicate, or an unrecognised reason) becomes `.WS9`, never assuming
+merged. It reads only `.WSx` labels, so trust labels (`vera...`,
+`UI...`) and flags are left untouched, and it is idempotent: a ticket already
+carrying the correct spine yields no edit.
+
+Permissions: `issues: write` (the default token is read-only for the issues
+scope in this organisation).
+
 ## Dependabot
 
 `.github/dependabot.yml` configures automated dependency update PRs:
