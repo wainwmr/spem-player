@@ -22,8 +22,11 @@ quota is exhausted.
   and its `lint` script.
 - `.github/workflows/monitor-ci.yml` — CI gate for monitor changes.
 - `.github/workflows/monitor-run.yml` — scheduled daily run.
+- `.github/workflows/monitor-refresh.yml` — merge-time refresh that keeps
+  today's series entry current intra-day (at most one series-changing refresh
+  per hour).
 - `.github/monitor-series.json` — daily cumulative usage series, committed by
-  `monitor-run.yml`.
+  `monitor-run.yml` and refreshed intra-day by `monitor-refresh.yml`.
 
 ## Status thresholds
 
@@ -97,6 +100,32 @@ The workflow triggers only on `schedule` and `workflow_dispatch`, so the
 self-commit cannot loop the workflow. The `[skip ci]` suffix also prevents it
 from consuming a `pwa-ci.yml` run.
 
+### `monitor-refresh.yml`
+
+Runs on every push to `main`. It keeps the throttle gate (Item #646) reacting to
+intra-day usage instead of waiting for the next daily run: it re-fetches Netlify
+and GitHub usage, recomputes today's summary, and upserts today's entry in
+`.github/monitor-series.json`.
+
+It deliberately does **less** than the daily run. It invokes
+`monitor-resources.mjs --refresh`, which updates today's entry only and sends no
+Telegram message, renders no chart, and opens no critical issue. It also leaves
+`mergedPRs` at 0; the daily run sets the real count later, but only on a run that
+does not skip the report (see `shouldSkipReport`).
+
+The hourly cap is a `git log --grep` for the previous refresh commit, so the
+checkout uses `fetch-depth: 0` to make that history visible. Because the cap keys
+off the last series-update commit, it caps refreshes that **change** the series
+to one per hour; in a flat-usage window (no series change, hence no commit) a
+merge may re-read the APIs, which is cheap (rate-limit only, no build minutes).
+The workflow is loop-safe: its self-commit (`chore: refresh build-usage series
+[skip ci]`) carries `[skip ci]`, which suppresses the push trigger that would
+otherwise re-run it, and a no-change run makes no commit so it cannot loop.
+
+Required secrets: `MONITOR_PUSH_TOKEN` (to commit the series),
+`NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`, and `GITHUB_TOKEN`. It does not use the
+Telegram secrets.
+
 ## Running locally
 
 - Run monitor tests: `pnpm run test:monitor`
@@ -104,6 +133,9 @@ from consuming a `pwa-ci.yml` run.
 - Run the monitor script locally: set the environment variables listed in
   `monitor-resources.mjs` and run
   `pnpm --filter @spem/monitor exec node monitor-resources.mjs`.
+- Run the merge-time refresh locally: set the same variables minus the Telegram
+  ones, then
+  `pnpm --filter @spem/monitor exec node monitor-resources.mjs --refresh`.
 
 ## Notes
 
