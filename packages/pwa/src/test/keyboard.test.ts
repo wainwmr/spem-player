@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import { MusicControls } from "../ts/MusicControls";
 
-describe("Space bar play/pause", () => {
+describe("keyboard shortcuts", () => {
   beforeAll(async () => {
     vi.resetModules();
 
