@@ -1289,8 +1289,6 @@ describe("MusicCanvas custom element", () => {
   it("disconnect and reconnect restarts the shimmer loop (#245)", async () => {
     const freshCanvas = document.createElement("music-canvas") as MusicCanvas;
     document.body.appendChild(freshCanvas);
-    // Wait for connectedCallback -> #init -> processLilypond -> draw
-    await new Promise((r) => setTimeout(r, 500));
 
     expect(freshCanvas.shimmerLoopId).not.toBe(0);
     const oldShimmerId = freshCanvas.shimmerLoopId;
@@ -1299,7 +1297,7 @@ describe("MusicCanvas custom element", () => {
     expect(freshCanvas.shimmerLoopId).toBe(0);
 
     document.body.appendChild(freshCanvas);
-    await new Promise((r) => setTimeout(r, 100));
+    await Promise.resolve();
 
     expect(freshCanvas.shimmerLoopId).not.toBe(0);
     expect(freshCanvas.shimmerLoopId).not.toBe(oldShimmerId);
@@ -1310,8 +1308,6 @@ describe("MusicCanvas custom element", () => {
   it("disconnect and reconnect during playback restarts the play loop (#554)", async () => {
     const freshCanvas = document.createElement("music-canvas") as MusicCanvas;
     document.body.appendChild(freshCanvas);
-    // Wait for connectedCallback -> #init -> processLilypond -> draw
-    await new Promise((r) => setTimeout(r, 500));
 
     freshCanvas.setPlaying(true);
     expect(freshCanvas.playLoopId).not.toBe(0);
@@ -1323,7 +1319,7 @@ describe("MusicCanvas custom element", () => {
     expect(freshCanvas.playing).toBe(true);
 
     document.body.appendChild(freshCanvas);
-    await new Promise((r) => setTimeout(r, 100));
+    await Promise.resolve();
 
     // Without a restart the canvas is silently frozen: playing is true, no
     // loop runs, and the setBar guard skips the controls-driven draws that
@@ -1337,7 +1333,6 @@ describe("MusicCanvas custom element", () => {
   it("removes all event listeners on disconnect and re-adds them on reconnect (#203)", async () => {
     const freshCanvas = document.createElement("music-canvas") as MusicCanvas;
     document.body.appendChild(freshCanvas);
-    await new Promise((r) => setTimeout(r, 500));
 
     const innerCanvas = freshCanvas.querySelector("canvas")!;
     const addCanvasSpy = vi.spyOn(innerCanvas, "addEventListener");
@@ -1380,7 +1375,7 @@ describe("MusicCanvas custom element", () => {
     removeElemSpy.mockClear();
 
     document.body.appendChild(freshCanvas);
-    await new Promise((r) => setTimeout(r, 100));
+    await Promise.resolve();
 
     expect(addCanvasSpy).toHaveBeenCalledWith("click", expect.any(Function));
     expect(addCanvasSpy).toHaveBeenCalledWith(
