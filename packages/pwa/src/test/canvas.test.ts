@@ -2,7 +2,21 @@ import { MusicCanvas } from "../ts/MusicCanvas";
 import config from "../ts/config";
 import { colors, type Position } from "../ts/common";
 import { Duration, Note } from "../ts/music-classes";
+import { barCount as lilyBarCount, type Range } from "../ts/lily";
 MusicCanvas.define("music-canvas");
+
+// Install fixture singing-ranges on a canvas by swapping its whole `lilyData`
+// (since #652 `ranges` is a deeply-readonly SingingRanges, so build a fresh
+// mutable map and replace the object rather than mutating it in place).
+function setRanges(
+  c: MusicCanvas,
+  build: (r: Map<string, Range[]>) => void
+): void {
+  const r = new Map<string, Range[]>();
+  for (const [k, v] of c.lilyData!.ranges) r.set(k, [...v]);
+  build(r);
+  c.lilyData = { ...c.lilyData!, ranges: r };
+}
 
 var canvas: MusicCanvas | null;
 describe("MusicCanvas custom element", () => {
@@ -18,19 +32,17 @@ describe("MusicCanvas custom element", () => {
     vi.clearAllMocks();
   });
 
-  // seek() tests overwrite choir ranges on the shared beforeAll canvas; snapshot
-  // and restore the map per test so a fixture never leaks into a later test (#598).
-  // #704 also mutates notesByQuant, so snapshot that too.
-  let savedRanges: NonNullable<typeof canvas>["ranges"];
-  let savedNotesByQuant: NonNullable<typeof canvas>["notesByQuant"];
+  // seek() tests install fixture ranges by swapping the whole `lilyData` object
+  // (its `ranges` is deeply readonly since #652, so the original is never mutated
+  // in place). A shallow snapshot of the reference therefore restores it cleanly
+  // per test, so a fixture never leaks into a later test (#598, #652). The #704
+  // pulse tests also swap lilyData (for notesByQuant), so this snapshot covers them.
+  let savedLilyData: NonNullable<typeof canvas>["lilyData"];
   beforeEach(() => {
-    savedRanges = new Map();
-    for (const [key, value] of canvas!.ranges) savedRanges.set(key, [...value]);
-    savedNotesByQuant = canvas!.notesByQuant;
+    savedLilyData = canvas!.lilyData;
   });
   afterEach(() => {
-    canvas!.ranges = savedRanges;
-    canvas!.notesByQuant = savedNotesByQuant;
+    canvas!.lilyData = savedLilyData;
   });
 
   it("Check that the canvasent contains a canvas", async () => {
@@ -44,13 +56,69 @@ describe("MusicCanvas custom element", () => {
     canvas!.draw();
   });
 
-  it("draw() early returns when dict/ranges are empty", async () => {
-    // Note: this exercises the !this.canvas guard (element not in DOM), not the
-    // ranges.length === 0 guard. See refactor item 15 in wiki/refactor-lily.ts.md.
+  it("collapses parsed data into a single populated lilyData field (#652)", () => {
+    expect(canvas).not.toBeNull();
+    expect(canvas!.lilyData).not.toBeNull();
+    // barCount mirrors the module-level export kept for MusicControls.
+    expect(canvas!.lilyData!.barCount).toBe(lilyBarCount);
+    expect(canvas!.lilyData!.barCount).toBeGreaterThan(0);
+  });
+
+  it("draw() early returns when the element is not in the DOM", async () => {
+    // A created-but-unconnected element never ran #init, so both `canvas` and
+    // `lilyData` are null. draw()'s first guard (`!this.canvas`) returns here;
+    // the `lilyData == null` guard has its own test below (#652).
     const freshCanvas = document.createElement("music-canvas") as MusicCanvas;
-    freshCanvas.notesByQuant = new Map();
-    freshCanvas.ranges = new Map();
     freshCanvas.draw();
+  });
+
+  it("draw() early returns when lilyData is null (#652)", () => {
+    expect(canvas).not.toBeNull();
+    // A connected canvas with its data cleared: the `!this.canvas` guard passes,
+    // so this exercises the new `lilyData == null` guard specifically. afterEach
+    // restores lilyData from the per-test snapshot.
+    canvas!.lilyData = null;
+    expect(() => canvas!.draw()).not.toThrow();
+  });
+
+  it("freezes each singing-range and note array against runtime mutation (#652)", () => {
+    expect(canvas).not.toBeNull();
+    for (const arr of canvas!.lilyData!.ranges.values()) {
+      expect(Object.isFrozen(arr)).toBe(true);
+    }
+    for (const arr of canvas!.lilyData!.notesByQuant.values()) {
+      expect(Object.isFrozen(arr)).toBe(true);
+    }
+    // The freeze must have teeth: a push on a frozen array throws in strict mode
+    // (ES modules are strict), not merely fail silently. Cast past readonly to
+    // attempt the mutation a non-TS consumer could make.
+    const anyRange = [...canvas!.lilyData!.ranges.values()][0] as Range[];
+    expect(() => anyRange.push({ from: 0, to: 1 })).toThrow();
+  });
+
+  it("draw() early returns when notesByQuant is empty (#652)", () => {
+    expect(canvas).not.toBeNull();
+    // A non-null lilyData whose parse yielded no notes must still short-circuit
+    // draw(), preserving the pre-#652 behaviour (the old guard checked
+    // notesByQuant.size). An early return paints nothing, so fillRect is unused.
+    canvas!.lilyData = { ...canvas!.lilyData!, notesByQuant: new Map() };
+    const ctx = canvas!.canvas!.getContext("2d")!;
+    const fillRectSpy = vi.spyOn(ctx, "fillRect");
+    try {
+      canvas!.draw();
+      expect(fillRectSpy).not.toHaveBeenCalled();
+    } finally {
+      fillRectSpy.mockRestore();
+    }
+  });
+
+  it("seek() returns the current bar when lilyData is null (#652)", () => {
+    expect(canvas).not.toBeNull();
+    // seek is public on the custom element; a call before #init must not throw.
+    // afterEach restores lilyData from the per-test snapshot.
+    canvas!.lilyData = null;
+    const pos = { choir: 0, part: "all" as const, bar: 7 };
+    expect(canvas!.seek(pos, +1)).toBe(7);
   });
 
   it("draw() renders every frame at 120Hz during playback (#554)", () => {
@@ -60,8 +128,8 @@ describe("MusicCanvas custom element", () => {
     // notesByQuant is the guard that actually trips on a data-less parse;
     // ranges is seeded per choir-part pair unconditionally (lily.ts), so its
     // size only detects #init never completing.
-    expect(canvas!.ranges.size).toBeGreaterThan(0);
-    expect(canvas!.notesByQuant.size).toBeGreaterThan(0);
+    expect(canvas!.lilyData!.ranges.size).toBeGreaterThan(0);
+    expect(canvas!.lilyData!.notesByQuant.size).toBeGreaterThan(0);
 
     // Simulate a 120Hz display: rAF fires every ~8.3ms. The old #shouldDraw
     // throttle read Date.now() (not the rAF timestamp), so the clock must be
@@ -219,14 +287,16 @@ describe("MusicCanvas custom element", () => {
 
   it("initialises shimmer phases for each FR location", () => {
     expect(canvas).not.toBeNull();
-    expect(canvas!.shimmerPhases.length).toBe(canvas!.frLocations.length);
+    expect(canvas!.shimmerPhases.length).toBe(
+      canvas!.lilyData!.frLocations.length
+    );
     expect(canvas!.shimmerPhases[0]).toBeGreaterThanOrEqual(0);
     expect(canvas!.shimmerPhases[0]).toBeLessThan(Math.PI * 2);
   });
 
   it("draw() renders false-relation shimmer circles when frLocations are populated", async () => {
     expect(canvas).not.toBeNull();
-    expect(canvas!.frLocations.length).toBeGreaterThan(0);
+    expect(canvas!.lilyData!.frLocations.length).toBeGreaterThan(0);
     canvas!.draw();
   });
 
@@ -259,9 +329,9 @@ describe("MusicCanvas custom element", () => {
       // Preconditions: #init completed, the loop will actually run, and draw()
       // will not early-return on empty data (a dead fixture would report 0
       // clears and masquerade as a throttle).
-      expect(fresh.frLocations.length).toBeGreaterThan(0);
-      expect(fresh.ranges.size).toBeGreaterThan(0);
-      expect(fresh.notesByQuant.size).toBeGreaterThan(0);
+      expect(fresh.lilyData!.frLocations.length).toBeGreaterThan(0);
+      expect(fresh.lilyData!.ranges.size).toBeGreaterThan(0);
+      expect(fresh.lilyData!.notesByQuant.size).toBeGreaterThan(0);
       expect(fresh.shimmerLoopId).not.toBe(0);
 
       // Spy after #init so its one-shot draw is not counted.
@@ -315,7 +385,7 @@ describe("MusicCanvas custom element", () => {
     const fresh = document.createElement("music-canvas") as MusicCanvas;
     document.body.appendChild(fresh);
     await new Promise((r) => setTimeout(r, 500)); // real #init populates FR data
-    const populatedFr = fresh.frLocations;
+    const populatedFr = fresh.lilyData!.frLocations;
     expect(populatedFr.length).toBeGreaterThan(0);
 
     const rafSpy = vi
@@ -326,7 +396,7 @@ describe("MusicCanvas custom element", () => {
       // exact flush regime and schedules one rAF.
       fresh.remove();
       expect(fresh.shimmerLoopId).toBe(0);
-      fresh.frLocations = populatedFr;
+      fresh.lilyData = { ...fresh.lilyData!, frLocations: populatedFr };
       document.body.appendChild(fresh);
       await Promise.resolve();
       await Promise.resolve();
@@ -337,7 +407,7 @@ describe("MusicCanvas custom element", () => {
       // Negative: reconnect with NO hotspots -> no further rAF is scheduled.
       fresh.remove();
       expect(fresh.shimmerLoopId).toBe(0);
-      fresh.frLocations = [];
+      fresh.lilyData = { ...fresh.lilyData!, frLocations: [] };
       document.body.appendChild(fresh);
       await Promise.resolve();
       await Promise.resolve();
@@ -357,8 +427,12 @@ describe("MusicCanvas custom element", () => {
 
   it("seek() clamps to upper bound when seeking forward from last bar", () => {
     expect(canvas).not.toBeNull();
-    const pos = { choir: 0, part: "all" as const, bar: canvas!.barCount };
-    expect(canvas!.seek(pos, +1)).toBe(canvas!.barCount);
+    const pos = {
+      choir: 0,
+      part: "all" as const,
+      bar: canvas!.lilyData!.barCount,
+    };
+    expect(canvas!.seek(pos, +1)).toBe(canvas!.lilyData!.barCount);
   });
 
   it("seek() finds next section change forward from bar 1", () => {
@@ -366,7 +440,7 @@ describe("MusicCanvas custom element", () => {
     const pos = { choir: 0, part: "all" as const, bar: 1 };
     const result = canvas!.seek(pos, +1);
     expect(result).toBeGreaterThanOrEqual(0);
-    expect(result).toBeLessThanOrEqual(canvas!.barCount);
+    expect(result).toBeLessThanOrEqual(canvas!.lilyData!.barCount);
   });
 
   it("seek() does not throw when a choir-part range key is absent (#244, now via ranges)", () => {
@@ -374,8 +448,9 @@ describe("MusicCanvas custom element", () => {
     // seek no longer reads notesByQuant (#598); the #244 "no data -> no throw"
     // intent now applies to the `ranges` lookup, which tolerates an absent
     // "choir-part" key (?? []).
-    for (let p = 0; p < config.parts.length; p++)
-      canvas!.ranges.delete(`0-${p}`);
+    setRanges(canvas!, (r) => {
+      for (let p = 0; p < config.parts.length; p++) r.delete(`0-${p}`);
+    });
     const pos = { choir: 0, part: "all" as const, bar: 1 };
     expect(() => canvas!.seek(pos, +1)).not.toThrow();
   });
@@ -384,8 +459,9 @@ describe("MusicCanvas custom element", () => {
     expect(canvas).not.toBeNull();
     // With choir 0 silent (no ranges), backward seek finds no flip edge and
     // clamps to bar 0 — the #244 clamp intent, now asserted against `ranges`.
-    for (let p = 0; p < config.parts.length; p++)
-      canvas!.ranges.set(`0-${p}`, []);
+    setRanges(canvas!, (r) => {
+      for (let p = 0; p < config.parts.length; p++) r.set(`0-${p}`, []);
+    });
     const pos = { choir: 0, part: "all" as const, bar: 1 };
     expect(canvas!.seek(pos, -1)).toBe(0);
   });
@@ -394,9 +470,10 @@ describe("MusicCanvas custom element", () => {
     expect(canvas).not.toBeNull();
     // Choir 0 is silent until 1.5, then sings [1.5, 3.0]; isolate it by clearing
     // every part of choir 0 first, then declaring the one fractional range.
-    for (let p = 0; p < config.parts.length; p++)
-      canvas!.ranges.set(`0-${p}`, []);
-    canvas!.ranges.set("0-0", [{ from: 1.5, to: 3.0 }]);
+    setRanges(canvas!, (r) => {
+      for (let p = 0; p < config.parts.length; p++) r.set(`0-${p}`, []);
+      r.set("0-0", [{ from: 1.5, to: 3.0 }]);
+    });
     const pos = { choir: 0, part: "all" as const, bar: 1 };
     // The old integer scan can only ever return an integer bar; the fractional
     // boundary 1.5 is reachable only by reading `ranges`.
@@ -405,9 +482,10 @@ describe("MusicCanvas custom element", () => {
 
   it("seek() stops at a fractional section boundary, backward (#598)", () => {
     expect(canvas).not.toBeNull();
-    for (let p = 0; p < config.parts.length; p++)
-      canvas!.ranges.set(`0-${p}`, []);
-    canvas!.ranges.set("0-0", [{ from: 1.5, to: 3.0 }]);
+    setRanges(canvas!, (r) => {
+      for (let p = 0; p < config.parts.length; p++) r.set(`0-${p}`, []);
+      r.set("0-0", [{ from: 1.5, to: 3.0 }]);
+    });
     const pos = { choir: 0, part: "all" as const, bar: 2.5 };
     expect(canvas!.seek(pos, -1)).toBe(1.5);
   });
@@ -420,10 +498,11 @@ describe("MusicCanvas custom element", () => {
     // must land on 4.5: if the collective-flip filter regressed, the unsuppressed
     // 3.0 would be returned instead. (A start above 3.0 would not bite — 3.0 is
     // already behind it.)
-    for (let p = 0; p < config.parts.length; p++)
-      canvas!.ranges.set(`0-${p}`, []);
-    canvas!.ranges.set("0-0", [{ from: 1.5, to: 3.0 }]);
-    canvas!.ranges.set("0-1", [{ from: 3.0, to: 4.5 }]);
+    setRanges(canvas!, (r) => {
+      for (let p = 0; p < config.parts.length; p++) r.set(`0-${p}`, []);
+      r.set("0-0", [{ from: 1.5, to: 3.0 }]);
+      r.set("0-1", [{ from: 3.0, to: 4.5 }]);
+    });
     expect(canvas!.seek({ choir: 0, part: "all" as const, bar: 2.0 }, +1)).toBe(
       4.5
     );
@@ -437,9 +516,10 @@ describe("MusicCanvas custom element", () => {
     expect(canvas).not.toBeNull();
     // The only singing part of choir 0 is part 3; its boundary must still be
     // found via the "any part" union, not just part 0.
-    for (let p = 0; p < config.parts.length; p++)
-      canvas!.ranges.set(`0-${p}`, []);
-    canvas!.ranges.set("0-3", [{ from: 2.5, to: 4.0 }]);
+    setRanges(canvas!, (r) => {
+      for (let p = 0; p < config.parts.length; p++) r.set(`0-${p}`, []);
+      r.set("0-3", [{ from: 2.5, to: 4.0 }]);
+    });
     expect(canvas!.seek({ choir: 0, part: "all" as const, bar: 1 }, +1)).toBe(
       2.5
     );
@@ -934,7 +1014,7 @@ describe("MusicCanvas custom element", () => {
     canvas!.querySelector("canvas")!.dispatchEvent(mouseEvent);
     const event = await promise;
     const pos = event.detail.position;
-    expect(pos.bar).toBe(canvas!.barCount);
+    expect(pos.bar).toBe(canvas!.lilyData!.barCount);
   });
 
   it("getMousePos returns mid bar at centre on narrow viewports (#204)", async () => {
@@ -978,7 +1058,7 @@ describe("MusicCanvas custom element", () => {
       canvas!.querySelector("canvas")!.dispatchEvent(mouseEvent);
       const event = await promise;
       const pos = event.detail.position;
-      expect(pos.bar).toBe(Math.floor(canvas!.barCount / 2));
+      expect(pos.bar).toBe(Math.floor(canvas!.lilyData!.barCount / 2));
     }
   });
 
@@ -1073,7 +1153,7 @@ describe("MusicCanvas custom element", () => {
     innerCanvas.dispatchEvent(touchStart);
     const event = await promise;
     const pos = event.detail.position;
-    expect(pos.bar).toBe(canvas!.barCount);
+    expect(pos.bar).toBe(canvas!.lilyData!.barCount);
   });
 
   it("getTouchPos returns mid bar at centre on narrow viewports (#204)", async () => {
@@ -1121,7 +1201,7 @@ describe("MusicCanvas custom element", () => {
       innerCanvas.dispatchEvent(touchStart);
       const event = await promise;
       const pos = event.detail.position;
-      expect(pos.bar).toBe(Math.floor(canvas!.barCount / 2));
+      expect(pos.bar).toBe(Math.floor(canvas!.lilyData!.barCount / 2));
     }
   });
 
@@ -1515,7 +1595,10 @@ describe("MusicCanvas custom element", () => {
 
     const onset = 0.03125; // 1/32 bar, between 1/16 quant points
     const note = new Note("a", null, null, new Duration("16"), null);
-    canvas!.notesByQuant = new Map([[onset, [{ c: 0, p: 0, n: note }]]]);
+    canvas!.lilyData = {
+      ...canvas!.lilyData!,
+      notesByQuant: new Map([[onset, [{ c: 0, p: 0, n: note }]]]),
+    };
     canvas!.bar = onset;
     canvas!.draw();
 
@@ -1529,10 +1612,13 @@ describe("MusicCanvas custom element", () => {
 
     const note16 = new Note("b", null, null, new Duration("16"), null);
     const noteWhole = new Note("c", null, null, new Duration("1"), null);
-    canvas!.notesByQuant = new Map([
-      [0.0625, [{ c: 0, p: 1, n: note16 }]],
-      [2.0, [{ c: 1, p: 2, n: noteWhole }]],
-    ]);
+    canvas!.lilyData = {
+      ...canvas!.lilyData!,
+      notesByQuant: new Map([
+        [0.0625, [{ c: 0, p: 1, n: note16 }]],
+        [2.0, [{ c: 1, p: 2, n: noteWhole }]],
+      ]),
+    };
 
     canvas!.bar = 0.0625;
     canvas!.draw();
@@ -1639,18 +1725,18 @@ describe("MusicCanvas custom element", () => {
     // three points sit at the clamp extremes and a stable interior row, so
     // they are unaffected by the Y-padding scaling — they characterise the
     // de-dup; the short-viewport tests below characterise the Y fix.
-    const mid = Math.floor(canvas!.barCount / 2);
+    const mid = Math.floor(canvas!.lilyData!.barCount / 2);
     expect(await clickAt(0, 2)).toEqual({ choir: 0, part: 0, bar: 0 });
     expect(await clickAt(700, 175)).toEqual({ choir: 3, part: 2, bar: mid });
     expect(await clickAt(1400, 398)).toEqual({
       choir: 7,
       part: 0,
-      bar: canvas!.barCount,
+      bar: canvas!.lilyData!.barCount,
     });
   });
 
   it("projects representative touch coordinates, resolving part to 'all' (#650)", async () => {
-    const mid = Math.floor(canvas!.barCount / 2);
+    const mid = Math.floor(canvas!.lilyData!.barCount / 2);
     expect(await touchAt(0, 2)).toEqual({ choir: 0, part: "all", bar: 0 });
     expect(await touchAt(700, 175)).toEqual({
       choir: 3,
@@ -1660,7 +1746,7 @@ describe("MusicCanvas custom element", () => {
     expect(await touchAt(1400, 398)).toEqual({
       choir: 7,
       part: "all",
-      bar: canvas!.barCount,
+      bar: canvas!.lilyData!.barCount,
     });
   });
 
@@ -1672,7 +1758,7 @@ describe("MusicCanvas custom element", () => {
     // wrong-result toward the top of a short viewport (the two mappings
     // coincide at the exact centre and diverge toward the edges). Scaling Y
     // restores the drawn mapping. (x = width/2 -> floor(barCount/2), unaffected.)
-    const mid = Math.floor(canvas!.barCount / 2);
+    const mid = Math.floor(canvas!.lilyData!.barCount / 2);
     expect(await clickAt(700, 50, 1400, 150)).toEqual({
       choir: 2,
       part: 3,
@@ -1684,7 +1770,7 @@ describe("MusicCanvas custom element", () => {
     // Touch hard-codes part "all" (#327), so the Y fix shows up on the CHOIR
     // here, not the part: on a 150px-tall canvas a tap at y=38 falls on the
     // drawn choir 2, but the old unscaled-Y mapping returned choir 1.
-    const mid = Math.floor(canvas!.barCount / 2);
+    const mid = Math.floor(canvas!.lilyData!.barCount / 2);
     expect(await touchAt(700, 38, 1400, 150)).toEqual({
       choir: 2,
       part: "all",
@@ -1713,7 +1799,7 @@ describe("MusicCanvas custom element", () => {
 
   it("draws both false-relation glows as a 3-stop radial gradient centred on the part row (#650)", () => {
     expect(canvas).not.toBeNull();
-    const frs = canvas!.frLocations;
+    const frs = canvas!.lilyData!.frLocations;
     expect(frs.length).toBeGreaterThan(0);
 
     const ctx = canvas!.canvas!.getContext("2d")!;
@@ -1815,8 +1901,10 @@ describe("MusicCanvas custom element", () => {
     expect(canvas).not.toBeNull();
     // Seed known ranges at two corners so a moveTo is issued at each row's
     // centre (the per-test ranges snapshot is restored by afterEach).
-    canvas!.ranges.set("0-0", [{ from: 10, to: 20 }]);
-    canvas!.ranges.set("7-4", [{ from: 30, to: 40 }]);
+    setRanges(canvas!, (r) => {
+      r.set("0-0", [{ from: 10, to: 20 }]);
+      r.set("7-4", [{ from: 30, to: 40 }]);
+    });
 
     const ctx = canvas!.canvas!.getContext("2d")!;
     const moveYs: number[] = [];

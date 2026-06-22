@@ -264,20 +264,32 @@ export type Range = {
 // See ticket #107 follow-on.
 export var barCount: number = 0;
 
-// Fields are `readonly` (field-level only) because processLilypond now hands
-// out the same cached reference on every call (see lilypondCache below).
-// `readonly` on the field catches `lilyData.notesByQuant = somethingElse`,
-// the most likely accidental reassignment. The Map itself is not marked
-// readonly because canvas.test.ts deliberately mutates `notesByQuant` to
-// exercise seek()'s defensive path (restoring at end-of-test); deep readonly
-// would force a wider refactor. Callers MUST treat `notesByQuant`, `ranges`,
-// and `frLocations` as immutable in non-test code (Range fields are
-// compiler-enforced readonly since #551; the Map and array levels are not).
+// Quantised bar position -> all notes/rests starting at that position. Readonly
+// to the array level (#652): the Map and its arrays are immutable to consumers,
+// and the arrays are frozen at runtime (see processLilypond). The `NoteEntry`
+// leaf objects are NOT readonly (their fields are mutable), so consumers must
+// treat the entries themselves as immutable by convention.
+export type NotesByQuant = ReadonlyMap<number, readonly NoteEntry[]>;
+
+// "choir-part" key -> the singing ranges for that part. Deeply readonly (#652):
+// the Map, its arrays, and the Range leaves are all immutable to consumers at the
+// type level (processLilypond hands out one cached reference). At runtime only the
+// arrays are frozen (see processLilypond); the Map and Range leaves rely on the
+// compile-time `readonly`, since Object.freeze on a Map does not block Map.set.
+export type SingingRanges = ReadonlyMap<string, readonly Range[]>;
+
+// processLilypond hands out the same cached reference on every call (see
+// lilypondCache below), so every field is `readonly` to catch reassignment.
+// `ranges` is deeply readonly (its `Range` leaves carry `readonly` fields since
+// #551); `notesByQuant` and `frLocations` are readonly only to the array level —
+// their element objects (`NoteEntry`, `FRlocation`) have mutable fields. At
+// runtime the `notesByQuant` and `ranges` arrays are frozen; the `frLocations`
+// array is compile-time readonly only.
 export type LilypondData = {
-  readonly notesByQuant: Map<number, NoteEntry[]>;
-  readonly ranges: Map<string, Range[]>;
+  readonly notesByQuant: NotesByQuant;
+  readonly ranges: SingingRanges;
   readonly barCount: number;
-  readonly frLocations: FRlocation[];
+  readonly frLocations: readonly FRlocation[];
 };
 
 // Module-level cache. processLilypond parses static data (spem.ly + scores),
@@ -385,6 +397,13 @@ export function processLilypond(): LilypondData {
 
   barCount = localBarCount; // side effect: keep global in sync for MusicControls.ts
   const frLocations = detectFalseRelations(activeNotes);
+
+  // Freeze each singing-range and note array so the shared, cached LilypondData
+  // cannot be mutated at the array level by a consumer (the Maps and arrays are
+  // also compiler-enforced readonly via SingingRanges / NotesByQuant). #652.
+  for (const arr of ranges.values()) Object.freeze(arr);
+  for (const arr of notesByQuant.values()) Object.freeze(arr);
+
   lilypondCache = {
     notesByQuant,
     ranges,
