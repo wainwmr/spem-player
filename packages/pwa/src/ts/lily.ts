@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 import config from "./config";
-import lyGrammar from "../ohmjs/ly-grammar.ohm-bundle";
+import lyGrammar, {
+  type LilypondSemantics,
+} from "../ohmjs/ly-grammar.ohm-bundle";
 import * as ohm from "ohm-js";
 import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
 import spem from "@lilypond/spem.ly?raw";
@@ -32,7 +34,23 @@ export var scores: { [id: string]: Component[] } = {};
 // Set up Lilypond parser
 // -----------------------------------------------------
 
-var semantics: ohm.Semantics = setupLilypondParser();
+type ParseValue =
+  | Component[]
+  | Component
+  | Duration
+  | number
+  | string
+  | undefined;
+
+interface LilypondOperations {
+  parse(): ParseValue;
+}
+
+var semantics: LilypondSemantics = setupLilypondParser();
+
+function parseMatch(match: ohm.MatchResult): ParseValue {
+  return (semantics(match) as unknown as LilypondOperations).parse();
+}
 
 function romanise(num: number) {
   var lookup: { [index: string]: number } = {
@@ -163,14 +181,14 @@ export function detectFalseRelations(
   return frLocations;
 }
 
-function setupLilypondParser(): ohm.Semantics {
-  var s = lyGrammar.createSemantics();
+function setupLilypondParser(): LilypondSemantics {
+  var s: LilypondSemantics = lyGrammar.createSemantics();
 
   // If lilypond input has no duration, use lastDuration; use lastNote if note name is missing
   var lastNote: Note, lastDuration: Duration;
 
   function getDuration(duration: ohm.Node) {
-    var d = duration.parse()[0];
+    var d = (duration.parse() as Duration[])[0];
     if (d == undefined) {
       d = lastDuration;
     } else {
@@ -179,15 +197,16 @@ function setupLilypondParser(): ohm.Semantics {
     return d;
   }
 
-  s.addOperation("parse", {
+  s.addOperation<ParseValue>("parse", {
     Version(_, _2, _v, _3) {},
     Include(_, _2, _filename, _3) {},
     RelativeClause(variable, _, _2, _3, _4, music, _6) {
-      const v = variable.parse();
+      const v = variable.parse() as string[];
+      const components = music.parse() as Component[];
       if (v[0] != undefined) {
-        scores[v[0]] = music.parse();
+        scores[v[0]] = components;
       }
-      return scores[v];
+      return scores[v[0]];
     },
     Component(comp) {
       const c = comp.parse();
@@ -199,7 +218,7 @@ function setupLilypondParser(): ohm.Semantics {
       return new BarLine();
     },
     repeatedNote(duration, slur) {
-      const d = duration.parse();
+      const d = duration.parse() as Duration;
       const s = slur.sourceString.length == 0 ? null : slur.sourceString;
 
       const note = new Note(lastNote.notename, lastNote.accidental, "", d, s);
@@ -229,13 +248,13 @@ function setupLilypondParser(): ohm.Semantics {
       return ret;
     },
     durationScaled(duration, _, multiplier) {
-      const x = duration.parse();
-      const m = multiplier.parse()[0];
+      const x = duration.parse() as Duration;
+      const m = (multiplier.parse() as number[])[0];
 
       return new Duration(x.duration, x.dotted, m);
     },
     fraction(_a, _b, _c) {
-      const text = (this as unknown as ohm.Node).sourceString;
+      const text = this.sourceString;
       if (text.includes("/")) {
         const [numStr, denStr] = text.split("/");
         return parseInt(numStr) / parseInt(denStr);
@@ -246,7 +265,10 @@ function setupLilypondParser(): ohm.Semantics {
       return v.sourceString;
     },
     _iter(...children) {
-      return children.map((c) => c.parse());
+      // Ohm's default iteration action returns an array of child results. The
+      // operation's return type is the scalar ParseValue union, so we cast the
+      // array back at the boundary; callers that need an array narrow explicitly.
+      return children.map((c) => c.parse()) as unknown as ParseValue;
     },
   });
   return s;
@@ -324,7 +346,7 @@ export function processLilypond(): LilypondData {
     throw new Error("Lilypond parse failed: " + result.message);
   }
 
-  semantics(result).parse();
+  parseMatch(result);
 
   const notesByQuant = new Map<number, NoteEntry[]>();
   const ranges = new Map<string, Range[]>();
@@ -415,6 +437,7 @@ export function processLilypond(): LilypondData {
 
 export const exportedForTesting = {
   semantics,
+  parseMatch,
   romanise,
   setupLilypondParser,
   noteToPitchClass,
