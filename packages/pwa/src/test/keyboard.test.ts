@@ -23,6 +23,7 @@ describe("Space bar play/pause", () => {
           <span id="darkswitch"></span>
         </header>
         <div id="help"></div>
+        <div id="feedback-modal"></div>
         <div class="split-container">
           <music-score></music-score>
           <div class="splitter"></div>
@@ -554,6 +555,264 @@ describe("Space bar play/pause", () => {
       );
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(document.body.classList.contains("light-theme")).toBe(wasLight);
+    });
+  });
+
+  // #654: pin the ~15 user-facing shortcuts keyboardTapped (index.ts ~243-389)
+  // handles but the suite never exercised. Assertions are on observable state,
+  // following the established dispatch-and-assert-state pattern. Tests only;
+  // no production change. setChoir is async, so the choir paths keep a microtask
+  // yield before asserting; the yield is defensive, not load-bearing (the
+  // attribute writes are synchronous), and a harmless no-op on the sync paths
+  // (setPart, recording, period, modals), kept for symmetry with the blocks above.
+  describe("Untested shortcut coverage (#654)", () => {
+    it("KeyV toggles the recording", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      const before = controls.getAttribute("recording");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyV", key: "v", bubbles: true })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      // recording cycles ALC(0) <-> CotE(1); a regression that stops KeyV
+      // toggling recording fails here.
+      expect(controls.getAttribute("recording")).not.toBe(before);
+      expect(["0", "1"]).toContain(controls.getAttribute("recording"));
+    });
+
+    it("KeyM toggles the score period", async () => {
+      const score = document.querySelector("music-score");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyM", key: "m", bubbles: true })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const first = score!.getAttribute("score-type");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyM", key: "m", bubbles: true })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const second = score!.getAttribute("score-type");
+      // modern <-> early flip; a regression that stops KeyM toggling fails here.
+      expect(first).not.toBe(second);
+      expect(["modern", "early"]).toContain(first);
+      expect(["modern", "early"]).toContain(second);
+    });
+
+    it("KeyF shows the feedback panel", () => {
+      const feedbackModal = document.getElementById(
+        "feedback-modal"
+      ) as HTMLDivElement;
+      const backdrop = document.getElementById("backdrop") as HTMLDivElement;
+      feedbackModal.style.display = "none";
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyF", key: "f", bubbles: true })
+      );
+      expect(feedbackModal.style.display).toBe("block");
+      expect(backdrop.style.display).toBe("block");
+    });
+
+    it("Shift+Slash shows the help panel", () => {
+      const help = document.getElementById("help") as HTMLDivElement;
+      help.style.display = "none";
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "Slash",
+          key: "?",
+          shiftKey: true,
+          bubbles: true,
+        })
+      );
+      expect(help.style.display).toBe("block");
+    });
+
+    it("Slash without Shift does not show help", () => {
+      const help = document.getElementById("help") as HTMLDivElement;
+      help.style.display = "none";
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "Slash", key: "/", bubbles: true })
+      );
+      // The e.shiftKey guard: plain `/` (Firefox quick-find) must not open help.
+      expect(help.style.display).toBe("none");
+    });
+
+    it("Escape closes the open help and feedback panels", () => {
+      const help = document.getElementById("help") as HTMLDivElement;
+      const feedbackModal = document.getElementById(
+        "feedback-modal"
+      ) as HTMLDivElement;
+      help.style.display = "block";
+      feedbackModal.style.display = "block";
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "Escape",
+          key: "Escape",
+          bubbles: true,
+        })
+      );
+      expect(help.style.display).toBe("none");
+      expect(feedbackModal.style.display).toBe("none");
+    });
+
+    // Digit1, Digit3-Digit8 set the choir directly. Digit2 -> choir 1 is the
+    // off-target reset, since every target below differs from 1. Previously only
+    // Digit2 was touched, and only negatively (in a focused input).
+    it.each([
+      ["Digit1", "1", "0"],
+      ["Digit3", "3", "2"],
+      ["Digit4", "4", "3"],
+      ["Digit5", "5", "4"],
+      ["Digit6", "6", "5"],
+      ["Digit7", "7", "6"],
+      ["Digit8", "8", "7"],
+    ])("%s sets choir to index %s", async (code, key, expected) => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "Digit2",
+          key: "2",
+          bubbles: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      // Positively pin Digit2 (the reset key) -> choir 1, so a Digit2-only
+      // regression cannot hide behind the post-set assertion below.
+      expect(controls.getAttribute("choir")).toBe("1");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { code, key, bubbles: true })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.getAttribute("choir")).toBe(expected);
+    });
+
+    // KeyS/A/T/R/B set the part. setPart keys off e.code, so the Cyrillic block
+    // above already pins this code path; this standard-layout case documents the
+    // Latin mapping explicitly. Part is reset to "all" (KeyX) before each case.
+    it.each([
+      ["KeyS", "s", "0"],
+      ["KeyA", "a", "1"],
+      ["KeyT", "t", "2"],
+      ["KeyR", "r", "3"],
+      ["KeyB", "b", "4"],
+    ])("%s sets part to index %s", async (code, key, expected) => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyX", key: "x", bubbles: true })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { code, key, bubbles: true })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.getAttribute("part")).toBe(expected);
+    });
+
+    it("KeyX sets part to all", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyS", key: "s", bubbles: true })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyX", key: "x", bubbles: true })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.getAttribute("part")).toBe("all");
+    });
+  });
+
+  // #654 items 2-3: the early-return guards in keyboardTapped that block
+  // shortcuts. Each asserts no state change (recording is the probe shortcut).
+  // The positive control below anchors those no-change assertions, so they
+  // cannot pass merely because the probe shortcut is itself dead.
+  describe("Shortcut guards (#654)", () => {
+    it("positive control: an unguarded KeyV does flip recording", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      const before = controls.getAttribute("recording");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyV", key: "v", bubbles: true })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.getAttribute("recording")).not.toBe(before);
+    });
+
+    it("a control-class element blocks shortcuts (item 2)", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      const el = document.createElement("div");
+      el.classList.add("control");
+      document.body.appendChild(el);
+      const before = controls.getAttribute("recording");
+      el.dispatchEvent(
+        new KeyboardEvent("keydown", { code: "KeyV", key: "v", bubbles: true })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      // keyboardTapped's classes.includes("control") guard returns early for
+      // control-class targets (non-Escape).
+      expect(controls.getAttribute("recording")).toBe(before);
+      document.body.removeChild(el);
+    });
+
+    it("isComposing ignores a non-Space shortcut (item 3)", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      const before = controls.getAttribute("recording");
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "KeyV",
+          key: "v",
+          isComposing: true,
+          bubbles: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.getAttribute("recording")).toBe(before);
+    });
+
+    it("keyCode 229 ignores a shortcut (IME, item 3)", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      const before = controls.getAttribute("recording");
+      const event = new KeyboardEvent("keydown", {
+        code: "KeyV",
+        key: "v",
+        bubbles: true,
+      });
+      // jsdom may not honour keyCode via the init dict; force it.
+      if (event.keyCode !== 229) {
+        Object.defineProperty(event, "keyCode", { value: 229 });
+      }
+      document.body.dispatchEvent(event);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.getAttribute("recording")).toBe(before);
+    });
+
+    it("a non-Element event target does not throw and is ignored", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      const before = controls.getAttribute("recording");
+      // Dispatching on `document` (a Document node, not an Element) hits the
+      // listener with a non-Element target, exercising keyboardTapped's
+      // `e.target instanceof Element` guard.
+      expect(() =>
+        document.dispatchEvent(
+          new KeyboardEvent("keydown", { code: "KeyV", key: "v" })
+        )
+      ).not.toThrow();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.getAttribute("recording")).toBe(before);
     });
   });
 });
