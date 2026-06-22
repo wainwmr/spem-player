@@ -28,6 +28,13 @@ export class MusicControls extends MusicElement {
   #isLooping = false;
   #loopId = 0;
 
+  #showIcon(state: "play" | "pause" | "loading"): void {
+    if (!this.svgPlay || !this.svgPause || !this.svgLoading) return;
+    this.svgPlay.style.display = state === "play" ? "block" : "none";
+    this.svgPause.style.display = state === "pause" ? "block" : "none";
+    this.svgLoading.style.display = state === "loading" ? "block" : "none";
+  }
+
   constructor() {
     super();
   }
@@ -56,17 +63,15 @@ export class MusicControls extends MusicElement {
       .parseFromString(playSVG, "image/svg+xml")
       .querySelector("svg");
     if (this.svgLoading) {
-      this.svgLoading.style.display = "none";
       this.playpausebutton.append(this.svgLoading);
     }
     if (this.svgPause) {
-      this.svgPause.style.display = "none";
       this.playpausebutton.append(this.svgPause);
     }
     if (this.svgPlay) {
-      this.svgPlay.style.display = "block";
       this.playpausebutton.append(this.svgPlay);
     }
+    this.#showIcon("play");
     this.append(this.playpausebutton);
 
     // Build the choirs drop-down list
@@ -233,11 +238,7 @@ export class MusicControls extends MusicElement {
     if (!this.isSameAudio(newfile)) {
       // set the play button spinner while loading audio
       this.playing = false;
-      if (this.svgPlay && this.svgLoading && this.svgPause) {
-        this.svgPlay.style.display = "none";
-        this.svgPause.style.display = "none";
-        this.svgLoading.style.display = "block";
-      }
+      this.#showIcon("loading");
       this.fireEvent("music-controls-loading");
 
       // load the new audio
@@ -249,21 +250,13 @@ export class MusicControls extends MusicElement {
     try {
       await this.audio.play();
     } catch {
-      if (this.svgPlay && this.svgLoading && this.svgPause) {
-        this.svgPlay.style.display = "block";
-        this.svgPause.style.display = "none";
-        this.svgLoading.style.display = "none";
-      }
+      this.#showIcon("play");
       this.playing = false;
       return;
     }
 
     this.playing = true;
-    if (this.svgPlay && this.svgLoading && this.svgPause) {
-      this.svgPlay.style.display = "none";
-      this.svgPause.style.display = "block";
-      this.svgLoading.style.display = "none";
-    }
+    this.#showIcon("pause");
     this.fireEvent("music-controls-playing");
 
     if (this.#isLooping) return;
@@ -293,11 +286,7 @@ export class MusicControls extends MusicElement {
     this.playing = false;
     this.#isLooping = false;
     window.cancelAnimationFrame(this.#loopId);
-    if (this.svgPlay && this.svgLoading && this.svgPause) {
-      this.svgPlay.style.display = "block";
-      this.svgPause.style.display = "none";
-      this.svgLoading.style.display = "none";
-    }
+    this.#showIcon("play");
     this.audio.pause();
     this.fireEvent("music-controls-paused");
   }
