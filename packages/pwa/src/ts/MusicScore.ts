@@ -59,12 +59,37 @@ export class MusicScore extends MusicElement {
   #loadGeneration = 0;
   clefOverlay: HTMLDivElement | null = null;
 
+  // Cached layout dimensions, null until first validly measured. Reading these
+  // avoids a per-frame forced reflow of the large score SVG during playback
+  // (#692). #frameWidth (the visible frame width = offsetWidth) is measured at
+  // connect (cached only once layout gives a non-zero width) and refreshed on
+  // element resize. #scoreWidth (the rendered SVG width) is refreshed on score
+  // load AND on element resize, and invalidated on score change: the SVG is
+  // height:100% with no width, so its width is height-driven, and a splitter
+  // drag changes the panel height. Both fall back to a live read while null, so
+  // a 0 measurement (no layout yet) is never cached.
+  #frameWidth: number | null = null;
+  #scoreWidth: number | null = null;
+  #resizeObserver: ResizeObserver | null = null;
+
   constructor() {
     super();
   }
 
   async connectedCallback() {
     super.connectedCallback();
+
+    this.#measureFrameWidth();
+    if (typeof ResizeObserver !== "undefined") {
+      this.#resizeObserver = new ResizeObserver(() => {
+        // A resize can change both the frame width (window resize) and the
+        // score width (a splitter drag changes the panel height, hence the
+        // height-driven SVG width — #692).
+        this.#measureFrameWidth();
+        this.#measureScoreWidth();
+      });
+      this.#resizeObserver.observe(this);
+    }
 
     this.highlightPosition.setAttribute("id", "hPos");
     this.highlightPosition.setAttribute("x", "0");
@@ -123,9 +148,33 @@ export class MusicScore extends MusicElement {
     super.disconnectedCallback();
     this.removeEventListener("wheel", this.#preventVerticalScroll);
     this.removeEventListener("mousemove", this.#handleMouseMove);
+    if (this.#resizeObserver) {
+      this.#resizeObserver.disconnect();
+      this.#resizeObserver = null;
+    }
     if (this.clefOverlay) {
       this.clefOverlay.remove();
       this.clefOverlay = null;
+    }
+  }
+
+  // Measure and cache the visible frame width, ignoring a 0 read (no layout
+  // yet) so the cache never poisons the live-read fallback — #692.
+  #measureFrameWidth() {
+    const w = this.offsetWidth;
+    if (w > 0) {
+      this.#frameWidth = w;
+    }
+  }
+
+  // Measure and cache the rendered score width. Guarded on the SVG existing, so
+  // a load that yields no SVG retains the previous value; ignores a 0 read — #692.
+  #measureScoreWidth() {
+    if (this.svg) {
+      const w = this.svg.getBoundingClientRect().width;
+      if (w > 0) {
+        this.#scoreWidth = w;
+      }
     }
   }
 
@@ -232,6 +281,11 @@ export class MusicScore extends MusicElement {
     }
     this.scrollArea = this.querySelector(".score-scroll-area");
     this.svg = this.scrollArea?.querySelector("svg") ?? null;
+    // The score just changed, so the cached width is stale until the rAF below
+    // re-measures it. Invalidate now (before measuring) so any scrollSmooth in
+    // the meantime falls back to a live read of the new score rather than the
+    // previous score's width — #692.
+    this.#scoreWidth = null;
 
     if (!this.svg) {
       console.error("Could not load score for choir " + (this.choir + 1));
@@ -278,6 +332,10 @@ export class MusicScore extends MusicElement {
     // `music-score-ready`, not `loaded`, to avoid racing the rAF.
     this.highlight();
     requestAnimationFrame(() => {
+      // Cache the rendered score width once per score load, when layout is
+      // clean, so scrollSmooth() can read the cache instead of forcing a
+      // reflow every frame — #692.
+      this.#measureScoreWidth();
       this.scrollSmooth();
       this.fireEvent("music-score-ready");
     });
@@ -319,8 +377,13 @@ export class MusicScore extends MusicElement {
     // we can't scroll past the last bar for this choir
     var intbar = toNum(this.bar, true, this.bars.length);
     const idealBarPercentage = 0.25;
-    const frameWidth = this.offsetWidth; // the width of the visible score on the screen
-    const scoreWidth = this.svg.getBoundingClientRect().width; // the total width of the score
+    // Use cached widths when available so playback does not force a reflow of
+    // the large score SVG every frame (#692). #frameWidth refreshes on resize;
+    // #scoreWidth refreshes on score load and on resize. Both fall back to a
+    // live read until first measured.
+    const frameWidth = this.#frameWidth ?? this.offsetWidth;
+    const scoreWidth =
+      this.#scoreWidth ?? this.svg.getBoundingClientRect().width;
     const barstartpct = intbar <= 0 ? 0 : this.bars[intbar - 1] / this.svgWidth; // % along the score of this bar
     const barendpct =
       intbar >= this.bars.length ? 1 : this.bars[intbar] / this.svgWidth; // % along the score of the next bar
