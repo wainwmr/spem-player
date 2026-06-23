@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
+import { setupIntegrationFixture } from "./helpers";
 
 describe("Dark/light mode toggle", () => {
   // Captured after the load event, before any beforeEach reset can touch the
@@ -6,48 +7,7 @@ describe("Dark/light mode toggle", () => {
   let defaultHadLightTheme: boolean;
 
   beforeAll(async () => {
-    vi.resetModules();
-
-    vi.spyOn(window, "requestAnimationFrame").mockReturnValue(0);
-    if (!HTMLElement.prototype.scrollTo) {
-      HTMLElement.prototype.scrollTo = () => {};
-    }
-
-    document.body.innerHTML = `
-      <div class="viewportDiv">
-        <div id="backdrop"></div>
-        <header class="header">
-          <span class="title">Spem Player</span>
-          <span id="info" class="tooltip"><span id="help-icon"></span></span>
-          <div class="header-spacer"></div>
-          <span id="recordinglabel"></span>
-          <span id="recordingswitch"></span>
-          <span id="scoreswitch"></span>
-          <span id="darkswitch"></span>
-        </header>
-        <div id="help"></div>
-        <div class="split-container">
-          <music-score></music-score>
-          <div class="splitter"></div>
-          <music-canvas></music-canvas>
-        </div>
-        <div class="footer">
-          <music-controls></music-controls>
-          <music-canvas-watcher class="hide"></music-canvas-watcher>
-        </div>
-      </div>
-    `;
-
-    await import("../ts/MusicCanvas");
-    await import("../ts/MusicScore");
-    await import("../ts/MusicControls");
-    await import("../ts/MusicCanvasWatcher");
-
-    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
-    vi.spyOn(HTMLMediaElement.prototype, "pause").mockReturnThis();
-
-    await import("../../index.ts");
-    window.dispatchEvent(new Event("load"));
+    await setupIntegrationFixture();
     // Flush one macrotask so a future tick-deferred theme application is
     // still captured rather than silently missed (Vera 542 pass 2).
     await new Promise((resolve) => setTimeout(resolve, 0));

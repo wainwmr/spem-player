@@ -1,36 +1,24 @@
 import { describe, it, expect, beforeAll, afterEach, vi } from "vitest";
 import { MusicControls } from "../ts/MusicControls";
+import { setupIntegrationFixture } from "./helpers";
 
 describe("Feedback modal", () => {
   beforeAll(async () => {
-    vi.resetModules();
+    await setupIntegrationFixture(() => {
+      const info = document.getElementById("info")!;
+      info.insertAdjacentHTML(
+        "afterend",
+        `<span id="feedback-trigger" class="tooltip">
+          <span id="feedback-icon"></span>
+          <span class="tooltiptext">Send feedback</span>
+        </span>`
+      );
 
-    vi.spyOn(window, "requestAnimationFrame").mockReturnValue(0);
-    if (!HTMLElement.prototype.scrollTo) {
-      HTMLElement.prototype.scrollTo = () => {};
-    }
-
-    document.body.innerHTML = `
-      <div class="viewportDiv">
-        <div id="backdrop"></div>
-        <header class="header">
-          <span class="title">Spem Player</span>
-          <span id="info" class="tooltip">
-            <span id="help-icon"></span>
-            <span class="tooltiptext">Display help information</span>
-          </span>
-          <span id="feedback-trigger" class="tooltip">
-            <span id="feedback-icon"></span>
-            <span class="tooltiptext">Send feedback</span>
-          </span>
-          <div class="header-spacer"></div>
-          <span id="recordinglabel"></span>
-          <span id="recordingswitch"></span>
-          <span id="scoreswitch"></span>
-          <span id="darkswitch"></span>
-        </header>
-        <div id="help" style="display: none;"></div>
-        <div id="feedback-modal" style="display: none;">
+      const help = document.getElementById("help")!;
+      help.setAttribute("style", "display: none;");
+      help.insertAdjacentHTML(
+        "afterend",
+        `<div id="feedback-modal" style="display: none;">
           <h2>Feedback</h2>
           <form id="feedback-form">
             <div id="feedback-rating">
@@ -47,35 +35,19 @@ describe("Feedback modal", () => {
             </div>
           </form>
           <div id="feedback-result" style="display: none;"></div>
-        </div>
-        <div class="split-container">
-          <music-score></music-score>
-          <div class="splitter"></div>
-          <music-canvas></music-canvas>
-        </div>
-        <div class="footer">
-          <music-controls></music-controls>
-          <music-canvas-watcher class="hide"></music-canvas-watcher>
-        </div>
-      </div>
-      <form name="feedback" netlify netlify-honeypot="bot-field" hidden>
-        <input type="hidden" name="bot-field" />
-        <input type="number" name="rating" />
-        <input type="hidden" name="context" />
-        <textarea name="message"></textarea>
-      </form>
-    `;
+        </div>`
+      );
 
-    await import("../ts/MusicCanvas");
-    await import("../ts/MusicScore");
-    await import("../ts/MusicControls");
-    await import("../ts/MusicCanvasWatcher");
-
-    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
-    vi.spyOn(HTMLMediaElement.prototype, "pause").mockReturnThis();
-
-    await import("../../index.ts");
-    window.dispatchEvent(new Event("load"));
+      document.body.insertAdjacentHTML(
+        "beforeend",
+        `<form name="feedback" netlify netlify-honeypot="bot-field" hidden>
+          <input type="hidden" name="bot-field" />
+          <input type="number" name="rating" />
+          <input type="hidden" name="context" />
+          <textarea name="message"></textarea>
+        </form>`
+      );
+    });
   }, 30000);
 
   afterAll(async () => {
