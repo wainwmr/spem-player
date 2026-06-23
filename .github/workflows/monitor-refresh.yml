@@ -1,0 +1,74 @@
+name: Monitor Refresh
+
+# Merge-time refresh of the build-usage series (#699), so the throttle gate
+# (Item #646) reacts to intra-day usage instead of waiting for the 02:29 UTC
+# daily run (monitor-run.yml). The hourly cap keys off the last series-update
+# commit, so it caps refreshes that CHANGE the series to one per hour; in a
+# flat-usage window (no series change, hence no commit) a merge may re-read the
+# APIs, which is cheap (rate-limit only, no build minutes).
+#
+# Loop-safe: the self-commit carries [skip ci], which suppresses the push
+# trigger that would otherwise re-run this workflow. A no-change run makes no
+# commit, so it cannot loop either.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.MONITOR_PUSH_TOKEN }}
+          # Full history so the once-per-hour cap below can find the last
+          # refresh commit with `git log --grep`. The checkout default
+          # (fetch-depth 1) would hide it and defeat the cap.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @spem/monitor
+
+      - name: Skip if refreshed in the last hour
+        id: recent
+        run: |
+          last=$(git log --format=%ct -1 --grep="chore: refresh build-usage series" || echo 0)
+          last=${last:-0}  # no match -> empty -> 0, so the arithmetic is explicit and set -u-safe
+          now=$(date +%s)
+          if (( now - last < 3600 )); then
+            echo "recent=true" >> "$GITHUB_OUTPUT"
+            echo "Skipping: refreshed within the last hour"
+          else
+            echo "recent=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Refresh usage series
+        if: steps.recent.outputs.recent == 'false'
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: pnpm --filter @spem/monitor exec node monitor-resources.mjs --refresh
+
+      - name: Commit refreshed series
+        if: steps.recent.outputs.recent == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/monitor-series.json
+          if git diff --cached --quiet; then
+            echo "No series changes to commit"
+            exit 0
+          fi
+          git commit --no-verify -m "chore: refresh build-usage series [skip ci]"
+          git push

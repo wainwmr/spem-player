@@ -15,7 +15,12 @@
  * actual and projected usage are below 75% (the watch threshold). Watch (≥ 75%),
  * throttle (≥ 82%), and critical (≥ 90%) alerts always send regardless of PR activity.
  *
- * Environment variables (all required):
+ * Run with `--refresh` for the lightweight merge-time path (#699): it refreshes
+ * today's series entry from the live APIs without rendering, Telegram, or
+ * critical-issue logic, so the throttle gate reads up-to-date usage intra-day.
+ * It needs only the Netlify and GitHub credentials, not the Telegram ones.
+ *
+ * Environment variables (all required for the daily run):
  *   NETLIFY_AUTH_TOKEN
  *   NETLIFY_SITE_ID
  *   TELEGRAM_BOT_TOKEN
@@ -936,14 +941,58 @@ export async function main(seriesFile = SERIES_FILE) {
   console.log(`monitor-resources: ${overallStatus} (Netlify ${netlifyPct}%, GitHub ${githubPct}%)`);
 }
 
-// Only run main() when invoked directly, not when imported by tests.
+/**
+ * Merge-time refresh of today's series entry (#699).
+ *
+ * Fetches current Netlify and GitHub usage, rebuilds today's summary, and
+ * upserts it into the series file — and nothing else. Unlike `main` it sends no
+ * Telegram message, renders no chart, opens no critical issue, and does not
+ * re-fetch the merged-PR count (it leaves `mergedPRs` at 0; the daily run sets
+ * the real count later, but only when it does not skip the report — see
+ * `shouldSkipReport`). Its single purpose is to keep the committed
+ * `overallStatus` fresh so the throttle gate reacts intra-day.
+ *
+ * Usage is fetched before the series is touched, so an API failure rejects
+ * without writing the file. Alerts are deliberately not dispatched on failure;
+ * the daily run owns alerting.
+ *
+ * @param {string} [seriesFile] - Series file path; defaults to `SERIES_FILE`.
+ * @returns {Promise<"good"|"watch"|"throttle"|"stop">} The new overall status.
+ */
+export async function refresh(seriesFile = SERIES_FILE) {
+  const netlify = await getNetlifyUsage();
+  const github = await getGitHubUsage();
+  const series = loadSeries(seriesFile);
+  const entry = buildLoggedEntry(todayISO(), netlify, github);
+  saveSeries(appendOrReplaceDay(series, entry), seriesFile);
+  // overallStatusName never returns null and buildLoggedEntry always populates
+  // summary, so overallStatus is one of the four status strings, never null.
+  const overallStatus = entry.summary.overallStatus;
+  console.log(`monitor-resources: refreshed ${overallStatus}`);
+  return overallStatus;
+}
+
+/**
+ * Select the CLI entrypoint from argv. `--refresh` runs the lightweight
+ * merge-time refresh; anything else runs the full daily monitor.
+ *
+ * @param {string[]} argv - Process argv (or any string array).
+ * @returns {"refresh"|"main"} Any argv lacking `--refresh` (including unknown
+ *   flags) routes to `main`.
+ */
+export function selectCommand(argv) {
+  return argv.includes("--refresh") ? "refresh" : "main";
+}
+
+// Only run a command when invoked directly, not when imported by tests.
 // realpathSync on both sides resolves symlinks so the comparison holds
 // when Node is launched via a symlinked path (macOS / nvm common case).
 const __filename = fileURLToPath(import.meta.url);
 const isMain =
   process.argv[1] && realpathSync(process.argv[1]) === realpathSync(__filename);
 if (isMain) {
-  main().catch((err) => {
+  const run = selectCommand(process.argv) === "refresh" ? refresh : main;
+  run().catch((err) => {
     console.error(err.message);
     process.exit(1);
   });

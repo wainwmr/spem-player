@@ -1,6 +1,6 @@
 import { test, after, describe } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, rmSync } from "fs";
+import { mkdtempSync, writeFileSync, rmSync, existsSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import {
@@ -36,6 +36,8 @@ import {
   sendTelegramPhoto,
   openIssue,
   main,
+  refresh,
+  selectCommand,
 } from "./monitor-resources.mjs";
 
 // projectedPct: linear burn-rate projection
@@ -1166,5 +1168,148 @@ describe("main", () => {
       m.restore();
       rmSync(tmp, { recursive: true, force: true });
     }
+  });
+});
+
+// --- refresh (#699) --------------------------------------------------------
+// The merge-time refresh path: fetch usage, upsert today's entry, and do
+// nothing else — no Telegram, no chart render, no critical issue, no PR-count
+// fetch. Clock-independent: GitHub usage is pinned to an actual breach (95% of
+// the 2000-minute budget), which is stop-level on any date.
+describe("refresh", () => {
+  test("upserts today's entry and suppresses Telegram/render/critical-issue at stop-level usage", async () => {
+    const tmp = mkdtempSync(join(tmpdir(), "monitor-refresh-"));
+    const seriesFile = join(tmp, "series.json");
+    const logs = [];
+    const origLog = console.log;
+    console.log = (msg) => logs.push(msg);
+    const m = startMock([
+      ["/sites/", () => res({ account_slug: "acct" })],
+      ["/builds/status", () =>
+        res({
+          minutes: {
+            current: 10,
+            included_minutes_with_packs: "300",
+            period_start_date: "2026-06-01",
+            period_end_date: "2026-06-30",
+          },
+        }),
+      ],
+      // 114000000 ms = 1900 min = 95% of the 2000-minute budget => stop on any date.
+      ["/actions/runs", () => res({ workflow_runs: [{ run_duration_ms: 114000000 }] })],
+    ]);
+    try {
+      const status = await refresh(seriesFile);
+      assert.equal(status, "stop");
+      const series = loadSeries(seriesFile);
+      assert.equal(series.length, 1);
+      assert.equal(series[0].date, todayISO());
+      assert.equal(series[0].summary.overallStatus, "stop");
+      assert.equal(series[0].source, "logged");
+      assert.equal(series[0].mergedPRs, 0); // refresh leaves the PR count for the daily run
+      // No alerting, rendering, critical-issue, or PR-count fetch on the merge path.
+      assert.ok(!m.calls.some((c) => /sendMessage|sendPhoto/.test(c.url)));
+      assert.ok(!m.calls.some((c) => /\/issues$/.test(c.url)));
+      assert.ok(!m.calls.some((c) => /search\/issues/.test(c.url)));
+      assert.ok(logs.some((msg) => /refreshed stop/.test(msg)));
+    } finally {
+      console.log = origLog;
+      m.restore();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  test("rejects on a Netlify API failure and does not write the series file", async () => {
+    const tmp = mkdtempSync(join(tmpdir(), "monitor-refresh-"));
+    const seriesFile = join(tmp, "series.json");
+    const m = startMock([
+      ["/sites/", () => res("netlify down", { ok: false, status: 500 })],
+    ]);
+    try {
+      await assert.rejects(() => refresh(seriesFile), /HTTP 500/);
+      assert.equal(existsSync(seriesFile), false);
+    } finally {
+      m.restore();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  test("rejects on a GitHub API failure (after Netlify succeeds) without writing the series", async () => {
+    const tmp = mkdtempSync(join(tmpdir(), "monitor-refresh-"));
+    const seriesFile = join(tmp, "series.json");
+    const m = startMock([
+      ["/sites/", () => res({ account_slug: "acct" })],
+      ["/builds/status", () =>
+        res({
+          minutes: {
+            current: 10,
+            included_minutes_with_packs: "300",
+            period_start_date: "2026-06-01",
+            period_end_date: "2026-06-30",
+          },
+        }),
+      ],
+      // Netlify has already succeeded; the GitHub leg fails before any write.
+      ["/actions/runs", () => res("gh down", { ok: false, status: 502 })],
+    ]);
+    try {
+      await assert.rejects(() => refresh(seriesFile), /HTTP 502/);
+      assert.equal(existsSync(seriesFile), false);
+    } finally {
+      m.restore();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  test("replaces an existing same-date entry rather than appending a duplicate", async () => {
+    const tmp = mkdtempSync(join(tmpdir(), "monitor-refresh-"));
+    const seriesFile = join(tmp, "series.json");
+    // Seed today's entry with a stale, different (good) status — the intra-day case.
+    const stale = {
+      date: todayISO(),
+      netlifyCurrent: 1,
+      githubMinutes: 1,
+      mergedPRs: 3,
+      summary: {
+        netlifyPct: 0, netlifyProjected: 0, netlifyStatus: "good",
+        githubPct: 0, githubProjected: 0, githubStatus: "good",
+        overallStatus: "good", mergedPRs: 3,
+      },
+      source: "logged",
+    };
+    writeFileSync(seriesFile, JSON.stringify([stale], null, 2) + "\n", "utf8");
+    const m = startMock([
+      ["/sites/", () => res({ account_slug: "acct" })],
+      ["/builds/status", () =>
+        res({
+          minutes: {
+            current: 10,
+            included_minutes_with_packs: "300",
+            period_start_date: "2026-06-01",
+            period_end_date: "2026-06-30",
+          },
+        }),
+      ],
+      ["/actions/runs", () => res({ workflow_runs: [{ run_duration_ms: 114000000 }] })],
+    ]);
+    try {
+      await refresh(seriesFile);
+      const series = loadSeries(seriesFile);
+      assert.equal(series.length, 1); // replaced today's entry, not appended
+      assert.equal(series[0].date, todayISO());
+      assert.equal(series[0].summary.overallStatus, "stop"); // overwritten with fresh status
+    } finally {
+      m.restore();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+});
+
+// --- selectCommand (#699) --------------------------------------------------
+describe("selectCommand", () => {
+  test("routes --refresh to refresh and anything else to main", () => {
+    assert.equal(selectCommand(["node", "monitor-resources.mjs", "--refresh"]), "refresh");
+    assert.equal(selectCommand(["node", "monitor-resources.mjs"]), "main");
+    assert.equal(selectCommand(["node", "monitor-resources.mjs", "--other"]), "main");
   });
 });
