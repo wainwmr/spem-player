@@ -67,7 +67,7 @@ If no SVGs changed, the job exits cleanly without committing.
 `.github/dependabot.yml` configures automated dependency update PRs:
 
 - **pnpm:** Weekly on Mondays at 09:00 UTC, targeting `main`. Related dependencies are grouped into single PRs (vite, vitest, build-tools, types-and-testing, ohm).
-- **GitHub Actions:** Monthly, targeting `main`.
+- **GitHub Actions:** Weekly on Mondays at 09:00 UTC, targeting `main`.
 
 Dependabot PRs are subject to the same `test` status check and ruleset requirements as human-authored PRs.
 
