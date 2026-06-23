@@ -348,6 +348,17 @@ music-score {
     top/25px 40% repeat-y;
 }
 
+// While dragging the splitter, pin the resize cursor across the whole window.
+// The score and canvas set their own `cursor: crosshair`, so they don't inherit
+// document.body's cursor when the pointer outpaces the clamped splitter onto
+// them (#709); the override must therefore land directly on every element under
+// the pointer — hence the universal selector and `!important` to beat their own
+// declared cursor. index.ts toggles the class while a drag is active.
+body.resizing-split,
+body.resizing-split * {
+  cursor: row-resize !important;
+}
+
 music-canvas {
   flex-grow: 1;
   cursor: crosshair;

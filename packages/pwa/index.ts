@@ -103,11 +103,29 @@ var current: State = {
 // -----------------------------------------------------
 splitter.addEventListener("mousedown", () => {
   isDragging = true;
-  document.body.style.cursor = "col.resize";
+  // Pin the resize cursor for the whole drag via a body class, not
+  // document.body.style.cursor: the score and canvas set their own
+  // `cursor: crosshair`, so they don't inherit the body cursor when the pointer
+  // outpaces the clamped splitter onto them. The `.resizing-split` rule in
+  // style.scss forces row-resize onto every element under the pointer (#709).
+  document.body.classList.add("resizing-split");
 });
+
+// End a splitter drag: drop the flag and the cursor-pinning class. Called from
+// mouseup, and from a button-less mousemove — a release outside the document
+// never sends us a mouseup, so the next in-window move with no button held is
+// our signal to clean up rather than leave the cursor stuck pinned (#709).
+function endDrag() {
+  isDragging = false;
+  document.body.classList.remove("resizing-split");
+}
 
 document.addEventListener("mousemove", (e) => {
   if (!isDragging) return;
+  if (e.buttons === 0) {
+    endDrag();
+    return;
+  }
   const containerRect = container?.getBoundingClientRect();
   if (!containerRect) return;
   let newHeight = e.clientY - containerRect.top;
@@ -115,10 +133,7 @@ document.addEventListener("mousemove", (e) => {
   score.style.height = `${newHeight}px`;
 });
 
-document.addEventListener("mouseup", () => {
-  isDragging = false;
-  document.body.style.cursor = "";
-});
+document.addEventListener("mouseup", endDrag);
 
 async function setChoir(c: number, forceChange = false) {
   if (current.choir == c && !forceChange) {
