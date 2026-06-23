@@ -92,13 +92,16 @@ updated SVGs, and the SVG commit then triggers Netlify.
 **Deploy preview:** Netlify posts a preview URL as a comment on each PR
 automatically.
 
-### `monitor-run.yml` and `monitor-ci.yml`
+### `monitor-run.yml`, `monitor-refresh.yml`, and `monitor-ci.yml`
 
 The build-resource monitor tracks Netlify and GitHub Actions usage, posts a daily
-burndown chart to Telegram, and opens a critical issue if usage nears quota. See
-[`doc/MONITOR.md`](./MONITOR.md) for the full monitor documentation, including
-status thresholds, workflow permissions, required secrets, and how to run the
-monitor locally.
+burndown chart to Telegram, and opens a critical issue if usage nears quota.
+`monitor-run.yml` is the daily run; `monitor-refresh.yml` re-reads usage on push
+to `main` (at most one series-changing refresh per hour; no Telegram, chart, or
+critical issue) so the throttle gate reacts to intra-day merges; `monitor-ci.yml`
+is the test gate for monitor changes. See [`doc/MONITOR.md`](./MONITOR.md) for the full monitor documentation,
+including status thresholds, workflow permissions, required secrets, and how to
+run the monitor locally.
 
 ## Node.js Version
 
