@@ -19,7 +19,7 @@ jobs:
       - run: pnpm run build
       - run: pnpm --filter @spem/pwa exec playwright install --with-deps
       - run: pnpm run e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report
