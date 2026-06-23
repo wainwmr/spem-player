@@ -89,19 +89,21 @@ export class Note extends Component {
   octave: string | null;
   slur: string | null;
 
-  constructor(
-    notename: string,
-    accidental: string | null,
-    octave: string | null,
-    duration: Duration,
-    slur: string | null
-  ) {
-    super(duration);
-    this.notename = notename;
-    this.accidental = accidental;
-    this.octave = octave;
-    this.duration = duration;
-    this.slur = slur;
+  // Named params, not positional: notename/accidental/octave/slur are adjacent
+  // string|null fields that positional args could silently transpose with no
+  // type error. Keep this keyed by name (#705).
+  constructor(params: {
+    notename: string;
+    accidental: string | null;
+    octave: string | null;
+    duration: Duration;
+    slur: string | null;
+  }) {
+    super(params.duration);
+    this.notename = params.notename;
+    this.accidental = params.accidental;
+    this.octave = params.octave;
+    this.slur = params.slur;
   }
 
   toString(showDuration = true) {

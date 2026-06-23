@@ -221,7 +221,13 @@ function setupLilypondParser(): LilypondSemantics {
       const d = duration.parse() as Duration;
       const s = slur.sourceString.length == 0 ? null : slur.sourceString;
 
-      const note = new Note(lastNote.notename, lastNote.accidental, "", d, s);
+      const note = new Note({
+        notename: lastNote.notename,
+        accidental: lastNote.accidental,
+        octave: "",
+        duration: d,
+        slur: s,
+      });
       return note;
     },
     note(notename, accidental, octave, _, duration, _2, slur) {
@@ -232,7 +238,13 @@ function setupLilypondParser(): LilypondSemantics {
       var d = getDuration(duration);
       const s = slur.sourceString.length == 0 ? null : slur.sourceString;
 
-      lastNote = new Note(n, a, o, d, s);
+      lastNote = new Note({
+        notename: n,
+        accidental: a,
+        octave: o,
+        duration: d,
+        slur: s,
+      });
       return lastNote;
     },
     rest(restname, duration) {
