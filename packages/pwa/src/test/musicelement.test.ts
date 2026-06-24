@@ -1,6 +1,21 @@
 import { MusicElement } from "../ts/MusicElement";
 import { MusicControls } from "../ts/MusicControls";
-import type { MusicEventDetail } from "../ts/common";
+import type { AssertNever, MusicEventDetail } from "../ts/common";
+
+// Compile-time exhaustiveness guard for the music-event typing (#716).
+// `AssertNever<T>` (common.ts) errors unless `T` is `never`. Applied here to a
+// local union and a local event map with a deliberately MISSING key, the
+// `Exclude` resolves to that missing key, the assertion errors, and the
+// suppression directive below absorbs it. If the guard mechanism ever stops
+// rejecting a missing key, that directive becomes unused and `tsc`
+// (check:types) fails -- the same compile-time-guard pattern as the #646
+// fireEvent test below and the #551 readonly-Range test in spem.test.ts. This
+// pins the mechanism that protects the real `MusicEventType` /
+// `HTMLElementEventMap` lockstep in common.ts.
+type _ProbeMap = { "music-mapped": CustomEvent<MusicEventDetail> };
+type _ProbeUnion = "music-mapped" | "music-unmapped";
+// @ts-expect-error -- "music-unmapped" has no _ProbeMap key, so Exclude is "music-unmapped", which violates AssertNever's `never` constraint (#716)
+type _ProbeExhaustive = AssertNever<Exclude<_ProbeUnion, keyof _ProbeMap>>;
 
 // Create a concrete subclass for testing
 class TestElement extends MusicElement {

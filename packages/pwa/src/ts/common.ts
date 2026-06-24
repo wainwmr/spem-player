@@ -67,6 +67,34 @@ declare global {
   }
 }
 
+/**
+ * Compile-time assertion that `T` is `never`. A non-`never` `T` fails the
+ * `extends never` constraint, so `tsc` errors at the instantiation site. It is a
+ * `type` alias (resolving to `void`), so it emits no runtime code. Shared so
+ * type-level guards (and their tests) can express "this set must be empty".
+ */
+export type AssertNever<_T extends never> = void;
+
+/**
+ * Compile-time exhaustiveness guard (#716): every `MusicEventType` member must
+ * have a matching key in the `HTMLElementEventMap` augmentation above, so a new
+ * event name cannot silently untype its listeners. If a member is added to the
+ * union without a map entry, `Exclude<...>` is that member (a string literal, not
+ * `never`) and `AssertNever` fails its `never` constraint, so `tsc`
+ * (check:types) errors here at the definition site. Type-only: no runtime output.
+ * The reverse direction (a map key with no union member) is not checkable here:
+ * `HTMLElementEventMap` is the global DOM event map, so `keyof` it spans every
+ * native event and the reverse `Exclude` is not an assertable-empty set. It is
+ * also low-harm, because `fireEvent`'s `MusicEventType` parameter rejects
+ * dispatching any name outside the union, so an orphan map key can never be fired.
+ *
+ * Exported (not a local alias) only so `noUnusedLocals` does not flag it; it is a
+ * guard, not a value to consume.
+ */
+export type MusicEventMapIsExhaustive = AssertNever<
+  Exclude<MusicEventType, keyof HTMLElementEventMap>
+>;
+
 export type Status = "playing" | "paused" | "loading";
 export type RecordingIndex = 0 | 1;
 
