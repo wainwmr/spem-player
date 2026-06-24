@@ -31,6 +31,23 @@ describe("keyboard shortcuts", () => {
     expect(controls.isPlaying()).toBe(false);
   });
 
+  it("NumpadEnter toggles play/pause when focus is on the document body (#711)", async () => {
+    const controls = document.querySelector("music-controls") as MusicControls;
+    controls.playing = false;
+
+    document.body.dispatchEvent(
+      new KeyboardEvent("keydown", { code: "NumpadEnter", bubbles: true })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(controls.isPlaying()).toBe(true);
+
+    document.body.dispatchEvent(
+      new KeyboardEvent("keydown", { code: "NumpadEnter", bubbles: true })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(controls.isPlaying()).toBe(false);
+  });
+
   it("Space does not toggle play/pause when an input element is focused", () => {
     const controls = document.querySelector("music-controls") as MusicControls;
     const input = document.createElement("input");
@@ -344,6 +361,22 @@ describe("keyboard shortcuts", () => {
       document.body.dispatchEvent(
         new KeyboardEvent("keydown", {
           code: "Enter",
+          bubbles: true,
+          repeat: true,
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(controls.isPlaying()).toBe(false);
+    });
+
+    it("held NumpadEnter does not toggle play/pause (#711)", async () => {
+      const controls = document.querySelector(
+        "music-controls"
+      ) as MusicControls;
+      controls.playing = false;
+      document.body.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          code: "NumpadEnter",
           bubbles: true,
           repeat: true,
         })
