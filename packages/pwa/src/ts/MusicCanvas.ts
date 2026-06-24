@@ -389,7 +389,7 @@ export class MusicCanvas extends MusicElement {
     const isLight = this.#isLightMode();
 
     // If there are notes starting now, record their onset and duration
-    const quant = Math.floor(this.bar * 16) / 16;
+    const quant = Math.floor(this.bar * 128) / 128;
     const notes = this.notesByQuant.get(quant);
     if (notes != undefined && notes.length > 0) {
       for (var n of notes) {
