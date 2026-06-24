@@ -1,6 +1,7 @@
 import { MusicCanvas } from "../ts/MusicCanvas";
 import config from "../ts/config";
 import type { Position } from "../ts/common";
+import { Duration, Note } from "../ts/music-classes";
 MusicCanvas.define("music-canvas");
 
 var canvas: MusicCanvas | null;
@@ -19,13 +20,17 @@ describe("MusicCanvas custom element", () => {
 
   // seek() tests overwrite choir ranges on the shared beforeAll canvas; snapshot
   // and restore the map per test so a fixture never leaks into a later test (#598).
+  // #704 also mutates notesByQuant, so snapshot that too.
   let savedRanges: NonNullable<typeof canvas>["ranges"];
+  let savedNotesByQuant: NonNullable<typeof canvas>["notesByQuant"];
   beforeEach(() => {
     savedRanges = new Map();
     for (const [key, value] of canvas!.ranges) savedRanges.set(key, [...value]);
+    savedNotesByQuant = canvas!.notesByQuant;
   });
   afterEach(() => {
     canvas!.ranges = savedRanges;
+    canvas!.notesByQuant = savedNotesByQuant;
   });
 
   it("Check that the canvasent contains a canvas", async () => {
@@ -1469,5 +1474,42 @@ describe("MusicCanvas custom element", () => {
     expect(canvas!.playLoopId).toBe(0);
 
     rafSpy.mockRestore();
+  });
+
+  it("pulses a note that onsets off the 1/16 grid (#704)", () => {
+    expect(canvas).not.toBeNull();
+
+    const onset = 0.03125; // 1/32 bar, between 1/16 quant points
+    const note = new Note("a", null, null, new Duration("16"), null);
+    canvas!.notesByQuant = new Map([[onset, [{ c: 0, p: 0, n: note }]]]);
+    canvas!.bar = onset;
+    canvas!.draw();
+
+    expect(canvas!.lastNoteStart[0][0]).toBe(onset);
+    expect(canvas!.lastNoteDuration[0][0]).toBe(4 / 128);
+    expect(canvas!.pulses[0][0]).not.toBe(1);
+  });
+
+  it("still pulses notes on 1/16 and whole-bar boundaries after the finer quant (#704)", () => {
+    expect(canvas).not.toBeNull();
+
+    const note16 = new Note("b", null, null, new Duration("16"), null);
+    const noteWhole = new Note("c", null, null, new Duration("1"), null);
+    canvas!.notesByQuant = new Map([
+      [0.0625, [{ c: 0, p: 1, n: note16 }]],
+      [2.0, [{ c: 1, p: 2, n: noteWhole }]],
+    ]);
+
+    canvas!.bar = 0.0625;
+    canvas!.draw();
+    expect(canvas!.lastNoteStart[0][1]).toBe(0.0625);
+    expect(canvas!.lastNoteDuration[0][1]).toBe(4 / 128);
+    expect(canvas!.pulses[0][1]).not.toBe(1);
+
+    canvas!.bar = 2.0;
+    canvas!.draw();
+    expect(canvas!.lastNoteStart[1][2]).toBe(2.0);
+    expect(canvas!.lastNoteDuration[1][2]).toBe(64 / 128);
+    expect(canvas!.pulses[1][2]).not.toBe(1);
   });
 });
