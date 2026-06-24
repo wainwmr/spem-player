@@ -92,9 +92,10 @@ Choosing the right layer keeps the suite fast and deterministic.
 - `AudioContext` (not implemented)
 - canvas pixel output (the `canvas` package provides the API but not pixel-perfect browser rendering)
 - CSS-triggered behaviour (no layout engine)
+- computed CSS properties and cascade effects (specificity, inheritance, `!important`) — jsdom stores inline style strings but does not compute the cascade, so `style.*` can pass while the rendered result is wrong; use Playwright `getComputedStyle` / `elementFromPoint` / `toHaveCSS`
 - real timer execution inside DOM event handlers (`vi.useFakeTimers()` does not intercept `setTimeout` scheduled by jsdom's internal event loop)
 
-If a test needs any of the above, it belongs in the E2E layer.
+If a test needs any of the above, it belongs in the E2E layer. For the computed-CSS / cascade case, the reusable assertions in `packages/pwa/e2e/helpers/computed-style.ts` (`expectComputedStyle`, `expectElementFromPointStyle`, `assertReadableInMode`) are the test-of-record pattern — import them rather than re-deriving the `getComputedStyle` boilerplate.
 
 ## CI Behaviour
 
