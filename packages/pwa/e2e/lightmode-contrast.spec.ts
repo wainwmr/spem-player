@@ -1,4 +1,8 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import {
+  getComputedStyleValue,
+  expectComputedStyleNot,
+} from "./helpers/computed-style";
 
 const selectors = [
   ["#test-help-link", "help link"],
@@ -6,18 +10,6 @@ const selectors = [
   ['#feedback-cancel[type="button"]', "feedback cancel button"],
   ["label[for='star1']", "star rating label"],
 ] as const;
-
-async function elementColours(page: Page) {
-  return page.evaluate(
-    (sel) =>
-      sel.map((s) => {
-        const el = document.querySelector(s);
-        if (!el) throw new Error(`selector matched nothing: ${s}`);
-        return window.getComputedStyle(el).color;
-      }),
-    selectors.map(([s]) => s)
-  );
-}
 
 test.describe("Light mode contrast", () => {
   test.beforeEach(async ({ page }) => {
@@ -53,15 +45,11 @@ test.describe("Light mode contrast", () => {
     await expect(body).toHaveClass(/light-theme/);
 
     for (const [selector, name] of selectors) {
-      const locator = page.locator(selector).first();
-      await expect(locator).toBeVisible();
-
-      const colour = await locator.evaluate(
-        (el) => window.getComputedStyle(el).color
-      );
-      expect(colour, `${name} colour in light mode`).not.toBe(
-        "rgb(255, 255, 255)"
-      );
+      await expect(page.locator(selector).first()).toBeVisible();
+      // Real-browser computed read (#714 helper): jsdom would not resolve the
+      // `#help a` cascade. `name` scopes the failure in the trace.
+      await test.step(`${name} colour in light mode`, () =>
+        expectComputedStyleNot(page, selector, "color", "rgb(255, 255, 255)"));
     }
   });
 
@@ -69,12 +57,23 @@ test.describe("Light mode contrast", () => {
     page,
   }) => {
     const body = page.locator("body");
-    const darkColours = await elementColours(page);
+    const readColours = () =>
+      Promise.all(
+        selectors.map(([s]) => getComputedStyleValue(page, s, "color"))
+      );
+
+    // Guard before the bulk read so a dropped fixture fails fast and names the
+    // selector, rather than waiting out a generic locator timeout.
+    for (const [selector, name] of selectors) {
+      await expect(page.locator(selector).first(), name).toBeVisible();
+    }
+
+    const darkColours = await readColours();
 
     await page.locator("#darkswitch").click();
     await expect(body).toHaveClass(/light-theme/);
 
-    const lightColours = await elementColours(page);
+    const lightColours = await readColours();
 
     expect(lightColours).toEqual(darkColours);
   });
