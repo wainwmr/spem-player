@@ -1,0 +1,69 @@
+name: Reset spine label on issue close
+
+# The .WSx spine label is a computed projection of board ground truth, repainted
+# by agent methods as a ticket moves through the active flow (.WS0 -> .WS3). The
+# terminal transition (a PR merge auto-closing the ticket, or a maintainer close)
+# is triggered by GitHub with no agent in the loop, so the spine drifts until a
+# later audit. This workflow paints the terminal spine at close time instead.
+# See ticket #674 for the rationale.
+
+on:
+  issues:
+    types: [closed]
+
+permissions:
+  issues: write
+
+jobs:
+  reset-spine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compute and apply terminal spine label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+
+          # Terminal spine from the close reason: COMPLETED -> .WS4 (merged /
+          # done); anything else (NOT_PLANNED, DUPLICATE, or an unrecognised /
+          # missing reason) -> .WS9. Never assume merged. `gh issue view` returns
+          # stateReason UPPERCASE, hence the COMPLETED literal -- do not lowercase.
+          reason=$(gh issue view "$ISSUE_NUMBER" --json stateReason --jq '.stateReason')
+          if [ "$reason" = "COMPLETED" ]; then
+            target=".WS4"
+          else
+            target=".WS9"
+          fi
+
+          # Read only single-digit .WSn labels (the live spine set is .WS0-.WS4
+          # and .WS9). Trust labels (vera.../UI...) and flags never match, so they
+          # are left untouched. No `|| true`: jq emits nothing (exit 0) when a
+          # ticket has no spine label, so a non-zero exit is a real gh failure and
+          # should abort under set -e rather than be read as "no spine".
+          current=$(gh issue view "$ISSUE_NUMBER" --json labels \
+            --jq '.labels[].name | select(test("^[.]WS[0-9]$"))')
+
+          # Diff to the target: drop every other spine, add the target if absent.
+          # Idempotent -- an already-correct ticket yields no edit.
+          have_target=0
+          args=()
+          while IFS= read -r label; do
+            [ -z "$label" ] && continue
+            if [ "$label" = "$target" ]; then
+              have_target=1
+            else
+              args+=(--remove-label "$label")
+            fi
+          done <<< "$current"
+          if [ "$have_target" -eq 0 ]; then
+            args+=(--add-label "$target")
+          fi
+
+          if [ ${#args[@]} -gt 0 ]; then
+            gh issue edit "$ISSUE_NUMBER" "${args[@]}"
+            echo "Issue #$ISSUE_NUMBER spine -> $target"
+          else
+            echo "Issue #$ISSUE_NUMBER spine already $target; no change"
+          fi
