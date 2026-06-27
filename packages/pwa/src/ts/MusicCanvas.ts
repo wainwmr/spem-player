@@ -491,8 +491,7 @@ export class MusicCanvas extends MusicElement {
     ctx.lineCap = "round";
     for (var c = 0; c < config.choirs[0].length; c++) {
       for (var p = 0; p < config.parts.length; p++) {
-        const startY =
-          this.canvasPadding + c * this.choirHeight + p * this.partHeight;
+        const Y = this.#partRowCenterY(c, p);
 
         const list = this.ranges.get(`${c}-${p}`)!;
         list.forEach((r) => {
@@ -502,7 +501,6 @@ export class MusicCanvas extends MusicElement {
           ctx.beginPath();
           const startX = this.canvasPadding + (from + 0.3) * this.barWidth;
           const endX = this.canvasPadding + (to - 0.3) * this.barWidth;
-          const Y = startY + this.partHeight / 2;
           ctx.moveTo(startX, Y);
           ctx.lineTo(endX, Y);
 
@@ -554,6 +552,47 @@ export class MusicCanvas extends MusicElement {
     ctx.fillText(`FPS: ${this.fpsValue}`, 10, this.canvas!.height - 10);
   }
 
+  #partRowCenterY(c: number, p: number): number {
+    return (
+      this.canvasPadding +
+      c * this.choirHeight +
+      p * this.partHeight +
+      this.partHeight / 2
+    );
+  }
+
+  #drawFalseRelationGlow(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    radius: number,
+    hue: number,
+    lightness: number,
+    centerAlpha: number,
+    midStop: number,
+    midAlphaFactor: number
+  ) {
+    const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    gradient.addColorStop(
+      0,
+      `hsla(${hue}, ${MusicCanvas.FR_HOTSPOT_SATURATION}%, ${lightness}%, ${centerAlpha})`
+    );
+    gradient.addColorStop(
+      midStop,
+      `hsla(${hue}, ${MusicCanvas.FR_HOTSPOT_SATURATION}%, ${lightness}%, ${
+        centerAlpha * midAlphaFactor
+      })`
+    );
+    gradient.addColorStop(
+      1,
+      `hsla(${hue}, ${MusicCanvas.FR_HOTSPOT_SATURATION}%, ${lightness}%, 0)`
+    );
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   #drawFalseRelationHotspot(ctx: CanvasRenderingContext2D) {
     const shimmerTime = Date.now() / 1000;
     for (let i = 0; i < this.frLocations.length; i++) {
@@ -565,32 +604,22 @@ export class MusicCanvas extends MusicElement {
         MusicCanvas.FR_HOTSPOT_ALPHA_RANGE *
           Math.sin(shimmerTime * MusicCanvas.FR_HOTSPOT_SHIMMER_SPEED + phase);
 
-      const startY =
-        this.canvasPadding + loc.c * this.choirHeight + loc.p * this.partHeight;
-      const cy = startY + this.partHeight / 2;
+      const cy = this.#partRowCenterY(loc.c, loc.p);
       const hue = colors().choir[loc.c];
       const lightness = this.#getHotspotLightness(loc.c, loc.p);
 
       const radius = this.partHeight * MusicCanvas.FR_HOTSPOT_RADIUS_MULTIPLIER;
-      const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-      gradient.addColorStop(
-        0,
-        `hsla(${hue}, ${MusicCanvas.FR_HOTSPOT_SATURATION}%, ${lightness}%, ${alpha})`
-      );
-      gradient.addColorStop(
+      this.#drawFalseRelationGlow(
+        ctx,
+        cx,
+        cy,
+        radius,
+        hue,
+        lightness,
+        alpha,
         MusicCanvas.FR_HOTSPOT_GRADIENT_MID_STOP,
-        `hsla(${hue}, ${MusicCanvas.FR_HOTSPOT_SATURATION}%, ${lightness}%, ${
-          alpha * MusicCanvas.FR_HOTSPOT_GRADIENT_MID_ALPHA_FACTOR
-        })`
+        MusicCanvas.FR_HOTSPOT_GRADIENT_MID_ALPHA_FACTOR
       );
-      gradient.addColorStop(
-        1,
-        `hsla(${hue}, ${MusicCanvas.FR_HOTSPOT_SATURATION}%, ${lightness}%, 0)`
-      );
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      ctx.fill();
     }
   }
 
@@ -602,9 +631,7 @@ export class MusicCanvas extends MusicElement {
       const loc = this.frLocations[i];
       const cx = this.canvasPadding + ((loc.from + loc.to) / 2) * this.barWidth;
 
-      const startY =
-        this.canvasPadding + loc.c * this.choirHeight + loc.p * this.partHeight;
-      const cy = startY + this.partHeight / 2;
+      const cy = this.#partRowCenterY(loc.c, loc.p);
 
       const radius =
         this.partHeight * MusicCanvas.FR_PULSE_RADIUS_MULTIPLIER * pulse;
@@ -614,25 +641,17 @@ export class MusicCanvas extends MusicElement {
         MusicCanvas.FR_PULSE_MAX_ALPHA,
         pulse * MusicCanvas.FR_PULSE_ALPHA_FACTOR
       );
-      const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-      gradient.addColorStop(
-        0,
-        `hsla(${hue}, ${MusicCanvas.FR_HOTSPOT_SATURATION}%, ${lightness}%, ${centerAlpha})`
-      );
-      gradient.addColorStop(
+      this.#drawFalseRelationGlow(
+        ctx,
+        cx,
+        cy,
+        radius,
+        hue,
+        lightness,
+        centerAlpha,
         MusicCanvas.FR_PULSE_GRADIENT_MID_STOP,
-        `hsla(${hue}, ${MusicCanvas.FR_HOTSPOT_SATURATION}%, ${lightness}%, ${
-          centerAlpha * MusicCanvas.FR_PULSE_GRADIENT_MID_ALPHA_FACTOR
-        })`
+        MusicCanvas.FR_PULSE_GRADIENT_MID_ALPHA_FACTOR
       );
-      gradient.addColorStop(
-        1,
-        `hsla(${hue}, ${MusicCanvas.FR_HOTSPOT_SATURATION}%, ${lightness}%, 0)`
-      );
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      ctx.fill();
     }
   }
 
@@ -653,28 +672,58 @@ export class MusicCanvas extends MusicElement {
     return (baseLight + 50) % 100;
   }
 
-  #getMousePos(e: MouseEvent): Position {
+  // Shared mouse/touch projection. `x`/`y` are element-local CSS pixels. The
+  // canvas is drawn at 4000x1000 internal pixels with a fixed `canvasPadding`,
+  // then scaled to fit its CSS box, so the padding must be scaled into CSS
+  // pixels on BOTH axes to invert the drawing faithfully. Scaling only X (the
+  // #204 fix) left the Y mapping inconsistent on short viewports — a tap toward
+  // the top or bottom of a short viewport could resolve to the wrong row (the
+  // two mappings coincide at the exact centre and diverge toward the edges);
+  // scaling Y as well is the Y-twin of that fix (refactor item 12).
+  #projectToPosition(
+    x: number,
+    y: number,
+    partResolver: (rowFraction: number) => PartType
+  ): Position {
     const rect = this.getBoundingClientRect();
-    const cssPadding = this.canvasPadding * (rect.width / this.canvas!.width);
+    const cssPaddingX = this.canvasPadding * (rect.width / this.canvas!.width);
+    const cssPaddingY =
+      this.canvasPadding * (rect.height / this.canvas!.height);
+    const drawableWidth = rect.width - 2 * cssPaddingX;
+    const drawableHeight = rect.height - 2 * cssPaddingY;
+    // A zero-area or unmeasured canvas has no meaningful position: the
+    // divisions below would yield NaN, which would flow into the public
+    // position event and silently corrupt state. Production CSS min-height
+    // keeps this unreachable; the guard returns the origin rather than NaN.
+    if (drawableWidth <= 0 || drawableHeight <= 0) {
+      return { choir: 0, part: partResolver(0), bar: 0 };
+    }
     const clampedX = Math.max(
-      cssPadding,
-      Math.min(e.offsetX, rect.width - cssPadding)
+      cssPaddingX,
+      Math.min(x, rect.width - cssPaddingX)
     );
     const clampedY = Math.max(
-      this.canvasPadding,
-      Math.min(e.offsetY, rect.height - this.canvasPadding)
+      cssPaddingY,
+      Math.min(y, rect.height - cssPaddingY)
     );
-    const y =
-      ((clampedY - this.canvasPadding) * config.choirs[0].length) /
-      (rect.height - 2 * this.canvasPadding);
-    const drawableWidth = rect.width - 2 * cssPadding;
+    const rowFraction =
+      ((clampedY - cssPaddingY) * config.choirs[0].length) / drawableHeight;
     return {
-      choir: Math.min(config.choirs[0].length - 1, Math.max(0, Math.floor(y))),
-      part: Math.floor((y % 1) * config.parts.length),
+      choir: Math.min(
+        config.choirs[0].length - 1,
+        Math.max(0, Math.floor(rowFraction))
+      ),
+      part: partResolver(rowFraction),
       bar: Math.floor(
-        ((clampedX - cssPadding) * this.barCount) / drawableWidth
+        ((clampedX - cssPaddingX) * this.barCount) / drawableWidth
       ),
     };
+  }
+
+  #getMousePos(e: MouseEvent): Position {
+    return this.#projectToPosition(e.offsetX, e.offsetY, (rowFraction) =>
+      Math.floor((rowFraction % 1) * config.parts.length)
+    );
   }
 
   #moveToPosition(pos: Position) {
@@ -694,37 +743,18 @@ export class MusicCanvas extends MusicElement {
   }
 
   #getTouchPos(e: TouchEvent): Position {
-    var rect = this.getBoundingClientRect();
+    const rect = this.getBoundingClientRect();
     // changedTouches, not targetTouches: targetTouches is filtered to
     // touches still on the target element, so it is empty once the
     // finger drags off the canvas — which used to crash this getter.
     // changedTouches contains the touch that triggered the event
     // regardless of whether it remains within the target's bounds,
     // and is guaranteed non-empty for touchstart/move/end/cancel.
-    // The clamp below pins out-of-bounds drags to the canvas edge.
+    // The clamp in #projectToPosition pins out-of-bounds drags to the edge.
     const touchX = e.changedTouches[0].clientX - rect.left;
     const touchY = e.changedTouches[0].clientY - rect.top;
-    const cssPadding = this.canvasPadding * (rect.width / this.canvas!.width);
-    const clampedX = Math.max(
-      cssPadding,
-      Math.min(touchX, rect.width - cssPadding)
-    );
-    const clampedY = Math.max(
-      this.canvasPadding,
-      Math.min(touchY, rect.height - this.canvasPadding)
-    );
-
-    const y =
-      ((clampedY - this.canvasPadding) * config.choirs[0].length) /
-      (rect.height - 2 * this.canvasPadding);
-    const drawableWidth = rect.width - 2 * cssPadding;
-    return {
-      choir: Math.min(config.choirs[0].length - 1, Math.max(0, Math.floor(y))),
-      part: "all",
-      bar: Math.floor(
-        ((clampedX - cssPadding) * this.barCount) / drawableWidth
-      ),
-    };
+    // Touch deliberately resolves to the whole choir (`part: "all"`, see #327).
+    return this.#projectToPosition(touchX, touchY, () => "all");
   }
 
   #touchStarted(e: TouchEvent) {
