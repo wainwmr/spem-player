@@ -1,6 +1,6 @@
 import { MusicCanvas } from "../ts/MusicCanvas";
 import config from "../ts/config";
-import type { Position } from "../ts/common";
+import { colors, type Position } from "../ts/common";
 import { Duration, Note } from "../ts/music-classes";
 MusicCanvas.define("music-canvas");
 
@@ -1511,5 +1511,300 @@ describe("MusicCanvas custom element", () => {
     expect(canvas!.lastNoteStart[1][2]).toBe(2.0);
     expect(canvas!.lastNoteDuration[1][2]).toBe(64 / 128);
     expect(canvas!.pulses[1][2]).not.toBe(1);
+  });
+
+  // ====================================================================
+  // #650 — shared draw/projection helpers + Y-padding fix
+  //
+  // The refactor extracts three #-private helpers (#projectToPosition,
+  // #drawFalseRelationGlow, #partRowCenterY) and, in the projection, aligns
+  // the Y padding with X (the Y-twin of the #204 X fix). The helpers are
+  // unreachable directly, so each test drives them through the public surface
+  // (dispatched events; the mocked 2D context); the per-test comments carry
+  // the load-bearing detail. The short-viewport tests pin the Y fix — they
+  // fail on the old unscaled-Y mapping.
+  // ====================================================================
+
+  const makeRect = (width: number, height: number) => () =>
+    ({
+      width,
+      height,
+      top: 0,
+      left: 0,
+      right: width,
+      bottom: height,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    }) as DOMRect;
+
+  async function clickAt(
+    offsetX: number,
+    offsetY: number,
+    width = 1400,
+    height = 400
+  ): Promise<Position> {
+    const promise = new Promise<CustomEvent>((resolve) => {
+      canvas!.addEventListener(
+        "music-canvas-click",
+        (e) => resolve(e as CustomEvent),
+        { once: true }
+      );
+    });
+    canvas!.getBoundingClientRect = vi.fn(makeRect(width, height));
+    const ev = new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+      clientX: offsetX,
+      clientY: offsetY,
+    });
+    Object.defineProperty(ev, "offsetX", { value: offsetX });
+    Object.defineProperty(ev, "offsetY", { value: offsetY });
+    canvas!.querySelector("canvas")!.dispatchEvent(ev);
+    return (await promise).detail.position;
+  }
+
+  async function touchAt(
+    clientX: number,
+    clientY: number,
+    width = 1400,
+    height = 400
+  ): Promise<Position> {
+    const promise = new Promise<CustomEvent>((resolve) => {
+      canvas!.addEventListener(
+        "music-canvas-touchstart",
+        (e) => resolve(e as CustomEvent),
+        { once: true }
+      );
+    });
+    canvas!.getBoundingClientRect = vi.fn(makeRect(width, height));
+    const innerCanvas = canvas!.querySelector("canvas")!;
+    const touch = { clientX, clientY, identifier: 0, target: innerCanvas };
+    const ev = new Event("touchstart", { bubbles: true, cancelable: true });
+    Object.defineProperty(ev, "targetTouches", { value: [touch] });
+    Object.defineProperty(ev, "changedTouches", { value: [touch] });
+    Object.defineProperty(ev, "preventDefault", { value: vi.fn() });
+    innerCanvas.dispatchEvent(ev);
+    return (await promise).detail.position;
+  }
+
+  // The part-row centre formula, re-derived from the public size fields. This
+  // is exactly what #partRowCenterY must compute; asserting draw() output
+  // against it pins every call site to the same formula.
+  const partRowCenterY = (c: number, p: number) =>
+    canvas!.canvasPadding +
+    c * canvas!.choirHeight +
+    p * canvas!.partHeight +
+    canvas!.partHeight / 2;
+
+  it("projects representative mouse coordinates to the expected choir/part/bar (#650)", async () => {
+    // choir/part depend only on constants (padding + grid sizes) so they are
+    // pinned exactly; bar uses barCount-robust coordinates — left edge -> 0,
+    // right edge -> barCount, x = width/2 -> floor(barCount/2) (the centre
+    // identity is exact regardless of padding). On a 1400x400 rect these
+    // three points sit at the clamp extremes and a stable interior row, so
+    // they are unaffected by the Y-padding scaling — they characterise the
+    // de-dup; the short-viewport tests below characterise the Y fix.
+    const mid = Math.floor(canvas!.barCount / 2);
+    expect(await clickAt(0, 2)).toEqual({ choir: 0, part: 0, bar: 0 });
+    expect(await clickAt(700, 175)).toEqual({ choir: 3, part: 2, bar: mid });
+    expect(await clickAt(1400, 398)).toEqual({
+      choir: 7,
+      part: 0,
+      bar: canvas!.barCount,
+    });
+  });
+
+  it("projects representative touch coordinates, resolving part to 'all' (#650)", async () => {
+    const mid = Math.floor(canvas!.barCount / 2);
+    expect(await touchAt(0, 2)).toEqual({ choir: 0, part: "all", bar: 0 });
+    expect(await touchAt(700, 175)).toEqual({
+      choir: 3,
+      part: "all",
+      bar: mid,
+    });
+    expect(await touchAt(1400, 398)).toEqual({
+      choir: 7,
+      part: "all",
+      bar: canvas!.barCount,
+    });
+  });
+
+  it("corrects the click row mapping on a short viewport — the #204 Y-twin (#650)", async () => {
+    // The canvas is drawn at 1000 internal px high with padding 5, scaled to
+    // the CSS box. On a 150px-tall canvas the drawn rows have padding
+    // 5*150/1000 = 0.75 CSS px, so a click at y=50 falls on choir 2 / part 3.
+    // The old unscaled-Y mapping used padding 5 and returned part 2 — a real
+    // wrong-result toward the top of a short viewport (the two mappings
+    // coincide at the exact centre and diverge toward the edges). Scaling Y
+    // restores the drawn mapping. (x = width/2 -> floor(barCount/2), unaffected.)
+    const mid = Math.floor(canvas!.barCount / 2);
+    expect(await clickAt(700, 50, 1400, 150)).toEqual({
+      choir: 2,
+      part: 3,
+      bar: mid,
+    });
+  });
+
+  it("corrects the touch row mapping on a short viewport (#650)", async () => {
+    // Touch hard-codes part "all" (#327), so the Y fix shows up on the CHOIR
+    // here, not the part: on a 150px-tall canvas a tap at y=38 falls on the
+    // drawn choir 2, but the old unscaled-Y mapping returned choir 1.
+    const mid = Math.floor(canvas!.barCount / 2);
+    expect(await touchAt(700, 38, 1400, 150)).toEqual({
+      choir: 2,
+      part: "all",
+      bar: mid,
+    });
+  });
+
+  it("returns the origin (no NaN) for a degenerate zero-area canvas (#650)", async () => {
+    // A zero-height (or zero-width, or unmeasured) canvas has no drawable
+    // area, so the projection's divisions would yield NaN, which would flow
+    // into the public position event. #projectToPosition's guard returns the
+    // origin instead. Production CSS min-height keeps this unreachable, but the
+    // guard stops a degenerate rect silently corrupting the committed position
+    // (the old code emitted {choir: NaN, part: NaN}).
+    expect(await clickAt(100, 50, 1400, 0)).toEqual({
+      choir: 0,
+      part: 0,
+      bar: 0,
+    });
+    expect(await touchAt(100, 50, 0, 400)).toEqual({
+      choir: 0,
+      part: "all",
+      bar: 0,
+    });
+  });
+
+  it("draws both false-relation glows as a 3-stop radial gradient centred on the part row (#650)", () => {
+    expect(canvas).not.toBeNull();
+    const frs = canvas!.frLocations;
+    expect(frs.length).toBeGreaterThan(0);
+
+    const ctx = canvas!.canvas!.getContext("2d")!;
+    // Record each radial gradient's centre/radius, the offsets of its colour
+    // stops, and the colour string at each stop. createRadialGradient is
+    // reached only via the two FR draw methods (through the shared glow
+    // helper) — hotspots first (one per FR location, always drawn) then pulses
+    // (only for lit locations). Pass through to the real gradient so fillStyle
+    // assignment still works.
+    const origCreate = ctx.createRadialGradient.bind(ctx);
+    const records: {
+      cy: number;
+      radius: number;
+      offsets: number[];
+      colors: string[];
+    }[] = [];
+    const gradSpy = vi
+      .spyOn(ctx, "createRadialGradient")
+      .mockImplementation(
+        (...args: Parameters<typeof origCreate>): CanvasGradient => {
+          const grad = origCreate(...args);
+          const rec = {
+            cy: args[1],
+            radius: args[5],
+            offsets: [] as number[],
+            colors: [] as string[],
+          };
+          records.push(rec);
+          const origAdd = grad.addColorStop.bind(grad);
+          grad.addColorStop = (offset: number, color: string) => {
+            rec.offsets.push(offset);
+            rec.colors.push(color);
+            origAdd(offset, color);
+          };
+          return grad;
+        }
+      );
+
+    try {
+      // Light the first FR location's playback pulse by parking the bar on its
+      // start: #updatePulses sets falseRelationPulses[0] = sqrt(1 - 0) = 1.
+      canvas!.bar = frs[0].from;
+      canvas!.draw();
+    } finally {
+      gradSpy.mockRestore();
+    }
+
+    // Hotspots: the first frs.length gradients, one per location, each a
+    // 3-stop gradient with the hotspot mid-stop, centred on the part-row
+    // centre and sized by the hotspot radius multiplier.
+    const parseHsla = (s: string) => {
+      const m =
+        /^hsla\(([-\d.]+),\s*([-\d.]+)%,\s*([-\d.]+)%,\s*([-\d.]+)\)$/.exec(s);
+      if (!m) throw new Error(`unparseable hsla: ${s}`);
+      return { h: +m[1], s: +m[2], l: +m[3], a: +m[4] };
+    };
+    for (let i = 0; i < frs.length; i++) {
+      const rec = records[i];
+      expect(rec.offsets).toEqual([
+        0,
+        MusicCanvas.FR_HOTSPOT_GRADIENT_MID_STOP,
+        1,
+      ]);
+      expect(rec.cy).toBeCloseTo(partRowCenterY(frs[i].c, frs[i].p), 6);
+      expect(rec.radius).toBeCloseTo(
+        canvas!.partHeight * MusicCanvas.FR_HOTSPOT_RADIUS_MULTIPLIER,
+        6
+      );
+      // Colour: the hue is the choir's hue, the saturation the hotspot
+      // constant, and the alpha falls from centre, to centre*midFactor, to 0
+      // across the three stops. This catches a hue/lightness swap, a dropped
+      // mid-alpha factor, or a non-transparent edge — none of which move the
+      // offsets/cy/radius asserted above.
+      const [centre, mid, edge] = rec.colors.map(parseHsla);
+      expect(centre.h).toBe(Number(colors().choir[frs[i].c]));
+      expect(centre.s).toBe(MusicCanvas.FR_HOTSPOT_SATURATION);
+      expect(mid.h).toBe(centre.h);
+      expect(mid.l).toBe(centre.l);
+      expect(mid.a).toBeCloseTo(
+        centre.a * MusicCanvas.FR_HOTSPOT_GRADIENT_MID_ALPHA_FACTOR,
+        6
+      );
+      expect(edge.a).toBe(0);
+    }
+
+    // Pulses: every gradient after the hotspot block uses the pulse mid-stop.
+    // At least one is lit by the bar we parked.
+    expect(records.length).toBeGreaterThan(frs.length);
+    for (let i = frs.length; i < records.length; i++) {
+      expect(records[i].offsets).toEqual([
+        0,
+        MusicCanvas.FR_PULSE_GRADIENT_MID_STOP,
+        1,
+      ]);
+    }
+  });
+
+  it("centres voice-part strokes on the part-row centre formula (#650)", () => {
+    expect(canvas).not.toBeNull();
+    // Seed known ranges at two corners so a moveTo is issued at each row's
+    // centre (the per-test ranges snapshot is restored by afterEach).
+    canvas!.ranges.set("0-0", [{ from: 10, to: 20 }]);
+    canvas!.ranges.set("7-4", [{ from: 30, to: 40 }]);
+
+    const ctx = canvas!.canvas!.getContext("2d")!;
+    const moveYs: number[] = [];
+    const moveSpy = vi
+      .spyOn(ctx, "moveTo")
+      .mockImplementation((_x: number, y: number) => {
+        moveYs.push(y);
+      });
+    try {
+      canvas!.voicePart = "all";
+      canvas!.choir = 0;
+      canvas!.bar = 15;
+      canvas!.draw();
+    } finally {
+      moveSpy.mockRestore();
+    }
+
+    // Tolerance-based (not exact-float equality) so the assertion tracks the
+    // drawn centre rather than the precise operand order of the formula.
+    const drawn = (target: number) =>
+      moveYs.some((y) => Math.abs(y - target) < 1e-6);
+    expect(drawn(partRowCenterY(0, 0))).toBe(true);
+    expect(drawn(partRowCenterY(7, 4))).toBe(true);
   });
 });
