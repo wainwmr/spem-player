@@ -84,7 +84,10 @@ export interface Colors {
   background: string;
   highlight: string;
   scoreHighlight: string;
-  choir: number[]; // Choir color hues
+  // One HSL hue per choir, indexed from 0 (entry i is choir i+1). Length
+  // equals config.choirs[0].length (asserted at module load); values mirror
+  // config.choirHues and the SCSS --color-c1..c8. Hue is the HSL degree.
+  choir: readonly number[];
 }
 
 export type Config = {
@@ -96,48 +99,71 @@ export type Config = {
   lilypond: string;
 };
 
-// Fallback colour set used only when the stylesheet's CSS custom
-// properties are absent (typically in unit tests or before the
-// stylesheet has loaded). The hues here are copied from config so
-// callers cannot mutate the canonical config array through
-// `colors().choir`. NOTE: in production the CSS-present branch below
-// is taken — `config.choirHues` is the source of truth for the
-// fallback only, not for the live render path. See the TODO above the
-// live branch.
+// Fallback colour set, used only when the stylesheet's CSS custom
+// properties are absent (in unit tests, or before the stylesheet has
+// loaded). The hues are copied from config so a caller cannot mutate the
+// canonical config array through `colors().choir`. config.choirHues is also
+// the per-hue fallback in the live CSS branch below; the SCSS --color-c1..c8
+// values are the source of truth there when present.
 const defaultColors: Colors = {
-  background: "hsl(210, 65%, 100%);",
-  highlight: "hsl(210, 65%, 90%);",
-  scoreHighlight: "hsl(210, 65%, 90%);",
+  background: "hsl(210, 65%, 100%)",
+  highlight: "hsl(210, 65%, 90%)",
+  scoreHighlight: "hsl(210, 65%, 90%)",
   choir: [...config.choirHues],
 };
-var loadedColors: Colors;
+let loadedColors: Readonly<Colors>;
 
-export function colors(reload = false): Colors {
-  if (!reload && loadedColors) return loadedColors; // no need to reload if we already have the colors
-  var style = getComputedStyle(document.body);
+// Fail fast at import time: colors().choir is built one-hue-per-choir, driven by
+// config.choirHues (count and per-hue fallback). If choirHues drifts from the
+// choir count the render silently loses or gains a colour, so assert they agree
+// at module load — matching the config.recording / bartime guards below.
+if (config.choirHues.length !== config.choirs[0].length) {
+  throw new Error(
+    `Colors.choir assumes config.choirHues.length === config.choirs[0].length, got ${config.choirHues.length} vs ${config.choirs[0].length}`
+  );
+}
+
+// Return colours as a deeply-immutable object so a caller cannot mutate the
+// shared cache (or the canonical config array) through `colors()`. Freezing the
+// wrapper and the choir array covers every mutable field of the current `Colors`
+// shape (the three colour strings are primitives); revisit if a nested object is
+// added. The `Readonly<Colors>` return makes the same guarantee at compile time.
+function freezeColors(c: Colors): Readonly<Colors> {
+  Object.freeze(c.choir);
+  return Object.freeze(c);
+}
+
+export function colors(reload = false): Readonly<Colors> {
+  if (!reload && loadedColors) return loadedColors; // reuse the cached colours
+  const style = getComputedStyle(document.body);
   if (!style || style.getPropertyValue("--color-background").length == 0) {
     // Build a fresh choir array on every fallback call so a caller
     // mutating the returned array cannot corrupt later callers' views.
-    return { ...defaultColors, choir: [...defaultColors.choir] };
+    return freezeColors({ ...defaultColors, choir: [...defaultColors.choir] });
   }
-  loadedColors = {
+  // The live render reads each choir hue from the --color-c1..c8 custom
+  // properties; config.choirHues.length drives the loop count and choirHues[i]
+  // is the per-hue fallback. A hue is invalid when its property is blank or
+  // non-numeric — a blank gives Number("") === 0 and a non-numeric gives NaN,
+  // both wrong hues — and falls back to config.choirHues[i]. The substitution is
+  // deliberately silent: the partial-load state is unreachable in production
+  // (every --color-* lives in one SCSS rule, so loading is all-or-nothing; only
+  // the test harness sets them individually), so this branch is defensive only
+  // (#653 item 11).
+  // TODO: the SCSS --color-c1..c8 values are kept in sync with config.choirHues
+  // by hand (only the count is coupled); drive the CSS hues from config to
+  // remove the hand-sync.
+  const choir = config.choirHues.map((fallback, i) => {
+    const raw = style.getPropertyValue(`--color-c${i + 1}`).trim();
+    const hue = Number(raw);
+    return raw.length > 0 && Number.isFinite(hue) ? hue : fallback;
+  });
+  loadedColors = freezeColors({
     background: style.getPropertyValue("--color-background"),
     highlight: style.getPropertyValue("--color-highlight"),
     scoreHighlight: style.getPropertyValue("--color-score-highlight"),
-    // TODO: hues here are still read from --color-c1..c8 in style.scss,
-    // not from config.choirHues. The two must stay in sync by hand
-    // until the CSS branch is also driven from config.
-    choir: [
-      Number(style.getPropertyValue("--color-c1")),
-      Number(style.getPropertyValue("--color-c2")),
-      Number(style.getPropertyValue("--color-c3")),
-      Number(style.getPropertyValue("--color-c4")),
-      Number(style.getPropertyValue("--color-c5")),
-      Number(style.getPropertyValue("--color-c6")),
-      Number(style.getPropertyValue("--color-c7")),
-      Number(style.getPropertyValue("--color-c8")),
-    ],
-  };
+    choir,
+  });
   return loadedColors;
 }
 

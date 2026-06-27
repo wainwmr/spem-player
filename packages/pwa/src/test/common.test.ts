@@ -321,4 +321,67 @@ describe("common", () => {
     const b = colors(true);
     expect(a.choir).not.toBe(b.choir);
   });
+
+  it("colors() substitutes config.choirHues for a non-finite or empty CSS hue (#653 item 11)", () => {
+    // Partial stylesheet load: --color-background present (so the CSS-present
+    // branch is taken) but one choir hue blank. Number("") is 0 (finite), so
+    // the guard must reject empty/blank values, not only non-finite ones;
+    // otherwise the missing hue renders as hue 0 (red) instead of transparent
+    // or its intended colour.
+    document.body.style.setProperty("--color-background", "#123456");
+    document.body.style.setProperty("--color-highlight", "#abcdef");
+    document.body.style.setProperty("--color-score-highlight", "#ffffff");
+    for (let i = 1; i <= 8; i++) {
+      document.body.style.setProperty("--color-c" + i, String(i * 10));
+    }
+    document.body.style.removeProperty("--color-c5"); // blank the 5th hue
+    document.body.style.setProperty("--color-c3", "not-a-hue"); // non-numeric
+    const result = colors(true);
+    // The blank hue (empty → Number("") === 0) and the non-numeric hue
+    // (→ NaN) both fall back to config; the rest still read from CSS.
+    expect(result.choir[4]).toBe(config.choirHues[4]); // empty → fallback
+    expect(result.choir[2]).toBe(config.choirHues[2]); // non-numeric → fallback
+    expect(Number.isFinite(result.choir[4])).toBe(true);
+    expect(Number.isFinite(result.choir[2])).toBe(true);
+    expect(result.choir[0]).toBe(10);
+    expect(result.choir[7]).toBe(80);
+  });
+
+  it("colors() returns a frozen, immutable cached object (#653 item 19)", () => {
+    document.body.style.setProperty("--color-background", "#123456");
+    document.body.style.setProperty("--color-highlight", "#abcdef");
+    document.body.style.setProperty("--color-score-highlight", "#ffffff");
+    for (let i = 1; i <= 8; i++) {
+      document.body.style.setProperty("--color-c" + i, String(i * 10));
+    }
+    const a = colors(true);
+    expect(Object.isFrozen(a)).toBe(true);
+    expect(Object.isFrozen(a.choir)).toBe(true);
+    // A caller that casts away readonly and mutates must not corrupt the cache.
+    expect(() => (a.choir as number[]).push(999)).toThrow();
+    const b = colors(false); // cached call returns the same frozen object
+    expect(b.choir).toHaveLength(8);
+    expect(b.choir).not.toContain(999);
+  });
+
+  it("colors() fallback choir has 8 finite entries (#653 item 6)", () => {
+    // Pins the completed-defaults invariant: the fallback path yields one
+    // finite hue per choir, never undefined for c > 0.
+    document.body.style.removeProperty("--color-background");
+    document.body.style.removeProperty("--color-highlight");
+    document.body.style.removeProperty("--color-score-highlight");
+    for (let i = 1; i <= 8; i++) {
+      document.body.style.removeProperty("--color-c" + i);
+    }
+    const result = colors(true);
+    expect(result.choir).toHaveLength(8);
+    for (const hue of result.choir) {
+      expect(Number.isFinite(hue)).toBe(true);
+    }
+    // Pins the trailing-semicolon strip (#653 item 5): the fallback colour
+    // strings are valid CSS values, not "hsl(...);".
+    expect(result.background).toBe("hsl(210, 65%, 100%)");
+    expect(result.highlight).toBe("hsl(210, 65%, 90%)");
+    expect(result.scoreHighlight).toBe("hsl(210, 65%, 90%)");
+  });
 });
