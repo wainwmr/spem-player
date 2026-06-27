@@ -198,45 +198,18 @@ export class MusicCanvas extends MusicElement {
   }
 
   async #init() {
-    if (this.canvas != null) {
-      this.canvas.addEventListener("click", this.#boundCanvasClicked);
-      this.canvas.addEventListener(
-        "mousemove",
-        this.#boundCanvasHovered,
-        false
-      );
-      this.canvas.addEventListener("touchstart", this.#boundTouchStarted, {
-        passive: false,
-      });
-      this.addEventListener("touchmove", this.#boundTouchMoved, {
-        passive: false,
-      });
-      this.addEventListener("touchend", this.#boundTouchEnded, {
-        passive: false,
-      });
-      this.addEventListener("wheel", this.#preventVerticalScroll, {
-        passive: false,
-      });
+    const existing = this.canvas;
+    if (existing != null) {
+      // Reconnect: re-attach listeners only; the first-init work below already
+      // ran on first connect and must not repeat (#651).
+      this.#attachListeners(existing);
       return;
     }
 
-    this.canvas = document.createElement("canvas");
-    this.append(this.canvas);
-
-    this.canvas.addEventListener("click", this.#boundCanvasClicked);
-    this.canvas.addEventListener("mousemove", this.#boundCanvasHovered, false);
-    this.canvas.addEventListener("touchstart", this.#boundTouchStarted, {
-      passive: false,
-    });
-    this.addEventListener("touchmove", this.#boundTouchMoved, {
-      passive: false,
-    });
-    this.addEventListener("touchend", this.#boundTouchEnded, {
-      passive: false,
-    });
-    this.addEventListener("wheel", this.#preventVerticalScroll, {
-      passive: false,
-    });
+    const canvas = document.createElement("canvas");
+    this.canvas = canvas;
+    this.append(canvas);
+    this.#attachListeners(canvas);
 
     this.#calculateCanvasSize();
     this.#showLoadingOnCanvas();
@@ -267,6 +240,26 @@ export class MusicCanvas extends MusicElement {
 
     this.draw();
     this.#startShimmerLoop();
+  }
+
+  // Registers the canvas/element listeners, shared by both #init paths (first
+  // connect and reconnect) so the registration lives in one place. The matching
+  // removals are in disconnectedCallback — change both together.
+  #attachListeners(canvas: HTMLCanvasElement) {
+    canvas.addEventListener("click", this.#boundCanvasClicked);
+    canvas.addEventListener("mousemove", this.#boundCanvasHovered, false);
+    canvas.addEventListener("touchstart", this.#boundTouchStarted, {
+      passive: false,
+    });
+    this.addEventListener("touchmove", this.#boundTouchMoved, {
+      passive: false,
+    });
+    this.addEventListener("touchend", this.#boundTouchEnded, {
+      passive: false,
+    });
+    this.addEventListener("wheel", this.#preventVerticalScroll, {
+      passive: false,
+    });
   }
 
   #calculateCanvasSize() {
