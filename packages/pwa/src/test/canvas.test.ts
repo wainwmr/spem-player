@@ -1410,6 +1410,40 @@ describe("MusicCanvas custom element", () => {
     freshCanvas.remove();
   });
 
+  it("reconnect does not re-run first-init work (#651)", async () => {
+    const freshCanvas = document.createElement("music-canvas") as MusicCanvas;
+    document.body.appendChild(freshCanvas);
+    await Promise.resolve();
+
+    const originalInnerCanvas = freshCanvas.querySelector("canvas")!;
+    const originalShimmerPhases = freshCanvas.shimmerPhases;
+    const originalFalseRelationPulses = freshCanvas.falseRelationPulses;
+    // Guard against a vacuous identity probe: shimmerPhases must be a populated
+    // array so a re-run would produce a different one.
+    expect(originalShimmerPhases.length).toBeGreaterThan(0);
+
+    freshCanvas.remove();
+    // The <canvas> survives disconnect (disconnectedCallback removes listeners
+    // and cancels loops but does not null this.canvas); this is the invariant
+    // the firstInit sentinel relies on to take the reconnect path.
+    expect(freshCanvas.canvas).toBe(originalInnerCanvas);
+
+    document.body.appendChild(freshCanvas);
+    await Promise.resolve();
+
+    // The reconnect (early-return) path re-attaches listeners but must NOT
+    // re-run first-init work: the <canvas> is not recreated, and the freshly
+    // minted first-init arrays (random shimmerPhases via map, falseRelationPulses
+    // via new Array) keep their identity. These two are the right re-run probes:
+    // they are rebuilt on every #init, unlike frLocations/notesByQuant/ranges,
+    // which processLilypond memoises and would return by the same reference.
+    expect(freshCanvas.querySelector("canvas")).toBe(originalInnerCanvas);
+    expect(freshCanvas.shimmerPhases).toBe(originalShimmerPhases);
+    expect(freshCanvas.falseRelationPulses).toBe(originalFalseRelationPulses);
+
+    freshCanvas.remove();
+  });
+
   it("prevents default on vertical wheel events but not on horizontal/zero scroll (#676)", () => {
     expect(canvas).not.toBeNull();
 
