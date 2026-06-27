@@ -443,12 +443,12 @@
   },
   {
     "date": "2026-06-27",
-    "netlifyCurrent": 209,
-    "githubMinutes": 1001,
+    "netlifyCurrent": 212,
+    "githubMinutes": 1007,
     "mergedPRs": 0,
     "summary": {
-      "netlifyPct": 70,
-      "netlifyProjected": 80,
+      "netlifyPct": 71,
+      "netlifyProjected": 81,
       "netlifyStatus": "watch",
       "githubPct": 50,
       "githubProjected": 56,
