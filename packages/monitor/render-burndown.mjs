@@ -13,6 +13,7 @@
 import { createCanvas, loadImage } from "canvas";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
+import { THROTTLE_ALPHA } from "./constants.mjs";
 
 /**
  * @typedef {import("./monitor-resources.mjs").UsageRecord} UsageRecord
@@ -181,6 +182,31 @@ function roundRect(ctx, x, y, w, h, r) {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
+ * Draw the throttle-pace reference curve for one panel: the sustainable-pace
+ * line used(t) = 1 - (1 - t)^THROTTLE_ALPHA, sampled as a smooth polyline from
+ * the chart's top-left (t = 0, 0% used) to its bottom-right (t = 1, 100% used).
+ * Replaces the straight critical-pace diagonal (#724). This builds and strokes
+ * the path; the caller owns the stroke style and dash.
+ *
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} ox - Chart origin x.
+ * @param {number} oy - Chart origin y.
+ */
+function drawThrottleCurve(ctx, ox, oy) {
+  const SAMPLES = 100;
+  ctx.beginPath();
+  for (let i = 0; i <= SAMPLES; i++) {
+    const t = i / SAMPLES;
+    const used = 1 - Math.pow(1 - t, THROTTLE_ALPHA);
+    const x = ox + t * CHART_WIDTH;
+    const y = oy + CHART_HEIGHT * used;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+/**
  * Draw one panel.
  *
  * @param {CanvasRenderingContext2D} ctx
@@ -252,14 +278,13 @@ function drawPanel(ctx, originX, icon, fireIcon, usage, points, now, status) {
     ctx.stroke();
   }
 
-  // Critical-pace diagonal (0% used → 100% used)
+  // Throttle-pace reference curve (#724): replaces the straight critical-pace
+  // diagonal. Same dashed style and colour; the curve bows above the old
+  // diagonal, marking the sustainable burn pace at each point in the period.
   ctx.strokeStyle = COLORS.diagonal;
   ctx.lineWidth = 4;
   ctx.setLineDash([8, 6]);
-  ctx.beginPath();
-  ctx.moveTo(ox, oy);
-  ctx.lineTo(ox + CHART_WIDTH, oy + CHART_HEIGHT);
-  ctx.stroke();
+  drawThrottleCurve(ctx, ox, oy);
   ctx.setLineDash([]);
 
   // Actual usage line, coloured per segment
@@ -450,4 +475,7 @@ export async function renderBurndown(
 export const exportedForTesting = {
   drawHistogram,
   statusColor,
+  drawThrottleCurve,
+  CHART_WIDTH,
+  CHART_HEIGHT,
 };

@@ -30,18 +30,46 @@ quota is exhausted.
 
 ## Status thresholds
 
-Status is the worse of the Netlify and GitHub statuses, driven by `statusPct`:
+Status is the worse of the Netlify and GitHub statuses, and it is
+**rate-relative** (#724). Rather than projecting usage to the end of the period
+and comparing against absolute percentages, the monitor compares each service's
+actual **remaining** budget against a family of sustainable-pace curves.
 
-- `good` — below 75%.
-- `watch` — 75% or above.
-- `throttle` — 82% or above.
-- `stop` — 90% or above (actual usage only; projection alone cannot open a
-  critical issue).
+The sustainable-remaining curve is `R(t) = (1 - t) ^ alpha`, where `t` is the
+fraction of the billing period elapsed (0 at the start, 1 at the end) and `alpha`
+is the burn-pace exponent. A higher `alpha` burns faster, so a lower `alpha`
+curve sits higher (more remaining is still sustainable). Each band is a curve; a
+service's status is the most severe band whose curve its remaining budget has
+fallen to or below:
 
-`computeUsageStatus` projects current usage linearly to the end of the billing
-period, working from the unrounded percentage to avoid scaling the rounding
-error. The status driver is the worse of actual percentage and projected
-percentage, capped at `throttle` unless actual usage already breaches critical.
+- `good` — remaining above the watch curve.
+- `watch` — remaining at or below the watch curve (`alpha = 0.85`).
+- `throttle` — remaining at or below the throttle curve (`alpha = 0.90`).
+- `stop` — remaining at or below the stop curve (`alpha = 1.00`): on track to
+  exhaust the budget by period end.
+
+The burndown chart draws the throttle curve (`alpha = 0.90`) as its dashed
+reference line, replacing the old straight critical-pace diagonal.
+
+Because the curves all converge to full budget as `t` approaches 0, the bands are
+tightest at the start of the period, so a small early-period burst can reach the
+stop curve on a forward projection alone. To stop that re-opening the #553
+cry-wolf failure, a curve-driven `stop` is **capped to `throttle` unless actual
+usage has breached the critical threshold (90%)** — the #553 guard, retained.
+
+Conversely the bands relax toward period end: the stop curve falls to zero as `t`
+approaches 1, so high late-period usage that is still on a sustainable pace is
+**deliberately not escalated to `stop`**. This is intended, not a gap — it lets
+the surplus be spent down late in the period rather than stranded. The only
+condition that always reports `stop` is genuine exhaustion (remaining at or below
+zero, i.e. usage at or above 100%). The platform itself is the hard, zero-cost
+ceiling for the end case: on the free tier Netlify pauses builds when the monthly
+limit is reached (it does not charge), so tipping over costs build availability
+until the cycle resets, not money.
+
+`computeUsageStatus` still returns the linear end-of-period projection
+(`projected`) for display, working from the unrounded percentage to avoid scaling
+the rounding error, but the projection no longer drives the status.
 
 ## Daily report behaviour
 
