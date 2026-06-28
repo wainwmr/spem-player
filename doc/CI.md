@@ -117,6 +117,17 @@ is the test gate for monitor changes. See [`doc/MONITOR.md`](./MONITOR.md) for t
 including status thresholds, workflow permissions, required secrets, and how to
 run the monitor locally.
 
+### Pushing regenerated files to `main`
+
+Three workflows commit a regenerated file to `main`: `monitor-run.yml`,
+`monitor-refresh.yml`, and `scores-ci.yml`. Each pushes via the shared helper
+`.github/scripts/push-with-rebase.sh`, which retries with a rebase if a concurrent
+push moved `main` first, so an overlapping run converges instead of failing
+non-fast-forward ([#727](https://github.com/wainwmr/spem-player/issues/727)).
+`push-helper-test.yml` runs the helper's regression test
+(`.github/scripts/push-with-rebase.test.sh`) on any change under
+`.github/scripts/`.
+
 ## Node.js Version
 
 The Node.js version is pinned in `.nvmrc`. All GitHub Actions workflows read this file via `node-version-file` in `actions/setup-node`. Netlify should be configured to use the same version.
