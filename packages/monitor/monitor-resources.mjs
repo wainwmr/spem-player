@@ -6,14 +6,17 @@
  * Daily build-resource monitor.
  *
  * Queries Netlify and GitHub APIs for current-period build-minute usage,
- * posts a one-line summary to Telegram, and opens a critical issue if
- * either service reaches — or is linearly projected to reach by the end of
- * its billing period — 90% of quota.
+ * posts a one-line summary to Telegram, and opens a critical issue when a
+ * service's status reaches `stop`.
  *
- * All thresholds apply to the higher of actual and projected end-of-period
- * usage. Skips the Telegram message on days with no PR merges when both
- * actual and projected usage are below 75% (the watch threshold). Watch (≥ 75%),
- * throttle (≥ 82%), and critical (≥ 90%) alerts always send regardless of PR activity.
+ * Status is rate-relative (#724): actual remaining budget is classified against
+ * the sustainable-remaining curve R(t) = (1 - t)^alpha for the elapsed fraction
+ * of the period, yielding good / watch / throttle / stop. A curve-driven `stop`
+ * is capped to `throttle` unless actual usage already breaches the critical
+ * threshold (90%), so an early-period burst cannot open a critical issue on a
+ * projection alone (#553 guard). The Telegram message is skipped on days with no
+ * PR merges when both actual and projected usage are below the 75% watch
+ * threshold; watch and worse always send regardless of PR activity.
  *
  * Run with `--refresh` for the lightweight merge-time path (#699): it refreshes
  * today's series entry from the live APIs without rendering, Telegram, or
@@ -33,13 +36,14 @@ import { fileURLToPath } from "url";
 import { realpathSync, readFileSync, writeFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { renderBurndown, dayDiff } from "./render-burndown.mjs";
+// Rate-relative throttle alphas (#724) live in their own module so the status
+// logic and the chart renderer share one source of truth (see constants.mjs).
+import { WATCH_ALPHA, THROTTLE_ALPHA, STOP_ALPHA } from "./constants.mjs";
 
 const NETLIFY_API = "https://api.netlify.com/api/v1";
 const TELEGRAM_API = "https://api.telegram.org/bot";
 const WATCH_THRESHOLD_PCT = 75;
-const THROTTLE_THRESHOLD_PCT = 82;
 const CRITICAL_THRESHOLD_PCT = 90;
-const PROJECTION_CAP_PCT = THROTTLE_THRESHOLD_PCT;
 const SERIES_FILE = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../..",
@@ -62,9 +66,49 @@ export function projectedPct(current, daysElapsed, daysInPeriod) {
 }
 
 /**
+ * The sustainable-remaining curve R(t) = (1 - t)^alpha (#724): the fraction of
+ * budget a service may still hold at elapsed-fraction `t`, where remaining falls
+ * as the `alpha`-power of the remaining time. `alpha = 1` is the linear
+ * burn-to-zero pace; `alpha < 1` keeps more in reserve early and defers spending
+ * to period end (less early, more late); `alpha > 1` front-loads. Clamped
+ * outside the open interval — full budget at or before the start (`t <= 0`),
+ * none at or after the end (`t >= 1`) — so an out-of-range `t` (a reference date
+ * past period end) is handled rather than extrapolated.
+ *
+ * @param {number} t - Elapsed fraction of the billing period; clamped outside [0, 1].
+ * @param {number} alpha - Pace exponent; higher burns faster.
+ * @returns {number} Remaining-budget fraction on the curve (0-1).
+ */
+export function curveRemaining(t, alpha) {
+  if (t <= 0) return 1;
+  if (t >= 1) return 0;
+  return Math.pow(1 - t, alpha);
+}
+
+/**
+ * Classify a service's actual remaining-budget fraction against the family of
+ * pace curves at elapsed-fraction `t` (#724). The cascade checks the
+ * most-severe (lowest) curve first; a lower alpha sits higher, so the bands
+ * nest watch > throttle > stop in remaining. This nesting relies on
+ * WATCH_ALPHA < THROTTLE_ALPHA < STOP_ALPHA (derived from THROTTLE_ALPHA in
+ * constants.mjs, so it holds by construction).
+ *
+ * @param {number} actualRemaining - Remaining-budget fraction; may be negative
+ *   when usage exceeds 100% (handled by the `<=` comparisons).
+ * @param {number} t - Elapsed fraction of the billing period; clamped in curveRemaining.
+ * @returns {"good"|"watch"|"throttle"|"stop"}
+ */
+export function statusFromCurve(actualRemaining, t) {
+  if (actualRemaining <= curveRemaining(t, STOP_ALPHA)) return "stop";
+  if (actualRemaining <= curveRemaining(t, THROTTLE_ALPHA)) return "throttle";
+  if (actualRemaining <= curveRemaining(t, WATCH_ALPHA)) return "watch";
+  return "good";
+}
+
+/**
  * Classify a projected end-of-period percentage against the critical-pace
- * diagonal (100% at period-end). Distinct from the watch/throttle/critical
- * budget thresholds.
+ * diagonal (100% at period-end). Distinct from the rate-relative status curve
+ * and the watch/critical budget thresholds.
  *
  * @param {number} projectedPct - Projected end-of-period usage percentage.
  * @returns {"green"|"yellow"|"red"}
@@ -172,55 +216,40 @@ export function calendarMonthPeriod(now = new Date()) {
 }
 
 /**
- * Compute actual, projected, and status percentages for one service from
- * its raw usage record. The single place raw minutes are converted to
- * percentages before projection — the projection always operates on a
- * percentage (Vera 536-01).
+ * Compute actual percentage, the linear projection, and the named status for
+ * one service from its raw usage record. Status is driven by the rate-relative
+ * curve (#724): the actual remaining-budget fraction is classified against the
+ * pace curves at the elapsed fraction `t`. A curve-driven `stop` is capped to
+ * `throttle` unless actual usage already breaches the critical threshold, so an
+ * early-period burst — where the curve bands are tightest — cannot open a
+ * critical issue on a projection alone (the #553 guard, kept under #724). The
+ * projection always operates on a percentage, never raw minutes (Vera 536-01).
+ * `projected` no longer drives status, but it is not inert: `main` feeds it into
+ * `shouldSkipReport` (gating whether the daily Telegram report is suppressed)
+ * and `formatCriticalIssue` uses it for the issue wording.
  *
  * @param {UsageRecord} usage
  * @param {Date} [now] - Reference date; defaults to `new Date()`.
- * @returns {{pct: number, projected: number, statusPct: number}} Actual
- *   percentage, linearly projected end-of-period percentage, and the driver
- *   of status. Projection-driven STOP is capped at throttle (75%) unless
- *   actual usage already breaches the critical threshold (90%).
+ * @returns {{pct: number, projected: number, status: "good"|"watch"|"throttle"|"stop"}}
+ *   Actual percentage, the linear end-of-period projection (still gates report
+ *   suppression and the critical-issue wording), and the named status.
  */
 export function computeUsageStatus(usage, now = new Date()) {
-  // Project from the unrounded percentage: rounding first would scale the
-  // rounding error by period/elapsed (up to 30x on day one).
+  // Work from the unrounded percentage: rounding first would scale the rounding
+  // error by period/elapsed (up to 30x on day one).
   const rawPct = usage.limit > 0 ? (usage.current / usage.limit) * 100 : 0;
   const pct = Math.round(rawPct);
   const elapsed = daysSince(usage.periodStartDate, now);
   const period = daysInPeriod(usage.periodStartDate, usage.periodEndDate);
   const projected = projectedPct(rawPct, elapsed, period);
-  const statusPct =
-    pct >= CRITICAL_THRESHOLD_PCT
-      ? pct
-      : projected >= CRITICAL_THRESHOLD_PCT
-        ? PROJECTION_CAP_PCT
-        : Math.max(pct, projected);
-  return { pct, projected, statusPct };
-}
-
-/**
- * Build a daily summary snapshot from the already-fetched usage records.
- *
- * @param {string} date - ISO date (YYYY-MM-DD).
- * @param {UsageRecord} netlify
- * @param {UsageRecord} github
- * @param {number} mergedPRs
- * @returns {Summary}
- */
-/**
- * Map a status percentage to the named monitor signal.
- *
- * @param {number} statusPct
- * @returns {"good"|"watch"|"throttle"|"stop"}
- */
-export function statusName(statusPct) {
-  if (statusPct >= CRITICAL_THRESHOLD_PCT) return "stop";
-  if (statusPct >= THROTTLE_THRESHOLD_PCT) return "throttle";
-  if (statusPct >= WATCH_THRESHOLD_PCT) return "watch";
-  return "good";
+  const curveStatus = statusFromCurve(1 - rawPct / 100, elapsed / period);
+  // #553 guard: a curve-driven stop is a forward projection, so cap it to
+  // throttle unless actual usage has genuinely breached the critical threshold.
+  const status =
+    curveStatus === "stop" && pct < CRITICAL_THRESHOLD_PCT
+      ? "throttle"
+      : curveStatus;
+  return { pct, projected, status };
 }
 
 /**
@@ -238,13 +267,22 @@ export function overallStatusName(a, b) {
   return worst === 3 ? "stop" : worst === 2 ? "throttle" : worst === 1 ? "watch" : "good";
 }
 
+/**
+ * Build a daily summary snapshot from the already-fetched usage records.
+ *
+ * @param {string} date - ISO date (YYYY-MM-DD).
+ * @param {UsageRecord} netlify
+ * @param {UsageRecord} github
+ * @param {number} mergedPRs
+ * @returns {Summary}
+ */
 export function buildSummary(date, netlify, github, mergedPRs) {
   const day = new Date(date);
   const githubStatus = computeUsageStatus(github, day);
   const netlifyStatus =
     netlify.current == null ? null : computeUsageStatus(netlify, day);
-  const githubStatusName = statusName(githubStatus.statusPct);
-  const netlifyStatusName = netlifyStatus ? statusName(netlifyStatus.statusPct) : null;
+  const githubStatusName = githubStatus.status;
+  const netlifyStatusName = netlifyStatus ? netlifyStatus.status : null;
   return {
     netlifyPct: netlifyStatus?.pct ?? null,
     netlifyProjected: netlifyStatus?.projected ?? null,
@@ -358,16 +396,16 @@ export function shouldSkipReport(mergedCount, maxActualPct, maxProjectedPct) {
 
 /**
  * Build the critical-issue title and body from the two services' status
- * records. The service is named by the quantity that drove the STOP
- * (statusPct, the worse of actual and projected), and the wording
- * distinguishes an actual breach from a projection (Vera 536-04/536-07).
+ * records. The service is named by the one whose status is `stop` (Netlify
+ * takes precedence when both are), and the wording distinguishes an actual
+ * breach from a projection (Vera 536-04/536-07, #724).
  *
- * @param {{pct: number, projected: number, statusPct: number}} netlifyStatus
- * @param {{pct: number, projected: number, statusPct: number}} githubStatus
+ * @param {{pct: number, projected: number, status: "good"|"watch"|"throttle"|"stop"}} netlifyStatus
+ * @param {{pct: number, projected: number, status: "good"|"watch"|"throttle"|"stop"}} githubStatus
  * @returns {{title: string, body: string}}
  */
 export function formatCriticalIssue(netlifyStatus, githubStatus) {
-  const svc = netlifyStatus.statusPct >= 90 ? "Netlify" : "GitHub";
+  const svc = netlifyStatus.status === "stop" ? "Netlify" : "GitHub";
   const svcStatus = svc === "Netlify" ? netlifyStatus : githubStatus;
   const actualBreach = svcStatus.pct >= 90;
   const headline = actualBreach
@@ -867,8 +905,8 @@ export async function main(seriesFile = SERIES_FILE) {
   const githubPct = githubStatus.pct;
   const maxActual = Math.max(netlifyPct, githubPct);
   const maxProjected = Math.max(netlifyStatus.projected, githubStatus.projected);
-  const netlifyStatusName = statusName(netlifyStatus.statusPct);
-  const githubStatusName = statusName(githubStatus.statusPct);
+  const netlifyStatusName = netlifyStatus.status;
+  const githubStatusName = githubStatus.status;
   const overallStatus = overallStatusName(netlifyStatusName, githubStatusName);
 
   const since = getReportingSince();

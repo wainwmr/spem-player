@@ -5,6 +5,8 @@ import { tmpdir } from "os";
 import { join } from "path";
 import {
   projectedPct,
+  curveRemaining,
+  statusFromCurve,
   computeUsageStatus,
   formatCriticalIssue,
   validatePeriod,
@@ -15,7 +17,6 @@ import {
   parseRepo,
   todayISO,
   paceBucket,
-  statusName,
   overallStatusName,
   loadSeries,
   saveSeries,
@@ -61,9 +62,54 @@ test("projectedPct clamps daysElapsed to 1", () => {
   assert.equal(projectedPct(10, 0, 30), 300);
 });
 
-// computeUsageStatus: binds the projection to API-shaped raw values — the
-// regression net for the units bug (Vera 536-01): the helper must divide by
-// the limit before projecting, never project raw minutes.
+// curveRemaining: the sustainable-remaining curve R(t) = (1 - t)^alpha (#724).
+// Clamped outside the open interval: full budget at/before the start, none
+// at/after the end.
+test("curveRemaining returns 1 at or before the period start", () => {
+  assert.equal(curveRemaining(0, 0.9), 1);
+  assert.equal(curveRemaining(-0.5, 0.9), 1);
+});
+
+test("curveRemaining returns 0 at or after the period end", () => {
+  assert.equal(curveRemaining(1, 0.9), 0);
+  assert.equal(curveRemaining(1.5, 0.9), 0);
+});
+
+test("curveRemaining is (1 - t)^alpha inside the period", () => {
+  assert.ok(Math.abs(curveRemaining(0.5, 0.9) - 0.535887) < 1e-6);
+  assert.ok(Math.abs(curveRemaining(0.5, 1.0) - 0.5) < 1e-9);
+  assert.ok(Math.abs(curveRemaining(0.5, 0.85) - 0.554785) < 1e-6);
+});
+
+// statusFromCurve: classify actual remaining against the family of curves
+// (#724). Lower alpha sits higher, so the bands nest watch > throttle > stop
+// in remaining; the cascade checks the most-severe (lowest) curve first.
+test("statusFromCurve is good above the watch curve", () => {
+  // t = 0.5: watch 0.5548, throttle 0.5359, stop 0.5.
+  assert.equal(statusFromCurve(0.6, 0.5), "good");
+});
+
+test("statusFromCurve is watch between the watch and throttle curves", () => {
+  assert.equal(statusFromCurve(0.545, 0.5), "watch");
+});
+
+test("statusFromCurve is throttle between the throttle and stop curves", () => {
+  assert.equal(statusFromCurve(0.52, 0.5), "throttle");
+});
+
+test("statusFromCurve is stop at or below the stop curve", () => {
+  assert.equal(statusFromCurve(0.5, 0.5), "stop");
+  assert.equal(statusFromCurve(0.4, 0.5), "stop");
+});
+
+test("statusFromCurve leaves late-period remaining good (curves collapse to 0)", () => {
+  // At t = 1 every curve is 0, so any positive remaining is good.
+  assert.equal(statusFromCurve(0.05, 1), "good");
+});
+
+// computeUsageStatus: drives status from the rate curve, keeping pct/projected
+// for display. The units regression net stands (Vera 536-01): the helper must
+// divide by the limit before projecting, never project raw minutes.
 test("computeUsageStatus projects percentages, not minutes (Vera 536-01)", () => {
   const usage = {
     current: 60,
@@ -72,14 +118,33 @@ test("computeUsageStatus projects percentages, not minutes (Vera 536-01)", () =>
     periodEndDate: "2026-06-30",
   };
   const now = new Date("2026-06-15T12:00:00Z");
+  // 20% used at t = 0.5 → remaining 0.8, above the watch curve → good.
   assert.deepEqual(computeUsageStatus(usage, now), {
     pct: 20,
     projected: 40,
-    statusPct: 40,
+    status: "good",
   });
 });
 
-test("computeUsageStatus on-budget usage is capped at throttle", () => {
+test("computeUsageStatus mid-period stranded budget is now good (#724)", () => {
+  // The headline #724 case: 40% used at t = 0.5 is comfortably sustainable.
+  const usage = {
+    current: 120,
+    limit: 300,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const now = new Date("2026-06-15T12:00:00Z");
+  assert.deepEqual(computeUsageStatus(usage, now), {
+    pct: 40,
+    projected: 80,
+    status: "good",
+  });
+});
+
+test("computeUsageStatus at the linear-exhaust pace caps to throttle (#553 guard)", () => {
+  // 50% used at t = 0.5 → remaining 0.5 = stop curve, but actual < 90%, so the
+  // #553 guard caps the curve-stop down to throttle.
   const usage = {
     current: 150,
     limit: 300,
@@ -90,7 +155,7 @@ test("computeUsageStatus on-budget usage is capped at throttle", () => {
   assert.deepEqual(computeUsageStatus(usage, now), {
     pct: 50,
     projected: 100,
-    statusPct: 82,
+    status: "throttle",
   });
 });
 
@@ -106,7 +171,7 @@ test("computeUsageStatus converges on the period's last day", () => {
   assert.equal(result.projected, result.pct);
 });
 
-test("computeUsageStatus day-one spike is capped at throttle (#553)", () => {
+test("computeUsageStatus day-one spike caps to throttle, not stop (#553 guard kept under #724)", () => {
   const usage = {
     current: 20,
     limit: 300,
@@ -115,27 +180,14 @@ test("computeUsageStatus day-one spike is capped at throttle (#553)", () => {
   };
   const now = new Date("2026-06-01T12:00:00Z");
   const result = computeUsageStatus(usage, now);
+  // 7% used on day 1 is over the rate curve (stop), but actual < 90%, so the
+  // guard caps it to throttle — no critical issue on an early-period spike.
   assert.equal(result.pct, 7);
   assert.equal(result.projected, 200);
-  assert.equal(result.statusPct, 82);
+  assert.equal(result.status, "throttle");
 });
 
-// Projection-damping policy (#553): projection-driven STOP is capped at
-// throttle unless actual usage already breaches the critical threshold.
-test("computeUsageStatus caps day-1 spike at throttle", () => {
-  const usage = {
-    current: 30,
-    limit: 100,
-    periodStartDate: "2026-06-01",
-    periodEndDate: "2026-06-30",
-  };
-  const result = computeUsageStatus(usage, new Date("2026-06-01T12:00:00Z"));
-  assert.equal(result.pct, 30);
-  assert.equal(result.projected, 900);
-  assert.equal(result.statusPct, 82);
-});
-
-test("computeUsageStatus actual breach overrides projection cap", () => {
+test("computeUsageStatus actual breach overrides the #553 guard", () => {
   const usage = {
     current: 92,
     limit: 100,
@@ -143,12 +195,13 @@ test("computeUsageStatus actual breach overrides projection cap", () => {
     periodEndDate: "2026-06-30",
   };
   const result = computeUsageStatus(usage, new Date("2026-06-01T12:00:00Z"));
+  // Actual usage ≥ 90% lifts the guard: a genuine breach is stop.
   assert.equal(result.pct, 92);
   assert.equal(result.projected, 2760);
-  assert.equal(result.statusPct, 92);
+  assert.equal(result.status, "stop");
 });
 
-test("computeUsageStatus caps mid-period projection at throttle", () => {
+test("computeUsageStatus caps a mid-period over-pace to throttle", () => {
   const usage = {
     current: 100,
     limit: 200,
@@ -158,10 +211,12 @@ test("computeUsageStatus caps mid-period projection at throttle", () => {
   const result = computeUsageStatus(usage, new Date("2026-06-15T12:00:00Z"));
   assert.equal(result.pct, 50);
   assert.equal(result.projected, 100);
-  assert.equal(result.statusPct, 82);
+  assert.equal(result.status, "throttle");
 });
 
-test("computeUsageStatus leaves late-period normal usage unchanged", () => {
+test("computeUsageStatus leaves late-period high usage good if on the rate curve (#724)", () => {
+  // 85% used at t ≈ 0.967 is still consistent with the rate curve → good,
+  // where the old absolute-threshold model flagged it watch.
   const usage = {
     current: 170,
     limit: 200,
@@ -171,10 +226,55 @@ test("computeUsageStatus leaves late-period normal usage unchanged", () => {
   const result = computeUsageStatus(usage, new Date("2026-06-29T12:00:00Z"));
   assert.equal(result.pct, 85);
   assert.equal(result.projected, 88);
-  assert.equal(result.statusPct, 88);
+  assert.equal(result.status, "good");
 });
 
-test("computeUsageStatus caps projection at the 90% boundary", () => {
+test("computeUsageStatus does not escalate high late-period usage to stop (#724 surplus use)", () => {
+  // 95% used on day 29 of 30 is still on a sustainable end-of-period pace, so it
+  // is deliberately NOT escalated to stop — this is the point of #724: spend the
+  // surplus down late rather than strand it. The platform pause at 100% is the
+  // real hard ceiling. This guards the intent against a future
+  // "actual >= 90% always stops" regression (which all reviewers, reasonably,
+  // first read as the correct behaviour).
+  const usage = {
+    current: 190,
+    limit: 200,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-29T12:00:00Z"));
+  assert.equal(result.pct, 95);
+  // Only "not stop" is asserted: that is the robust #724 intent and survives
+  // alpha tuning. The exact band (watch vs throttle) is pinned by the dedicated
+  // curve-band tests above, so this guard rail stays decoupled from the tuning.
+  assert.notEqual(result.status, "stop");
+});
+
+test("computeUsageStatus is a genuine curve-throttle, not via the #553 guard (#724)", () => {
+  // 48% used at t=0.5 -> remaining 0.52, between the stop and throttle curves.
+  const usage = {
+    current: 96,
+    limit: 200,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-15T12:00:00Z"));
+  assert.deepEqual(result, { pct: 48, projected: 96, status: "throttle" });
+});
+
+test("computeUsageStatus produces a genuine curve-watch (#724)", () => {
+  // 45.5% used at t=0.5 -> remaining 0.545, between the throttle and watch curves.
+  const usage = {
+    current: 91,
+    limit: 200,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-15T12:00:00Z"));
+  assert.deepEqual(result, { pct: 46, projected: 91, status: "watch" });
+});
+
+test("computeUsageStatus pins the 90% guard boundary: 89% caps to throttle (#553)", () => {
   const usage = {
     current: 89,
     limit: 100,
@@ -183,11 +283,22 @@ test("computeUsageStatus caps projection at the 90% boundary", () => {
   };
   const result = computeUsageStatus(usage, new Date("2026-06-01T12:00:00Z"));
   assert.equal(result.pct, 89);
-  assert.equal(result.projected, 2670);
-  assert.equal(result.statusPct, 82);
+  assert.equal(result.status, "throttle");
 });
 
-test("computeUsageStatus zero limit yields zeros, no division error", () => {
+test("computeUsageStatus pins the 90% guard boundary: 90% reports stop", () => {
+  const usage = {
+    current: 90,
+    limit: 100,
+    periodStartDate: "2026-06-01",
+    periodEndDate: "2026-06-30",
+  };
+  const result = computeUsageStatus(usage, new Date("2026-06-01T12:00:00Z"));
+  assert.equal(result.pct, 90);
+  assert.equal(result.status, "stop");
+});
+
+test("computeUsageStatus zero limit yields zeros and good status", () => {
   const usage = {
     current: 10,
     limit: 0,
@@ -195,16 +306,16 @@ test("computeUsageStatus zero limit yields zeros, no division error", () => {
     periodEndDate: "2026-06-30",
   };
   const result = computeUsageStatus(usage, new Date("2026-06-10T00:00:00Z"));
-  assert.deepEqual(result, { pct: 0, projected: 0, statusPct: 0 });
+  assert.deepEqual(result, { pct: 0, projected: 0, status: "good" });
 });
 
 // formatCriticalIssue: binds the critical-issue attribution and wording —
-// the service is named by the quantity that drove the STOP (statusPct), and
-// the title distinguishes an actual breach from a projection (Vera 536-07).
+// the service is named by the one whose status drove the STOP, and the title
+// distinguishes an actual breach from a projection (Vera 536-07, #724).
 test("formatCriticalIssue names the actual-breach service with at-N% wording", () => {
   const { title, body } = formatCriticalIssue(
-    { pct: 92, projected: 95, statusPct: 95 },
-    { pct: 10, projected: 12, statusPct: 12 }
+    { pct: 92, projected: 95, status: "stop" },
+    { pct: 10, projected: 12, status: "good" }
   );
   assert.equal(title, "BUILD MINUTES CRITICAL: Netlify at 92%");
   assert.match(body, /Netlify build minutes at 92% of quota\./);
@@ -212,8 +323,8 @@ test("formatCriticalIssue names the actual-breach service with at-N% wording", (
 
 test("formatCriticalIssue names the projection-driven service with projected wording", () => {
   const { title, body } = formatCriticalIssue(
-    { pct: 30, projected: 120, statusPct: 120 },
-    { pct: 10, projected: 12, statusPct: 12 }
+    { pct: 30, projected: 120, status: "stop" },
+    { pct: 10, projected: 12, status: "good" }
   );
   assert.equal(title, "BUILD MINUTES CRITICAL: Netlify projected 120%");
   assert.match(
@@ -222,12 +333,22 @@ test("formatCriticalIssue names the projection-driven service with projected wor
   );
 });
 
-test("formatCriticalIssue attributes a GitHub-projection STOP to GitHub (Vera 536-04 regression pin)", () => {
+test("formatCriticalIssue attributes a GitHub STOP to GitHub (Vera 536-04 regression pin)", () => {
   const { title } = formatCriticalIssue(
-    { pct: 20, projected: 40, statusPct: 40 },
-    { pct: 15, projected: 110, statusPct: 110 }
+    { pct: 20, projected: 40, status: "good" },
+    { pct: 15, projected: 110, status: "stop" }
   );
   assert.equal(title, "BUILD MINUTES CRITICAL: GitHub projected 110%");
+});
+
+test("formatCriticalIssue gives Netlify precedence when both services are stop (#724)", () => {
+  // The reworded selector is `netlifyStatus.status === "stop" ? "Netlify" : ...`,
+  // so when both are stop Netlify is named. Pins the new predicate's tie-break.
+  const { title } = formatCriticalIssue(
+    { pct: 95, projected: 130, status: "stop" },
+    { pct: 92, projected: 120, status: "stop" }
+  );
+  assert.equal(title, "BUILD MINUTES CRITICAL: Netlify at 95%");
 });
 
 // validatePeriod: malformed billing dates must fail loudly in the getters
@@ -381,18 +502,6 @@ test("paceBucket returns red when over critical pace", () => {
   assert.equal(paceBucket(101), "red");
   assert.equal(paceBucket(150), "red");
 });
-
-// statusName: map status percentage to named signal
- test("statusName maps thresholds to the correct signal", () => {
-   assert.equal(statusName(0), "good");
-   assert.equal(statusName(74), "good");
-   assert.equal(statusName(75), "watch");
-   assert.equal(statusName(81), "watch");
-   assert.equal(statusName(82), "throttle");
-   assert.equal(statusName(89), "throttle");
-   assert.equal(statusName(90), "stop");
-   assert.equal(statusName(120), "stop");
- });
 
  // overallStatusName: worse of two service statuses wins
  test("overallStatusName returns the worse service status", () => {
@@ -1041,9 +1150,10 @@ describe("Telegram and issue posting", () => {
 // These tests are clock-independent by construction, even though `main` reads
 // the real clock internally (todayISO/getReportingSince): the skip case forces
 // `current: 0` and `total_count: 0`, so usage is 0 regardless of the date, and
-// the stop case pins `run_duration_ms` to 95% of the budget, which is stop-level
-// on any date. Keep that property if you raise the fixture numbers, or inject a
-// fixed reference date instead.
+// the stop case pins `run_duration_ms` to ≥ 100% of the budget. Under the rate
+// curve (#724) a sub-100% usage is good at period end, so stop-on-any-date now
+// requires remaining ≤ 0 (used ≥ 100%); 126000000 ms = 2100 min = 105%. Keep
+// that property if you change the fixture, or inject a fixed reference date.
 describe("main", () => {
   test("skips the report when no PRs merged and usage is zero", async () => {
     const tmp = mkdtempSync(join(tmpdir(), "monitor-main-"));
@@ -1112,7 +1222,7 @@ describe("main", () => {
           },
         }),
       ],
-      ["/actions/runs", () => res({ workflow_runs: [{ run_duration_ms: 114000000 }] })],
+      ["/actions/runs", () => res({ workflow_runs: [{ run_duration_ms: 126000000 }] })],
       ["/search/issues", () => res({ total_count: 2 })],
       ["/sendPhoto", () => res({ ok: true })],
       ["/issues", () => res({ id: 1 })],
@@ -1174,8 +1284,8 @@ describe("main", () => {
 // --- refresh (#699) --------------------------------------------------------
 // The merge-time refresh path: fetch usage, upsert today's entry, and do
 // nothing else — no Telegram, no chart render, no critical issue, no PR-count
-// fetch. Clock-independent: GitHub usage is pinned to an actual breach (95% of
-// the 2000-minute budget), which is stop-level on any date.
+// fetch. Clock-independent: GitHub usage is pinned to ≥ 100% of the 2000-minute
+// budget (remaining ≤ 0), which is stop-level on any date under the rate curve.
 describe("refresh", () => {
   test("upserts today's entry and suppresses Telegram/render/critical-issue at stop-level usage", async () => {
     const tmp = mkdtempSync(join(tmpdir(), "monitor-refresh-"));
@@ -1195,8 +1305,9 @@ describe("refresh", () => {
           },
         }),
       ],
-      // 114000000 ms = 1900 min = 95% of the 2000-minute budget => stop on any date.
-      ["/actions/runs", () => res({ workflow_runs: [{ run_duration_ms: 114000000 }] })],
+      // 126000000 ms = 2100 min = 105% of the 2000-minute budget => remaining ≤ 0,
+      // so stop on any date under the rate curve (#724).
+      ["/actions/runs", () => res({ workflow_runs: [{ run_duration_ms: 126000000 }] })],
     ]);
     try {
       const status = await refresh(seriesFile);
@@ -1290,7 +1401,7 @@ describe("refresh", () => {
           },
         }),
       ],
-      ["/actions/runs", () => res({ workflow_runs: [{ run_duration_ms: 114000000 }] })],
+      ["/actions/runs", () => res({ workflow_runs: [{ run_duration_ms: 126000000 }] })],
     ]);
     try {
       await refresh(seriesFile);

@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { renderBurndown, exportedForTesting } from "./render-burndown.mjs";
 
-const { drawHistogram, statusColor } = exportedForTesting;
+const { drawHistogram, statusColor, drawThrottleCurve, CHART_WIDTH, CHART_HEIGHT } =
+  exportedForTesting;
 
 const statuses = { github: "good", netlify: "watch", overall: "watch" };
 
@@ -78,6 +79,41 @@ function createMockCtx() {
     },
   };
 }
+
+// drawThrottleCurve: the rate-relative pace reference (#724), replacing the
+// straight critical-pace diagonal.
+test("drawThrottleCurve draws a sampled polyline from top-left to bottom-right", () => {
+  const ctx = createMockCtx();
+  const ox = 100;
+  const oy = 50;
+  drawThrottleCurve(ctx, ox, oy);
+
+  const moves = ctx.operations.filter((op) => op.type === "moveTo");
+  const lines = ctx.operations.filter((op) => op.type === "lineTo");
+  assert.equal(moves.length, 1, "one moveTo starts the polyline");
+  assert.ok(
+    lines.length > 2,
+    "a sampled curve has many segments, not one diagonal segment"
+  );
+
+  // Starts at the chart origin (top-left).
+  assert.equal(moves[0].x, ox);
+  assert.equal(moves[0].y, oy);
+
+  // Ends at the bottom-right corner of the chart area.
+  const last = lines[lines.length - 1];
+  assert.ok(Math.abs(last.x - (ox + CHART_WIDTH)) < 1e-9);
+  assert.ok(Math.abs(last.y - (oy + CHART_HEIGHT)) < 1e-9);
+
+  // Bows above the diagonal: at the horizontal midpoint the curve sits above the
+  // straight diagonal (less used than the linear pace), so its y is above the midline.
+  const mid = lines.find((op) => Math.abs(op.x - (ox + CHART_WIDTH / 2)) < 1e-9);
+  assert.ok(mid, "a sample sits at the horizontal midpoint");
+  assert.ok(
+    mid.y < oy + CHART_HEIGHT / 2,
+    "curve bows above the diagonal midpoint"
+  );
+});
 
 test("drawHistogram draws a baseline and bars for past days with PRs", () => {
   const ctx = createMockCtx();
