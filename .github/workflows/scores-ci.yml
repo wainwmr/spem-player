@@ -36,7 +36,7 @@ jobs:
               mtime=$(git log -1 --format=%ct -- "$f") && touch -d "@$mtime" "$f"
             done
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
         with:
           node-version-file: ".nvmrc"
