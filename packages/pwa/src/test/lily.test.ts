@@ -10,6 +10,7 @@ const {
   setupLilypondParser,
   noteToPitchClass,
   semantics,
+  parseMatch,
   resetLilypondCache,
 } = exportedForTesting;
 import { Note, Duration } from "../ts/music-classes";
@@ -66,6 +67,12 @@ describe("lilypond parsing tests", () => {
     const match = lyGrammar.match("3", "fraction");
     expect(match.succeeded()).toBe(true);
     expect(semantics(match).parse()).toBe(3);
+  });
+
+  it("parse operation result is typed, not any", () => {
+    const match = lyGrammar.match("3/4", "fraction");
+    // @ts-expect-error parse() returns a union, not any; property access is now checked.
+    expect(parseMatch(match).wrongProperty).toBeUndefined();
   });
 
   it("processLilypond", () => {
