@@ -71,4 +71,4 @@ jobs:
             exit 0
           fi
           git commit --no-verify -m "chore: refresh build-usage series [skip ci]"
-          git push
+          bash .github/scripts/push-with-rebase.sh
