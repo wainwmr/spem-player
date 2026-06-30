@@ -16,7 +16,7 @@
     "@vitest/coverage-v8": "^4.1.9",
     "@vitest/ui": "^4.1.9",
     "autoprefixer": "^10.5.2",
-    "dependency-cruiser": "^17.4.3",
+    "dependency-cruiser": "^18.0.0",
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.6.0",
