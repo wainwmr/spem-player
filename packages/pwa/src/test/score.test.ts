@@ -8,6 +8,55 @@ import {
 } from "./helpers";
 import { makeFixtureSvg } from "./fixtureScore";
 
+// Capture ResizeObserver callbacks so tests can drive the resize path, and
+// count disconnects so the teardown test can assert the observer is released.
+const resizeObserverCallbacks = new WeakMap<Element, () => void>();
+let resizeObserverDisconnects = 0;
+
+vi.stubGlobal(
+  "ResizeObserver",
+  class {
+    #callback: ResizeObserverCallback;
+    #target: Element | null = null;
+
+    constructor(callback: ResizeObserverCallback) {
+      this.#callback = callback;
+    }
+
+    observe(target: Element) {
+      this.#target = target;
+      resizeObserverCallbacks.set(target, () =>
+        // The entry shape is intentionally minimal: the production callback
+        // ignores its arguments and re-reads offsetWidth / getBoundingClientRect,
+        // so only `target` is real. Enrich this if the callback ever reads the
+        // rect.
+        this.#callback(
+          [
+            {
+              target,
+              contentRect: { width: 0, height: 0 } as DOMRectReadOnly,
+            } as ResizeObserverEntry,
+          ],
+          this as unknown as ResizeObserver
+        )
+      );
+    }
+
+    disconnect() {
+      resizeObserverDisconnects++;
+      if (this.#target) {
+        resizeObserverCallbacks.delete(this.#target);
+        this.#target = null;
+      }
+    }
+  }
+);
+
+function triggerResize(target: Element) {
+  const callback = resizeObserverCallbacks.get(target);
+  if (callback) callback();
+}
+
 // Polyfill DOMPoint for jsdom
 if (typeof DOMPoint === "undefined") {
   globalThis.DOMPoint = class DOMPoint {
@@ -688,6 +737,384 @@ describe("MusicScore custom element", () => {
     const overlay = elem.querySelector(".score-clef-overlay");
     expect(overlay).not.toBeNull();
     expect(overlay!.querySelector("#part-dim-style")).toBeNull();
+  });
+
+  it("caches scoreWidth so scrollSmooth does not re-read getBoundingClientRect after load", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    // Stub layout dimensions before the post-load requestAnimationFrame populates
+    // the cache. With these values, the scroll math for bar 40 is deterministic.
+    vi.spyOn(elem, "offsetWidth", "get").mockReturnValue(800);
+    const rectSpy = vi
+      .spyOn(window.SVGElement.prototype, "getBoundingClientRect")
+      .mockReturnValue({ width: 2000 } as DOMRect);
+
+    const waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem?.setAttribute("choir", "0");
+    await waitingForLoaded;
+
+    const waitingForReady = waitForEvent(
+      elem,
+      "music-score-ready",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    await waitingForReady;
+
+    const scrollArea = elem.querySelector(
+      ".score-scroll-area"
+    ) as HTMLDivElement;
+
+    // After the cache is populated, sabotage getBoundingClientRect. A
+    // non-cached scrollSmooth would read 0 and produce a wrong scroll position.
+    rectSpy.mockReturnValue({ width: 0 } as DOMRect);
+
+    elem.setAttribute("bar", "40");
+    expect(scrollArea.scrollLeft).toBeGreaterThan(0);
+  });
+
+  it("caches frameWidth and only refreshes it via ResizeObserver", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    vi.spyOn(elem, "offsetWidth", "get").mockReturnValue(800);
+    vi.spyOn(
+      window.SVGElement.prototype,
+      "getBoundingClientRect"
+    ).mockReturnValue({ width: 2000 } as DOMRect);
+    // The ResizeObserver was wired in connectedCallback, before the offsetWidth
+    // spy was installed, so its first measure read jsdom's 0; drive it once now
+    // to populate the frameWidth cache.
+    triggerResize(elem);
+
+    const waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem?.setAttribute("choir", "0");
+    await waitingForLoaded;
+
+    const waitingForReady = waitForEvent(
+      elem,
+      "music-score-ready",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    await waitingForReady;
+
+    const scrollArea = elem.querySelector(
+      ".score-scroll-area"
+    ) as HTMLDivElement;
+
+    // Change offsetWidth without invoking the ResizeObserver callback. A cached
+    // frameWidth stays at 800; a non-cached scrollSmooth reads 400 and scrolls
+    // further (bar 40 with fixture width 1000: ~565 - 100 = 465).
+    vi.spyOn(elem, "offsetWidth", "get").mockReturnValue(400);
+    elem.setAttribute("bar", "40");
+    expect(scrollArea.scrollLeft).toBeCloseTo(365, 0);
+
+    // Now drive the resize path: the callback refreshes the cache to 400.
+    triggerResize(elem);
+    elem.setAttribute("bar", "41");
+    elem.setAttribute("bar", "40");
+    expect(scrollArea.scrollLeft).toBeCloseTo(465, 0);
+  });
+
+  it("refreshes scoreWidth on score load", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    vi.spyOn(elem, "offsetWidth", "get").mockReturnValue(800);
+    let scoreWidth = 2000;
+    const rectSpy = vi
+      .spyOn(window.SVGElement.prototype, "getBoundingClientRect")
+      .mockReturnValue({ width: scoreWidth } as DOMRect);
+    // Populate the frameWidth cache now that offsetWidth is stubbed.
+    triggerResize(elem);
+
+    const waitingForLoaded1 = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem?.setAttribute("choir", "0");
+    await waitingForLoaded1;
+
+    const waitingForReady1 = waitForEvent(
+      elem,
+      "music-score-ready",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    await waitingForReady1;
+
+    // Load a different score type with a narrower rendered width.
+    scoreWidth = 1200;
+    rectSpy.mockReturnValue({ width: scoreWidth } as DOMRect);
+
+    const waitingForReady2 = waitForEvent(
+      elem,
+      "music-score-ready",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem.setAttribute("score-type", "early");
+    await waitingForReady2;
+
+    const scrollArea = elem.querySelector(
+      ".score-scroll-area"
+    ) as HTMLDivElement;
+
+    // After the second load the cache holds scoreWidth 1200. Sabotage the
+    // getter to prove the cached value is used, not a fresh read.
+    rectSpy.mockReturnValue({ width: 0 } as DOMRect);
+    elem.setAttribute("bar", "40");
+    // With the refreshed cache, scrollLeft is based on 1200; with a stale 2000
+    // cache it would be much larger, and with no cache it would be negative.
+    expect(scrollArea.scrollLeft).toBeGreaterThan(0);
+    expect(scrollArea.scrollLeft).toBeLessThan(300);
+  });
+
+  it("refreshes scoreWidth on resize, not only on load (#692 splitter drag)", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    vi.spyOn(elem, "offsetWidth", "get").mockReturnValue(800);
+    const rectSpy = vi
+      .spyOn(window.SVGElement.prototype, "getBoundingClientRect")
+      .mockReturnValue({ width: 2000 } as DOMRect);
+    // Populate the frameWidth cache now that offsetWidth is stubbed.
+    triggerResize(elem);
+
+    const waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem?.setAttribute("choir", "0");
+    await waitingForLoaded;
+
+    const waitingForReady = waitForEvent(
+      elem,
+      "music-score-ready",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    await waitingForReady;
+
+    const scrollArea = elem.querySelector(
+      ".score-scroll-area"
+    ) as HTMLDivElement;
+
+    // A splitter drag changes the panel height, so the height:100% SVG renders
+    // narrower. The element resizes, so the ResizeObserver fires — and must
+    // refresh the cached scoreWidth, not only frameWidth (#692). Drive the
+    // resize with the new, narrower width, then sabotage the getter to 0 to
+    // prove the refreshed *cache* (1000) is read, not a fresh re-measure.
+    rectSpy.mockReturnValue({ width: 1000 } as DOMRect);
+    triggerResize(elem);
+    rectSpy.mockReturnValue({ width: 0 } as DOMRect);
+
+    elem.setAttribute("bar", "40");
+    // scoreWidth 1000, frameWidth 800: 0.2826*1000 - 0.25*800 ≈ 83. A stale 2000
+    // cache (resize not refreshing scoreWidth) would give ≈365.
+    expect(scrollArea.scrollLeft).toBeCloseTo(83, 0);
+  });
+
+  it("falls back to a live offsetWidth read when frameWidth was never validly cached (#692)", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    // connectedCallback already ran in beforeEach with jsdom's offsetWidth of 0.
+    // That 0 must NOT be cached, or it would suppress the live-read fallback.
+    // Deliberately do NOT triggerResize, so frameWidth stays uncached and
+    // scrollSmooth must read offsetWidth live.
+    vi.spyOn(elem, "offsetWidth", "get").mockReturnValue(800);
+    vi.spyOn(
+      window.SVGElement.prototype,
+      "getBoundingClientRect"
+    ).mockReturnValue({ width: 2000 } as DOMRect);
+
+    const waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem?.setAttribute("choir", "0");
+    await waitingForLoaded;
+
+    const waitingForReady = waitForEvent(
+      elem,
+      "music-score-ready",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    await waitingForReady;
+
+    const scrollArea = elem.querySelector(
+      ".score-scroll-area"
+    ) as HTMLDivElement;
+
+    elem.setAttribute("bar", "40");
+    // frameWidth falls back to the live offsetWidth 800 (not a cached 0):
+    // 0.2826*2000 - 0.25*800 ≈ 365. A cached 0 frameWidth would give ≈565.
+    expect(scrollArea.scrollLeft).toBeCloseTo(365, 0);
+  });
+
+  it("disconnects the ResizeObserver when removed from the DOM (#692)", () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    const before = resizeObserverDisconnects;
+
+    elem.remove();
+
+    expect(resizeObserverDisconnects).toBe(before + 1);
+    // After disconnect the callback is released, so a later resize is a no-op
+    // (no throw, nothing to refresh).
+    expect(() => triggerResize(elem)).not.toThrow();
+  });
+
+  it("invalidates the cached scoreWidth on score change, falling back to a live read when the new measure is unavailable (#692)", async () => {
+    const elem = document.querySelector("music-score") as MusicScore;
+    elem.scrollTo = vi.fn();
+
+    vi.spyOn(elem, "offsetWidth", "get").mockReturnValue(800);
+    const rectSpy = vi
+      .spyOn(window.SVGElement.prototype, "getBoundingClientRect")
+      .mockReturnValue({ width: 2000 } as DOMRect);
+    triggerResize(elem); // cache frameWidth 800
+
+    const waitingForLoaded = waitForEvent(
+      elem,
+      "music-score-loaded",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem?.setAttribute("choir", "0");
+    await waitingForLoaded;
+
+    const waitingForReady = waitForEvent(
+      elem,
+      "music-score-ready",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    await waitingForReady;
+    // The cache now holds the first score's width (2000).
+
+    // Switch to a different score whose post-load measure transiently reads 0
+    // (layout not yet settled), so the > 0 guard skips the cache update. The
+    // previous 2000 must NOT survive: a score change invalidates the cache, so
+    // scrollSmooth falls back to a live read of the new score (#692).
+    rectSpy.mockReturnValue({ width: 0 } as DOMRect);
+    const waitingForReady2 = waitForEvent(
+      elem,
+      "music-score-ready",
+      handleScoreLoaded,
+      0,
+      null,
+      0
+    );
+    elem.setAttribute("score-type", "early");
+    await waitingForReady2;
+
+    const scrollArea = elem.querySelector(
+      ".score-scroll-area"
+    ) as HTMLDivElement;
+
+    // A live read now returns the new score's width (1500); the stale 2000 is
+    // gone.
+    rectSpy.mockReturnValue({ width: 1500 } as DOMRect);
+    elem.setAttribute("bar", "40");
+    // Live scoreWidth 1500, frameWidth 800: 0.2826*1500 - 0.25*800 ≈ 224. A
+    // stale cached 2000 (no invalidation on score change) would give ≈365.
+    expect(scrollArea.scrollLeft).toBeCloseTo(224, 0);
+  });
+
+  // Keep this test LAST among ResizeObserver-dependent tests: it stubs
+  // ResizeObserver to undefined and restores it in `finally`, so any later
+  // RO-dependent test would rely on that restore having run (#692).
+  it("connects without throwing when ResizeObserver is unavailable (#692)", async () => {
+    // Simulate an environment without ResizeObserver: the element must still
+    // connect, load, and scroll (frameWidth simply won't refresh on resize).
+    const original = globalThis.ResizeObserver;
+    vi.stubGlobal("ResizeObserver", undefined);
+    try {
+      document.body.innerHTML = `<music-score></music-score>`;
+      const elem = document.querySelector("music-score") as MusicScore;
+      elem.scrollTo = vi.fn();
+      vi.spyOn(elem, "offsetWidth", "get").mockReturnValue(800);
+      vi.spyOn(
+        window.SVGElement.prototype,
+        "getBoundingClientRect"
+      ).mockReturnValue({ width: 2000 } as DOMRect);
+
+      const waitingForLoaded = waitForEvent(
+        elem,
+        "music-score-loaded",
+        handleScoreLoaded,
+        0,
+        null,
+        0
+      );
+      elem?.setAttribute("choir", "0");
+      await waitingForLoaded;
+
+      const waitingForReady = waitForEvent(
+        elem,
+        "music-score-ready",
+        handleScoreLoaded,
+        0,
+        null,
+        0
+      );
+      await waitingForReady;
+
+      const scrollArea = elem.querySelector(
+        ".score-scroll-area"
+      ) as HTMLDivElement;
+      elem.setAttribute("bar", "40");
+      // scoreWidth cached on load (2000), frameWidth falls back to live 800: ≈365.
+      expect(scrollArea.scrollLeft).toBeCloseTo(365, 0);
+    } finally {
+      vi.stubGlobal("ResizeObserver", original);
+    }
   });
 
   it("aborts stale #loadScore when a newer choir request resolves first (#391)", async () => {
