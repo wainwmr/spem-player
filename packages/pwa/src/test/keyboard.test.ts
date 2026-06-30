@@ -1,51 +1,10 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import { MusicControls } from "../ts/MusicControls";
+import { setupIntegrationFixture } from "./helpers";
 
 describe("keyboard shortcuts", () => {
   beforeAll(async () => {
-    vi.resetModules();
-
-    vi.spyOn(window, "requestAnimationFrame").mockReturnValue(0);
-    if (!HTMLElement.prototype.scrollTo) {
-      HTMLElement.prototype.scrollTo = () => {};
-    }
-
-    document.body.innerHTML = `
-      <div class="viewportDiv">
-        <div id="backdrop"></div>
-        <header class="header">
-          <span class="title">Spem Player</span>
-          <span id="info" class="tooltip"><span id="help-icon"></span></span>
-          <div class="header-spacer"></div>
-          <span id="recordinglabel"></span>
-          <span id="recordingswitch"></span>
-          <span id="scoreswitch"></span>
-          <span id="darkswitch"></span>
-        </header>
-        <div id="help"></div>
-        <div id="feedback-modal"></div>
-        <div class="split-container">
-          <music-score></music-score>
-          <div class="splitter"></div>
-          <music-canvas></music-canvas>
-        </div>
-        <div class="footer">
-          <music-controls></music-controls>
-          <music-canvas-watcher class="hide"></music-canvas-watcher>
-        </div>
-      </div>
-    `;
-
-    await import("../ts/MusicCanvas");
-    await import("../ts/MusicScore");
-    await import("../ts/MusicControls");
-    await import("../ts/MusicCanvasWatcher");
-
-    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
-    vi.spyOn(HTMLMediaElement.prototype, "pause").mockReturnThis();
-
-    await import("../../index.ts");
-    window.dispatchEvent(new Event("load"));
+    await setupIntegrationFixture();
   }, 30000);
 
   afterAll(async () => {
