@@ -5,7 +5,7 @@ import config from "./config";
 import { PartType, Position, colors } from "./common";
 import { MusicElement } from "./MusicElement";
 
-import { NoteEntry, Range, FRlocation, processLilypond } from "./lily";
+import { LilypondData, processLilypond } from "./lily";
 
 export class MusicCanvas extends MusicElement {
   static observedAttributes = ["choir", "part", "bar", "playing"];
@@ -21,10 +21,13 @@ export class MusicCanvas extends MusicElement {
   lastNoteDuration: number[][] = [];
   falseRelationPulses: number[] = [];
   shimmerPhases: number[] = [];
-  notesByQuant: Map<number, NoteEntry[]> = new Map();
-  ranges: Map<string, Range[]> = new Map();
-  barCount: number = 0;
-  frLocations: FRlocation[] = [];
+  // All parsed score data arrives together from one processLilypond() call, so
+  // it is held as one nullable object: null until #init populates it, never
+  // partially filled (#652). The entry points draw(), #startShimmerLoop(), and
+  // the public seek() guard on null; the post-init draw helpers and pointer
+  // handlers read `lilyData!`. (#updatePulses also guards defensively but is
+  // reached only via the already-guarded draw().)
+  lilyData: LilypondData | null = null;
   source: string | null = null;
 
   isOnDevBranch =
@@ -133,7 +136,7 @@ export class MusicCanvas extends MusicElement {
   #startShimmerLoop() {
     // Nothing animates while paused unless there are false-relation hotspots
     // to breathe, so skip the loop entirely when there are none (#649).
-    if (this.frLocations.length === 0) return;
+    if (this.lilyData == null || this.lilyData.frLocations.length === 0) return;
     const loop = (timestamp: number) => {
       if (!this.playing) {
         // Throttle to the idle interval: the breathing hotspot does not need
@@ -214,11 +217,7 @@ export class MusicCanvas extends MusicElement {
     this.#calculateCanvasSize();
     this.#showLoadingOnCanvas();
 
-    const lilyData = processLilypond();
-    this.notesByQuant = lilyData.notesByQuant;
-    this.ranges = lilyData.ranges;
-    this.barCount = lilyData.barCount;
-    this.frLocations = lilyData.frLocations;
+    this.lilyData = processLilypond();
 
     // define array pulses[choir][part] to be min transparency which
     // will be pulsed when the choir is singing a note.
@@ -233,10 +232,9 @@ export class MusicCanvas extends MusicElement {
       }
     }
 
-    this.falseRelationPulses = new Array(this.frLocations.length).fill(0);
-    this.shimmerPhases = this.frLocations.map(
-      () => Math.random() * Math.PI * 2
-    );
+    const { frLocations } = this.lilyData;
+    this.falseRelationPulses = new Array(frLocations.length).fill(0);
+    this.shimmerPhases = frLocations.map(() => Math.random() * Math.PI * 2);
 
     this.draw();
     this.#startShimmerLoop();
@@ -302,9 +300,12 @@ export class MusicCanvas extends MusicElement {
     // positions, so the old integer scan stepped right over them (#598). `ranges`
     // is the boundary-bearing source, and walking its edges is O(sections), not
     // O(bars).
+    // seek is public on the custom element; tolerate a call before #init.
+    if (this.lilyData == null) return pos.bar;
+    const { ranges, barCount } = this.lilyData;
     const singingAt = (bar: number): boolean => {
       for (let p = 0; p < config.parts.length; p++) {
-        const list = this.ranges.get(`${pos.choir}-${p}`);
+        const list = ranges.get(`${pos.choir}-${p}`);
         if (list?.some((r) => bar >= r.from && bar < r.to)) return true;
       }
       return false;
@@ -313,7 +314,7 @@ export class MusicCanvas extends MusicElement {
     // Every part-range edge for this choir, de-duplicated and sorted.
     const edges = new Set<number>();
     for (let p = 0; p < config.parts.length; p++) {
-      for (const r of this.ranges.get(`${pos.choir}-${p}`) ?? []) {
+      for (const r of ranges.get(`${pos.choir}-${p}`) ?? []) {
         edges.add(r.from);
         edges.add(r.to);
       }
@@ -337,7 +338,7 @@ export class MusicCanvas extends MusicElement {
     // current bar.
     if (direction > 0) {
       const next = flips.find((b) => b > pos.bar);
-      return next === undefined ? this.barCount : Math.min(next, this.barCount);
+      return next === undefined ? barCount : Math.min(next, barCount);
     }
     const prev = [...flips].reverse().find((b) => b < pos.bar);
     return prev === undefined ? 0 : Math.max(prev, 0);
@@ -362,7 +363,11 @@ export class MusicCanvas extends MusicElement {
 
   draw() {
     if (!this.canvas) return;
-    if (this.ranges.size === 0 || this.notesByQuant.size === 0) return;
+    if (this.lilyData == null) return;
+    // A non-null lilyData is fully populated, but a degenerate parse can yield
+    // zero notes; preserve the pre-#652 short-circuit so an empty score renders
+    // nothing rather than an empty grid.
+    if (this.lilyData.notesByQuant.size === 0) return;
 
     this.#updatePulses();
 
@@ -379,11 +384,13 @@ export class MusicCanvas extends MusicElement {
   }
 
   #updatePulses() {
+    if (this.lilyData == null) return;
+    const { notesByQuant, frLocations } = this.lilyData;
     const isLight = this.#isLightMode();
 
     // If there are notes starting now, record their onset and duration
     const quant = Math.floor(this.bar * 128) / 128;
-    const notes = this.notesByQuant.get(quant);
+    const notes = notesByQuant.get(quant);
     if (notes != undefined && notes.length > 0) {
       for (var n of notes) {
         if (n.n.duration != null) {
@@ -411,8 +418,8 @@ export class MusicCanvas extends MusicElement {
     }
 
     // Pulse false relations
-    for (let i = 0; i < this.frLocations.length; i++) {
-      const loc = this.frLocations[i];
+    for (let i = 0; i < frLocations.length; i++) {
+      const loc = frLocations[i];
       if (
         this.bar >= loc.from &&
         this.bar < loc.from + MusicCanvas.FR_PULSE_FADE_BARS
@@ -432,7 +439,7 @@ export class MusicCanvas extends MusicElement {
   }
 
   #drawBarHighlight(ctx: CanvasRenderingContext2D) {
-    if (this.bar <= 0 || this.bar > this.barCount) return;
+    if (this.bar <= 0 || this.bar > this.lilyData!.barCount) return;
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(
@@ -487,13 +494,16 @@ export class MusicCanvas extends MusicElement {
       ? MusicCanvas.DULL_BASE_LIGHTNESS_LIGHT
       : MusicCanvas.DULL_BASE_LIGHTNESS_DARK;
 
+    const { ranges, barCount } = this.lilyData!;
     ctx.lineWidth = 0.9 * this.partHeight;
     ctx.lineCap = "round";
     for (var c = 0; c < config.choirs[0].length; c++) {
       for (var p = 0; p < config.parts.length; p++) {
         const Y = this.#partRowCenterY(c, p);
 
-        const list = this.ranges.get(`${c}-${p}`)!;
+        // processLilypond seeds every `${c}-${p}` key, so this lookup is total
+        // here (unlike seek's tolerant `?? []`). #652.
+        const list = ranges.get(`${c}-${p}`)!;
         list.forEach((r) => {
           const from = r.from;
           const to = r.to;
@@ -518,7 +528,7 @@ export class MusicCanvas extends MusicElement {
             saturation = 80;
             lightness = MusicCanvas.SELECTED_BASE_LIGHTNESS - 3 * p;
             transparency = 1;
-          } else if (this.bar === 0 || this.bar > this.barCount) {
+          } else if (this.bar === 0 || this.bar > barCount) {
             saturation = 50;
             lightness = MusicCanvas.SELECTED_BASE_LIGHTNESS - 3 * p;
             transparency = 1;
@@ -594,9 +604,10 @@ export class MusicCanvas extends MusicElement {
   }
 
   #drawFalseRelationHotspot(ctx: CanvasRenderingContext2D) {
+    const { frLocations } = this.lilyData!;
     const shimmerTime = Date.now() / 1000;
-    for (let i = 0; i < this.frLocations.length; i++) {
-      const loc = this.frLocations[i];
+    for (let i = 0; i < frLocations.length; i++) {
+      const loc = frLocations[i];
       const cx = this.canvasPadding + ((loc.from + loc.to) / 2) * this.barWidth;
       const phase = this.shimmerPhases[i];
       const alpha =
@@ -624,11 +635,12 @@ export class MusicCanvas extends MusicElement {
   }
 
   #drawFalseRelationPulses(ctx: CanvasRenderingContext2D) {
-    for (let i = 0; i < this.frLocations.length; i++) {
+    const { frLocations } = this.lilyData!;
+    for (let i = 0; i < frLocations.length; i++) {
       const pulse = this.falseRelationPulses[i];
       if (pulse <= 0) continue;
 
-      const loc = this.frLocations[i];
+      const loc = frLocations[i];
       const cx = this.canvasPadding + ((loc.from + loc.to) / 2) * this.barWidth;
 
       const cy = this.#partRowCenterY(loc.c, loc.p);
@@ -715,7 +727,7 @@ export class MusicCanvas extends MusicElement {
       ),
       part: partResolver(rowFraction),
       bar: Math.floor(
-        ((clampedX - cssPaddingX) * this.barCount) / drawableWidth
+        ((clampedX - cssPaddingX) * this.lilyData!.barCount) / drawableWidth
       ),
     };
   }
