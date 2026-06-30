@@ -1594,7 +1594,13 @@ describe("MusicCanvas custom element", () => {
     expect(canvas).not.toBeNull();
 
     const onset = 0.03125; // 1/32 bar, between 1/16 quant points
-    const note = new Note("a", null, null, new Duration("16"), null);
+    const note = new Note({
+      notename: "a",
+      accidental: null,
+      octave: null,
+      duration: new Duration("16"),
+      slur: null,
+    });
     canvas!.lilyData = {
       ...canvas!.lilyData!,
       notesByQuant: new Map([[onset, [{ c: 0, p: 0, n: note }]]]),
@@ -1610,8 +1616,20 @@ describe("MusicCanvas custom element", () => {
   it("still pulses notes on 1/16 and whole-bar boundaries after the finer quant (#704)", () => {
     expect(canvas).not.toBeNull();
 
-    const note16 = new Note("b", null, null, new Duration("16"), null);
-    const noteWhole = new Note("c", null, null, new Duration("1"), null);
+    const note16 = new Note({
+      notename: "b",
+      accidental: null,
+      octave: null,
+      duration: new Duration("16"),
+      slur: null,
+    });
+    const noteWhole = new Note({
+      notename: "c",
+      accidental: null,
+      octave: null,
+      duration: new Duration("1"),
+      slur: null,
+    });
     canvas!.lilyData = {
       ...canvas!.lilyData!,
       notesByQuant: new Map([
