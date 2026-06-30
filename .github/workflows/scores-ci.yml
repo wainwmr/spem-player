@@ -60,4 +60,4 @@ jobs:
             exit 0
           fi
           git commit -m "chore: regenerate SVGs"
-          git push
+          bash .github/scripts/push-with-rebase.sh

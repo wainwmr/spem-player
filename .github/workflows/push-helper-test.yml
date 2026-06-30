@@ -1,0 +1,23 @@
+name: Push-helper test
+
+# Runs the push-with-rebase regression test on any change to the helper or its
+# test. Without this, changes under .github/scripts/ only hit test-noop, so
+# nothing exercised the script (#727).
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/scripts/**"
+      - ".github/workflows/push-helper-test.yml"
+  pull_request:
+    paths:
+      - ".github/scripts/**"
+      - ".github/workflows/push-helper-test.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run push-with-rebase regression test
+        run: bash .github/scripts/push-with-rebase.test.sh
