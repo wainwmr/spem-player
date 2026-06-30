@@ -57,26 +57,66 @@ describe("Duration", () => {
 describe("Note", () => {
   it("toString formats note correctly", () => {
     const d = new Duration("4");
-    const n = new Note("c", null, null, d, null);
+    const n = new Note({
+      notename: "c",
+      accidental: null,
+      octave: null,
+      duration: d,
+      slur: null,
+    });
     expect(n.toString()).toBe("c4");
   });
 
   it("toString includes accidental and octave", () => {
     const d = new Duration("8");
-    const n = new Note("d", "is", "'", d, null);
+    const n = new Note({
+      notename: "d",
+      accidental: "is",
+      octave: "'",
+      duration: d,
+      slur: null,
+    });
     expect(n.toString()).toBe("dis'8");
   });
 
   it("toString can hide duration", () => {
     const d = new Duration("2");
-    const n = new Note("e", null, null, d, "(");
+    const n = new Note({
+      notename: "e",
+      accidental: null,
+      octave: null,
+      duration: d,
+      slur: "(",
+    });
     expect(n.toString(false)).toBe("e(");
   });
 
   it("toString concatenates all fields in order", () => {
     const d = new Duration("4");
-    const n = new Note("c", "is", "'", d, "(");
+    const n = new Note({
+      notename: "c",
+      accidental: "is",
+      octave: "'",
+      duration: d,
+      slur: "(",
+    });
     expect(n.toString()).toBe("cis'4(");
+  });
+
+  it("assigns each named parameter to the correct property", () => {
+    const d = new Duration("4");
+    const n = new Note({
+      notename: "c",
+      accidental: "is",
+      octave: "'",
+      duration: d,
+      slur: "(",
+    });
+    expect(n.notename).toBe("c");
+    expect(n.accidental).toBe("is");
+    expect(n.octave).toBe("'");
+    expect(n.duration).toBe(d);
+    expect(n.slur).toBe("(");
   });
 });
 

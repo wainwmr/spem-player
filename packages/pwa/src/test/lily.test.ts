@@ -137,54 +137,178 @@ describe("lilypond parsing tests", () => {
 
   it("noteToPitchClass maps natural notes correctly", () => {
     expect(
-      noteToPitchClass(new Note("c", null, null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "c",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(0);
     expect(
-      noteToPitchClass(new Note("d", null, null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "d",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(2);
     expect(
-      noteToPitchClass(new Note("e", null, null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "e",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(4);
     expect(
-      noteToPitchClass(new Note("f", null, null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "f",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(5);
     expect(
-      noteToPitchClass(new Note("g", null, null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "g",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(7);
     expect(
-      noteToPitchClass(new Note("a", null, null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "a",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(9);
     expect(
-      noteToPitchClass(new Note("b", null, null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "b",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(11);
   });
 
   it("noteToPitchClass maps accidentals correctly", () => {
     expect(
-      noteToPitchClass(new Note("c", "is", null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "c",
+          accidental: "is",
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(1);
     expect(
-      noteToPitchClass(new Note("c", "es", null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "c",
+          accidental: "es",
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(11);
     expect(
-      noteToPitchClass(new Note("c", "isis", null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "c",
+          accidental: "isis",
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(2);
     expect(
-      noteToPitchClass(new Note("c", "eses", null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "c",
+          accidental: "eses",
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(10);
     expect(
-      noteToPitchClass(new Note("e", "es", null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "e",
+          accidental: "es",
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(3); // E flat
     expect(
-      noteToPitchClass(new Note("b", "es", null, new Duration("4"), null))
+      noteToPitchClass(
+        new Note({
+          notename: "b",
+          accidental: "es",
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        })
+      )
     ).toBe(10); // B flat
   });
 
   it("detectFalseRelations finds false relations (same letter, different accidental)", () => {
     const activeNotes = new Map<number, ActiveNote[]>();
     activeNotes.set(1.0, [
-      { c: 0, p: 0, n: new Note("f", null, null, new Duration("4"), null) },
-      { c: 1, p: 0, n: new Note("f", "is", null, new Duration("4"), null) },
+      {
+        c: 0,
+        p: 0,
+        n: new Note({
+          notename: "f",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        }),
+      },
+      {
+        c: 1,
+        p: 0,
+        n: new Note({
+          notename: "f",
+          accidental: "is",
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        }),
+      },
     ]);
     const result = detectFalseRelations(activeNotes);
     expect(result.length).toBe(2);
@@ -197,8 +321,28 @@ describe("lilypond parsing tests", () => {
   it("detectFalseRelations ignores same-part clashes", () => {
     const activeNotes = new Map<number, ActiveNote[]>();
     activeNotes.set(1.0, [
-      { c: 0, p: 0, n: new Note("f", null, null, new Duration("4"), null) },
-      { c: 0, p: 0, n: new Note("f", "is", null, new Duration("4"), null) },
+      {
+        c: 0,
+        p: 0,
+        n: new Note({
+          notename: "f",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        }),
+      },
+      {
+        c: 0,
+        p: 0,
+        n: new Note({
+          notename: "f",
+          accidental: "is",
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        }),
+      },
     ]);
     const result = detectFalseRelations(activeNotes);
     expect(result.length).toBe(0);
@@ -207,8 +351,28 @@ describe("lilypond parsing tests", () => {
   it("detectFalseRelations ignores different letters (even if semitone apart)", () => {
     const activeNotes = new Map<number, ActiveNote[]>();
     activeNotes.set(1.0, [
-      { c: 0, p: 0, n: new Note("e", null, null, new Duration("4"), null) },
-      { c: 1, p: 0, n: new Note("f", null, null, new Duration("4"), null) },
+      {
+        c: 0,
+        p: 0,
+        n: new Note({
+          notename: "e",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        }),
+      },
+      {
+        c: 1,
+        p: 0,
+        n: new Note({
+          notename: "f",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        }),
+      },
     ]);
     const result = detectFalseRelations(activeNotes);
     expect(result.length).toBe(0);
@@ -217,12 +381,52 @@ describe("lilypond parsing tests", () => {
   it("detectFalseRelations merges consecutive positions for same part", () => {
     const activeNotes = new Map<number, ActiveNote[]>();
     activeNotes.set(1.0, [
-      { c: 0, p: 0, n: new Note("b", "es", null, new Duration("4"), null) },
-      { c: 1, p: 0, n: new Note("b", null, null, new Duration("4"), null) },
+      {
+        c: 0,
+        p: 0,
+        n: new Note({
+          notename: "b",
+          accidental: "es",
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        }),
+      },
+      {
+        c: 1,
+        p: 0,
+        n: new Note({
+          notename: "b",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        }),
+      },
     ]);
     activeNotes.set(1.0625, [
-      { c: 0, p: 0, n: new Note("b", "es", null, new Duration("4"), null) },
-      { c: 1, p: 0, n: new Note("b", null, null, new Duration("4"), null) },
+      {
+        c: 0,
+        p: 0,
+        n: new Note({
+          notename: "b",
+          accidental: "es",
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        }),
+      },
+      {
+        c: 1,
+        p: 0,
+        n: new Note({
+          notename: "b",
+          accidental: null,
+          octave: null,
+          duration: new Duration("4"),
+          slur: null,
+        }),
+      },
     ]);
     const result = detectFalseRelations(activeNotes);
     expect(result.length).toBe(2);
