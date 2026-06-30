@@ -12,3 +12,8 @@
 *.html text eol=lf
 *.ohm text eol=lf
 .husky/pre-commit text eol=lf
+
+# Value-preserving merge for the accumulated build-usage series (#728): keep the
+# richer per-day mergedPRs rather than last-writer-wins. The driver is registered
+# per checkout by the monitor workflows (git config merge.monitor-series.driver).
+.github/monitor-series.json merge=monitor-series

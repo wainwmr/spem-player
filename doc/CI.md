@@ -124,6 +124,18 @@ Three workflows commit a regenerated file to `main`: `monitor-run.yml`,
 `.github/scripts/push-with-rebase.sh`, which retries with a rebase if a concurrent
 push moved `main` first, so an overlapping run converges instead of failing
 non-fast-forward ([#727](https://github.com/wainwmr/spem-player/issues/727)).
+
+The rebase is content-blind last-writer-wins, which is correct for a
+fully-regenerated file (a dropped score SVG self-heals on the next build). The
+build-usage series (`.github/monitor-series.json`) is the exception: it is
+upserted, not regenerated, so last-writer-wins could overwrite the daily run's
+real `mergedPRs` with a merge-time refresh's `0`. A value-preserving git merge
+driver (`packages/monitor/merge-monitor-series.mjs`, bound by `.gitattributes`
+and registered by the monitor workflows via
+`git config merge.monitor-series.driver`) reconciles a concurrent rebase of that
+file by keeping the larger per-day `mergedPRs`, so neither writer erases the
+other's count ([#728](https://github.com/wainwmr/spem-player/issues/728)).
+
 `push-helper-test.yml` runs the helper's regression test
 (`.github/scripts/push-with-rebase.test.sh`) on any change under
 `.github/scripts/`.
