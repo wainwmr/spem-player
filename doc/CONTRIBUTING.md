@@ -318,8 +318,8 @@ When creating or modifying a component:
 - **SVG bar detection** — `MusicScore.getBars()` parses `translate` attributes on `<g>` elements
   containing numeric `<tspan>` text. Values near the left edge are filtered to avoid false matches
   from tenor clef symbols.
-- **LilyPond parsing** — the Ohm grammar (`packages/pwa/src/ohmjs/ly-grammar.ohm`) covers only the subset of
-  LilyPond syntax used by `spem.ly`. Do not assume it generalises to other LilyPond files.
+- **LilyPond parsing** — the Ohm grammar (`packages/scores/src/lily/ly-grammar.ohm`) covers only the subset of
+  LilyPond syntax used by `spem.ly`, and runs at build time in `@spem/scores` to produce `lilyData.json` (#693). Do not assume it generalises to other LilyPond files.
 - **Version injection** — `package.json` version is injected into `index.html` at build time.
   Non-`main` branches append the branch name (e.g. `2.4.0-fix-123`).
 - **Local ignore rules** — personal patterns (IDE configs, local scripts) belong in
@@ -335,8 +335,8 @@ commands and configuration.
 
 Modules export an `exportedForTesting` object containing functions and state
 that are not part of the public API but require unit testing. For example,
-`lily.ts` exports `setupLilypondParser`, `romanise`, and parser state via this
-object.
+`@spem/scores`'s `lily.ts` exports `setupLilypondParser`, `parseMatch`, and
+`detectFalseRelations` via this object.
 
 #### Custom Elements in Tests
 

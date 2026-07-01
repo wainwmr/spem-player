@@ -11,15 +11,18 @@ Tests use Vitest 4 with the jsdom environment. Configuration lives in `vite.conf
 
 ## Prerequisites
 
-The Ohm.js grammar bundle must be built before tests can run. `pnpm run check` and
-`pnpm run build` handle this automatically, but if you are running tests in
-isolation you may need:
+The pwa test suite reads the committed precomputed note data
+(`packages/scores/src/lily/lilyData.json`) and needs no build step. The
+`@spem/scores` suite exercises the LilyPond parser directly, which imports the
+generated Ohm grammar bundle; the committed bundle is normally current, so this
+is only needed after editing the grammar:
 
 ```console
 pnpm run build:ohm
 ```
 
-Without this step, any test importing `packages/pwa/src/ohmjs/ly-grammar.ohm-bundle` will fail.
+Without it, a scores parser test importing
+`packages/scores/src/lily/ly-grammar.ohm-bundle` will fail.
 
 ## Running Tests
 
@@ -70,9 +73,11 @@ Choosing the right layer keeps the suite fast and deterministic.
 **Unit tests** (Vitest/jsdom, `packages/pwa/src/test/`) cover single modules in isolation:
 
 - custom element behaviour and state helpers
-- parser logic (LilyPond, Ohm grammar)
-- build script logic that does not spawn subprocesses
 - pure functions and domain models
+
+The LilyPond parser, Ohm grammar, and build-script logic are tested in the
+`@spem/scores` suite (Vitest/node, `packages/scores/test/`), where that code now
+lives (#693).
 
 **Integration tests** (Vitest/jsdom, `packages/scores/test/*.integration.test.ts`) cover cross-module behaviour and subprocess orchestration:
 

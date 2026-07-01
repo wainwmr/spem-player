@@ -1,8 +1,9 @@
 import { MusicCanvas } from "../ts/MusicCanvas";
 import config from "../ts/config";
 import { colors, type Position } from "../ts/common";
-import { Duration, Note } from "../ts/music-classes";
-import { barCount as lilyBarCount, type Range } from "../ts/lily";
+import { Duration, Note } from "@scores/lily/music-classes";
+import { barCount as lilyBarCount } from "../ts/lilyData";
+import type { Range } from "@scores/lily/lily";
 MusicCanvas.define("music-canvas");
 
 // Install fixture singing-ranges on a canvas by swapping its whole `lilyData`
@@ -1516,7 +1517,8 @@ describe("MusicCanvas custom element", () => {
     // minted first-init arrays (random shimmerPhases via map, falseRelationPulses
     // via new Array) keep their identity. These two are the right re-run probes:
     // they are rebuilt on every #init, unlike frLocations/notesByQuant/ranges,
-    // which processLilypond memoises and would return by the same reference.
+    // which come from the shared precomputed `lilyData` and keep the same
+    // reference across re-init (#693).
     expect(freshCanvas.querySelector("canvas")).toBe(originalInnerCanvas);
     expect(freshCanvas.shimmerPhases).toBe(originalShimmerPhases);
     expect(freshCanvas.falseRelationPulses).toBe(originalFalseRelationPulses);

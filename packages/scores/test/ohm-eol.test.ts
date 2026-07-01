@@ -31,7 +31,7 @@ describe("ohm grammar line-ending hygiene (#611)", () => {
   });
 
   it("the grammar bundle has no baked-in CRLF escape", () => {
-    const bundle = readFileSync("src/ohmjs/ly-grammar.ohm-bundle.js", "utf-8");
+    const bundle = readFileSync("src/lily/ly-grammar.ohm-bundle.js", "utf-8");
     // A CRLF-checked-out grammar is baked into the `source` literal as the
     // escaped sequence \r\n (the characters backslash-r-backslash-n), never a
     // raw CR byte, so search for the escape, not for a raw "\r".

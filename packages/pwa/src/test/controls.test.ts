@@ -1,6 +1,6 @@
 import { MusicControls } from "../ts/MusicControls";
 import config from "../ts/config";
-import { processLilypond, barCount } from "../ts/lily";
+import { barCount } from "../ts/lilyData";
 import playSVG from "../icons/play.svg?raw";
 import pauseSVG from "../icons/pause.svg?raw";
 import {
@@ -18,7 +18,6 @@ function matchesWildcard(pattern: string, str: string): boolean {
 describe("MusicControls custom element", () => {
   beforeAll(() => {
     MusicControls.define("music-controls");
-    processLilypond();
 
     // mock the Media element so we know if it's being played
     vi.spyOn(HTMLMediaElement.prototype, "load").mockReturnThis();

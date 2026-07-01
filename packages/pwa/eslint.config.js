@@ -57,15 +57,11 @@ export default tseslint.config(
   {
     // .gitignore is honoured via includeIgnoreFile above; only paths that are
     // NOT gitignored need listing here. tests-local/ and probes/ are local-only
-    // (.git/info/exclude, not .gitignore); .dependency-cruiser.cjs is tracked;
-    // the Ohm grammar bundle is generated code that is deliberately tracked but
-    // must skip lint (it uses require/module). It was previously excluded only by
-    // a stale, path-wrong .gitignore line; that exclusion lives here now (#637).
+    // (.git/info/exclude, not .gitignore); .dependency-cruiser.cjs is tracked.
     ignores: [
       'tests-local/',
       'probes/',
       '.dependency-cruiser.cjs',
-      'src/ohmjs/ly-grammar.ohm-bundle.*',
     ],
   }
 )

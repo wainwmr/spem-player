@@ -5,7 +5,7 @@ import {
   BarLine,
   Command,
   Component,
-} from "../ts/music-classes";
+} from "../src/lily/music-classes";
 
 describe("Duration", () => {
   it("creates durations for all note values", () => {

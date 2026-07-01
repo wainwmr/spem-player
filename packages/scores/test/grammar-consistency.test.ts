@@ -26,7 +26,7 @@ import { describe, expect, it } from "vitest";
  */
 describe("grammar / Duration switch consistency", () => {
   it("the Duration switch handles exactly the grammar's duration literals", () => {
-    const grammar = readFileSync("src/ohmjs/ly-grammar.ohm", "utf-8");
+    const grammar = readFileSync("src/lily/ly-grammar.ohm", "utf-8");
     const grammarMatch = grammar.match(/duration = \(([^)]+)\)/);
     expect(
       grammarMatch,
@@ -39,7 +39,7 @@ describe("grammar / Duration switch consistency", () => {
 
     // Scope the case-label scan to the Duration switch block only, so a future
     // unrelated `switch` elsewhere in the file cannot inject spurious labels.
-    const source = readFileSync("src/ts/music-classes.ts", "utf-8");
+    const source = readFileSync("src/lily/music-classes.ts", "utf-8");
     const switchStart = source.indexOf("switch (this.duration)");
     expect(
       switchStart,

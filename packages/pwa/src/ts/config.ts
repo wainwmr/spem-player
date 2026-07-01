@@ -2,20 +2,21 @@
 // SPDX-License-Identifier: MIT
 
 import pkg from "../../package.json";
+// choir/part names live in @spem/scores (they describe spem.ly's structure, which
+// that package owns) since #693 moved the LilyPond parse there. Single source of
+// truth; the CotE "1".."8" display numbering below stays here, an app concern.
+import { choirNames, parts } from "@scores/lily/structure";
 
 export default {
   version: pkg.version,
-  parts: ["Soprano", "Alto", "Tenor", "Baritone", "Bass"],
+  parts,
   scores: ["modern", "early"],
   audio_prefix: "/audio/",
   svg_prefix: "/svg/",
 
   recording: ["ALC", "CotE"],
   recording_label: ["Andrew Leslie Cooper", "Choir of the Earth"],
-  choirs: [
-    ["I A", "I B", "II A", "II B", "III A", "III B", "IV A", "IV B"],
-    ["1", "2", "3", "4", "5", "6", "7", "8"],
-  ],
+  choirs: [choirNames, ["1", "2", "3", "4", "5", "6", "7", "8"]],
   /**
    * HSL hue (0-360) for each choir, one per `choirs[*]` entry.
    * Index matches choir number; length must equal `choirs[0].length`.

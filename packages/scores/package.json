@@ -6,11 +6,19 @@
   "type": "module",
   "scripts": {
     "build": "node build/buildScores.mjs",
+    "build:ohm": "node build/build-ohm.mjs && npx ohm generateBundles --withTypes --esm src/lily/ly-grammar.ohm",
+    "build:lilydata": "pnpm run build:ohm && tsx build/buildLilyData.ts",
+    "check:types": "tsc --noEmit",
     "test": "vitest run",
     "test:integration": "vitest run test/*.integration.test.ts"
   },
   "devDependencies": {
+    "@ohm-js/cli": "^2.0.1",
+    "@types/node": "^24.0.0",
     "@xmldom/xmldom": "^0.9.10",
+    "ohm-js": "^17.2.1",
+    "tsx": "^4.20.0",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.10"
   },
   "packageManager": "pnpm@11.5.3",

@@ -94,8 +94,8 @@ A separate workflow enables GitHub native auto-merge for Dependabot **patch** PR
 Netlify handles both production deploys (on push to `main`) and deploy previews
 (on pull requests) via its native GitHub integration.
 
-**Build:** `pnpm run build` — Vite prebuild (Ohm grammar bundle, SVGs are already
-committed) then Vite production build. No LilyPond required.
+**Build:** `pnpm run build` — Vite production build only (no prebuild; the Ohm
+grammar bundle, precomputed note data, and SVGs are all committed). No LilyPond required.
 
 **Path filter:** `netlify.toml` configures an `ignore` command that skips the
 build when none of the build-relevant paths changed. This preserves the 300

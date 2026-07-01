@@ -42,10 +42,12 @@ pnpm run build
 
 This runs `vite build` to produce a production bundle into `dist/`.
 
-`pnpm run prebuild` runs automatically before `build` and generates the Ohm.js
-grammar bundle and SVG scores from LilyPond source. The SVG files in
-`packages/pwa/src/scores/` are committed source assets generated from LilyPond source.
-LilyPond is required only if regenerating SVGs from source.
+`pnpm run build` runs `vite build` only; there is no pwa prebuild step. Its build
+inputs are committed source assets: the SVG scores in `packages/pwa/src/scores/`
+and the precomputed note data `packages/scores/src/lily/lilyData.json` (#693), both
+derived from LilyPond source in `packages/scores/`. LilyPond is required only to
+regenerate the SVGs; the note data regenerates without it (see Ohm Grammar and
+Precomputed Note Data below).
 
 ## Preview the Production Build
 
@@ -92,7 +94,7 @@ To force a clean regeneration, delete the directory
 
 ## Quality Checks
 
-Run the full quality gate locally (Ohm grammar bundle, unused-export check, formatting, lint, typecheck, e2e-spec typecheck, dependency checks):
+Run the full quality gate locally (unused-export check, formatting, lint, typecheck, e2e-spec typecheck, dependency checks):
 
 ```console
 pnpm run check
@@ -170,11 +172,13 @@ The build pipeline injects the version from `package.json` into `index.html` at 
 
 When releasing, update `package.json` only. The build will propagate the new version into the generated HTML.
 
-### Ohm Grammar
+### Ohm Grammar and Precomputed Note Data
 
-`pnpm run build:ohm` first normalises `packages/pwa/src/ohmjs/ly-grammar.ohm` to LF (via `packages/pwa/build/build-ohm.mjs`), then regenerates `packages/pwa/src/ohmjs/ly-grammar.ohm-bundle.js` and `packages/pwa/src/ohmjs/ly-grammar.ohm-bundle.d.ts` from it via `@ohm-js/cli`. If you modify the grammar, rebuild before testing or deploying.
+The LilyPond note-data parse runs at **build time** in `@spem/scores`, not in the browser (#693). `pnpm run build:lilydata` (or `pnpm --filter @spem/scores build:lilydata`) runs `build:ohm`, then parses `spem.ly` via the Ohm grammar and writes `packages/scores/src/lily/lilyData.json`; the pwa runtime loads that committed file instead of parsing on every cold page load. It needs no LilyPond binary. Rerun it whenever you change `spem.ly` or the parser, and commit the result — the `lily-precompute` test fails if the committed data is stale.
 
-`ly-grammar.ohm` is pinned to LF by `.gitattributes` (`*.ohm text eol=lf`) so `build:ohm` is deterministic across platforms. Without the rule, a Windows checkout (e.g. with `core.autocrlf=true`) writes the grammar with CRLF and `build:ohm` bakes those CRLFs into the `source` string literal of the generated bundle, producing a phantom diff on every Windows build, even from a clean tree (#611). The bundle file's own line endings are already LF via the existing `*.js` rule; the `*.ohm` rule is what stops CRLF being baked into that literal. The `.gitattributes` rule only fixes *fresh* checkouts, though: a worktree that already held a CRLF `ly-grammar.ohm` keeps it (git reads it clean against the LF blob, so `git checkout --` never rewrites it). So `build:ohm` also normalises the grammar to LF itself before generating (`packages/pwa/build/build-ohm.mjs`), making the build deterministic regardless of the working copy's line endings (#648).
+`pnpm run build:ohm` first normalises `packages/scores/src/lily/ly-grammar.ohm` to LF (via `packages/scores/build/build-ohm.mjs`), then regenerates the ES-module bundle `packages/scores/src/lily/ly-grammar.ohm-bundle.js` and its `.d.ts` from it via `@ohm-js/cli`.
+
+`ly-grammar.ohm` is pinned to LF by `.gitattributes` (`*.ohm text eol=lf`) so `build:ohm` is deterministic across platforms. Without the rule, a Windows checkout (e.g. with `core.autocrlf=true`) writes the grammar with CRLF and `build:ohm` bakes those CRLFs into the `source` string literal of the generated bundle, producing a phantom diff on every Windows build, even from a clean tree (#611). The bundle file's own line endings are already LF via the existing `*.js` rule; the `*.ohm` rule is what stops CRLF being baked into that literal. The `.gitattributes` rule only fixes *fresh* checkouts, though: a worktree that already held a CRLF `ly-grammar.ohm` keeps it (git reads it clean against the LF blob, so `git checkout --` never rewrites it). So `build:ohm` also normalises the grammar to LF itself before generating (`packages/scores/build/build-ohm.mjs`), making the build deterministic regardless of the working copy's line endings (#648).
 
 ## Build Output
 

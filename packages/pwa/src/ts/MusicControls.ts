@@ -4,7 +4,7 @@
 import config from "./config";
 import { getBarFromTime, getTimeFromBar } from "./common";
 import { MusicElement } from "./MusicElement";
-import { barCount } from "./lily";
+import { barCount } from "./lilyData";
 
 import loadingSVG from "../icons/loading.svg?raw";
 import pauseSVG from "../icons/pause.svg?raw";
