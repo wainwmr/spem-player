@@ -1,22 +1,38 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 
 // buildScore must shell out without a shell, so mock the exec layer and the
-// fs/postprocess touchpoints it hits between entry and the exec call.
+// fs/postprocess touchpoints it hits between entry and the exec call. The render
+// runs through promisified execFile (#760), so the mock invokes execFile's
+// callback to resolve; execSync/execFileSync stay mocked to assert neither is
+// used.
 vi.mock("child_process", () => ({
   execSync: vi.fn(),
   execFileSync: vi.fn(),
+  execFile: vi.fn((...args: unknown[]) => {
+    const cb = args[args.length - 1];
+    if (typeof cb === "function") {
+      (cb as (e: unknown, r: unknown) => void)(null, { stdout: "", stderr: "" });
+    }
+  }),
 }));
-// existsSync:false makes needsRebuild() short-circuit true at its first check,
+// existsSync:false makes rawNeedsRender() short-circuit true at its first check,
 // so buildScore skips the real statSync and reaches the (mocked) exec call;
-// mkdirSync is stubbed because buildScore creates the output dir before exec.
+// mkdirSync/copyFileSync are stubbed because buildScore creates the output dir
+// and copies the raw render to the final path before postprocessing (#760).
 vi.mock("fs", async (importOriginal) => ({
   ...(await importOriginal<typeof import("fs")>()),
   existsSync: () => false,
   mkdirSync: () => undefined,
+  copyFileSync: () => undefined,
 }));
-vi.mock("../build/postprocessSvg.mjs", () => ({ postprocessSvg: vi.fn() }));
+// isMainModule is stubbed to false so importing buildScores.mjs does not run
+// main() during the test (buildScores now guards its entry with it, #760/#555).
+vi.mock("../build/postprocessSvg.mjs", () => ({
+  postprocessSvg: vi.fn(),
+  isMainModule: () => false,
+}));
 
-import { execSync, execFileSync } from "child_process";
+import { execSync, execFileSync, execFile } from "child_process";
 import {
   validateOptions,
   buildScore,
@@ -152,11 +168,14 @@ describe("lilypondCommand LILYPOND_CMD parsing (#624)", () => {
 });
 
 describe("buildScore shells out without a shell (#624)", () => {
-  it("invokes execFileSync with an argument array, never a shell string", () => {
-    buildScore("/src/Choir I A.ly", "Hugh Keyte", "early", 0, "/out");
+  // The render now runs through promisified execFile (#760), so buildScore is
+  // async and the no-shell guarantee is asserted against execFile — the array
+  // form and literal-argument property are unchanged from the execFileSync era.
+  it("invokes execFile with an argument array, never a shell string", async () => {
+    await buildScore("/src/Choir I A.ly", "Hugh Keyte", "early", 0, "/out");
 
-    expect(execFileSync).toHaveBeenCalledTimes(1);
-    const [cmd, args, opts] = vi.mocked(execFileSync).mock.calls[0];
+    expect(execFile).toHaveBeenCalledTimes(1);
+    const [cmd, args, opts] = vi.mocked(execFile).mock.calls[0];
     expect(cmd).toBe("lilypond");
     expect(Array.isArray(args)).toBe(true);
     expect(args).toContain("--svg");
@@ -168,18 +187,19 @@ describe("buildScore shells out without a shell (#624)", () => {
     // every assertion above would still pass — so pin it explicitly (Vera 624-S1).
     expect((opts as { shell?: unknown } | undefined)?.shell).toBeFalsy();
 
-    // The vulnerable form interpolated everything into one execSync string.
+    // Neither the sync exec APIs nor the vulnerable execSync string form run.
     expect(execSync).not.toHaveBeenCalled();
+    expect(execFileSync).not.toHaveBeenCalled();
   });
 
-  it("passes a metacharacter-laden outDir to execFileSync as one literal arg (#624)", () => {
+  it("passes a metacharacter-laden outDir to execFile as one literal arg (#624)", async () => {
     // outDir flows from --outDir (deliberately not whitelisted, since it is a
-    // real user path). execFileSync (no shell) must pass it literally, so a
+    // real user path). execFile (no shell) must pass it literally, so a
     // shell-metacharacter value cannot inject. Pins the bug class against a
     // future revert to a template string on the -o argument (Vera 624-06).
-    buildScore("/src/Choir I A.ly", "Hugh Keyte", "early", 0, "/out; touch pwned");
+    await buildScore("/src/Choir I A.ly", "Hugh Keyte", "early", 0, "/out; touch pwned");
 
-    const args = vi.mocked(execFileSync).mock.calls[0][1] as string[];
+    const args = vi.mocked(execFile).mock.calls[0][1] as string[];
     const outArg = args[args.indexOf("-o") + 1];
     expect(outArg).toContain("; touch pwned"); // survived as a literal segment
     expect(outArg).toContain("Hugh Keyte");
@@ -188,12 +208,12 @@ describe("buildScore shells out without a shell (#624)", () => {
     expect(execSync).not.toHaveBeenCalled();
   });
 
-  it("honours a LILYPOND_CMD override as [binary, ...prefix] (#624)", () => {
+  it("honours a LILYPOND_CMD override as [binary, ...prefix] (#624)", async () => {
     const prev = process.env.LILYPOND_CMD;
     process.env.LILYPOND_CMD = JSON.stringify(["node", "/fake/helper.js"]);
     try {
-      buildScore("/src/Choir I A.ly", "Hugh Keyte", "early", 0, "/out");
-      const [cmd, args] = vi.mocked(execFileSync).mock.calls[0];
+      await buildScore("/src/Choir I A.ly", "Hugh Keyte", "early", 0, "/out");
+      const [cmd, args] = vi.mocked(execFile).mock.calls[0];
       expect(cmd).toBe("node");
       expect(args?.[0]).toBe("/fake/helper.js");
       expect(args).toContain("--svg");

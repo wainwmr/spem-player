@@ -3,6 +3,10 @@
 .worktree-offset
 node_modules
 dist
+# Kept raw LilyPond renders (#760): the un-postprocessed source of each SVG,
+# used to re-postprocess without re-rendering. An intermediate build artifact,
+# not committed — only the postprocessed SVGs under scores/ are tracked.
+packages/pwa/src/scores/**/.raw/
 *.ipynb
 *.pdf
 # Local Netlify folder
