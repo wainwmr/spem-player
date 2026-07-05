@@ -10,7 +10,7 @@
     "build:lilydata": "pnpm run build:ohm && tsx build/buildLilyData.ts",
     "check:types": "tsc --noEmit",
     "test": "vitest run",
-    "test:integration": "vitest run test/*.integration.test.ts"
+    "test:integration": "vitest run integration.test.ts"
   },
   "devDependencies": {
     "@ohm-js/cli": "^2.0.1",
