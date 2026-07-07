@@ -70,7 +70,11 @@ The central `State` interface (`packages/pwa/src/ts/common.ts`) tracks:
 - `choir` — 0 to 7
 - `part` — `"all"` or 0 to 4
 - `bar` — 0 to 139
-- `status` — `"playing"`, `"paused"`, or `"loading"`
+
+Playback status is not stored on `State`. The `Status` type
+(`"playing" | "paused" | "loading"`) is still exported, but the value is derived
+at read time from the audio element (`deriveFeedbackStatus()` in `index.ts`) when
+the feedback payload is built, so it cannot drift stale.
 
 State changes flow through `index.ts` helpers (`setChoir()`, `setPart()`, `setBar()`), which set
 attributes on elements. Components react via `attributeChangedCallback` and fire custom events

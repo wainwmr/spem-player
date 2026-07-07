@@ -77,7 +77,6 @@ export type State = {
   choir: number;
   part: PartType;
   bar: number;
-  status: Status;
 };
 
 export interface Colors {
