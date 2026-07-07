@@ -28,6 +28,13 @@ export class MusicControls extends MusicElement {
   #isLooping = false;
   #loopId = 0;
 
+  // #loading is true while a play() call is awaiting audio.play() (the audio is
+  // not yet audible but the user intends playback); #playGeneration tags each
+  // play() call so a superseded one no-ops on resolve instead of flipping the UI
+  // back to the stale file/state (#764).
+  #playGeneration = 0;
+  #loading = false;
+
   #showIcon(state: "play" | "pause" | "loading"): void {
     if (!this.svgPlay || !this.svgPause || !this.svgLoading) return;
     this.svgPlay.style.display = state === "play" ? "block" : "none";
@@ -233,6 +240,11 @@ export class MusicControls extends MusicElement {
   }
 
   async play() {
+    // Tag this call so a later play() (or pause) can supersede it: a control
+    // change arriving during the load window starts its own play(), and only
+    // the latest call may update the UI when it resolves (#764).
+    const gen = ++this.#playGeneration;
+
     // Load the new audio if necessary
     const newfile = this.getMP3filename();
     if (!this.isSameAudio(newfile)) {
@@ -247,43 +259,65 @@ export class MusicControls extends MusicElement {
       this.audio.currentTime = getTimeFromBar(this.bar, this.recording);
     }
 
+    this.#loading = true;
+
     try {
       await this.audio.play();
     } catch {
+      // A superseded call (a mid-load control change bumped the generation)
+      // leaves the UI to the newer call; only the current call resets on a
+      // genuine reject (e.g. autoplay blocked).
+      if (gen !== this.#playGeneration) return;
       this.#showIcon("play");
       this.playing = false;
+      this.#loading = false;
       return;
     }
 
+    // A control change (or pause) during the load window bumped the generation;
+    // that newer call owns the state, so this stale resolution stops here.
+    if (gen !== this.#playGeneration) return;
     this.playing = true;
     this.#showIcon("pause");
     this.fireEvent("music-controls-playing");
+    this.#loading = false;
 
     if (this.#isLooping) return;
     this.#isLooping = true;
 
-    const self = this;
+    const loop = () => {
+      this.bar = getBarFromTime(this.audio.currentTime, this.recording);
 
-    function loop() {
-      self.bar = getBarFromTime(self.audio.currentTime, self.recording);
-
-      const intbar = Math.floor(self.bar);
-      if (self.barinput && Number(self.barinput.value) != intbar) {
-        self.barinput.value = String(intbar);
+      const intbar = Math.floor(this.bar);
+      if (this.barinput && Number(this.barinput.value) != intbar) {
+        this.barinput.value = String(intbar);
       }
-      self.fireEvent("music-controls-changed");
+      this.fireEvent("music-controls-changed");
 
-      if (self.isPlaying()) {
-        self.#loopId = window.requestAnimationFrame(loop);
+      if (this.isPlaying()) {
+        this.#loopId = window.requestAnimationFrame(loop);
       } else {
-        self.#isLooping = false;
+        this.#isLooping = false;
       }
-    }
+    };
     this.#loopId = window.requestAnimationFrame(loop);
+  }
+
+  // The user intends playback either while audio is audible (playing) or while a
+  // play() call is still awaiting audio.play() (#loading, not yet audible). The
+  // reload guards fire on this, so a mid-load control change reloads (#764).
+  #intendsToPlay(): boolean {
+    return this.playing || this.#loading;
   }
 
   pause() {
     this.playing = false;
+    // Bumping the generation makes any in-flight play()'s resolution guard fail,
+    // so its await no-ops instead of flipping the UI back to "playing". Clearing
+    // #loading separately resets #intendsToPlay() so a control change after this
+    // pause does not restart playback (#764).
+    this.#playGeneration++;
+    this.#loading = false;
     this.#isLooping = false;
     window.cancelAnimationFrame(this.#loopId);
     this.#showIcon("play");
@@ -296,14 +330,14 @@ export class MusicControls extends MusicElement {
     super.setChoir(c);
 
     this.choirselect.value = String(this.choir);
-    if (this.isPlaying()) this.play();
+    if (this.#intendsToPlay()) this.play();
   }
 
   setRecording(v: number | string): void {
     super.setRecording(v);
     this.#buildChoirDropdown();
     this.audio.currentTime = getTimeFromBar(this.bar, this.recording);
-    if (this.isPlaying()) this.play();
+    if (this.#intendsToPlay()) this.play();
   }
 
   setPart(p: string | number) {
@@ -311,7 +345,7 @@ export class MusicControls extends MusicElement {
     super.setPart(p);
 
     this.partselect.value = String(p);
-    if (this.isPlaying()) this.play();
+    if (this.#intendsToPlay()) this.play();
   }
 
   setBar(b: string | number) {
