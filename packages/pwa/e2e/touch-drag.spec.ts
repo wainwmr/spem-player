@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/page-errors";
 
 /**
  * Regression tests for #317 — touch drag on the canvas overview must not

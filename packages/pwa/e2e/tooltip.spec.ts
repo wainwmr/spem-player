@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/page-errors";
 
 test.describe("Header tooltip positioning", () => {
   test("tooltip is horizontally centred under its icon", async ({ page }) => {

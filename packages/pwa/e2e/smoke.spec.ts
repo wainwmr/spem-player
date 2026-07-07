@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/page-errors";
 
 test.describe("Spem Player smoke tests", () => {
   test("page loads with all custom elements", async ({ page }) => {

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/page-errors";
 
 test.describe("Bar navigation boundary wrapping", () => {
   test("ArrowRight from bar 139 wraps to bar 0", async ({ page }) => {
