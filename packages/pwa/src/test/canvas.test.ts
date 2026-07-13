@@ -3,12 +3,53 @@ import config from "../ts/config";
 import { colors, type Position } from "../ts/common";
 import { Duration, Note } from "@scores/lily/music-classes";
 import { barCount as lilyBarCount } from "../ts/lilyData";
-import type { Range } from "@scores/lily/lily";
+import type { LilypondData, NoteEntry, Range } from "@scores/lily/lily";
 MusicCanvas.define("music-canvas");
 
-// Install fixture singing-ranges on a canvas by swapping its whole `lilyData`
-// (since #652 `ranges` is a deeply-readonly SingingRanges, so build a fresh
-// mutable map and replace the object rather than mutating it in place).
+// Install fixture score data by swapping the whole `lilyData`. Since #652 all
+// parsed data lives on one `lilyData` object, so there is no `canvas.notesByQuant`
+// to assign; and `LilypondData`'s fields are readonly (`ranges` deeply so, also
+// #652), so a fixture patches by replacing the object rather than mutating it. The
+// file-level afterEach restores `lilyData` per test, so callers need no cleanup.
+//
+// This is the only place the #706 block installs a fixture, and new code should use
+// it. It is not the file's only writer: the file-level afterEach restores `lilyData`
+// raw, and the older tests above still assign it raw. Those are legacy, not the
+// pattern to copy.
+//
+// `frLocations` is deliberately NOT patchable. MusicCanvas sizes `shimmerPhases`
+// and `falseRelationPulses` from `frLocations.length` once, in #init, and never
+// rebuilds them; patching it here would leave `shimmerPhases` short, so
+// #drawFalseRelationHotspot would read undefined, Math.sin would yield NaN, and
+// the element would emit an hsla() with a NaN alpha that node-canvas silently
+// ignores. `Omit` alone would not prevent it: TypeScript's excess-property check
+// fires only on a fresh object literal, so a patch hoisted into a variable would
+// slip straight through. The `frLocations?: never` intersection rejects it
+// structurally, literal or not, because an FRlocation[] is not assignable to never.
+function setLily(
+  c: MusicCanvas,
+  patch: Partial<Omit<LilypondData, "frLocations">> & { frLocations?: never }
+): void {
+  const base = c.lilyData;
+  // Not an assertion: spreading null is legal JS and yields {}, so a null base
+  // would silently produce a LilypondData missing every unpatched key (barCount
+  // undefined, guards comparing against undefined). Fail loudly instead.
+  if (base == null)
+    throw new Error("setLily: canvas has no lilyData (not initialised)");
+  // An explicitly-undefined value spreads through and would blank a real field
+  // while still typing as LilypondData. Same malformed-object class as the null
+  // base above, so it gets the same loud treatment.
+  for (const [k, v] of Object.entries(patch))
+    if (v === undefined)
+      throw new Error(`setLily: patch key '${k}' is undefined`);
+  c.lilyData = { ...base, ...patch };
+}
+
+// Install fixture singing-ranges. Routes through setLily so there is exactly one
+// place that writes `lilyData`. The arrays are frozen because the real data is:
+// serialise.ts freezes every ranges/notesByQuant array at load (#652), so an
+// unfrozen fixture would let an in-place mutation added to MusicCanvas pass here
+// while throwing in production, which is a false negative rather than a lax test.
 function setRanges(
   c: MusicCanvas,
   build: (r: Map<string, Range[]>) => void
@@ -16,7 +57,8 @@ function setRanges(
   const r = new Map<string, Range[]>();
   for (const [k, v] of c.lilyData!.ranges) r.set(k, [...v]);
   build(r);
-  c.lilyData = { ...c.lilyData!, ranges: r };
+  for (const v of r.values()) Object.freeze(v);
+  setLily(c, { ranges: r });
 }
 
 var canvas: MusicCanvas | null;
@@ -1948,5 +1990,679 @@ describe("MusicCanvas custom element", () => {
       moveYs.some((y) => Math.abs(y - target) < 1e-6);
     expect(drawn(partRowCenterY(0, 0))).toBe(true);
     expect(drawn(partRowCenterY(7, 4))).toBe(true);
+  });
+
+  // ---- #706: pin rendering / pulse / colour behaviours that draw() exercises
+  // but no existing test asserts — the covered-but-unasserted band that let the
+  // #704 pulse-drop ship.
+  //
+  // The 2D context is the real node-canvas backend, so colour strings normalise
+  // on READ; they are captured here via a property-SETTER spy to see the exact
+  // hsla() string the source emits. node-canvas reaches this jsdom env as an
+  // OPTIONAL PEER of jsdom, satisfied from the single workspace copy that
+  // packages/monitor declares. @spem/pwa does not declare it itself, so if monitor
+  // ever drops it, getContext("2d") returns null and the five tests that call the
+  // ctx() helper below (the three colour tests and the two geometry tests) die on a
+  // !-deref. Three keep PASSING: the two pulse tests, because #updatePulses runs
+  // before draw() reaches getContext, and #getMousePos, which never asks for a 2D
+  // context at all. The failure is partial, not total: do not expect a clean wipeout
+  // to point at the cause. #817.
+  //
+  // GEOMETRY is derived from the element's own public fields (canvasPadding,
+  // barWidth, partHeight, choirHeight, barCount). The TUNED CONSTANTS pinned IN
+  // THIS BLOCK are asserted as LITERALS on purpose. Do not "tidy" them into
+  // MusicCanvas.* references: mirroring the source would make a constant regression
+  // drift both sides in lockstep and the assertion would stop being able to fail.
+  // (The older #650 hotspot test above does mirror MusicCanvas.* constants and is
+  // weaker for exactly that reason. It is a known exception, not the pattern.)
+  //
+  // Every body stays synchronous so the shared canvas's live shimmer loop
+  // (real rAF, #649) cannot fire mid-assertion.
+  describe("rendering/pulse/colour pins (#706)", () => {
+    afterEach(() => {
+      // Guard against a thrown assertion leaving global/element state flipped.
+      // `lilyData` is restored wholesale by the file-level afterEach above (it
+      // is one object since #652, so `ranges` and `notesByQuant` ride together).
+      // What that hook does NOT restore is the element state below, and the pulse
+      // onset grid: #updatePulses stamps lastNoteStart/lastNoteDuration for every
+      // part singing at the current bar, and the live shimmer loop draws between
+      // tests, so both are reset here. Without this a future test that reads
+      // pulses[c][p] without seeding it would inherit a stale onset and pass for
+      // the wrong reason. `bar` is reset to 0 FIRST, and quant 0 carries no notes
+      // (the score's lowest is 1), so the shimmer loop's between-test draws cannot
+      // immediately re-stamp the grid we just cleared.
+      document.body.classList.remove("light-theme");
+      canvas!.voicePart = "all";
+      canvas!.choir = 0;
+      canvas!.bar = 0;
+      for (let c = 0; c < config.choirs[0].length; c++) {
+        for (let p = 0; p < config.parts.length; p++) {
+          canvas!.lastNoteStart[c][p] = 0;
+          canvas!.lastNoteDuration[c][p] = 0;
+          canvas!.pulses[c][p] = 1;
+        }
+      }
+      // The block poisons `pulses` and `falseRelationPulses` with NaN to prove a
+      // draw() really ran (see the rest legs below). Clear both back to their rest
+      // values, because a LEAKED NaN would not be caught downstream: the FR draw
+      // skips on `pulse <= 0`, and `NaN <= 0` is false, so a NaN would sail past the
+      // guard and into createRadialGradient as a NaN radius.
+      canvas!.falseRelationPulses.fill(0);
+    });
+
+    const ctx = () => canvas!.canvas!.getContext("2d")!;
+
+    // Replicates MusicCanvas.#easeOutCubic. Kept local so a regression to the
+    // source formula is caught here rather than silently mirrored.
+    const easeOutCubic = (t: number, b: number, c: number, d: number) =>
+      c * ((t = t / d - 1) * t * t + 1) + b;
+
+    // Capture, in order, the string values assigned to a ctx colour accessor
+    // during fn(). A setter spy is the only way to see the raw hsla() string:
+    // the real backend normalises colour on read.
+    function styleSetsDuring(
+      ctxObj: CanvasRenderingContext2D,
+      prop: "strokeStyle" | "fillStyle",
+      fn: () => void
+    ): string[] {
+      const spy = vi.spyOn(ctxObj, prop, "set");
+      let calls: unknown[];
+      try {
+        fn();
+        calls = spy.mock.calls.map((c) => c[0]);
+      } finally {
+        spy.mockRestore();
+      }
+      return calls.filter((v): v is string => typeof v === "string");
+    }
+
+    const parseHsla = (s: string) => {
+      const m = s.match(
+        /^hsla\(([\d.]+),\s*([\d.]+)%,\s*([\d.]+)%,\s*([\d.]+)\)$/
+      );
+      if (!m) throw new Error(`unparseable hsla: ${s}`);
+      return { h: +m[1], s: +m[2], l: +m[3], a: +m[4] };
+    };
+
+    // A non-empty notesByQuant whose only key (999) never collides with a test's
+    // bar quant (the real data's highest quant is 138), so #updatePulses' onset
+    // block is a no-op and the seeded lastNote* fields drive the envelope alone.
+    // size > 0 keeps draw() past its empty-data guard. Frozen because the real
+    // arrays are: serialise.ts freezes them at load (#652).
+    const inertNotes = () =>
+      new Map([
+        [
+          999,
+          Object.freeze([
+            { c: 0, p: 0, n: { duration: { sfths: 128 } } },
+          ]) as unknown as NoteEntry[],
+        ],
+      ]);
+
+    // Build an isolated ranges map: every choir-part key present (the source
+    // uses a non-null assertion on .get()), but only `${C}-${P}` has a range, so
+    // #drawVoiceParts strokes exactly once. Arrays frozen, as above.
+    const soleRange = (C: number, P: number, from: number, to: number) => {
+      const ranges = new Map<string, readonly Range[]>();
+      for (let c = 0; c < config.choirs[0].length; c++)
+        for (let p = 0; p < config.parts.length; p++)
+          ranges.set(`${c}-${p}`, Object.freeze([]));
+      ranges.set(`${C}-${P}`, Object.freeze([{ from, to }]));
+      return ranges;
+    };
+
+    // State teardown is owned by the hooks, not by this block: the file-level
+    // afterEach restores `lilyData`, and this block's afterEach clears the theme,
+    // the selection and the lastNote* grid. Both run even when an assertion
+    // throws, so no per-test try/finally is needed.
+    it("pins the #updatePulses easing envelope (dark and light)", () => {
+      const C = 3,
+        P = 1,
+        DUR = 2; // duration 2 bars == sfths 256 / 128
+      // Frozen, and this is the fixture where it matters: noteAt's array is the one
+      // #updatePulses' onset loop actually iterates. (inertNotes is frozen too, but
+      // its key 999 is unreachable by design, so the freeze there protects nothing
+      // on its own.) An in-place mutation added to that loop would throw here, as it
+      // would in production, rather than passing against a laxer fixture.
+      const noteAt = (quant: number) =>
+        new Map([
+          [
+            quant,
+            Object.freeze([
+              { c: C, p: P, n: { duration: { sfths: 256 } } },
+            ]) as unknown as NoteEntry[],
+          ],
+        ]);
+
+      // Dark, onset (elapsed 0): a note present at the quant records the onset,
+      // so pulses == easeOutCubic(0, 1.6, -0.6, 2) == 1.6.
+      document.body.classList.remove("light-theme");
+      setLily(canvas!, { notesByQuant: noteAt(1) });
+      canvas!.bar = 1;
+      canvas!.draw();
+      expect(canvas!.pulses[C][P]).toBeCloseTo(
+        easeOutCubic(0, 1.6, -0.6, DUR),
+        6
+      );
+
+      // Dark, mid-envelope (elapsed 0.5): seed the onset directly and choose a
+      // bar whose quant carries no note, so the envelope alone drives it.
+      setLily(canvas!, { notesByQuant: inertNotes() });
+      canvas!.lastNoteStart[C][P] = 1;
+      canvas!.lastNoteDuration[C][P] = DUR;
+      canvas!.bar = 1.5;
+      canvas!.draw();
+      expect(canvas!.pulses[C][P]).toBeCloseTo(
+        easeOutCubic(0.5, 1.6, -0.6, DUR),
+        6
+      );
+
+      // Light, onset (elapsed 0): the light-mode constants are (0.4, 0.6), so
+      // pulses == 0.4. Distinct from dark's 1.6 — pins the mode branch.
+      document.body.classList.add("light-theme");
+      setLily(canvas!, { notesByQuant: noteAt(1) });
+      canvas!.bar = 1;
+      canvas!.draw();
+      expect(canvas!.pulses[C][P]).toBeCloseTo(
+        easeOutCubic(0, 0.4, 0.6, DUR),
+        6
+      );
+
+      // Light, MID-envelope (elapsed 0.5) == 0.746875. This leg is load-bearing
+      // and must not be dropped: #easeOutCubic returns exactly `b` at t == 0, for
+      // any `c` and any NONZERO `d`, so the onset legs above pin only the 1.6/0.4
+      // `b` term and say nothing at all about `c`. Without a mid-envelope reading
+      // per mode, the light coefficient 0.6 (MusicCanvas.ts, `isLight ? 0.6 : -0.6`)
+      // is asserted by nothing in this file and could be changed to any value with
+      // the suite still green. Dark has its twin above; this is light's.
+      setLily(canvas!, { notesByQuant: inertNotes() });
+      canvas!.lastNoteStart[C][P] = 1;
+      canvas!.lastNoteDuration[C][P] = DUR;
+      canvas!.bar = 1.5;
+      canvas!.draw();
+      expect(canvas!.pulses[C][P]).toBeCloseTo(
+        easeOutCubic(0.5, 0.4, 0.6, DUR),
+        6
+      );
+
+      // Backwards seek (elapsed < 0) leaves the pulse at rest. Pins the source's
+      // `elapsed >= 0` guard: without it the ease runs on a negative elapsed and
+      // exceeds 1 (2.171875 at elapsed -0.5, 5.8 at elapsed -2), and #drawVoiceParts
+      // multiplies lightness by the pulse, so a bar seeked back past a recorded
+      // onset would emit an over-bright lightness (243.6% for this p=1 cell at
+      // elapsed -2, up to 261% for a p=0 row; node-canvas clips it to white).
+      // Seeking backwards is a normal user action.
+      //
+      // The NaN is load-bearing, not decoration. Every rest-value assertion in this
+      // block expects 1, which is ALSO the value `pulses` holds at init and after
+      // any preceding rest leg, so a draw() that silently did nothing would satisfy
+      // it. Poisoning the cell first means only a real draw() can produce the 1.
+      // #updatePulses writes every pulses[c][p] on every draw (both the if and the
+      // else assign), so a live draw always clears the sentinel.
+      //
+      // The onset is re-seeded here rather than inherited from the leg above. The
+      // sentinel catches a dead draw(); it does NOT catch a wrong PRECONDITION, and
+      // this leg's whole kill power rests on the onset being live: with duration 0
+      // (the state this block's afterEach installs) `0.5 < 0` is false, the else
+      // branch writes 1, and the assertion is green with or without the guard.
+      document.body.classList.remove("light-theme");
+      canvas!.lastNoteStart[C][P] = 1;
+      canvas!.lastNoteDuration[C][P] = DUR;
+      canvas!.pulses[C][P] = NaN;
+      canvas!.bar = 0.5;
+      canvas!.draw();
+      expect(canvas!.pulses[C][P]).toBe(1);
+
+      // Just INSIDE the end of the note (elapsed 1.999 of 2). The guard is true
+      // here, so #easeOutCubic IS evaluated, and this is therefore the leg that
+      // pins its terminal value: the ease must land on 1.0 as the note expires.
+      // (With c = -0.7 instead of -0.6 this reads 0.9000000001 and fails.)
+      canvas!.lastNoteStart[C][P] = 1;
+      canvas!.lastNoteDuration[C][P] = DUR;
+      canvas!.pulses[C][P] = NaN;
+      canvas!.bar = 3 - 1e-3;
+      canvas!.draw();
+      expect(canvas!.pulses[C][P]).toBeCloseTo(
+        easeOutCubic(DUR - 1e-3, 1.6, -0.6, DUR),
+        6
+      );
+      expect(canvas!.pulses[C][P]).toBeCloseTo(1, 6);
+
+      // Note just ended (elapsed === duration exactly). The guard is now FALSE, so
+      // #easeOutCubic is NOT called: the 1 is written by the `else` branch. What
+      // this pins is that a note stops pulsing the instant its duration is spent.
+      // It pins NOTHING about the ease's endpoint (the leg above does that), and at
+      // THIS point it cannot pin the strict `<` either: easeOutCubic lands on b + c
+      // == 1.0 in both modes, exactly the rest value, so `<` and `<=` emit the same
+      // number here. The strict `<` IS observable, but only at duration 0; see the
+      // next leg, which is where it is pinned.
+      canvas!.lastNoteStart[C][P] = 1;
+      canvas!.lastNoteDuration[C][P] = DUR;
+      canvas!.pulses[C][P] = NaN;
+      canvas!.bar = 3;
+      canvas!.draw();
+      expect(canvas!.pulses[C][P]).toBe(1);
+
+      // A never-sung part at bar 0. THIS is where the strict `<` in
+      // `elapsed < lastNoteDuration` is load-bearing, and it guards against a NaN,
+      // not against an off-by-one. lastNoteDuration defaults to 0 for every part
+      // (and this block's afterEach resets it to 0), so with bar 0 the elapsed is
+      // also 0. Under `<`, `0 < 0` is false and the else branch writes the rest
+      // value. Under `<=`, `0 <= 0` is true and the source calls
+      // easeOutCubic(0, b, c, 0), whose `t = 0/0 - 1` is NaN, so `pulses` becomes
+      // NaN for every part that has not yet sung. That NaN then multiplies the
+      // lightness in #drawVoiceParts and the element emits `hsla(h, 80%, NaN%, 1)`.
+      // Verified by mutation: `<=` turns this red.
+      canvas!.lastNoteStart[C][P] = 0;
+      canvas!.lastNoteDuration[C][P] = 0;
+      canvas!.pulses[C][P] = NaN;
+      canvas!.bar = 0;
+      canvas!.draw();
+      expect(canvas!.pulses[C][P]).toBe(1);
+    });
+
+    it("pins the false-relation pulse sqrt(1 - t) envelope", () => {
+      expect(canvas!.lilyData!.frLocations.length).toBeGreaterThan(0);
+      // draw() early-returns on an empty notesByQuant, and falseRelationPulses is
+      // initialised all-zero, so without this guard the `toBe(0)` below could pass
+      // on a never-written value if a fixture ever leaked in empty.
+      expect(canvas!.lilyData!.notesByQuant.size).toBeGreaterThan(0);
+      const FADE = 0.4; // MusicCanvas.FR_PULSE_FADE_BARS — literal to pin it
+      // falseRelationPulses[i] is index-coupled to frLocations[i] in the source
+      // loop, so index 0 always reflects `loc`: a fixture reorder moves both
+      // together, keeping this test self-consistent rather than masking.
+      const loc = canvas!.lilyData!.frLocations[0];
+
+      // elapsed 0 -> t 0 -> sqrt(1) == 1
+      canvas!.bar = loc.from;
+      canvas!.draw();
+      expect(canvas!.falseRelationPulses[0]).toBeCloseTo(1, 6);
+
+      // elapsed 0.2 -> t 0.5 -> sqrt(0.5)
+      canvas!.bar = loc.from + 0.2;
+      canvas!.draw();
+      expect(canvas!.falseRelationPulses[0]).toBeCloseTo(
+        Math.sqrt(1 - 0.2 / FADE),
+        6
+      );
+
+      // bar at from + FADE -> outside the half-open window -> 0. Poisoned first for
+      // the same reason as the pulse rest legs above: 0 is also the init value and
+      // the value left by any earlier out-of-window draw, so without the sentinel a
+      // draw() that silently did nothing would satisfy this. The FR loop assigns
+      // every falseRelationPulses[i] on every draw, so a live draw clears it.
+      //
+      // This does NOT pin the window's strict `<`, and at frLocations[0] nothing
+      // could: from is 8.75, so the float residual `(from + 0.4) - from` lands at
+      // 0.40000000000000036, Math.min clamps t to 1, and the in-window branch
+      // computes sqrt(1 - 1) == 0, exactly what the else branch writes. `<=` is
+      // invisible HERE.
+      //
+      // It is NOT an equivalent mutant in general. 14 of the 70 FR locations (index
+      // 4, from 16.875, among them) leave the residual just BELOW 0.4, so t stays
+      // just under 1 and the in-window branch yields 5.96e-8, which this toBe(0)
+      // would reject. Pinning `<` that way is DELIBERATELY not done: the value that
+      // discriminates is a floating-point artefact of the build-generated
+      // lilyData.json, so regenerating that file could move which indices
+      // discriminate and leave the assertion passing while testing nothing. A pin
+      // that can rot into a no-op is worse than an honest gap.
+      //
+      // What this leg pins is that the pulse is spent by the fade's end.
+      canvas!.falseRelationPulses[0] = NaN;
+      canvas!.bar = loc.from + FADE;
+      canvas!.draw();
+      expect(canvas!.falseRelationPulses[0]).toBe(0);
+    });
+
+    it("pins the #drawVoiceParts four-branch colour state (dark)", () => {
+      const C = 0,
+        P = 2; // choir 0 hue is 360; part 2 exercises the -3*p term
+      const hue = colors().choir[C];
+      const sole = (log: string[]) => {
+        // Anti-vacuity anchor: with the real `ranges` in place this would capture
+        // many strokes, so a fixture that failed to install fails HERE rather than
+        // passing quietly. colors() takes its fallback branch under jsdom, so the
+        // bar/selection highlights emit hsl(), never hsla(360,, and cannot collide.
+        const hits = log.filter((s) => s.startsWith(`hsla(${hue},`));
+        expect(hits).toHaveLength(1);
+        return parseHsla(hits[0]);
+      };
+      const barCount = canvas!.lilyData!.barCount;
+      document.body.classList.remove("light-theme");
+      setLily(canvas!, {
+        ranges: soleRange(C, P, 10, 20),
+        notesByQuant: inertNotes(),
+      });
+
+      // Branch 1: current bar inside the range -> sat 80, lightness scaled by
+      // the pulse. Seed a known onset so pulse != 1 (pins the "* pulses[c][p]").
+      canvas!.lastNoteStart[C][P] = 14;
+      canvas!.lastNoteDuration[C][P] = 2;
+      canvas!.choir = 1; // irrelevant: the in-range branch is tested first
+      canvas!.bar = 15;
+      let col = sole(
+        styleSetsDuring(ctx(), "strokeStyle", () => canvas!.draw())
+      );
+      expect(col.s).toBe(80);
+      expect(col.a).toBe(1);
+      // `pulse` is computed independently (elapsed 1, dur 2) so this branch
+      // stands alone rather than reading pulses[C][P] back on both sides.
+      const pulse = easeOutCubic(1, 1.6, -0.6, 2);
+      expect(canvas!.pulses[C][P]).toBeCloseTo(pulse, 6);
+      expect(col.l).toBeCloseTo((45 - 3 * P) * pulse, 6);
+
+      // The range is HALF-OPEN, [from, to). Both endpoints are asserted, and they
+      // are the point of this pair: without them a regression from `bar < to` to
+      // `bar <= to` (or `bar >= from` to `bar > from`) passes every other test in
+      // this file. Boundary-sense drift is a recurring defect class here (#598).
+      // Saturation alone discriminates: in-range is 80, out-of-range unselected 50.
+      // The onset is cleared first so lightness is unscaled (pulse == 1) and the
+      // two endpoints differ only by the branch taken.
+      canvas!.lastNoteStart[C][P] = 0;
+      canvas!.lastNoteDuration[C][P] = 0;
+      canvas!.choir = 1; // unselected, so the contrast is branch 1 vs branch 4
+      canvas!.bar = 10; // === from -> INSIDE (>=)
+      col = sole(styleSetsDuring(ctx(), "strokeStyle", () => canvas!.draw()));
+      expect(col.s).toBe(80);
+      expect(col.l).toBeCloseTo(45 - 3 * P, 6);
+
+      canvas!.bar = 20; // === to -> OUTSIDE (<), so the dull branch
+      col = sole(styleSetsDuring(ctx(), "strokeStyle", () => canvas!.draw()));
+      expect(col.s).toBe(50);
+      expect(col.l).toBeCloseTo(38 - 3 * P, 6);
+
+      // Branch 2: selected (choir & part match), bar outside the range ->
+      // sat 80, lightness 45 - 3p, unscaled.
+      canvas!.choir = C;
+      canvas!.voicePart = P;
+      canvas!.bar = 5;
+      col = sole(styleSetsDuring(ctx(), "strokeStyle", () => canvas!.draw()));
+      expect(col.s).toBe(80);
+      expect(col.l).toBeCloseTo(45 - 3 * P, 6);
+
+      // Branch 3: bar === 0, unselected -> sat 50, lightness 45 - 3p.
+      canvas!.choir = 1; // unselected (the cell is choir 0)
+      canvas!.bar = 0;
+      col = sole(styleSetsDuring(ctx(), "strokeStyle", () => canvas!.draw()));
+      expect(col.s).toBe(50);
+      expect(col.l).toBeCloseTo(45 - 3 * P, 6);
+
+      // Branch 3, second disjunct: bar PAST the end of the piece takes the same
+      // branch as bar 0. Deleting `|| this.bar > barCount` from the source would
+      // send these bars to branch 4 (dull 38 instead of bright 45) and nothing
+      // else in the file would catch it. The pair also pins the STRICT `>`:
+      // barCount itself is still inside the piece and must take branch 4.
+      canvas!.bar = barCount + 1;
+      col = sole(styleSetsDuring(ctx(), "strokeStyle", () => canvas!.draw()));
+      expect(col.s).toBe(50);
+      expect(col.l).toBeCloseTo(45 - 3 * P, 6);
+
+      canvas!.bar = barCount;
+      col = sole(styleSetsDuring(ctx(), "strokeStyle", () => canvas!.draw()));
+      expect(col.s).toBe(50);
+      expect(col.l).toBeCloseTo(38 - 3 * P, 6);
+
+      // Branch 4: unselected, bar inside the piece -> sat 50, dull base (dark 38).
+      canvas!.choir = 1;
+      canvas!.voicePart = P;
+      canvas!.bar = 5;
+      col = sole(styleSetsDuring(ctx(), "strokeStyle", () => canvas!.draw()));
+      expect(col.s).toBe(50);
+      expect(col.l).toBeCloseTo(38 - 3 * P, 6);
+    });
+
+    // The try/finally here restores only `isOnDevBranch`, which no hook owns.
+    // `lilyData` and the theme are deliberately NOT saved: the file-level afterEach
+    // restores the first and this block's afterEach clears the second, and a raw
+    // `canvas.lilyData = ...` restore here would contradict setLily's single-
+    // mutation-point rule for a write that is already done for us.
+    it("pins light/dark constants (#drawDev text colour, dull base lightness)", () => {
+      const savedDev = canvas!.isOnDevBranch;
+      const C = 0,
+        P = 2;
+      const hue = colors().choir[C];
+      try {
+        // #drawDev paints its text white in dark mode, black in light mode.
+        canvas!.isOnDevBranch = true;
+        canvas!.bar = 5;
+        document.body.classList.remove("light-theme");
+        let fills = styleSetsDuring(ctx(), "fillStyle", () => canvas!.draw());
+        expect(fills).toContain("white");
+        expect(fills).not.toContain("black");
+
+        document.body.classList.add("light-theme");
+        fills = styleSetsDuring(ctx(), "fillStyle", () => canvas!.draw());
+        expect(fills).toContain("black");
+        expect(fills).not.toContain("white");
+
+        // Dull base lightness: an unselected voice part is 80 in light mode
+        // versus 38 in dark (asserted dark in the four-branch test).
+        canvas!.isOnDevBranch = false;
+        setLily(canvas!, {
+          ranges: soleRange(C, P, 10, 20),
+          notesByQuant: inertNotes(),
+        });
+        canvas!.choir = 1; // unselected
+        canvas!.bar = 5; // outside [10,20], not 0 -> dull branch (still light mode)
+        const log = styleSetsDuring(ctx(), "strokeStyle", () => canvas!.draw());
+        const hits = log.filter((s) => s.startsWith(`hsla(${hue},`));
+        expect(hits).toHaveLength(1);
+        expect(parseHsla(hits[0]).l).toBeCloseTo(80 - 3 * P, 6);
+      } finally {
+        canvas!.isOnDevBranch = savedDev;
+      }
+    });
+
+    // WARNING: this test pins CURRENT behaviour, and the light-mode case is very
+    // probably a BUG -- see #816. `(baseLight + 50) % 100` wraps only in light
+    // mode, where the dull base is 80: 80 + 50 = 130 wraps to 30. The upshot is
+    // that a SELECTED part's hotspot lands at ~95% lightness (near-invisible on a
+    // light background) while an UNSELECTED one lands at ~30% (dark and obvious),
+    // inverting the emphasis. Dark mode is correct, which is why it went unnoticed.
+    // The assertions below are deliberately left asserting the wrap, so the
+    // behaviour is pinned rather than drifting silently, but do NOT read them as an
+    // endorsement: when #816 is fixed this test must be updated to the corrected
+    // behaviour, and that is the intended outcome, not a regression.
+    it("pins the #getHotspotLightness (baseLight + 50) % 100 wrap (see #816)", () => {
+      expect(canvas!.lilyData!.frLocations.length).toBeGreaterThan(0);
+      const loc = canvas!.lilyData!.frLocations[0];
+      const P = loc.p;
+
+      // The lightness #drawFalseRelationHotspot emits for frLocations[0] (the
+      // first gradient created). Keep bar beyond every FR window so
+      // #drawFalseRelationPulses creates no competing gradients.
+      const hotspotLightness = (): number => {
+        const stops: string[] = [];
+        const spy = vi.spyOn(ctx(), "createRadialGradient").mockImplementation(
+          () =>
+            ({
+              addColorStop: (_o: number, c: string) => stops.push(c),
+            }) as unknown as CanvasGradient
+        );
+        try {
+          canvas!.bar = canvas!.lilyData!.barCount + 10;
+          canvas!.draw();
+        } finally {
+          spy.mockRestore();
+        }
+        const m = stops[0]?.match(/hsla\([^,]+,\s*100%,\s*([\d.]+)%/);
+        if (!m) throw new Error(`no hotspot colour captured: ${stops[0]}`);
+        return +m[1];
+      };
+
+      // Selected (choir & part match): base 45 - 3p, +50, no wrap (< 100).
+      canvas!.choir = loc.c;
+      canvas!.voicePart = loc.p;
+      document.body.classList.remove("light-theme");
+      expect(hotspotLightness()).toBeCloseTo((45 - 3 * P + 50) % 100, 6);
+
+      // Unselected, dark: dull base 38, +50, no wrap.
+      canvas!.choir = (loc.c + 1) % config.choirs[0].length;
+      expect(hotspotLightness()).toBeCloseTo((38 - 3 * P + 50) % 100, 6);
+
+      // Unselected, light: dull base 80, +50 -> (130 - 3p) -> wraps past 100.
+      // Pins both the light dull base and the % 100 wrap.
+      document.body.classList.add("light-theme");
+      expect(hotspotLightness()).toBeCloseTo((80 - 3 * P + 50) % 100, 6);
+    });
+
+    it("pins the #drawBarHighlight guard boundaries and playhead position", () => {
+      expect(canvas!.lilyData!.notesByQuant.size).toBeGreaterThan(0); // draw() must not early-return
+      const pad = canvas!.canvasPadding;
+      const moveSpy = vi.spyOn(ctx(), "moveTo");
+      const lineSpy = vi.spyOn(ctx(), "lineTo");
+      // The playhead is the only stroke whose moveTo y-coordinate is the bare
+      // canvasPadding; every other helper offsets y by at least partHeight/2.
+      const playheadMoves = () =>
+        moveSpy.mock.calls.filter((c) => c[1] === pad);
+      try {
+        // bar 1: playhead at x = pad + (1 + 0.5) * barWidth, full canvas height.
+        canvas!.bar = 1;
+        moveSpy.mockClear();
+        lineSpy.mockClear();
+        canvas!.draw();
+        const x1 = pad + (1 + 0.5) * canvas!.barWidth;
+        expect(playheadMoves().length).toBeGreaterThan(0);
+        expect(playheadMoves()[0][0]).toBeCloseTo(x1, 6);
+        expect(
+          lineSpy.mock.calls.some(
+            (c) =>
+              Math.abs(c[0] - x1) < 1e-6 &&
+              Math.abs(c[1] - (canvas!.canvas!.height - pad)) < 1e-6
+          )
+        ).toBe(true);
+
+        // bar === barCount: still drawn (the guard is bar > barCount).
+        canvas!.bar = canvas!.lilyData!.barCount;
+        moveSpy.mockClear();
+        canvas!.draw();
+        expect(playheadMoves().length).toBeGreaterThan(0);
+
+        // bar 0: guard returns, no playhead.
+        //
+        // Each negative is SELF-anchored. After mockClear() the count is already 0,
+        // so `toBe(0)` alone would be satisfied by a draw() that did nothing at all,
+        // and it would then be resting on the positive legs above happening to run
+        // first in the same test. draw() still strokes the voice parts and the
+        // selection highlight at these bars, so moveTo IS called; what must not
+        // happen is a call at y === canvasPadding. Asserting both says "draw() ran,
+        // and issued no playhead", which is the actual claim.
+        canvas!.bar = 0;
+        moveSpy.mockClear();
+        canvas!.draw();
+        expect(moveSpy.mock.calls.length).toBeGreaterThan(0);
+        expect(playheadMoves().length).toBe(0);
+
+        // bar > barCount: guard returns, no playhead. Self-anchored, as above.
+        canvas!.bar = canvas!.lilyData!.barCount + 1;
+        moveSpy.mockClear();
+        canvas!.draw();
+        expect(moveSpy.mock.calls.length).toBeGreaterThan(0);
+        expect(playheadMoves().length).toBe(0);
+      } finally {
+        moveSpy.mockRestore();
+        lineSpy.mockRestore();
+      }
+    });
+
+    it("pins the #drawSelectionHighlight all-vs-single-part geometry", () => {
+      expect(canvas!.lilyData!.notesByQuant.size).toBeGreaterThan(0);
+      const c = ctx();
+      let lastMoveX = NaN,
+        lastMoveY = NaN;
+      const strokes: { lineWidth: number; x: number; y: number }[] = [];
+      const moveSpy = vi
+        .spyOn(c, "moveTo")
+        .mockImplementation((x: number, y: number) => {
+          lastMoveX = x;
+          lastMoveY = y;
+        });
+      // Draw order is bar -> selection -> voiceParts, so lastMoveX/Y captured
+      // at the selection highlight's stroke() is its own moveTo. This ordering
+      // is load-bearing for the geometry assertions below.
+      const strokeSpy = vi.spyOn(c, "stroke").mockImplementation(() => {
+        strokes.push({ lineWidth: c.lineWidth, x: lastMoveX, y: lastMoveY });
+      });
+      const pad = canvas!.canvasPadding;
+      const ph = canvas!.partHeight;
+      const ch = canvas!.choirHeight;
+      try {
+        // Single part (voicePart 1): narrow highlight, lineWidth partHeight*1.4,
+        // y centred on part 1's row (startY uses voicePart*partHeight).
+        canvas!.choir = 3;
+        canvas!.voicePart = 1;
+        canvas!.bar = 50;
+        strokes.length = 0;
+        canvas!.draw();
+        const singles = strokes.filter(
+          (s) => Math.abs(s.lineWidth - ph * 1.4) < 1e-6
+        );
+        expect(singles).toHaveLength(1); // exactly one stroke at this width
+        expect(singles[0].x).toBeCloseTo(pad + canvas!.barWidth, 6);
+        expect(singles[0].y).toBeCloseTo(pad + 3 * ch + 1 * ph + ph / 2, 6);
+
+        // All parts (voicePart "all"): wide highlight, lineWidth partHeight*5.8,
+        // y centred on the choir block (startY uses 2*partHeight).
+        canvas!.voicePart = "all";
+        strokes.length = 0;
+        canvas!.draw();
+        const alls = strokes.filter(
+          (s) => Math.abs(s.lineWidth - ph * 5.8) < 1e-6
+        );
+        expect(alls).toHaveLength(1); // exactly one stroke at this width
+        expect(alls[0].x).toBeCloseTo(pad + canvas!.barWidth, 6);
+        expect(alls[0].y).toBeCloseTo(pad + 3 * ch + 2 * ph + ph / 2, 6);
+      } finally {
+        moveSpy.mockRestore();
+        strokeSpy.mockRestore();
+      }
+    });
+
+    it("pins #getMousePos exact part/choir derivation", () => {
+      // Snapshot and restore: a leaked getBoundingClientRect stub would follow
+      // the shared element into any later test.
+      const savedRect = canvas!.getBoundingClientRect;
+      canvas!.getBoundingClientRect = vi.fn(
+        () =>
+          ({
+            width: 1400,
+            height: 400,
+            top: 0,
+            left: 0,
+            right: 1400,
+            bottom: 400,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+          }) as DOMRect
+      );
+      try {
+        // Exact (choir, part) for each offsetY at height 400 / padding 5 /
+        // 8 choirs / 5 parts, asserted as literals (not a mirrored formula) so a
+        // source drift cannot pass by drifting the expectation in lockstep. The
+        // bar (x-axis) derivation is pinned by the #204 left/right/centre tests.
+        const cases = [
+          { offsetY: 29, choir: 0, part: 2 },
+          { offsetY: 48, choir: 0, part: 4 },
+          { offsetY: 78, choir: 1, part: 2 },
+          { offsetY: 150, choir: 2, part: 4 },
+        ];
+        for (const { offsetY, choir, part } of cases) {
+          const ev = new MouseEvent("click", {
+            bubbles: true,
+            cancelable: true,
+            clientX: 100,
+            clientY: offsetY,
+          });
+          Object.defineProperty(ev, "offsetX", { value: 100 });
+          Object.defineProperty(ev, "offsetY", { value: offsetY });
+          canvas!.querySelector("canvas")!.dispatchEvent(ev);
+          expect(canvas!.voicePart).toBe(part);
+          expect(canvas!.choir).toBe(choir);
+        }
+      } finally {
+        canvas!.getBoundingClientRect = savedRect;
+      }
+    });
   });
 });
