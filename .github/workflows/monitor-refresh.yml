@@ -65,6 +65,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Value-preserving merge for the series so a concurrent rebase keeps the
+          # richer per-day mergedPRs rather than last-writer-wins (#728).
+          git config merge.monitor-series.driver 'node packages/monitor/merge-monitor-series.mjs %O %A %B %P'
           git add .github/monitor-series.json
           if git diff --cached --quiet; then
             echo "No series changes to commit"

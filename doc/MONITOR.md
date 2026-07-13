@@ -139,7 +139,11 @@ It deliberately does **less** than the daily run. It invokes
 `monitor-resources.mjs --refresh`, which updates today's entry only and sends no
 Telegram message, renders no chart, and opens no critical issue. It also leaves
 `mergedPRs` at 0; the daily run sets the real count later, but only on a run that
-does not skip the report (see `shouldSkipReport`).
+does not skip the report (see `shouldSkipReport`). Because both writers upsert
+today's entry, a value-preserving merge driver reconciles a concurrent rebase by
+keeping the larger per-day `mergedPRs`, so a second-finishing refresh cannot erase
+the daily run's real count ([#728](https://github.com/wainwmr/spem-player/issues/728);
+see [`doc/CI.md`](./CI.md) § Pushing regenerated files to `main`).
 
 The hourly cap is a `git log --grep` for the previous refresh commit, so the
 checkout uses `fetch-depth: 0` to make that history visible. Because the cap keys

@@ -33,11 +33,13 @@
 #     does not re-trigger scores-ci, so the catch-up is the next build that
 #     rebuilds the affected score, not necessarily the immediate next run.)
 #   - The monitor series (.github/monitor-series.json) is accumulated, NOT
-#     regenerated -- each run upserts only today's entry. Last-writer-wins can
-#     therefore overwrite a richer entry with a poorer one (a merge-time refresh
-#     writing mergedPRs:0 over the daily run's real count), and it does NOT
-#     self-heal within the day; recovery needs a manual backfill. Tracked as #728
-#     (a value-preserving merge for the series).
+#     regenerated -- each run upserts only today's entry. Last-writer-wins would
+#     overwrite a richer entry with a poorer one (a merge-time refresh writing
+#     mergedPRs:0 over the daily run's real count), so this path is bound to the
+#     `monitor-series` merge driver (.gitattributes + the monitor workflows'
+#     `git config merge.monitor-series.driver`), which reconciles the rebase by
+#     keeping the larger per-day mergedPRs -- last-writer-wins no longer applies
+#     to this file (#728).
 #
 # Why FETCH_HEAD, not origin/main: actions/checkout fetches with a narrow refspec
 # that need not update the origin/main remote-tracking ref, so rebasing onto

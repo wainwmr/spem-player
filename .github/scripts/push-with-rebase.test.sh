@@ -7,11 +7,14 @@
 # rejected push fails loudly after exactly the retry bound, (4) it rebases onto
 # FETCH_HEAD so it converges even when the origin/main ref is stale (the core
 # fix), (5) --autostash lets it converge with a dirty working tree, (6) a floored
-# PUSH_RETRIES=0 still attempts one push, and (7) a non-integer PUSH_RETRIES
-# normalises rather than falling through to a no-push.
+# PUSH_RETRIES=0 still attempts one push, (7) a non-integer PUSH_RETRIES
+# normalises rather than falling through to a no-push, and (8) the
+# .github/monitor-series.json value-preserving merge driver keeps the richer
+# per-day mergedPRs through the rebase (#728) -- the one case that depends on the
+# .gitattributes binding + driver registration the others do not set.
 #
 # Run by .github/workflows/push-helper-test.yml on any change under
-# .github/scripts/, and locally with:
+# .github/scripts/ or to the monitor merge driver, and locally with:
 #
 #     bash .github/scripts/push-with-rebase.test.sh
 set -euo pipefail
@@ -184,6 +187,41 @@ if ( cd "$d/ci"; PUSH_RETRIES=notanumber bash "$HELPER" ) >/dev/null 2>&1; then
     || bad "case7: regenerated=$r (want vCI)"
 else
   bad "case7: non-integer PUSH_RETRIES did not push (validation missing?)"
+fi
+
+# Case 8: the accumulated monitor series merges by VALUE (#728). A concurrent
+# push of the richer per-day mergedPRs must survive the rebase that writes the
+# poorer 0, instead of being clobbered by -X theirs. Requires the merge driver
+# registered + .gitattributes binding the path, exactly as the monitor workflows
+# configure it -- so this also asserts the driver beats -X theirs.
+DRIVER="$(cd "$(dirname "$0")/../.." && pwd)/packages/monitor/merge-monitor-series.mjs"
+mseries() { printf '[{"date":"2026-06-30","mergedPRs":%s,"summary":{"date":"2026-06-30","mergedPRs":%s}}]\n' "$1" "$1"; }
+
+d="$(setup case8)"
+# Commit the .gitattributes binding + an empty series on origin/main.
+(
+  cd "$d/seed"
+  printf '.github/monitor-series.json merge=monitor-series\n' > .gitattributes
+  mkdir -p .github
+  printf '[]\n' > .github/monitor-series.json
+  git_q add -A; git_q commit -qm "seed series + gitattributes"
+  git_q push -q origin HEAD:main
+) >/dev/null 2>&1
+# Re-clone ci so it carries the gitattributes binding, and register the driver
+# (the monitor workflow's `git config merge.monitor-series.driver`).
+rm -rf "$d/ci"; git_q clone -q "$d/origin.git" "$d/ci" >/dev/null 2>&1
+git_q -C "$d/ci" config merge.monitor-series.driver "node $DRIVER %O %A %B %P"
+# ci writes today with the poorer count (refresh: 0); a concurrent push lands the
+# richer count (daily run: 3) first, so ci must rebase.
+( cd "$d/ci"; mseries 0 > .github/monitor-series.json; git_q add -A; git_q commit -qm "ci refresh 0" ) >/dev/null 2>&1
+rm -rf "$d/other"; git_q clone -q "$d/origin.git" "$d/other" >/dev/null 2>&1
+( cd "$d/other"; mseries 3 > .github/monitor-series.json; git_q add -A; git_q commit -qm "daily run 3"; git_q push -q origin HEAD:main ) >/dev/null 2>&1
+if ( cd "$d/ci"; bash "$HELPER" ) >/dev/null 2>&1; then
+  got="$(origin_show "$d" .github/monitor-series.json | grep -oE '"mergedPRs":[[:space:]]*[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)"
+  [ "$got" = 3 ] && ok "case8: monitor series keeps the richer mergedPRs through the rebase (#728)" \
+    || bad "case8: mergedPRs=$got (want 3 -- driver did not beat -X theirs)"
+else
+  bad "case8: helper exited non-zero on the monitor-series race"
 fi
 
 echo "---"

@@ -9,10 +9,12 @@ on:
     paths:
       - ".github/scripts/**"
       - ".github/workflows/push-helper-test.yml"
+      - "packages/monitor/merge-monitor-series.mjs"
   pull_request:
     paths:
       - ".github/scripts/**"
       - ".github/workflows/push-helper-test.yml"
+      - "packages/monitor/merge-monitor-series.mjs"
 
 jobs:
   test:
