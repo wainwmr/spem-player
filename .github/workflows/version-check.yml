@@ -1,0 +1,67 @@
+name: Version check
+
+# Guards the app version on every pull request (ticket #810), so two builds cannot
+# ship under one version string. A PR that changes app source with a user-facing
+# intent must carry a version strictly above main's and equal to no other open PR's;
+# any other PR must carry no bump. The rule lives in doc/CI.md.
+#
+# NOT PATH-FILTERED, deliberately: the guard must see every PR, or an internal PR
+# carrying a stray bump would slip through unguarded.
+#
+# `edited` is in the trigger list and is LOAD-BEARING. The repo squash-merges, so the
+# subject that lands on main is the PR TITLE, and the guard reads it. Without
+# `edited`, an author could pass green as `chore: tidy`, retitle to `feat: metronome`,
+# and merge unguarded: a retitle fires `edited`, not `synchronize`.
+#
+# NOT YET BLOCKING: this job reports a check named `version`, and the "Main should be
+# golden" ruleset requires only `test`. Until `version` is added to that ruleset's
+# required checks, a red result annotates the PR but does not stop a merge, and
+# Dependabot auto-merge will not see it. See doc/CI.md.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The PR head, not the merge ref, so the commit list and the diff are
+          # exactly the branch's own.
+          ref: ${{ github.event.pull_request.head.sha }}
+          # Full history is REQUIRED: `git log origin/main..HEAD` and
+          # `git diff origin/main...HEAD` both need the merge base, which a shallow
+          # fetch does not have. It is also nearly free here, because the repo's
+          # weight is blobs, not history.
+          fetch-depth: 0
+          # The weight IS the blobs: packages/pwa/public/audio is 775.8 MiB of the
+          # 791.5 MiB tip tree, and this job reads a 1,905-byte package.json.
+          # `blob:none` fetches commits and trees only, lazily pulling the two
+          # package.json blobs `git show` asks for; the commit walk and the
+          # name-only diff need no blobs at all.
+          #
+          # These two options are a PAIR. Removing `sparse-checkout` while keeping
+          # `filter` makes the checkout step lazily fetch every blob in the tip tree,
+          # re-introducing the full 775 MiB download.
+          filter: blob:none
+          sparse-checkout: .github
+      - name: Check app version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          # The squash-merge subject is the PR title, so the title is what actually
+          # ships. The guard classifies it alongside the branch commits.
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          # Pin the repo rather than letting `gh` resolve it from the ambient git
+          # remote. A wrong-repo read returns a confident EMPTY open-PR list, which is
+          # a silent pass on the one question this guard exists to answer.
+          GH_REPO: ${{ github.repository }}
+        run: |
+          git fetch origin main --no-tags
+          node .github/scripts/version-check-cli.mjs
