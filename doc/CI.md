@@ -1,6 +1,6 @@
 # Continuous Integration
 
-The repository uses GitHub Actions for automated testing and dependency updates. All workflows run on Ubuntu latest and read the Node.js version from `.nvmrc`.
+The repository uses GitHub Actions for automated testing and dependency updates. All workflows run on Ubuntu latest. Those that build or test the app read the Node.js version from `.nvmrc`; the two that only run a dependency-free script (`version-check.yml` and `push-helper-test.yml`) use the runner's preinstalled Node instead, and so skip the `actions/setup-node` step.
 
 ## Philosophy
 
@@ -38,6 +38,119 @@ On failure, the Playwright HTML report is uploaded as an artifact and retained f
 
 This workflow is intentionally excluded from the PR gate. Playwright tests are slow and can flake on infrastructure issues. Running them nightly catches real regressions within 24 hours without blocking rapid fixes.
 
+### `version-check.yml`
+
+Triggers on every pull request to `main`, on `opened`, `synchronize`, `reopened` and
+`edited`. Not path-filtered: the guard must see every PR. It exists so two builds
+cannot ship under one version string
+([#810](https://github.com/wainwmr/spem-player/issues/810), after PR #804 and PR #805
+both shipped as 2.8.10 on 2026-07-13).
+
+**The version it guards is the one in `packages/pwa/package.json`.** The root
+`package.json` carries a different version and is not the app's. Vite injects the PWA
+package's version into `index.html` at build time.
+
+The rule, exactly as enforced:
+
+- A PR that **changes app source** with a **user-facing intent** must carry a version
+  strictly above `main`'s, and equal to no other open PR's.
+- Any other PR must carry **no bump**: its version must not be above `main`'s. It may
+  sit *below* `main`, which happens whenever `main` moves under a branch that
+  correctly did not bump.
+
+Both signals must fire. Either one alone misfires badly, and we have the evidence:
+classifying on the commit type alone would have demanded a bump on 11 of 21
+user-facing-typed commits that correctly shipped without one, because the common real
+shape is an unscoped `fix:` on the monitor package, on lint config, or on a build
+script.
+
+**App source** is anything that can change what a user downloads:
+
+- everything under `packages/pwa/`, including `index.html`, `index.ts`, `vite.config.ts`
+  and `tsconfig.json` (a resolver or target change alters the bundle) and
+  `.browserslistrc` / `.postcssrc.json` (they shape the emitted CSS);
+- `packages/scores/src/`, which `vite.config.ts` aliases as `@scores` and bundles;
+- `pnpm-lock.yaml`. The PWA declares `"dependencies": {}`, so everything it builds with
+  (`vite`, `vite-plugin-pwa`, `sass-embedded`, `workbox-window`) is a devDependency and
+  its output IS the bundle. Without the lockfile a dependency change would be
+  structurally invisible to the guard.
+
+It excludes, by exact path: `packages/pwa/package.json` (the version file itself, so
+counting it would be circular), `packages/pwa/src/test/`, `packages/pwa/e2e/`,
+`eslint.config.js`, `.prettierrc`, `.prettierignore`, `knip.json`,
+`.dependency-cruiser.cjs`, `playwright.config.ts`, `tsconfig.e2e.json` and
+`worktree-ports.ts`; plus `packages/scores/build/` (the LilyPond pipeline, which does not
+ship), `packages/monitor/`, `.github/` and `doc/`. Anything else newly added under
+`packages/pwa/` counts as shipping by default, which fails safe.
+
+**User-facing intent** means a commit subject typed `feat:`, `feature:`, `fix:`,
+`perf:` or `revert:`. `build:`, `chore:`, `ci:`, `docs:`, `refactor:`, `style:`, `test:`
+and `tooling:` are internal. The type is matched case-insensitively, a `Revert "<subject>"`
+inherits the intent of the subject it reverts, and a Dependabot dev-dependency subject
+(`[deps](deps-dev):`) is internal. A conventional type it does not recognise
+(`bugfix:`, `hotfix:`) is **not** treated as internal: it reads as user-facing, which
+is the fail-safe direction.
+
+**Which subjects it reads.** The repo squash-merges, so the subject that lands on
+`main` is the **PR title**. The guard classifies the title *and* the branch commits: a
+user-facing intent in either one counts. This is why `edited` is in the trigger list.
+Without it, an author could pass green as `chore: tidy`, retitle to `feat: metronome`,
+and merge unguarded.
+
+**Two known residuals, stated rather than hidden.** Both are deliberate, and closing
+either is a rule change for Andrew and Mark, not a bug fix.
+
+1. **The type signal.** An internally-typed change to app source owes no bump. Measured
+   against history, 12 of 122 passing commits changed app source, shipped no bump and
+   were green, and they are ordinary honest `refactor:` PRs. Roughly one commit in nine.
+   Closing it means "app source changed implies a bump", dropping the type signal
+   entirely, which would have flagged 18 of 128.
+2. **Dependabot.** A `[deps](deps-dev):` bump changes the lockfile, which IS app source,
+   but classifies as internal and so owes no bump. Since `vite` is a devDependency, a
+   bundler bump can ship a different build under an unchanged version. Without the
+   exemption every Dependabot PR goes red, and Dependabot can neither bump the version
+   nor clear the check, and its PRs auto-merge.
+
+It **fails closed**, reporting a failure rather than a silent pass, when: either
+version is not a plain `x.y.z`; the open-PR list cannot be read, is not a list, or
+comes back full and so may be truncated; the list comes back without this PR in it
+(which proves it is not the list we think it is, since the PR under test is itself an
+open PR, and an empty list would otherwise read as "nothing to collide with"); an open
+PR's version string will not parse; this PR's number or title is missing; or git cannot
+be read. A peer whose
+`packages/pwa/package.json` returns **404** is skipped rather than failed: that head
+declares no app version, so it cannot collide, and failing the list would red every PR
+in the repo until that one stale PR was closed.
+
+Exit codes: **`0`** pass; **`1`** the version is wrong (`bump-owed`, `no-bump-owed`,
+`collision`, `malformed-version`); **`2`** the guard could not tell (`unreadable`,
+`unreadable-peer`), which is an infrastructure failure, not a version violation.
+
+The decision lives in the pure function `decideVersion` in
+`.github/scripts/version-check.mjs`, unit-tested by
+`.github/scripts/version-check.test.mjs` (run by `push-helper-test.yml`, whose path
+filter this change extends to cover `version-check.yml` itself).
+`.github/scripts/version-check-cli.mjs` is the entry point the workflow runs; it exists
+so the module can be imported by its tests without a "was I invoked directly?"
+condition, which would be a fail-open guard on a fail-closed tool.
+
+> **This check does not yet block a merge.** It reports a check named `version`, and
+> the "Main should be golden" ruleset requires only `test` (see Branch Protection
+> below). Until `version` is added to that ruleset's required status checks, a red
+> result annotates the PR but does not prevent merging, and Dependabot auto-merge does
+> not see it. Adding it is a repository settings change, not a code change. It is safe
+> to require: the workflow has no path filter, so it runs on every PR to `main` and can
+> never be a permanently-pending required check.
+
+The job checks out with `filter: blob:none` and `sparse-checkout: .github`, because it
+reads a 1,905-byte `package.json` while the tip tree is 791.5 MiB, of which 775.8 MiB is
+the choir audio under `packages/pwa/public/audio/`. The two options are a pair: removing
+the sparse checkout while keeping the filter re-introduces the full download.
+`fetch-depth: 0` is kept and is required, because the commit walk and the diff both need
+the merge base.
+
+Permissions: `contents: read`, `pull-requests: read`.
+
 ### `scores-ci.yml`
 
 Triggers on push to `main` and on `pull_request`, both path-filtered to `packages/scores/**` and this workflow file.
@@ -52,7 +165,7 @@ Runs on `ubuntu-latest`.
 
 Steps:
 
-- `actions/checkout@v6` with `ref: ${{ github.head_ref || github.ref_name }}` — checkout the target branch so commits can be pushed back.
+- `actions/checkout@v7` with `ref: ${{ github.head_ref || github.ref_name }}` — checkout the target branch so commits can be pushed back.
 - `actions/setup-node@v6` from `.nvmrc` — install Node.js.
 - `pnpm install` — clean install from lockfile.
 - `pnpm run test:lilypond` — run the Lilypond-related test suite.
@@ -138,11 +251,14 @@ other's count ([#728](https://github.com/wainwmr/spem-player/issues/728)).
 
 `push-helper-test.yml` runs the helper's regression test
 (`.github/scripts/push-with-rebase.test.sh`) on any change under
-`.github/scripts/`.
+`.github/scripts/`, and also runs the `version-check.mjs` unit tests
+(`node --test .github/scripts/version-check.test.mjs`).
 
 ## Node.js Version
 
-The Node.js version is pinned in `.nvmrc`. All GitHub Actions workflows read this file via `node-version-file` in `actions/setup-node`. Netlify should be configured to use the same version.
+The Node.js version is pinned in `.nvmrc`. GitHub Actions workflows that build or test the app read this file via `node-version-file` in `actions/setup-node`. Netlify should be configured to use the same version.
+
+Two workflows are deliberate exceptions and run on the runner's preinstalled Node: `version-check.yml` and the version-check step of `push-helper-test.yml`. Both execute a single dependency-free script that uses only long-stable Node APIs, so pinning would add an `actions/setup-node` step to every pull request for determinism they do not need.
 
 ## Branch Protection
 
@@ -152,3 +268,11 @@ The `main` branch has a GitHub Ruleset ("Main should be golden") that enforces:
 - The `test` job (from `pwa-ci.yml` for PWA changes, `monitor-ci.yml` for monitor changes, `scores-ci.yml` for LilyPond changes, or `test-noop.yml` otherwise) must pass before merge
 - Branches must be up to date with `main` before merging
 - Force pushes and deletions are restricted
+
+`test` is currently the **only** required status check. The `version` job from
+`version-check.yml` is therefore advisory: it reports on every PR, but a red result
+does not block the merge button, and Dependabot auto-merge
+(`.github/workflows/dependabot-auto-merge.yml`, which merges once the required
+checks pass) does not see it. **To make the app-version guard actually guard, add
+`version` to this ruleset's required status checks.** That is a repository settings
+change and cannot be made from a pull request.
