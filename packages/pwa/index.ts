@@ -325,11 +325,7 @@ function keyboardTapped(e: KeyboardEvent) {
     return;
   }
 
-  if (e.code == "Enter") {
-    controls.isPlaying() ? controls.pause() : controls.play();
-    return;
-  }
-  if (e.code == "Space") {
+  if (e.code === "Enter" || e.code === "NumpadEnter" || e.code === "Space") {
     controls.isPlaying() ? controls.pause() : controls.play();
     return;
   }
