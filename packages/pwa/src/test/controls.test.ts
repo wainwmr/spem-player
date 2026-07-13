@@ -655,4 +655,224 @@ describe("MusicControls custom element", () => {
 
     cancelSpy.mockRestore();
   });
+
+  // #764: while a new file is loading, play() holds playing=false across the
+  // await, so a control change arriving mid-load sees isPlaying()===false and is
+  // dropped; audio then resumes on the stale file. The fix adds an in-flight
+  // signal (reload guards fire during a load) and a generation counter (a stale
+  // play() resolution no-ops).
+  describe("play() load-window race (#764)", () => {
+    // A deferred play() mock we settle by hand, so the load window can be held
+    // open across further control changes. In a real browser a play() promise
+    // whose load is interrupted by a new load()/pause() REJECTS with AbortError,
+    // so both a resolve and a reject handle are exposed per call.
+    let playResolvers: Array<() => void>;
+    let playRejecters: Array<(reason?: unknown) => void>;
+
+    beforeEach(() => {
+      playResolvers = [];
+      playRejecters = [];
+      vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            playResolvers.push(resolve);
+            playRejecters.push(reject);
+          })
+      );
+    });
+
+    afterEach(() => {
+      // Re-apply the suite-wide immediate stub for later tests. mockRestore()
+      // would expose the real (jsdom-unimplemented) play(), so re-stub instead.
+      vi.spyOn(HTMLMediaElement.prototype, "play").mockReturnThis();
+    });
+
+    // Put the element in a loaded, playing choir-part state without opening a
+    // load window (a choir-part file, not default.mp3, so a later change reloads).
+    function loadedAndPlaying(elem: MusicControls): void {
+      elem.setPart(0); // Soprano
+      elem.setChoir(0); // Choir 1
+      elem.audio.src = "http://localhost/audio/ALC/Choir%201-Soprano.mp3";
+      elem.playing = true;
+    }
+
+    const last = <T>(a: T[]): T => a[a.length - 1];
+
+    it("a control change during the load window reloads the latest selection", async () => {
+      const elem = document.querySelector("music-controls") as MusicControls;
+      loadedAndPlaying(elem);
+      let playingEvents = 0;
+      elem.addEventListener("music-controls-playing", () => playingEvents++);
+
+      // Choir 2: a new file, so play() opens the load window and awaits.
+      elem.setChoir(1);
+      await Promise.resolve();
+      expect(playResolvers.length).toBe(1);
+
+      // Choir 3 arrives mid-load. Without the fix, playing===false drops it and
+      // audio stays on Choir 2.
+      elem.setChoir(2);
+      await Promise.resolve();
+      expect(decodeURIComponent(elem.audio.src)).toContain("Choir 3-Soprano");
+
+      // Resolve the STALE load alone: the generation guard must swallow it, so
+      // no state flip while the newer call is still pending. (Resolving both
+      // would pass whether or not the guard exists, so this isolates it.)
+      playResolvers[0]();
+      await Promise.resolve();
+      expect(elem.playing).toBe(false);
+      expect(playingEvents).toBe(0);
+
+      // The latest load resolving is the one that flips state.
+      last(playResolvers)();
+      await Promise.resolve();
+      expect(elem.playing).toBe(true);
+      expect(playingEvents).toBe(1);
+
+      elem.pause();
+    });
+
+    it("a superseded load REJECTING (AbortError) does not disturb the newer call", async () => {
+      const elem = document.querySelector("music-controls") as MusicControls;
+      const spinner = document.getElementById("spinner");
+      const play = document.getElementById("play");
+      loadedAndPlaying(elem);
+
+      elem.setChoir(1); // opens the load window (stale call)
+      await Promise.resolve();
+      elem.setChoir(2); // supersedes mid-load (newer call)
+      await Promise.resolve();
+
+      // The stale play() rejects, as the browser aborts it on the new load. The
+      // catch's generation guard must leave the newer call's loading UI alone.
+      playRejecters[0](new DOMException("aborted", "AbortError"));
+      await Promise.resolve();
+      expect(elem.playing).toBe(false);
+      expect(spinner?.style.display).toBe("block");
+      expect(play?.style.display).toBe("none");
+
+      // The newer load then resolves and takes over cleanly.
+      last(playResolvers)();
+      await Promise.resolve();
+      expect(elem.playing).toBe(true);
+
+      elem.pause();
+    });
+
+    it("the current load REJECTING resets to the play icon", async () => {
+      const elem = document.querySelector("music-controls") as MusicControls;
+      const play = document.getElementById("play");
+      loadedAndPlaying(elem);
+
+      elem.setChoir(1); // opens the load window (no supersession)
+      await Promise.resolve();
+
+      // The one in-flight (current-generation) play rejects, e.g. autoplay
+      // blocked: the UI resets to the play icon and playing stays false.
+      last(playRejecters)(new DOMException("blocked", "NotAllowedError"));
+      await Promise.resolve();
+      expect(elem.playing).toBe(false);
+      expect(play?.style.display).toBe("block");
+    });
+
+    it("rapid changes during the load window land on the latest selection", async () => {
+      const elem = document.querySelector("music-controls") as MusicControls;
+      loadedAndPlaying(elem);
+
+      elem.setPart(1); // Alto: opens the load window
+      await Promise.resolve();
+      elem.setPart(2); // Tenor
+      elem.setPart(3); // Baritone, in quick succession
+      await Promise.resolve();
+
+      expect(decodeURIComponent(elem.audio.src)).toContain("Choir 1-Baritone");
+
+      last(playResolvers)();
+      await Promise.resolve();
+      expect(elem.playing).toBe(true);
+
+      elem.pause();
+    });
+
+    it("a recording change during the load window reloads the latest selection", async () => {
+      const elem = document.querySelector("music-controls") as MusicControls;
+      loadedAndPlaying(elem);
+
+      elem.setChoir(1); // opens the load window on ALC
+      await Promise.resolve();
+      elem.setRecording(1); // CotE arrives mid-load
+      await Promise.resolve();
+
+      expect(decodeURIComponent(elem.audio.src)).toContain("/CotE/");
+
+      last(playResolvers)();
+      await Promise.resolve();
+      expect(elem.playing).toBe(true);
+
+      elem.pause();
+    });
+
+    it("a control change while paused and idle does not start playback", async () => {
+      const elem = document.querySelector("music-controls") as MusicControls;
+      // Fresh element: not playing, not loading. #intendsToPlay() is false, so
+      // the reload guard must not fire and no play() may run.
+      elem.setChoir(1);
+      await Promise.resolve();
+      expect(playResolvers.length).toBe(0);
+      expect(elem.playing).toBe(false);
+    });
+
+    it("shows the loading icon for the duration of the load window", async () => {
+      const elem = document.querySelector("music-controls") as MusicControls;
+      const spinner = document.getElementById("spinner");
+      const play = document.getElementById("play");
+      loadedAndPlaying(elem);
+
+      elem.setChoir(1); // opens the load window
+      await Promise.resolve();
+      expect(spinner?.style.display).toBe("block");
+      expect(play?.style.display).toBe("none");
+
+      last(playResolvers)();
+      await Promise.resolve();
+      const pause = document.getElementById("pause");
+      expect(pause?.style.display).toBe("block");
+
+      elem.pause();
+    });
+
+    it("pause during the load window cancels the pending play", async () => {
+      const elem = document.querySelector("music-controls") as MusicControls;
+      const play = document.getElementById("play");
+      loadedAndPlaying(elem);
+
+      elem.setChoir(1); // opens the load window
+      await Promise.resolve();
+
+      elem.pause();
+      // The in-flight play() resolving after pause must not resume playback.
+      playResolvers[0]();
+      await Promise.resolve();
+
+      expect(elem.playing).toBe(false);
+      expect(play?.style.display).toBe("block");
+    });
+
+    it("a control change after a mid-load pause does not restart playback", async () => {
+      const elem = document.querySelector("music-controls") as MusicControls;
+      loadedAndPlaying(elem);
+
+      elem.setChoir(1); // opens the load window
+      await Promise.resolve();
+      elem.pause(); // clears #loading as well as bumping the generation
+
+      // #intendsToPlay() must now be false, so a later control change starts no
+      // new play(). If pause() left #loading true, this would silently restart
+      // the playback the user just paused.
+      elem.setChoir(2);
+      await Promise.resolve();
+      expect(playResolvers.length).toBe(1); // no second load window opened
+      expect(elem.playing).toBe(false);
+    });
+  });
 });
