@@ -162,8 +162,14 @@ export default defineConfig({
         // Precache the app shell but NOT the audio files.
         globPatterns: ["**/*.{js,css,html,svg,png,ico,json,webmanifest}"],
         navigateFallback: "index.html",
-        clientsClaim: true,
-        skipWaiting: true,
+        // Must stay false. `registerType: "prompt"` (above) plus the update
+        // toast in src/ts/pwa-update.ts give the user control over when a new
+        // service worker activates (the Refresh click calls updateSW(true),
+        // which does the skip-waiting handshake). `true` here are the
+        // autoUpdate-recipe defaults: they would silently self-activate and
+        // claim open tabs, defeating the prompt model (#710). Do not restore.
+        clientsClaim: false,
+        skipWaiting: false,
       },
     }),
   ],
