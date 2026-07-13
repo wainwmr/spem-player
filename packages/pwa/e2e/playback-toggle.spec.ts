@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/page-errors";
 
 test.describe("Playback keyboard toggle", () => {
   test("Space toggles play and pause", async ({ page }) => {

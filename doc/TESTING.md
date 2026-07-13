@@ -124,6 +124,27 @@ Coverage reports are written to the `coverage/` directory. This directory is git
 
 End-to-end tests run in a real browser using Playwright. They live in `e2e/` and follow the naming convention `*.spec.ts`.
 
+### Page-error capture
+
+Every spec imports `test` and `expect` from `e2e/helpers/page-errors.ts`, not
+from `@playwright/test` (enforced by a scoped ESLint `no-restricted-imports`
+rule). That module wraps `test` with an automatic per-test fixture that
+collects uncaught page exceptions and unhandled rejections (`pageerror`),
+console errors, and `/audio/` requests that fail, return >=400, or whose 2xx
+response lacks an `audio/*` content-type (SPA hosting serves a missing file as
+200 text/html, so content-type, not status, is the reliable signal), and fails
+the test at
+teardown if any arrived. Playwright's default semantics ignore all three
+channels, so without the fixture a test can pass while the page under it is
+broken. `e2e/page-errors.spec.ts` is the fixture's self-test: each positive
+case injects one error class and polls the capture array, and a final
+`test.fail()`-annotated case pins that a non-empty capture fails at teardown.
+If a spec ever legitimately produces a captured message, add a narrow,
+commented entry to the module's `ALLOWLIST` (the current entries cover
+third-party script hosts that are absent or DNS-blocked in test environments)
+rather than reverting the import. Service workers are blocked suite-wide
+(`playwright.config.ts`) so page-level network events stay observable.
+
 ### E2E Prerequisites
 
 The production build must exist before e2e tests run:

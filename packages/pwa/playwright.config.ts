@@ -11,6 +11,14 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PREVIEW_PORT}`,
     trace: "on-first-retry",
+    // Block service-worker registration in e2e. The built app's SW claims the
+    // page immediately (workbox clientsClaim/skipWaiting), and SW-intercepted
+    // requests bypass page-level network events on Chromium, which blinds the
+    // page-error fixture's /audio/ channel (e2e/helpers/page-errors.ts, #775)
+    // and makes network-dependent tests SW-state-dependent. No spec exercises
+    // the real SW (pwa-update-toast.spec.ts drives the __pwaShowUpdateToast
+    // test hook); remove this deliberately if one ever must.
+    serviceWorkers: "block",
   },
   projects: [
     {

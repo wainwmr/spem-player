@@ -55,6 +55,24 @@ export default tseslint.config(
     },
   },
   {
+    // Every e2e spec must take test/expect from the page-error capture
+    // fixture (e2e/helpers/page-errors.ts, #775): a spec importing them from
+    // @playwright/test compiles and runs green with the error-capture safety
+    // net silently absent, so the convention is enforced here rather than by
+    // review. allowTypeImports keeps type-only imports (e.g. Page) legal.
+    files: ['e2e/**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': ['error', {
+        paths: [{
+          name: '@playwright/test',
+          importNames: ['test', 'expect'],
+          message: 'Import test/expect from ./helpers/page-errors (see doc/TESTING.md § Page-error capture).',
+          allowTypeImports: true,
+        }],
+      }],
+    },
+  },
+  {
     // .gitignore is honoured via includeIgnoreFile above; only paths that are
     // NOT gitignored need listing here. tests-local/ and probes/ are local-only
     // (.git/info/exclude, not .gitignore); .dependency-cruiser.cjs is tracked.

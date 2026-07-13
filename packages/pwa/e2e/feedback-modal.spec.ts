@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/page-errors";
 
 test.describe("Feedback modal mobile viewport", () => {
   test("does not overflow horizontally on iPhone SE viewport (375px)", async ({ page }) => {
