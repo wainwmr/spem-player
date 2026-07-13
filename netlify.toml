@@ -5,13 +5,22 @@
 #
 # Ignore: skip the build when none of the listed paths changed. Exits 0
 # (skip) if no differences; exits 1 (build) if any path changed.
-# packages/scores/src/ is intentionally excluded — .ly changes trigger the
-# Scores CI workflow (#462) which commits updated SVGs, and the SVG commit
-# then triggers Netlify.
+#
+# The empty-$CACHED_COMMIT_REF guard is essential (#809): when Netlify passes
+# an empty cached ref (no prior successful production deploy), the bare
+# `git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF` degenerates to comparing
+# the checked-out commit against itself, always reports "no change", and skips
+# — a self-perpetuating loop that froze production at 2.8.3. Force a build
+# whenever the cached ref is empty.
+#
+# packages/scores/src/lily IS watched because since #804 the PWA build consumes
+# its precomputed lilyData.json. The rest of packages/scores/src is excluded —
+# .ly changes trigger the Scores CI workflow (#462) which commits updated SVGs,
+# and the SVG commit then triggers Netlify.
 [build]
   command = "pnpm run build"
   publish = "packages/pwa/dist"
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- packages/pwa/index.ts packages/pwa/src/ts packages/pwa/src/scss packages/pwa/src/ohmjs packages/pwa/src/scores packages/pwa/public packages/pwa/index.html packages/pwa/vite.config.ts packages/pwa/package.json pnpm-lock.yaml netlify.toml"
+  ignore = "if [ -z \"$CACHED_COMMIT_REF\" ]; then exit 1; fi; git diff --quiet \"$CACHED_COMMIT_REF\" \"$COMMIT_REF\" -- packages/pwa/index.ts packages/pwa/src/ts packages/pwa/src/scss packages/pwa/src/ohmjs packages/pwa/src/scores packages/pwa/public packages/pwa/index.html packages/pwa/vite.config.ts packages/pwa/package.json packages/scores/src/lily pnpm-lock.yaml netlify.toml"
   functions = "netlify/functions"
 
   ## Uncomment to use this redirect for Single Page Applications like create-react-app.
