@@ -715,15 +715,15 @@
   },
   {
     "date": "2026-07-13",
-    "netlifyCurrent": 23,
-    "githubMinutes": 184,
+    "netlifyCurrent": 27,
+    "githubMinutes": 219,
     "mergedPRs": 0,
     "summary": {
-      "netlifyPct": 8,
-      "netlifyProjected": 19,
+      "netlifyPct": 9,
+      "netlifyProjected": 22,
       "netlifyStatus": "good",
-      "githubPct": 9,
-      "githubProjected": 22,
+      "githubPct": 11,
+      "githubProjected": 26,
       "githubStatus": "good",
       "overallStatus": "good",
       "mergedPRs": 0
