@@ -9,6 +9,7 @@ import {
   MusicEventDetail,
   PartType,
   State,
+  Status,
   colors,
   toNum,
   toRecordingIndex,
@@ -85,7 +86,6 @@ var current: State = {
   choir: 0,
   part: "all",
   bar: 0,
-  status: "paused",
 };
 
 // TODO: Change dark mode to moon/sun icons
@@ -449,6 +449,25 @@ function showFeedbackResult(message: string) {
   setTimeout(() => showFeedback(false), 1500);
 }
 
+// Derive the playback status from the audio element at read time, rather than
+// mirroring it into a stored State field that every handler must remember to
+// update (the field was the stale-status bug this replaces). networkState is
+// checked first: it reports NETWORK_LOADING through the whole fetch, including
+// the load window where play() has already flipped audio.paused to false, so a
+// paused-first order would misreport a loading track as playing. The trade is
+// that mid-play buffering (a not-yet-fully-fetched track that is audibly
+// playing) also reads "loading"; the audio element alone cannot tell that from
+// the pre-play load window. Distinguishing them needs MusicControls' own state
+// (a status() getter) — deferred to a follow-up. Guard the controls read so a
+// missing element degrades to a default rather than throwing and dropping a
+// feedback submit, matching updateFeedbackContext's other null-guards.
+function deriveFeedbackStatus(): Status {
+  const audio = controls?.audio;
+  if (!audio) return "paused";
+  if (audio.networkState === HTMLMediaElement.NETWORK_LOADING) return "loading";
+  return audio.paused ? "paused" : "playing";
+}
+
 function updateFeedbackContext() {
   if (!hiddenFeedbackForm) return;
   const contextInput = hiddenFeedbackForm.querySelector<HTMLInputElement>(
@@ -462,7 +481,7 @@ function updateFeedbackContext() {
     bar: current.bar,
     viewmode: current.viewmode,
     period: current.period,
-    status: current.status,
+    status: deriveFeedbackStatus(),
     userAgent: navigator.userAgent,
     viewport: `${window.innerWidth}x${window.innerHeight}`,
   };
