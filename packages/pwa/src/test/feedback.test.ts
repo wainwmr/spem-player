@@ -184,3 +184,91 @@ describe("Feedback modal", () => {
     });
   });
 });
+
+describe("Feedback context playback status (derived)", () => {
+  // Fresh app instance for this block. setupIntegrationFixture calls
+  // vi.resetModules() and re-imports "../../index.ts"; we re-import the same
+  // specifier for a cache hit on that live module so updateFeedbackContext()
+  // reads the same `controls` instance we drive here.
+  let idx: typeof import("../../index.ts");
+  let audio: HTMLAudioElement;
+
+  beforeAll(async () => {
+    await setupIntegrationFixture(() => {
+      document.body.insertAdjacentHTML(
+        "beforeend",
+        `<form name="feedback" netlify netlify-honeypot="bot-field" hidden>
+          <input type="hidden" name="bot-field" />
+          <input type="number" name="rating" />
+          <input type="hidden" name="context" />
+          <textarea name="message"></textarea>
+        </form>`
+      );
+    });
+    idx = await import("../../index.ts");
+    audio = (document.querySelector("music-controls") as MusicControls).audio;
+  }, 30000);
+
+  afterEach(() => {
+    // Restore any per-test getter overrides on the shared audio element.
+    for (const p of ["paused", "networkState"]) {
+      delete (audio as unknown as Record<string, unknown>)[p];
+    }
+  });
+
+  // The feedback status is derived from the audio element at read time, so drive
+  // the element's own getters rather than dispatching control events.
+  function stubAudio(
+    props: Partial<Record<"paused" | "networkState", unknown>>
+  ) {
+    for (const [key, value] of Object.entries(props)) {
+      Object.defineProperty(audio, key, {
+        get: () => value,
+        configurable: true,
+      });
+    }
+  }
+
+  function contextStatus(): string {
+    idx.exportedForTesting.updateFeedbackContext();
+    const contextInput = document.querySelector<HTMLInputElement>(
+      'form[name="feedback"] input[name="context"]'
+    );
+    return JSON.parse(contextInput!.value).status as string;
+  }
+
+  it("defaults to paused when idle (nothing loaded)", () => {
+    expect(contextStatus()).toBe("paused");
+  });
+
+  it("reports playing when the audio element is playing", () => {
+    stubAudio({ paused: false, networkState: HTMLMediaElement.NETWORK_IDLE });
+    expect(contextStatus()).toBe("playing");
+  });
+
+  it("reports paused when the audio element is paused", () => {
+    stubAudio({ paused: true, networkState: HTMLMediaElement.NETWORK_IDLE });
+    expect(contextStatus()).toBe("paused");
+  });
+
+  it("reports loading while the audio element is fetching a track", () => {
+    stubAudio({
+      paused: true,
+      networkState: HTMLMediaElement.NETWORK_LOADING,
+    });
+    expect(contextStatus()).toBe("loading");
+  });
+
+  it("reports loading during mid-play buffering (networkState precedence)", () => {
+    // play() flips audio.paused to false before its promise resolves, so the
+    // real load window is (paused: false, NETWORK_LOADING) — the same signature
+    // as buffering an already-playing track. networkState is checked first so
+    // the load window reads "loading"; the cost is that mid-play buffering does
+    // too. Pin that precedence so a reorder cannot silently regress the window.
+    stubAudio({
+      paused: false,
+      networkState: HTMLMediaElement.NETWORK_LOADING,
+    });
+    expect(contextStatus()).toBe("loading");
+  });
+});
