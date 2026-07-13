@@ -1,7 +1,21 @@
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "fs";
+import { afterAll, beforeAll, describe, it, expect, vi } from "vitest";
+import {
+  mkdtempSync,
+  writeFileSync,
+  readFileSync,
+  rmSync,
+  utimesSync,
+} from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { postprocessSvg } from "../build/postprocessSvg.mjs";
+
+// Spy on readFileSync while leaving every other fs export real, so the
+// parseVariables memo (#760) can be checked by counting source-file reads.
+vi.mock("fs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("fs")>();
+  return { ...actual, readFileSync: vi.fn(actual.readFileSync) };
+});
 
 describe("postprocessSvg build script", () => {
   const tmpDir = mkdtempSync(join(tmpdir(), "spem-annotate-test-"));
@@ -141,5 +155,64 @@ wordsIABass = \\lyricmode { Spem }
     // Defence in depth: exactly one data-part in the output.
     const dataParts = output.match(/data-part="\d+"/g) || [];
     expect(dataParts).toEqual(['data-part="0"']);
+  });
+});
+
+describe("parseVariables memo (#760)", () => {
+  const dir = mkdtempSync(join(tmpdir(), "spem-memo-test-"));
+  const spem = join(dir, "spem.ly");
+  const words = join(dir, "spem words.ly");
+  const svgA = join(dir, "A.svg");
+  const svgB = join(dir, "B.svg");
+
+  const spemLy = `notesIASoprano = \\relative c' { c4 }
+notesIAAlto = \\relative c' { c4 }
+`;
+  const wordsLy = `wordsIASoprano = \\lyricmode { la }\n`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <a xlink:href="spem.ly:1:1:1"><path d="M0,0 L1,1"/></a>
+</svg>`;
+
+  beforeAll(() => {
+    writeFileSync(spem, spemLy, "utf-8");
+    writeFileSync(words, wordsLy, "utf-8");
+    writeFileSync(svgA, svg, "utf-8");
+    writeFileSync(svgB, svg, "utf-8");
+  });
+
+  afterAll(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function countReads(path: string): number {
+    return vi
+      .mocked(readFileSync)
+      .mock.calls.filter((c) => c[0] === path).length;
+  }
+
+  it("reads each source .ly once across repeated postprocess calls", () => {
+    vi.mocked(readFileSync).mockClear();
+
+    // Two SVGs postprocessed against the same source files: without the memo
+    // each source .ly is read twice; the memo reads each once.
+    postprocessSvg(svgA, spem, words);
+    postprocessSvg(svgB, spem, words);
+
+    expect(countReads(spem)).toBe(1);
+    expect(countReads(words)).toBe(1);
+  });
+
+  it("re-reads a source .ly after it changes (mtime-keyed, no stale memo)", () => {
+    // Prime the memo, then change the file and bump its mtime: the memo must
+    // miss and re-read rather than return the stale parse.
+    postprocessSvg(svgA, spem, words);
+    vi.mocked(readFileSync).mockClear();
+
+    writeFileSync(spem, spemLy + "notesIATenor = \\relative c' { c4 }\n", "utf-8");
+    const future = new Date(Date.now() + 2000);
+    utimesSync(spem, future, future);
+
+    postprocessSvg(svgB, spem, words);
+    expect(countReads(spem)).toBe(1);
   });
 });

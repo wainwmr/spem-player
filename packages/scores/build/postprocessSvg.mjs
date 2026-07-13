@@ -11,7 +11,7 @@
  * deduplicates repeated path shapes via <defs> and <use>.
  */
 
-import { readFileSync, realpathSync, writeFileSync } from "fs";
+import { readFileSync, realpathSync, statSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
@@ -26,6 +26,13 @@ const PART_INDICES = {
   Bass: 4,
 };
 
+// A build postprocesses all 16 SVGs in one process, each parsing the same two
+// large .ly files with identical arguments (#760 ride-along). Memoise the parse
+// keyed on path + pattern + mtime: a build reads each source once instead of 16
+// times, and the mtime in the key means an in-place edit is picked up rather
+// than served stale. The cached partMap is read-only for callers.
+const parseVariablesCache = new Map();
+
 /**
  * Parse a LilyPond file and return a list of [start_line, end_line, part_index].
  * @param {string} path
@@ -33,6 +40,12 @@ const PART_INDICES = {
  * @returns {[number, number, number][]}
  */
 function parseVariables(path, pattern) {
+  const key = JSON.stringify([path, pattern.source, statSync(path).mtimeMs]);
+  const cached = parseVariablesCache.get(key);
+  if (cached) {
+    return cached;
+  }
+
   const text = readFileSync(path, "utf-8");
   const lines = text.split(/\r?\n/);
 
@@ -54,6 +67,11 @@ function parseVariables(path, pattern) {
     partMap.push([start, end, PART_INDICES[partName]]);
   }
 
+  // Freeze before caching: every caller shares this one reference, so a stray
+  // mutation would poison the cache for the rest of the build. Freeze turns the
+  // "read-only for callers" convention into a guarantee.
+  Object.freeze(partMap);
+  parseVariablesCache.set(key, partMap);
   return partMap;
 }
 

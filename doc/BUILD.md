@@ -58,9 +58,11 @@ Serves the contents of `dist/` locally.
 ## Regenerate SVG Scores
 
 The SVG files in `packages/pwa/src/scores/` are generated from LilyPond source files in
-`packages/scores/src/`. They are committed to git as source assets. `pnpm run build`
-regenerates them automatically via the `prebuild` step when `.ly` sources are
-newer than the generated SVGs.
+`packages/scores/src/` and committed to git as source assets. Regenerate them with
+`pnpm run build:scores` locally, or let the **Scores CI** workflow
+(`.github/workflows/scores-ci.yml`) rebuild and commit them when a push changes
+`packages/scores/**`. The app build (`pnpm run build`, and Netlify) uses the committed
+SVGs and does not regenerate them.
 
 To build scores manually:
 
@@ -75,13 +77,15 @@ pnpm run build:scores -- --choir="I A"
 pnpm run build:scores -- --version="Hugh Keyte" --notation=early --choir="II B"
 ```
 
-This iterates over matching `Choir*.ly` files under `packages/scores/src/` and runs `lilypond --svg` for each, then post-processes the generated SVG with `packages/scores/build/postprocessSvg.mjs`.
+This iterates over matching `Choir*.ly` files under `packages/scores/src/`, runs `lilypond --svg` for each in a small parallel pool, and post-processes each render with `packages/scores/build/postprocessSvg.mjs`. The raw LilyPond render is kept alongside the final SVG under a gitignored `.raw/` directory, so a change to the postprocessor re-applies by re-postprocessing the kept raw in seconds instead of re-running LilyPond.
 
-LilyPond is invoked via `execFileSync` (no shell), so no option value — `--version`, `--notation`, `--outDir`, the resolved `.ly` path, or `LILYPOND_CMD` — can inject shell commands: each is passed as a literal argument. Separately, `--version` and `--notation` are whitelisted to their known values because they become output-directory path segments. By default the `lilypond` binary on `PATH` is used; set the `LILYPOND_CMD` environment variable to a JSON array to point at a wrapped install — for example `LILYPOND_CMD='["flatpak","run","org.lilypond.LilyPond"]'` or `LILYPOND_CMD='["wsl","lilypond"]'` (POSIX shell syntax; in PowerShell use `$env:LILYPOND_CMD='[...]'`). The array is `[binary, ...prefixArgs]`; the build appends LilyPond's own arguments.
+LilyPond is invoked via the `execFile` family (no shell) — promisified `execFile` for each render, `execFileSync` for the `--version` probe — so no option value — `--version`, `--notation`, `--outDir`, the resolved `.ly` path, or `LILYPOND_CMD` — can inject shell commands: each is passed as a literal argument. Separately, `--version` and `--notation` are whitelisted to their known values because they become output-directory path segments. By default the `lilypond` binary on `PATH` is used; set the `LILYPOND_CMD` environment variable to a JSON array to point at a wrapped install — for example `LILYPOND_CMD='["flatpak","run","org.lilypond.LilyPond"]'` or `LILYPOND_CMD='["wsl","lilypond"]'` (POSIX shell syntax; in PowerShell use `$env:LILYPOND_CMD='[...]'`). The array is `[binary, ...prefixArgs]`; the build appends LilyPond's own arguments.
 
 ### Timing
 
-LilyPond is the slow part: roughly 60 seconds per choir, 16 choirs across early + modern notations. When `.ly` sources are current, `pnpm run build:scores` (and the `prebuild` step inside `pnpm run build`) completes in a few seconds because `needsRebuild` compares mtimes and skips unchanged files. After a batch edit of `.ly` files — particularly shared includes (`basic.ly`, `layout.ly`) — expect the next full `pnpm run ci` to take 10+ minutes as the affected SVGs regenerate. This is a one-off; the next build after that is fast again.
+LilyPond is the slow part: roughly 60 seconds per choir, 16 choirs across early + modern notations, run in a bounded parallel pool (`availableParallelism()`, capped). When `.ly` sources are current, `pnpm run build:scores` completes in a few seconds because it compares mtimes and skips unchanged renders. A change to `postprocessSvg.mjs` alone re-postprocesses the kept `.raw/` renders (seconds) rather than re-running LilyPond. After a batch edit of `.ly` sources — particularly shared includes (`basic.ly`, `layout.ly`) — a full `pnpm run build:scores` (or the Scores CI rebuild) re-renders the affected SVGs; expect several minutes. This is a one-off; the next build is fast again.
+
+The kept-raw fast path is local-only: `.raw/` is gitignored, so a fresh checkout (including every Scores CI run) has none. CI still skips scores whose sources and the postprocessor are unchanged (the skip compares the committed SVG), and renders only the affected ones — but a change to `postprocessSvg.mjs` re-renders every score on CI, since there is no kept raw to re-postprocess from.
 
 To force a clean regeneration, delete the directory
 (`rm -rf packages/pwa/src/scores/`) and re-run `pnpm run build:scores`.
