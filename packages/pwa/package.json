@@ -19,7 +19,7 @@
     "dependency-cruiser": "^18.0.0",
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
-    "globals": "^17.6.0",
+    "globals": "^17.7.0",
     "jsdom": "^29.1.1",
     "knip": "^6.26.0",
     "lint-staged": "^17.0.8",
