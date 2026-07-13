@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/page-errors";
 
 /**
  * Regression test for #709 — while dragging the splitter, the resize cursor

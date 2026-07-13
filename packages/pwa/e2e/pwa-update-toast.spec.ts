@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./helpers/page-errors";
 
 test.describe("PWA update toast accessibility", () => {
   test("focus moves to the refresh button when the toast appears", async ({ page }) => {
