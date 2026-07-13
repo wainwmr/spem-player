@@ -5,7 +5,8 @@ import config from "./config";
 import { PartType, Position, colors } from "./common";
 import { MusicElement } from "./MusicElement";
 
-import { LilypondData, processLilypond } from "./lily";
+import { lilyData as precomputedLilyData } from "./lilyData";
+import type { LilypondData } from "@scores/lily/lily";
 
 export class MusicCanvas extends MusicElement {
   static observedAttributes = ["choir", "part", "bar", "playing"];
@@ -21,8 +22,8 @@ export class MusicCanvas extends MusicElement {
   lastNoteDuration: number[][] = [];
   falseRelationPulses: number[] = [];
   shimmerPhases: number[] = [];
-  // All parsed score data arrives together from one processLilypond() call, so
-  // it is held as one nullable object: null until #init populates it, never
+  // All parsed score data arrives together from the precomputed lilyData (#693),
+  // so it is held as one nullable object: null until #init assigns it, never
   // partially filled (#652). The entry points draw(), #startShimmerLoop(), and
   // the public seek() guard on null; the post-init draw helpers and pointer
   // handlers read `lilyData!`. (#updatePulses also guards defensively but is
@@ -217,7 +218,7 @@ export class MusicCanvas extends MusicElement {
     this.#calculateCanvasSize();
     this.#showLoadingOnCanvas();
 
-    this.lilyData = processLilypond();
+    this.lilyData = precomputedLilyData;
 
     // define array pulses[choir][part] to be min transparency which
     // will be pulsed when the choir is singing a note.
@@ -501,8 +502,8 @@ export class MusicCanvas extends MusicElement {
       for (var p = 0; p < config.parts.length; p++) {
         const Y = this.#partRowCenterY(c, p);
 
-        // processLilypond seeds every `${c}-${p}` key, so this lookup is total
-        // here (unlike seek's tolerant `?? []`). #652.
+        // the precomputed parse seeds every `${c}-${p}` key, so this lookup is
+        // total here (unlike seek's tolerant `?? []`). #652.
         const list = ranges.get(`${c}-${p}`)!;
         list.forEach((r) => {
           const from = r.from;

@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ensureLf, toLf } from "../../build/build-ohm.mjs";
+import { ensureLf, toLf } from "../build/build-ohm.mjs";
 
 /**
  * Guards the `build:ohm` CRLF normalisation step (#648, a #611 recurrence).
@@ -16,7 +16,7 @@ import { ensureLf, toLf } from "../../build/build-ohm.mjs";
  * grammar to LF before `ohm generateBundles` runs, regardless of worktree
  * state. These tests pin that step's behaviour and its wiring.
  *
- * Reads are relative to the pwa package cwd, matching ohm-eol.test.ts.
+ * Reads are relative to the scores package cwd, matching ohm-eol.test.ts.
  */
 describe("build:ohm CRLF guard (#648)", () => {
   let dir: string;

@@ -4,12 +4,9 @@
   "version": "2.8.10",
   "description": "Helping singers learn Thomas Tallis Spem in alium",
   "type": "module",
-  "dependencies": {
-    "ohm-js": "^17.2.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@ohm-js/cli": "^2.0.1",
     "@playwright/test": "^1.61.1",
     "@types/jest": "^30.0.0",
     "@types/jsdom": "^28.0.3",
@@ -28,7 +25,6 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.63.0",
     "vite": "^8.1.3",
-    "vite-plugin-commonjs": "^0.10.4",
     "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.1.10",
     "workbox-window": "^7.4.1"
@@ -36,15 +32,13 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
-    "prebuild": "pnpm run build:ohm",
-    "build:ohm": "node build/build-ohm.mjs && npx ohm generateBundles --withTypes src/ohmjs/ly-grammar.ohm",
     "preview": "vite preview",
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
-    "check": "pnpm run build:ohm && pnpm run check:unused && pnpm run check:format && pnpm run check:lint && pnpm run check:types && pnpm run check:types:e2e && pnpm run check:deps",
+    "check": "pnpm run check:unused && pnpm run check:format && pnpm run check:lint && pnpm run check:types && pnpm run check:types:e2e && pnpm run check:deps",
     "check:lint": "eslint . --max-warnings 0",
     "check:format": "prettier --check src/",
     "check:types": "tsc --noEmit",

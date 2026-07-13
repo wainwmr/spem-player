@@ -1,22 +1,40 @@
 // Copyright (c) 2024-2026 Mark Wainwright
 // SPDX-License-Identifier: MIT
 
-import config from "./config";
 import lyGrammar, {
   type LilypondSemantics,
-} from "../ohmjs/ly-grammar.ohm-bundle";
+} from "./ly-grammar.ohm-bundle";
 import * as ohm from "ohm-js";
 import { Duration, BarLine, Note, Rest, Component } from "./music-classes";
-import spem from "@lilypond/spem.ly?raw";
+import { choirNames, parts } from "./structure";
+
+// The plain-data shape of a parsed note and its duration. `LilypondData` carries
+// these structural types, not the `Note`/`Duration` classes: the parse-time
+// builders (music-classes.ts) are structurally assignable to them, and the
+// runtime loads plain JSON that satisfies them without reviving any class (#693).
+export type DurationData = {
+  duration: string;
+  dotted: string;
+  multiplier: number;
+  sfths: number;
+};
+
+export type NoteData = {
+  duration: DurationData | null;
+  notename: string;
+  accidental: string | null;
+  octave: string | null;
+  slur: string | null;
+};
 
 // A single note entry at a quantised bar position.
 export type NoteEntry = {
   c: number;
   p: number;
-  n: Note;
+  n: NoteData;
 };
 
-export type ActiveNote = { c: number; p: number; n: Note };
+export type ActiveNote = { c: number; p: number; n: NoteData };
 
 export type FRlocation = {
   c: number;
@@ -45,55 +63,6 @@ var semantics: LilypondSemantics = setupLilypondParser();
 
 function parseMatch(match: ohm.MatchResult): ParseValue {
   return (semantics(match) as unknown as LilypondOperations).parse();
-}
-
-function romanise(num: number) {
-  var lookup: { [index: string]: number } = {
-      M: 1000,
-      CM: 900,
-      D: 500,
-      CD: 400,
-      C: 100,
-      XC: 90,
-      L: 50,
-      XL: 40,
-      X: 10,
-      IX: 9,
-      V: 5,
-      IV: 4,
-      I: 1,
-    },
-    roman = "",
-    i;
-  for (i in lookup) {
-    while (num >= lookup[i]) {
-      roman += i;
-      num -= lookup[i];
-    }
-  }
-  return roman;
-}
-
-export function noteToPitchClass(note: Note): number {
-  const base: Record<string, number> = {
-    c: 0,
-    d: 2,
-    e: 4,
-    f: 5,
-    g: 7,
-    a: 9,
-    b: 11,
-  };
-  let pc = base[note.notename] ?? 0;
-
-  if (note.accidental) {
-    if (note.accidental.includes("isis")) pc += 2;
-    else if (note.accidental.includes("eses")) pc -= 2;
-    else if (note.accidental.includes("is")) pc += 1;
-    else if (note.accidental.includes("es")) pc -= 1;
-  }
-
-  return ((pc % 12) + 12) % 12;
 }
 
 export function detectFalseRelations(
@@ -287,33 +256,23 @@ export type Range = {
   readonly to: number;
 };
 
-// HACK: barCount is still exported as a module-level variable consumed by MusicControls.ts
-// and controls.test.ts. All other parsed data is returned from processLilypond(). The cache
-// added below re-syncs barCount on cache hits — see the cache-hit branch in processLilypond.
-// See ticket #107 follow-on.
-export var barCount: number = 0;
-
 // Quantised bar position -> all notes/rests starting at that position. Readonly
-// to the array level (#652): the Map and its arrays are immutable to consumers,
-// and the arrays are frozen at runtime (see processLilypond). The `NoteEntry`
-// leaf objects are NOT readonly (their fields are mutable), so consumers must
-// treat the entries themselves as immutable by convention.
+// to the array level (#652): the Map and its arrays are immutable to consumers.
+// The `NoteEntry` leaf objects are NOT readonly (their fields are mutable), so
+// consumers must treat the entries themselves as immutable by convention.
 export type NotesByQuant = ReadonlyMap<number, readonly NoteEntry[]>;
 
 // "choir-part" key -> the singing ranges for that part. Deeply readonly (#652):
 // the Map, its arrays, and the Range leaves are all immutable to consumers at the
-// type level (processLilypond hands out one cached reference). At runtime only the
-// arrays are frozen (see processLilypond); the Map and Range leaves rely on the
-// compile-time `readonly`, since Object.freeze on a Map does not block Map.set.
+// type level; at runtime only the arrays are frozen (Object.freeze on a Map does
+// not block Map.set).
 export type SingingRanges = ReadonlyMap<string, readonly Range[]>;
 
-// processLilypond hands out the same cached reference on every call (see
-// lilypondCache below), so every field is `readonly` to catch reassignment.
-// `ranges` is deeply readonly (its `Range` leaves carry `readonly` fields since
-// #551); `notesByQuant` and `frLocations` are readonly only to the array level —
-// their element objects (`NoteEntry`, `FRlocation`) have mutable fields. At
-// runtime the `notesByQuant` and `ranges` arrays are frozen; the `frLocations`
-// array is compile-time readonly only.
+// The full parse output. `ranges` is deeply readonly (its `Range` leaves carry
+// `readonly` fields since #551); `notesByQuant` and `frLocations` are readonly
+// only to the array level -- their element objects (`NoteEntry`, `FRlocation`)
+// have mutable fields. At runtime the `notesByQuant` and `ranges` arrays are
+// frozen; the `frLocations` array is compile-time readonly only.
 export type LilypondData = {
   readonly notesByQuant: NotesByQuant;
   readonly ranges: SingingRanges;
@@ -321,34 +280,20 @@ export type LilypondData = {
   readonly frLocations: readonly FRlocation[];
 };
 
-// Module-level cache. processLilypond parses static data (spem.ly + scores),
-// so the result is invariant across calls within a process. Caching avoids
-// the ~500-700 ms Ohm parse on every call. On a cache hit, the function also
-// re-syncs the module-level `barCount` export from the cached value to
-// preserve the side effect MusicControls.ts depends on. Tests can force a
-// re-parse via exportedForTesting.resetLilypondCache.
-let lilypondCache: LilypondData | null = null;
-
 // -----------------------------------------------------
 // Process the lilypond input file and return a LilypondData object:
 //   notesByQuant.get(position) = [ {choir, part, note}, ... ]
 //   ranges.get("choir-part") = [ {from, to}, ... ]
 //   barCount — index of the last bar
 //   frLocations — false-relation positions for rendering
+//
+// `source` is the raw text of `spem.ly`. This runs once at build time
+// (packages/scores/build/buildLilyData.ts); the runtime loads the emitted
+// lilyData.json instead of parsing (#693), so no module-level cache is needed.
 // -----------------------------------------------------
-export function processLilypond(): LilypondData {
-  if (lilypondCache) {
-    barCount = lilypondCache.barCount; // keep module-level global in sync
-    return lilypondCache;
-  }
-
-  // (`semantics` is initialised eagerly at module load on line 35, so no
-  // lazy-init is needed here. A previous defensive `if (!semantics)` guard
-  // was removed as part of #376 — it had been dead since the eager init
-  // landed.)
-
+export function processLilypond(source: string): LilypondData {
   // Parse lilypond from the ohm grammar
-  const result = lyGrammar.match(spem);
+  const result = lyGrammar.match(source);
   if (result.failed()) {
     throw new Error("Lilypond parse failed: " + result.message);
   }
@@ -359,10 +304,10 @@ export function processLilypond(): LilypondData {
   const ranges = new Map<string, Range[]>();
   const activeNotes = new Map<number, ActiveNote[]>();
   let localBarCount = 0;
-  for (let c = 0; c < config.choirs[0].length; c++) {
-    const choir = config.choirs[0][c];
-    for (let p = 0; p < config.parts.length; p++) {
-      const part = config.parts[p];
+  for (let c = 0; c < choirNames.length; c++) {
+    const choir = choirNames[c];
+    for (let p = 0; p < parts.length; p++) {
+      const part = parts[p];
       ranges.set(`${c}-${p}`, []);
       var key = "notes" + choir.replace(/ /g, "") + part;
 
@@ -424,33 +369,25 @@ export function processLilypond(): LilypondData {
   }
   localBarCount = Math.floor(localBarCount);
 
-  barCount = localBarCount; // side effect: keep global in sync for MusicControls.ts
   const frLocations = detectFalseRelations(activeNotes);
 
-  // Freeze each singing-range and note array so the shared, cached LilypondData
-  // cannot be mutated at the array level by a consumer (the Maps and arrays are
-  // also compiler-enforced readonly via SingingRanges / NotesByQuant). #652.
+  // Freeze each singing-range and note array so the returned LilypondData cannot
+  // be mutated at the array level by a consumer (the Maps and arrays are also
+  // compiler-enforced readonly via SingingRanges / NotesByQuant). #652.
   for (const arr of ranges.values()) Object.freeze(arr);
   for (const arr of notesByQuant.values()) Object.freeze(arr);
 
-  lilypondCache = {
+  return {
     notesByQuant,
     ranges,
     barCount: localBarCount,
     frLocations,
   };
-  return lilypondCache;
 }
 
 export const exportedForTesting = {
   semantics,
   parseMatch,
-  romanise,
   setupLilypondParser,
-  noteToPitchClass,
   detectFalseRelations,
-  // test-only mutator; arrow form needed to close over the cache binding.
-  resetLilypondCache: () => {
-    lilypondCache = null;
-  },
 };

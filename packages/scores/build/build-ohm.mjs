@@ -36,7 +36,7 @@ export function ensureLf(path) {
 // of the main-module check.
 if (argv[1] && import.meta.url === pathToFileURL(argv[1]).href) {
   const grammar = fileURLToPath(
-    new URL("../src/ohmjs/ly-grammar.ohm", import.meta.url)
+    new URL("../src/lily/ly-grammar.ohm", import.meta.url)
   );
   // Log on rewrite so a triggered guard is a visible event, not a silent
   // recurrence (Vera 648-01).

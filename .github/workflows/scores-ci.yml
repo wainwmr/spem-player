@@ -43,6 +43,7 @@ jobs:
           cache: pnpm
 
       - run: pnpm install
+      - run: pnpm --filter @spem/scores check:types
       - run: pnpm --filter @spem/scores test
       - run: bash packages/scores/build/install-lilypond.sh
 

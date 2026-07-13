@@ -1,5 +1,4 @@
 import { defineConfig } from "vitest/config";
-import commonjs from "vite-plugin-commonjs";
 import { VitePWA } from "vite-plugin-pwa";
 import { readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
@@ -32,16 +31,15 @@ const versionWithBranch =
 export default defineConfig({
   resolve: {
     alias: {
-      // The PWA parses spem.ly at runtime (src/ts/lily.ts) from the @spem/scores
-      // package. We resolve it with this build-time alias rather than a tracked
-      // symlink: a git symlink checks out as a plain text file on Windows
-      // (core.symlinks = false by default), which breaks Vite resolution and the
-      // PWA test suite there. The alias resolves identically on every OS with no
-      // per-clone setup, so contributors can work on any platform, Windows included.
-      "@lilypond": resolve(__dirname, "../scores/src/Hugh Keyte"),
+      // The PWA consumes the precomputed note data (lilyData.json) and the
+      // loader/types from the sibling @spem/scores package (#693). We resolve it
+      // with this build-time alias rather than a tracked symlink: a git symlink
+      // checks out as a plain text file on Windows (core.symlinks = false by
+      // default), which breaks Vite resolution and the PWA test suite there. The
+      // alias resolves identically on every OS with no per-clone setup.
+      "@scores": resolve(__dirname, "../scores/src"),
     },
   },
-  assetsInclude: ["**/*.ohm", "**/*.ly"],
   server: {
     // Dev tolerates port collisions: `strictPort: false` lets Vite
     // auto-increment from DEV_PORT when running `npm run dev` —
@@ -49,9 +47,9 @@ export default defineConfig({
     port: DEV_PORT,
     strictPort: false,
     fs: {
-      // Allow serving files from outside the PWA package: the score
-      // source resolved via the @lilypond alias (see resolve.alias)
-      // lives in the sibling @spem/scores package.
+      // Allow serving files from outside the PWA package: the precomputed data
+      // resolved via the @scores alias (see resolve.alias) lives in the sibling
+      // @spem/scores package.
       allow: ["..", "../.."],
     },
   },
@@ -75,23 +73,13 @@ export default defineConfig({
       exclude: [
         "**/*.svg",
         "**/*.scss",
-        "**/*.ly",
-        "**/ly-grammar.ohm-bundle.js",
         "**/test/**",
         "**/node_modules/**",
       ],
     },
   },
 
-  // Ohmjs doesn't generate ES modules yet so we need to
-  // convert the ohm-bundle.js from commonjs to ES modules
-  // (npm run ohm)
   plugins: [
-    commonjs({
-      filter(id) {
-        return id.match(/[/]src[/]ohmjs[/]ly-grammar.ohm-bundle.js/) !== null;
-      },
-    }),
     {
       name: "html-version",
       transformIndexHtml(html) {
