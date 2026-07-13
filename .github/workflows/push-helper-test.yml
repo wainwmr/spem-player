@@ -9,17 +9,22 @@ on:
     paths:
       - ".github/scripts/**"
       - ".github/workflows/push-helper-test.yml"
+      - ".github/workflows/version-check.yml"
       - "packages/monitor/merge-monitor-series.mjs"
   pull_request:
     paths:
       - ".github/scripts/**"
       - ".github/workflows/push-helper-test.yml"
+      - ".github/workflows/version-check.yml"
       - "packages/monitor/merge-monitor-series.mjs"
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
       - name: Run push-with-rebase regression test
         run: bash .github/scripts/push-with-rebase.test.sh
+      - name: Run version-check unit tests
+        run: node --test .github/scripts/version-check.test.mjs

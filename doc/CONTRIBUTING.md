@@ -351,14 +351,22 @@ static method on each class handles registration.
 
 ## Commit Messages
 
-Use conventional commit format where possible:
+Use conventional commit format where possible.
 
-- `feature:` — new feature
-- `fix:` — bug fix
-- `docs:` — documentation
-- `test:` — tests
-- `refactor:` — code restructuring
-- `build:` — build system or tooling
+**User-facing** (`feat:` or `feature:` — new feature; `fix:` — bug fix; `perf:` —
+performance; `revert:`). **Internal** (`build:` — build system; `chore:`; `ci:`;
+`docs:` — documentation; `refactor:` — code restructuring; `style:`; `test:` — tests;
+`tooling:`).
+
+The distinction is enforced, so it is worth getting right. CI checks the app version on
+every pull request (`doc/CI.md` § `version-check.yml`): a PR that changes app source with
+a **user-facing** subject must bump `packages/pwa/package.json`, and one that does not
+must leave it alone. A type it does not recognise (`bugfix:`, `hotfix:`) is treated as
+user-facing, which fails safe.
+
+The check reads both the PR **title** and the branch commits, because a squash-merge lands
+whichever of them is the single subject. So the title matters as much as the commits: a
+user-facing change titled `chore:` is taken at its word and ships with no version bump.
 
 ## Best Practices
 
