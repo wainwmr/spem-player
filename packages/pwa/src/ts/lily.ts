@@ -35,12 +35,7 @@ export var scores: { [id: string]: Component[] } = {};
 // -----------------------------------------------------
 
 type ParseValue =
-  | Component[]
-  | Component
-  | Duration
-  | number
-  | string
-  | undefined;
+  Component[] | Component | Duration | number | string | undefined;
 
 interface LilypondOperations {
   parse(): ParseValue;
