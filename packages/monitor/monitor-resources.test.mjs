@@ -919,6 +919,58 @@ describe("dispatchAlert", () => {
       m.restore();
     }
   });
+
+  test("still opens the issue when Telegram fails (#748)", async () => {
+    // The issue is the durable channel; a Telegram outage must not suppress it.
+    const m = startMock([
+      ["/sendMessage", () => res("down", { ok: false, status: 500 })],
+      ["/issues", () => res({ id: 1 })],
+    ]);
+    const errs = [];
+    const origErr = console.error;
+    console.error = (msg) => errs.push(msg);
+    try {
+      await dispatchAlert({
+        telegramText: "x",
+        issueTitle: "T",
+        issueBody: "B",
+        onErrorLog: "Failed to send alert for Netlify failure",
+      });
+      assert.ok(m.calls.some((c) => /\/issues$/.test(c.url)));
+      assert.equal(errs.length, 1);
+      assert.match(errs[0], /^Failed to send alert for Netlify failure: \[telegram\] /);
+    } finally {
+      console.error = origErr;
+      m.restore();
+    }
+  });
+
+  test("logs both failures when both legs fail (#748)", async () => {
+    const m = startMock([
+      ["/sendMessage", () => res("down", { ok: false, status: 500 })],
+      ["/issues", () => res("nope", { ok: false, status: 500 })],
+    ]);
+    const errs = [];
+    const origErr = console.error;
+    console.error = (msg) => errs.push(msg);
+    try {
+      await dispatchAlert({
+        telegramText: "x",
+        issueTitle: "T",
+        issueBody: "B",
+        onErrorLog: "p",
+      });
+      // The legs must be tellable apart even when both messages are a bare
+      // "fetch failed" (network-level errors carry no host): the tag is the
+      // only reliable discriminator in a CI log (Vera 748-01).
+      assert.equal(errs.length, 2);
+      assert.match(errs[0], /^p: \[telegram\] /);
+      assert.match(errs[1], /^p: \[issue\] /);
+    } finally {
+      console.error = origErr;
+      m.restore();
+    }
+  });
 });
 
 // --- api -------------------------------------------------------------------
