@@ -43,7 +43,8 @@ const ALLOWLIST: string[] = [
   // DNS-blocked in test environments (net::ERR_NAME_NOT_RESOLVED); their
   // load failure is environmental, not an app defect. Matched on the URL
   // suffix this fixture appends, so the entries are browser-agnostic.
-  "at https://static.cloudflareinsights.com/",
+  // Cloudflare Web Analytics is not listed here: it is intercepted and
+  // stubbed below (#822) so its beacon never reaches the network at all.
   "at https://www.googletagmanager.com/",
   "at https://cdnjs.buymeacoffee.com/",
 ];
@@ -70,6 +71,17 @@ export const test = base.extend<{ pageErrorCapture: readonly string[] }>({
           captured.push(entry);
         }
       };
+
+      // Stub Cloudflare Web Analytics so its beacon never fires in e2e (#822).
+      // Under the preview server the cross-origin RUM POST to
+      // cloudflareinsights.com/cdn-cgi/rum is CORS-blocked (ERR_FAILED), which
+      // floods console.error and fails otherwise-unrelated tests. Fulfil with
+      // an empty 204 rather than abort() so no "Failed to load resource" error
+      // is logged — keeping the console-error gate strict with no allowlist.
+      // Covers both the static.* script host and the bare RUM endpoint.
+      await page.route(/cloudflareinsights\.com/, (route) =>
+        route.fulfill({ status: 204, body: "" })
+      );
 
       page.on("pageerror", (err) => {
         record(`pageerror: ${err.message}`);
