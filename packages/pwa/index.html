@@ -27,15 +27,36 @@
            page. Revealing the app should not undress it.
 
            This is a SEPARATE node from #fouc-guard, and deliberately so: the fallback
-           removes that one, and must not remove this one. These rules are the floor
-           the failure screen stands on.
+           removes that one by id and must not remove this one. These rules are the
+           floor the failure screen stands on. Merging the two <style> blocks is the
+           tempting tidy-up, and it is wrong: the fallback would remove both and #help
+           would compute to visible. The new case in e2e/fouc-fallback.spec.ts goes red
+           if you try it.
+
+           EACH RULE MIRRORS ITS SOURCE SELECTOR EXACTLY. Do not broaden them. A bare
+           `.tooltiptext` would also hide any tooltip placed OUTSIDE <header>, which the
+           header-scoped hover rule could then never reveal: permanently invisible, with
+           no error and no red test. Before this block, that same tooltip would have been
+           permanently VISIBLE, which a developer sees at once. Broadening the mirror
+           trades a loud failure for a silent one.
 
            It cannot break the healthy page, which is why it is safe to leave in place:
              - #help and #feedback-modal are opened by an inline `style.display` write
-               (index.ts), and an inline style outranks any stylesheet rule;
-             - .tooltiptext is revealed by `.tooltip:hover .tooltiptext`, which outranks
-               the bare `.tooltiptext` selector below on specificity.
-           Both are pinned by e2e/fouc-fallback.spec.ts. */
+               (index.ts), and an inline style outranks any non-!important stylesheet
+               rule;
+             - `header .tooltip .tooltiptext` (0,2,1) is outranked by style.scss's
+               `header .tooltip:hover .tooltiptext` (0,3,1), so hover still reveals.
+
+           WHICH TESTS PIN WHAT, because it matters and the obvious answer is wrong.
+           e2e/fouc-fallback.spec.ts pins the FAILURE page (these three stay hidden). It
+           says nothing about the healthy page and would stay green if the healthy page
+           broke. The healthy-page claims above are pinned by e2e/smoke.spec.ts ("help
+           panel opens and closes"), e2e/feedback-modal.spec.ts, and e2e/tooltip.spec.ts
+           (hovers each tooltip). Those three are load-bearing for #829 now. Weaken one
+           and this block loses its only guard.
+
+           #backdrop is knowingly NOT mirrored: style.scss alone hides it, but unstyled
+           it is an empty div with no size and no background, so it renders nothing. */
         #help {
             display: none;
         }
@@ -44,7 +65,7 @@
             display: none;
         }
 
-        .tooltiptext {
+        header .tooltip .tooltiptext {
             visibility: hidden;
         }
     </style>

@@ -303,17 +303,19 @@ test.describe("FOUC-guard fallback (#801)", () => {
 
   // #829 — the fallback must reveal the APP, not everything the stylesheet hides.
   //
-  // style.scss is the ONLY thing hiding three groups: #help (display: none),
-  // #feedback-modal (display: none) and .tooltiptext (visibility: hidden). When it
-  // fails, revealing .viewportDiv also exposes all three, so the failure screen
-  // showed an expanded help panel, an expanded feedback dialog, and every tooltip
-  // string dumped inline down the page.
+  // style.scss alone hides #help, #feedback-modal and the tooltip text, so revealing
+  // .viewportDiv also exposed all three: the failure screen showed an expanded help
+  // panel, an expanded feedback dialog, and every tooltip string inline down the page.
+  // The fix is a second, persistent <style id="fallback-hide"> the fallback does not
+  // remove. The cascade argument for why it cannot break the healthy page lives in ONE
+  // place, beside the code: index.html, the #fallback-hide block. Do not restate it
+  // here; two copies drift.
   //
-  // The fix is a SECOND inline <style id="fallback-hide"> that the fallback does not
-  // remove, so those three stay hidden with no stylesheet. It cannot break the healthy
-  // page: #help and #feedback-modal are opened by an inline style.display write
-  // (index.ts), which outranks any stylesheet rule, and .tooltiptext is revealed by
-  // `.tooltip:hover .tooltiptext`, which outranks it on specificity.
+  // NOTE the discrimination. All four assertions below are ALSO true on a healthy page,
+  // because style.scss hides the same three. What makes this a failure-page test rather
+  // than a tautology is `aborted > 0` (the failure really was injected), the GUARD count
+  // (the fallback really fired), and expectOnlyTheFoucDiagnostic (exactly one
+  // stylesheet-error diagnostic). Do not remove any of the three.
   test("the fallback does not expose the elements only the stylesheet hides (#829)", async ({
     context,
   }) => {
@@ -340,6 +342,10 @@ test.describe("FOUC-guard fallback (#801)", () => {
       timeout: 5000,
     });
 
+    // The fallback really fired: the guard node is gone. Third discriminator, and the
+    // one that separates this from a healthy page (see the note above).
+    await expect(page.locator(GUARD)).toHaveCount(0);
+
     // The point of the ticket: revealed, but not undressed. Computed style, never
     // the inline style string (#709).
     await expect(page.locator("#help")).toHaveCSS("display", "none");
@@ -351,6 +357,46 @@ test.describe("FOUC-guard fallback (#801)", () => {
 
     await expectOnlyTheFoucDiagnostic(injection, "stylesheet-error", BROKEN_CSS);
     await page.close();
+  });
+
+  // The other half of #829, and the half that would hurt: the persistent
+  // #fallback-hide block must not survive into the OPEN path on a healthy page. If it
+  // did, the help panel and the feedback dialog would never open and the tooltips would
+  // never show — a permanent, silent breakage of three working features, shipped to fix
+  // a failure screen almost nobody sees.
+  //
+  // smoke.spec.ts, feedback-modal.spec.ts and tooltip.spec.ts each pin one of these
+  // already, but none of them knows it is now guarding #829, and a tidy-up of any one
+  // would remove the guard silently. This case makes fouc-fallback.spec.ts stand on its
+  // own for the block it introduces.
+  test("the persistent hide block does not break the healthy page (#829)", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    // Premise: a healthy load, so the block is inert rather than load-bearing.
+    await expect(page.locator(VIEWPORT)).toHaveCSS("visibility", "visible");
+    await expect(page.locator(GUARD)).toHaveCount(1);
+
+    // Inline style.display writes outrank the block. Dismiss each panel before opening
+    // the next: both raise #backdrop, which covers the header and would intercept the
+    // following click. The backdrop IS the app's dismiss control (see smoke.spec.ts).
+    const backdrop = page.locator("#backdrop");
+
+    await page.locator("#info").click();
+    await expect(page.locator("#help")).toBeVisible();
+    await backdrop.click();
+    await expect(page.locator("#help")).toBeHidden();
+
+    await page.locator("#feedback-trigger").click();
+    await expect(page.locator("#feedback-modal")).toBeVisible();
+    await backdrop.click();
+    await expect(page.locator("#feedback-modal")).toBeHidden();
+
+    // The header-scoped hover rule outranks the block on specificity.
+    const tooltip = page.locator("header .tooltip").first();
+    await tooltip.hover();
+    await expect(tooltip.locator(".tooltiptext")).toBeVisible();
   });
 
   test("a successful stylesheet releases the guard via the cascade, not the fallback", async ({
