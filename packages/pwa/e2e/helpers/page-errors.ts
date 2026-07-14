@@ -12,10 +12,17 @@ import { test as base, expect } from "@playwright/test";
  * the playback loop outright — either way every icon assertion stays green.
  * The un-mocked audio load is likewise silent on a 404 or decode failure.
  *
- * Scope: listeners attach to the per-test `page` fixture only. Popups, pages
- * opened via context.newPage(), and dedicated workers are NOT captured. No
- * spec opens any of these today; a spec that does must wire its extra pages
- * explicitly. Service workers are blocked suite-wide (playwright.config.ts
+ * Scope: the listeners attach to the per-test `page` fixture only, so popups,
+ * pages opened via context.newPage(), and dedicated workers are NOT captured. A
+ * spec that opens one must either wire the listeners onto it explicitly, or —
+ * when the extra page deliberately produces captured-class errors, as a
+ * failure-injection test does (e2e/fouc-fallback.spec.ts injects a stylesheet
+ * failure as its premise) — say so in a comment at the open site, and re-attach the
+ * channels with a filter rather than dropping them (see doc/TESTING.md). The ROUTES
+ * below are registered on the context, not the page, so another page IN THIS CONTEXT
+ * does still get them; only the listeners are lost.
+ *
+ * Service workers are blocked suite-wide (playwright.config.ts
  * `serviceWorkers: "block"`) — an active SW would intercept requests and
  * bypass page-level network events on Chromium, blinding the /audio/ channel.
  *
@@ -64,6 +71,19 @@ const ALLOWLIST: string[] = [
 // implements SPA fallback by redirecting /audio/ off-path, whose final hop
 // this filter would no longer match — update this too, or the audio channel
 // guards a dead path silently.
+/**
+ * True if a captured message is one the ALLOWLIST above expects.
+ *
+ * Exported so a spec that escapes the fixture (see the Scope note) filters its
+ * own re-attached console channel through the SAME list, rather than
+ * re-implementing it and diverging. A private copy immediately went out of step
+ * with this one: it re-flagged the DNS-blocked third-party script hosts the
+ * ALLOWLIST exists to excuse (#801).
+ */
+export function isAllowlisted(entry: string): boolean {
+  return ALLOWLIST.some((allowed) => entry.includes(allowed));
+}
+
 function isAudioUrl(url: string): boolean {
   try {
     return new URL(url).pathname.startsWith("/audio/");
@@ -74,10 +94,10 @@ function isAudioUrl(url: string): boolean {
 
 export const test = base.extend<{ pageErrorCapture: readonly string[] }>({
   pageErrorCapture: [
-    async ({ page }, use) => {
+    async ({ page, context }, use) => {
       const captured: string[] = [];
       const record = (entry: string) => {
-        if (!ALLOWLIST.some((allowed) => entry.includes(allowed))) {
+        if (!isAllowlisted(entry)) {
           captured.push(entry);
         }
       };
@@ -89,7 +109,15 @@ export const test = base.extend<{ pageErrorCapture: readonly string[] }>({
       // an empty 204 rather than abort() so no "Failed to load resource" error
       // is logged — keeping the console-error gate strict with no allowlist.
       // Covers both the static.* script host and the bare RUM endpoint.
-      await page.route(/cloudflareinsights\.com/, (route) =>
+      //
+      // Registered on the CONTEXT, not the page (#801): a page-scoped route
+      // would leave a context.newPage() spec running the real beacon, and the
+      // ALLOWLIST above deliberately carries no Cloudflare entry precisely
+      // BECAUSE the beacon is stubbed. A spec that wired its own listeners onto
+      // an unstubbed page would therefore hit the CORS flood with no allowlist
+      // to fall back on. Context scope makes the stub true for every page here,
+      // so that trap cannot be sprung.
+      await context.route(/cloudflareinsights\.com/, (route) =>
         route.fulfill({ status: 204, body: "" })
       );
 

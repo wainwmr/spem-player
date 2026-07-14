@@ -10,12 +10,148 @@
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="manifest" href="site.webmanifest">
-    <style>
-        /* Prevent FOUC: hide main content until external CSS loads */
+    <style id="fouc-guard">
+        /* Prevent FOUC: hide main content until external CSS loads. The bundled
+           stylesheet releases it (style.scss `.viewportDiv { visibility: visible }`);
+           the script below removes this whole node if that release never arrives. */
         .viewportDiv {
             visibility: hidden;
         }
     </style>
+    <script>
+        /* FOUC-guard fallback (#801).
+
+           If the bundled stylesheet fails, the release above never arrives and the
+           page would stay blank forever. Reveal the unstyled app instead.
+
+           Reveal by REMOVING the guard node, not by writing an inline style on
+           .viewportDiv. That element lives in <body> and this script runs in <head>,
+           so when a stylesheet error fires the element may not exist yet: a query for
+           it would silently find nothing and the reveal would be lost. (The parser can
+           still be inside <head> at that point, because a pending stylesheet blocks the
+           inline gtag script below, which in turn blocks parsing.) Removing the guard
+           node is element-independent, order-independent and idempotent, and it leaves
+           no inline-style specificity residue to outrank a later rule.
+
+           TWO PATHS, AND BOTH ARE LOAD-BEARING. Do not "simplify" this to one.
+
+           The link's `error` event is the fast path; a window-load backstop covers the
+           failures that raise no error. It is tempting to think the error path is
+           enough, and reading the HTML link-processing algorithm encourages that. The
+           browsers say otherwise, and they do not even agree with each other. Measured
+           on 2026-07-14, for the most likely real failure (a hashed asset that has gone
+           because a deploy landed under an open tab, served back as 200 text/html by
+           SPA-fallback hosting):
+
+               Chromium   refuses to apply the sheet, but fires `load`  -> backstop
+               Firefox    fires `error`                                 -> fast path
+               WebKit     fires `error`                                 -> fast path
+
+           So removing the backstop leaves that failure unhandled on Chromium, and
+           removing the error path leaves it unhandled on Firefox and WebKit. Neither
+           path alone is sufficient. e2e/fouc-fallback.spec.ts pins each path with a
+           case that fails if that path is deleted; trust those over this comment.
+
+           The error path also catches an outright failure: a network error, or a 404
+           (which is what our host actually returns for a missing hashed asset, since
+           the SPA `[[redirects]]` block in netlify.toml is commented out).
+
+           The backstop also catches a stylesheet that loads cleanly but carries no
+           rules (a truncated body), and one that no longer contains the release rule at
+           all. `load` cannot fire early on a slow-but-successful stylesheet, so no
+           timer is needed.
+
+           A request that HANGS raises neither event until the network stack finally
+           times out, so the page stays blank in the meantime. That case is NOT covered:
+           see #828.
+
+           The backstop is armed FIRST, before anything that can throw, so a failure in
+           the fast-path setup cannot take the universal path down with it.
+
+           Nothing enforces the ordering rule below; this comment is all there is.
+
+           Vite appends the bundled stylesheet <link> at the END of <head>, after this
+           script, so the initial scan below finds nothing in the built page and the
+           MutationObserver is what actually arms the error path. Under `vite dev` there
+           is no <link> at all (the SCSS arrives as an injected <style>), so in dev the
+           error path is inert and the backstop is what covers it.
+
+           Keep this script ABOVE the Google Fonts @import below: a parser-blocking
+           inline script placed after a pending stylesheet must wait for that
+           stylesheet's CSSOM before it runs, which would put this behind a
+           cross-origin round trip. */
+        (function () {
+            var observer = null;
+            var revealed = false;
+
+            function reveal(source) {
+                if (revealed) return;
+                revealed = true;
+                if (observer) observer.disconnect();
+                /* Report BEFORE acting, and unconditionally. If the guard node is
+                   somehow already gone while the app is still hidden, that is a blank
+                   page we cannot fix, and it must scream rather than return quietly:
+                   returning early here is how #801 would come back, silent. */
+                var guard = document.getElementById('fouc-guard');
+                if (guard) guard.remove();
+                document.documentElement.setAttribute(
+                    'data-fouc-fallback', guard ? source : source + '-noguard');
+                console.error('[spem] the stylesheet did not release the FOUC guard (' +
+                    source + ')' + (guard
+                        ? '; revealing the unstyled app'
+                        : '; the guard node was already gone, so nothing could be revealed') +
+                    ' (#801)');
+            }
+
+            /* Armed first: this is the path that must never be lost. */
+            window.addEventListener('load', function () {
+                var el = document.querySelector('.viewportDiv');
+                if (!el) {
+                    /* The class name is shared by the guard rule above, style.scss and
+                       the markup. If it is ever renamed and this query is missed, the
+                       backstop dies; say so rather than no-op. */
+                    console.error('[spem] FOUC backstop: .viewportDiv not found, so the ' +
+                        'guard could not be checked (#801)');
+                } else if (getComputedStyle(el).visibility === 'hidden') {
+                    reveal('load-backstop');
+                }
+                if (observer) observer.disconnect();
+            });
+
+            try {
+                /* Only OUR stylesheet withholds the release, so only watch same-origin
+                   links. A third-party sheet failing (a blocked font CDN, an adblocker)
+                   says nothing about our CSS: treating it as our failure would tear the
+                   guard out while our CSS was still loading, which is the very flash the
+                   guard prevents, and would log an app error that is not ours. */
+                var ours = function (link) {
+                    try {
+                        return new URL(link.href, location.href).origin === location.origin;
+                    } catch (e) {
+                        return false;
+                    }
+                };
+                var watch = function (link) {
+                    if (!ours(link)) return;
+                    link.addEventListener('error', function () { reveal('stylesheet-error'); });
+                };
+                /* Observe before scanning, so a throw in the scan cannot cost us the
+                   observer as well: in the built page the observer is the only path that
+                   ever arms, because Vite appends the link after this script. */
+                observer = new MutationObserver(function (records) {
+                    records.forEach(function (record) {
+                        record.addedNodes.forEach(function (node) {
+                            if (node.nodeName === 'LINK' && node.rel === 'stylesheet') watch(node);
+                        });
+                    });
+                });
+                observer.observe(document.head, { childList: true });
+                document.querySelectorAll('link[rel="stylesheet"]').forEach(watch);
+            } catch (e) {
+                console.error('[spem] FOUC fast-path setup failed; the load backstop is still armed (#801)', e);
+            }
+        })();
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Quintessential&display=swap&family=EB+Garamond&display=swap&family=Macondo&display=swap&family=Eagle+Lake&display=swap&family=Macondo+Swash+Caps&display=swap');
     </style>
