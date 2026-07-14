@@ -46,14 +46,23 @@ const controls = document.querySelector("music-controls") as MusicControls;
 const info = document.getElementById("info") as HTMLSpanElement;
 const help = document.getElementById("help") as HTMLDivElement;
 const backdrop = document.getElementById("backdrop") as HTMLDivElement;
-const feedbackTrigger = document.getElementById("feedback-trigger") as HTMLSpanElement;
-const feedbackIcon = document.getElementById("feedback-icon") as HTMLSpanElement;
-const feedbackModal = document.getElementById("feedback-modal") as HTMLDivElement;
-const feedbackCancel = document.getElementById("feedback-cancel") as HTMLButtonElement;
-const feedbackMessage = document.getElementById("feedback-message") as HTMLTextAreaElement;
-const feedbackResult = document.getElementById("feedback-result") as HTMLDivElement;
-const feedbackForm = document.getElementById("feedback-form") as HTMLFormElement;
-const hiddenFeedbackForm = document.querySelector('form[name="feedback"]') as HTMLFormElement;
+// Null in the jsdom fixtures that do not build the feedback markup (the darkmode,
+// keyboard and setbar tests), so the guards on them are load-bearing rather than
+// defensive; feedback.test.ts injects the markup, so they are non-null there.
+// #feedback-modal is in the shared fixture, empty, because keyboard.test.ts's KeyF
+// and Escape tests need it. Every use is already guarded or optional-chained, so
+// typing them honestly costs nothing and stops the next unguarded write compiling.
+// The elements above are a different case: the app asserts them and uses them
+// unguarded, so typing them would force guards everywhere.
+const feedbackTrigger = document.getElementById("feedback-trigger") as HTMLSpanElement | null;
+const feedbackIcon = document.getElementById("feedback-icon") as HTMLSpanElement | null;
+const feedbackModal = document.getElementById("feedback-modal") as HTMLDivElement | null;
+const feedbackCancel = document.getElementById("feedback-cancel") as HTMLButtonElement | null;
+const feedbackSubmit = document.getElementById("feedback-submit") as HTMLButtonElement | null;
+const feedbackMessage = document.getElementById("feedback-message") as HTMLTextAreaElement | null;
+const feedbackResult = document.getElementById("feedback-result") as HTMLDivElement | null;
+const feedbackForm = document.getElementById("feedback-form") as HTMLFormElement | null;
+const hiddenFeedbackForm = document.querySelector('form[name="feedback"]') as HTMLFormElement | null;
 const darkswitch = document.getElementById("darkswitch") as HTMLElement;
 const scoreswitch = document.getElementById("scoreswitch") as HTMLElement;
 const helpIcon = document.getElementById("help-icon") as HTMLElement;
@@ -409,9 +418,38 @@ function showHelp(show = true) {
   }
 }
 
+// The modal's send state (#798). A pending close timer means a confirmation is on
+// screen. The session stamps each submit, so a response whose modal is gone renders
+// nothing. The in-flight flag admits one send at a time. There is no fetch timeout a
+// page can rely on, so the deadline is what stops a hung POST holding the lock in
+// silence.
+//
+// resetFeedbackForm bumps the session, aborts the request, clears the timer and
+// releases the lock. The chain's .finally also releases the lock, guarded by the
+// session, so the two cannot fight.
+//
+// The deadline is generous on purpose. It can only fire once the request is out and
+// we are waiting on an answer, so a short one converts a merely-slow network into a
+// reported failure, and the user then re-sends feedback Netlify has already filed.
+const FEEDBACK_SEND_TIMEOUT_MS = 30_000;
+let feedbackCloseTimer: ReturnType<typeof setTimeout> | undefined;
+let feedbackAbort: AbortController | undefined;
+let feedbackSession = 0;
+let feedbackSending = false;
+
 function showFeedback(show = true) {
   if (!feedbackModal) return;
   if (show) {
+    // A pending close timer means a confirmation is on screen. Reopening adopts it:
+    // hand the form back, rather than only cancelling the timer that would have done
+    // so, or the modal is left showing "Thank you" with no form and no buttons (Send
+    // and Cancel both live inside the form).
+    //
+    // Conditional on the timer, and only on the timer. Reopening an already-open
+    // modal is routine (the icon, and KeyF once focus has left the textarea, where
+    // keyboardTapped's input-guard would otherwise swallow it), so an unconditional
+    // reset here would wipe a half-typed message: #798 by another route.
+    if (feedbackCloseTimer !== undefined) resetFeedbackForm();
     backdrop.style.display = "block";
     feedbackModal.style.display = "block";
     updateFeedbackContext();
@@ -423,7 +461,21 @@ function showFeedback(show = true) {
   }
 }
 
+// The teardown: the only writer that ends a session. It must release the send lock
+// as well as the rest, or a send the user walked away from leaves the next modal
+// with a dead Send button.
 function resetFeedbackForm() {
+  // Cancel the request, not merely its result. An abandoned POST that has not yet
+  // reached Netlify is dropped, so the user cannot file the same message twice by
+  // reopening and sending again. One already delivered is still filed: abort stops
+  // us waiting on it, it does not un-send it.
+  feedbackAbort?.abort();
+  feedbackAbort = undefined;
+  feedbackSession++;
+  feedbackSending = false;
+  if (feedbackSubmit) feedbackSubmit.disabled = false;
+  clearTimeout(feedbackCloseTimer);
+  feedbackCloseTimer = undefined;
   if (feedbackForm) {
     feedbackForm.style.display = "";
     feedbackForm.reset();
@@ -433,16 +485,51 @@ function resetFeedbackForm() {
   if (feedbackResult) {
     feedbackResult.style.display = "none";
     feedbackResult.textContent = "";
+    feedbackResult.classList.remove("feedback-error");
   }
 }
 
+// Success only. The form has done its job, so replace it with the confirmation and
+// tidy up. A failed send must NOT come through here: this teardown destroys the
+// message the user is being asked to send again (#798).
+//
+// Both writers set every property they share, rather than relying on the state the
+// other left behind, and both set the region's display before its text, so the live
+// region (role="alert") is in the accessibility tree before its content lands.
 function showFeedbackResult(message: string) {
-  if (feedbackForm) feedbackForm.style.display = "none";
+  // Arm the close FIRST, so a throw while rendering below still closes the modal.
+  // An empty modal closing is not a good outcome; it is the less bad one. It bounds
+  // the window in which the user, left on an unchanged form, presses Send again and
+  // files the same feedback twice, rather than leaving that window open.
+  clearTimeout(feedbackCloseTimer);
+  feedbackCloseTimer = setTimeout(() => showFeedback(false), 1500);
   if (feedbackResult) {
-    feedbackResult.textContent = message;
+    feedbackResult.classList.remove("feedback-error");
     feedbackResult.style.display = "flex";
+    feedbackResult.textContent = message;
   }
-  setTimeout(() => showFeedback(false), 1500);
+  if (feedbackForm) feedbackForm.style.display = "none";
+}
+
+// Failure. Leave the form, the message and the rating exactly as they are and show
+// the error beneath them, so "please try later" costs the user nothing.
+function showFeedbackError(message: string) {
+  // No close timer may survive into a failure: it would auto-close the modal and
+  // reset the very message the user is being asked to send again.
+  clearTimeout(feedbackCloseTimer);
+  feedbackCloseTimer = undefined;
+  if (feedbackForm) feedbackForm.style.display = "";
+  // After a CLICK, focus was on Send, and disabling it moved focus to <body>, where
+  // Enter reaches the global key handler and toggles playback. Put it back in the
+  // textarea. (Submitting with Enter never left the textarea, so this is a no-op
+  // there.) Before the alert text lands, not after: a focus move after the write
+  // would flush the screen reader's speech queue and cut the announcement off.
+  feedbackMessage?.focus();
+  if (feedbackResult) {
+    feedbackResult.classList.add("feedback-error");
+    feedbackResult.style.display = "flex";
+    feedbackResult.textContent = message;
+  }
 }
 
 // Derive the playback status from the audio element at read time, rather than
@@ -644,6 +731,7 @@ function init(): void {
     });
     feedbackForm.addEventListener("submit", (e) => {
       e.preventDefault();
+      if (feedbackSending) return;
       syncFeedbackRating();
       syncFeedbackMessage();
       updateFeedbackContext();
@@ -660,16 +748,104 @@ function init(): void {
         message,
         context,
       });
-      fetch("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: data.toString(),
-      })
+      // The modal session this send belongs to. A response whose session is gone
+      // renders nothing (#798).
+      const session = feedbackSession;
+      const onScreen = () => session === feedbackSession;
+      // Blank the previous attempt's error before the lock, so a retry that fails the
+      // same way is visible rather than rewriting an identical string into a region
+      // already showing it. This makes the SIGHTED change reliable; whether a screen
+      // reader re-announces an identical alert depends on the reader. Done
+      // synchronously and before the lock: a throw here wedges nothing.
+      if (feedbackResult) {
+        feedbackResult.style.display = "none";
+        feedbackResult.textContent = "";
+        feedbackResult.classList.remove("feedback-error");
+      }
+      const controller = new AbortController();
+      feedbackAbort = controller;
+      let timedOut = false;
+      const deadline = setTimeout(() => {
+        timedOut = true;
+        controller.abort(new Error("feedback send timed out"));
+      }, FEEDBACK_SEND_TIMEOUT_MS);
+      feedbackSending = true;
+      if (feedbackSubmit) feedbackSubmit.disabled = true;
+      // Disabling the button blurs it, so focus would otherwise fall to <body> for
+      // the whole send, where Space and Enter reach the global key handler and
+      // toggle playback behind the open modal. Park it in the textarea instead.
+      feedbackMessage?.focus();
+      // Everything from the fetch onward runs inside the chain, so a throw becomes a
+      // rejection the handler below logs and the .finally releases. A synchronous throw
+      // outside it would escape before the chain existed, leaving Send disabled until
+      // the user dismissed the modal, losing what they typed.
+      Promise.resolve()
+        .then(() =>
+          fetch("/", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: data.toString(),
+            signal: controller.signal,
+          })
+        )
         .then((res) => {
-          if (!res.ok) throw new Error();
-          showFeedbackResult("Thank you");
+          // The status distinguishes an unregistered Netlify form's permanent 404
+          // from a network blip.
+          if (!res.ok) {
+            throw new Error(`feedback POST failed: HTTP ${res.status}`);
+          }
         })
-        .catch(() => showFeedbackResult("Couldn't send, please try later"));
+        // Two sibling handlers, not then-catch: a throw inside the success
+        // handler must not fall into the failure handler, which would tell the
+        // user their feedback had not been sent when in fact it had.
+        .then(
+          () => {
+            if (onScreen()) showFeedbackResult("Thank you");
+          },
+          (err: unknown) => {
+            // The send log and the error render are wrapped, so a DOM throw while
+            // rendering the error is logged here rather than mislabelled by the tail
+            // catch.
+            try {
+              // The user walked away and we cancelled the request. That is not a
+              // failure, and logging it as one makes a cancellation indistinguishable
+              // from a real fault to anyone reading the console later.
+              if (!onScreen() && controller.signal.aborted && !timedOut) return;
+              console.error(
+                timedOut ? "Feedback send timed out:" : "Feedback send failed:",
+                err
+              );
+              if (onScreen()) {
+                // On a timeout the request is out and we are waiting on an answer, so
+                // "couldn't send" would assert the opposite of the likeliest truth and
+                // invite the user to file the same feedback twice. Report the
+                // observation, not a conclusion the code cannot support.
+                showFeedbackError(
+                  timedOut
+                    ? "No answer from the server. Your feedback may already have been sent, so please check before sending it again."
+                    : "Couldn't send, please try later"
+                );
+              }
+            } catch (renderErr: unknown) {
+              console.error("Feedback error failed to render:", renderErr);
+            }
+          }
+        )
+        // Reached when rendering the confirmation throws: the send succeeded, so log
+        // it rather than report a failure that did not happen.
+        .catch((err: unknown) =>
+          console.error("Feedback confirmation failed to render:", err)
+        )
+        .finally(() => {
+          clearTimeout(deadline);
+          // Session-guarded: an abandoned send must not release the lock that a
+          // send started in a later session is holding. The teardown that ended its
+          // session already released the lock this send took.
+          if (!onScreen()) return;
+          feedbackAbort = undefined;
+          feedbackSending = false;
+          if (feedbackSubmit) feedbackSubmit.disabled = false;
+        });
     });
   }
 

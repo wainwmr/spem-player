@@ -148,7 +148,10 @@
                     </div>
                 </div>
             </form>
-            <div id="feedback-result" style="display: none;"></div>
+            <!-- Live region: a failed send shows its error in place, with no dismissal.
+                 showFeedbackError moves focus to the textarea BEFORE writing here, so the
+                 alert is the last event and is not cut off by the focus move (#798). -->
+            <div id="feedback-result" role="alert" style="display: none;"></div>
         </div>
 
         <form name="feedback" netlify netlify-honeypot="bot-field" hidden>

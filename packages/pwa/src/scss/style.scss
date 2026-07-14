@@ -15,6 +15,14 @@ body {
   --color-text: hsl(0, 0%, 92%);
   --color-title: hsl(210, 65%, 80%);
   --color-highlight: hsl(210, 65%, 25%);
+  // Do NOT use outside the feedback modal. It is 4.9:1 on the modal
+  // (--color-background-lighter, light blue in BOTH themes, so this red is fixed
+  // rather than theme-dependent, like --color-on-light above), but only 1.6:1 on
+  // the dark --color-background. A red chosen for the page would be unreadable on
+  // the modal, which is #569 over again; this one is unreadable off it. The guard
+  // ("error text meets WCAG AA against the modal", e2e/feedback-modal.spec.ts)
+  // measures against the modal, so it would not catch a reuse elsewhere.
+  --color-error: hsl(0, 75%, 35%);
 }
 /* Dev-only badge: visible when deployed from a non-main branch */
 body[data-branch]:not([data-branch=""])::before {
@@ -640,6 +648,15 @@ kbd {
     justify-content: center;
     min-height: 140px;
     font-size: 1.2rem;
+
+    // The failure variant sits beneath the form the user is about to resend, so
+    // it must not claim the form's height the way the confirmation does (#798).
+    &.feedback-error {
+      min-height: 0;
+      margin-top: 8px;
+      font-size: 1rem;
+      color: var(--color-error);
+    }
   }
 
   .feedback-context-note {
@@ -672,6 +689,15 @@ kbd {
       font-size: 1rem;
       font-family: inherit;
 
+      // Send is disabled while a send is in flight. Without this it stays
+      // pixel-identical to a live button, because the author-set background and
+      // colour below override the browser's default greying, so a user on a slow
+      // connection clicks a normal-looking button that does nothing (#798).
+      &:disabled {
+        opacity: 0.55;
+        cursor: default;
+      }
+
       &[type="submit"] {
         background: var(--color-active-button);
         color: var(--color-on-light);
@@ -682,7 +708,12 @@ kbd {
         color: var(--color-on-light);
       }
 
-      &:hover {
+      // :not(:disabled), or this wins on source order at equal specificity and a
+      // hovered disabled Send renders identically to a hovered live one. Disabled
+      // controls suppress events, not selector matching, and the pointer is still
+      // on the button the user just clicked, which is the whole window the disabled
+      // styling exists for (#798).
+      &:hover:not(:disabled) {
         opacity: 0.85;
       }
     }
