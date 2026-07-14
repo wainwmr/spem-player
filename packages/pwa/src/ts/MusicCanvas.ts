@@ -215,10 +215,15 @@ export class MusicCanvas extends MusicElement {
     this.append(canvas);
     this.#attachListeners(canvas);
 
+    // lilyData FIRST: #calculateCanvasSize derives barWidth from #barSlots, so
+    // the forward map must be built from the real barCount, not a fallback. This
+    // ordering is what lets #barSlots drop its `?? 139` literal, and with it the
+    // whole class of defect #790 was: a forward map and an inverse map that can
+    // silently divide by different slot counts.
+    this.lilyData = precomputedLilyData;
+
     this.#calculateCanvasSize();
     this.#showLoadingOnCanvas();
-
-    this.lilyData = precomputedLilyData;
 
     // define array pulses[choir][part] to be min transparency which
     // will be pulsed when the choir is singing a note.
@@ -263,18 +268,25 @@ export class MusicCanvas extends MusicElement {
 
   // The number of bar slots the overview is drawn in: bar 0 is the intro slot
   // and bars 1..barCount follow, so the count is `barCount + 1` (140 for the
-  // shipped corpus, whose last bar index `barCount` is 139). The inverse map
-  // (hit-test) and the end-of-piece guards read this live value; the forward
-  // map's `barWidth` is computed once at init (#calculateCanvasSize), before
-  // `lilyData` loads, via the `?? 139` fallback. Both directions therefore
-  // divide by the same slot count, so a click at a bar's drawn centre inverts
-  // back to that bar; dividing by `barCount` in one direction only was the #790
-  // count-vs-index defect. The `?? 139` literal is the corpus's last-bar index:
-  // it makes the init-time `barWidth` match the loaded `barCount + 1` for this
-  // fixed-length score. A variable bar count would need `barWidth` recomputed
-  // after load (tracked as tech debt in refactor-MusicCanvas.ts.md).
+  // shipped corpus, whose last bar index `barCount` is 139).
+  //
+  // THE SINGLE SOURCE OF THE SLOT COUNT. Both directions must divide by it: the
+  // forward map (`barWidth`, in #calculateCanvasSize) and the inverse map (the
+  // hit-test in #projectToPosition), plus the end-of-piece guards. Dividing by
+  // `barCount` in one direction only WAS #790, and every click from bar 70 up
+  // resolved one bar low.
+  //
+  // There is deliberately no `?? fallback` here. An earlier shape read
+  // `(this.lilyData?.barCount ?? 139) + 1`, because #calculateCanvasSize ran
+  // before lilyData was assigned. That made the literal the SOLE production path
+  // for barWidth, so editing it to 140 (which reads correct, given this getter's
+  // name and units) would silently rebuild the forward map on 141 slots while the
+  // hit-test kept using 140: #790, restored, and no test could see it. #init now
+  // assigns lilyData first, so the real barCount is always available and the
+  // literal is gone. Keep it that way: a fallback here is a second source of
+  // truth for the one number that must have exactly one.
   get #barSlots(): number {
-    return (this.lilyData?.barCount ?? 139) + 1;
+    return this.lilyData!.barCount + 1;
   }
 
   #calculateCanvasSize() {
@@ -457,11 +469,22 @@ export class MusicCanvas extends MusicElement {
   }
 
   #drawBarHighlight(ctx: CanvasRenderingContext2D) {
-    // `>= #barSlots` (140), not `> barCount` (139): the final bar's fractional
-    // interior (139 < bar < 140) is inside the piece, so the playhead is drawn
-    // there rather than being suppressed as past-the-end (#790, symptom 2).
-    // (bar == 139.0 was never suppressed, even before the fix.) bar <= 0 still
-    // hides the playhead on the intro bar (deliberate, #419).
+    // `>= #barSlots` (140), not `> barCount` (139), for symmetry with the slot
+    // model: the guard is expressed in slots, like every other bar comparison
+    // here.
+    //
+    // BE HONEST ABOUT WHAT THIS DOES NOT FIX. The two forms differ only on
+    // bar values strictly between 139 and 140, and NO REACHABLE STATE puts bar
+    // there: getBarFromTime clamps to 139 for both recordings, and MusicControls
+    // clamps on load. So this is behaviour-identical on every input the app can
+    // produce. Bar 139 itself was never suppressed even before the fix (139 > 139
+    // is false). #790's second reported symptom ("the whole of bar 139 reads as
+    // past the end") is NOT supported by the code, and the tests that exercise
+    // 139.5 do so by assigning `bar` directly, bypassing both clamps. They are
+    // defensive pins on an unreachable state, not regression tests for a
+    // user-visible bug.
+    //
+    // bar <= 0 still hides the playhead on the intro bar (deliberate, #419).
     if (this.bar <= 0 || this.bar >= this.#barSlots) return;
     ctx.save();
     ctx.beginPath();

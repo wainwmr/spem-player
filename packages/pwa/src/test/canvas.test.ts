@@ -2399,7 +2399,7 @@ describe("MusicCanvas custom element", () => {
       // Branch 3, second disjunct: bar PAST the end of the piece takes the same
       // branch as bar 0. Deleting `|| this.bar > barCount` from the source would
       // send these bars to branch 4 (dull 38 instead of bright 45) and nothing
-      // else in the file would catch it. The pair also pins the STRICT `>`:
+      // else in the file would catch it. The pair also pins the `>=` boundary at 140:
       // barCount itself is still inside the piece and must take branch 4.
       canvas!.bar = barCount + 1;
       col = sole(styleSetsDuring(ctx(), "strokeStyle", () => canvas!.draw()));
@@ -2541,7 +2541,7 @@ describe("MusicCanvas custom element", () => {
           )
         ).toBe(true);
 
-        // bar === barCount: still drawn (the guard is bar > barCount).
+        // bar === barCount: still drawn (the guard is bar >= #barSlots, i.e. 140).
         canvas!.bar = canvas!.lilyData!.barCount;
         moveSpy.mockClear();
         canvas!.draw();
@@ -2747,21 +2747,35 @@ describe("MusicCanvas custom element", () => {
       }
       return tops.length ? tops[0] : null;
     };
+    // PIN THE FORWARD DIVISOR. barWidth is the drawn geometry, the thing the
+    // user actually clicks, and every other assertion in this file reads it back
+    // OFF the element, which makes them tautologies in it. So a barWidth
+    // regression (the forward map built on a different slot count from the
+    // inverse map) passed every test: exactly #790, and invisible. Assert the
+    // value against its definition, from the element's own public fields, not
+    // against itself.
+    expect(canvas!.barWidth).toBeCloseTo(
+      (canvas!.canvas!.width - 2 * canvas!.canvasPadding) /
+        (canvas!.lilyData!.barCount + 1),
+      9
+    );
+
     // Inside the final bar the playhead is drawn, at the forward-map x for that
-    // bar. Pinning x to canvasPadding + (bar + 0.5) * barWidth ties the drawn
-    // playhead to the same slot geometry the hit-test inverts, so a barWidth
-    // regression cannot pass while the (inverse-only) round-trip test stays green.
+    // bar. NOTE this assertion reads barWidth off the element on both sides, so
+    // it pins the FORMULA (the + 0.5, the padding term), not the VALUE. The
+    // value is pinned above; do not delete that and rely on this.
     const x = playheadX(139.5);
     expect(x).not.toBeNull();
     expect(x!).toBeCloseTo(
       canvas!.canvasPadding + (139.5 + 0.5) * canvas!.barWidth,
       6
     );
-    // Both edges of the `>= #barSlots` guard: no playhead on the intro bar
-    // (bar <= 0) or past the end (bar 140.5 >= #barSlots = 140). Without these a
-    // guard widened to always-draw, or to `> #barSlots`, would stay green.
+    // Both edges of the `>= #barSlots` guard. The upper edge is asserted at
+    // EXACTLY 140, not 140.5: `>` and `>=` differ only at bar === #barSlots, so
+    // a guard widened to `>` would sail past 140.5 (140.5 > 140 is also true) and
+    // this test would not carry the claim its comment makes.
     expect(playheadX(0)).toBeNull();
-    expect(playheadX(140.5)).toBeNull();
+    expect(playheadX(140)).toBeNull();
   });
 
   it("keeps normal row colouring inside the final bar (#790)", () => {
