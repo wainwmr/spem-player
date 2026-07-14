@@ -31,13 +31,15 @@ import { test as base, expect } from "@playwright/test";
  * and fails the test at teardown if any arrived. Every spec imports
  * `test`/`expect` from this module instead of `@playwright/test`.
  *
- * If a spec ever legitimately produces one of these (none does today), add an
- * explicit, commented entry to ALLOWLIST rather than reverting its import —
- * silent suppression is the failure mode this fixture exists to remove.
+ * If a spec legitimately produces one of these, add an explicit, commented entry
+ * to ALLOWLIST rather than reverting its import: silent suppression is the failure
+ * mode this fixture exists to remove. The feedback failure specs drive a path that
+ * logs deliberately (#798); their entry is below.
  */
 
 // Substrings of captured messages that are expected and must not fail a test.
-// Keep each entry commented with the reason and keep it as narrow as the URL.
+// Keep each entry commented with the reason, and narrow enough that only the
+// expected message can match it (a URL, or a prefix only one call site emits).
 const ALLOWLIST: string[] = [
   // Third-party scripts loaded by index.html are routinely absent or
   // DNS-blocked in test environments (net::ERR_NAME_NOT_RESOLVED); their
@@ -47,6 +49,14 @@ const ALLOWLIST: string[] = [
   // stubbed below (#822) so its beacon never reaches the network at all.
   "at https://www.googletagmanager.com/",
   "at https://cdnjs.buymeacoffee.com/",
+  // The feedback-modal failure specs reject the POST by stubbing window.fetch in
+  // the page (never route.abort(), which would make the browser log its own
+  // resource error; see doc/TESTING.md). The submit handler then logs the cause
+  // (#798) so an unregistered form is distinguishable from a network blip. That
+  // log is an expected byproduct of the failure path those specs drive; it is
+  // asserted in src/test/feedback.test.ts, not there. Kept to the exact prefix
+  // index.ts emits, so a genuinely unexpected console error still fails the test.
+  "console.error: Feedback send failed:",
 ];
 
 // "/audio/" mirrors config.audio_prefix (src/ts/config.ts, value pinned by

@@ -139,11 +139,27 @@ channels, so without the fixture a test can pass while the page under it is
 broken. `e2e/page-errors.spec.ts` is the fixture's self-test: each positive
 case injects one error class and polls the capture array, and a final
 `test.fail()`-annotated case pins that a non-empty capture fails at teardown.
-If a spec ever legitimately produces a captured message, add a narrow,
-commented entry to the module's `ALLOWLIST` (the current entries cover
-third-party script hosts that are absent or DNS-blocked in test environments)
-rather than reverting the import. Service workers are blocked suite-wide
-(`playwright.config.ts`) so page-level network events stay observable.
+If a spec legitimately produces a captured message, add a narrow, commented entry
+to the module's `ALLOWLIST` rather than reverting the import. The current entries
+cover third-party script hosts that are absent or DNS-blocked in test
+environments, and the feedback submit handler's `console.error` on a failed send
+(#798), which is an expected byproduct of the failure path
+`e2e/feedback-modal.spec.ts` drives; that log is asserted in
+`src/test/feedback.test.ts`, not in the spec. Service workers are blocked
+suite-wide (`playwright.config.ts`) so page-level network events stay observable.
+
+**Simulate a network failure by stubbing `fetch`, not by aborting the route.**
+`route.abort()` makes the browser log its own `Failed to load resource:
+net::ERR_FAILED`, which the fixture captures. Allowlisting it means adding an
+entry for a failed load of the site root `/`, and the fixture's convention is to
+keep an entry as narrow as the URL: that URL is the port-dependent `baseURL`
+(`worktree-ports.ts` gives each worktree its own offset), so a conforming entry
+is not portable, and the broad text-only alternative would mask a genuine failure
+to load the document itself. Reject the call in the page instead
+(`page.addInitScript` replacing `window.fetch`, bound to `window`), which issues
+no request and raises the same `TypeError` a genuinely offline fetch raises.
+`failTheSend` in `e2e/feedback-modal.spec.ts` is the implementation; it points
+here for the reason rather than restating it.
 
 ### E2E Prerequisites
 
