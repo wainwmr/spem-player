@@ -536,9 +536,11 @@ export async function openIssue(title, body) {
 
 /**
  * Dispatch a monitor alert: optionally send a Telegram message, then open a
- * tracking issue. A failure in either is logged with `onErrorLog` and
- * swallowed, so a secondary alert failure never masks the caller's own in-flight
- * error.
+ * tracking issue. The two legs are attempted independently: a failure in
+ * either is logged with `onErrorLog` (tagged with the failing leg) and
+ * swallowed, so a Telegram outage
+ * cannot suppress the durable tracking issue (#748) and a secondary alert
+ * failure never masks the caller's own in-flight error.
  *
  * @param {object} alert
  * @param {string} [alert.telegramText] - Telegram message. Omit it (or pass any
@@ -554,11 +556,21 @@ export async function dispatchAlert({
   issueBody,
   onErrorLog,
 }) {
+  // Each log line tags its leg: a network-level fetch failure carries the
+  // bare message "fetch failed" with no host, so without the tag the two legs
+  // are indistinguishable in a CI log exactly when it matters, namely whether
+  // the durable issue opened or not (Vera 748-01).
+  if (telegramText) {
+    try {
+      await sendTelegram(telegramText);
+    } catch (alertErr) {
+      console.error(`${onErrorLog}: [telegram] ${alertErr.message}`);
+    }
+  }
   try {
-    if (telegramText) await sendTelegram(telegramText);
     await openIssue(issueTitle, issueBody);
   } catch (alertErr) {
-    console.error(`${onErrorLog}: ${alertErr.message}`);
+    console.error(`${onErrorLog}: [issue] ${alertErr.message}`);
   }
 }
 
