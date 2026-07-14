@@ -91,7 +91,7 @@ test.describe("page-error capture fixture (self-test)", () => {
     await page.goto("/");
     await page.evaluate(() => {
       console.error(
-        "allowlist probe at https://static.cloudflareinsights.com/beacon.min.js"
+        "allowlist probe at https://www.googletagmanager.com/gtag/js"
       );
       console.error("page-errors self-test: sentinel after allowlisted");
     });
