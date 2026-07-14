@@ -105,11 +105,18 @@ export const test = base.extend<{ pageErrorCapture: readonly string[] }>({
         }
       });
       page.on("requestfailed", (req) => {
-        if (isAudioUrl(req.url())) {
-          record(
-            `audio request failed: ${req.url()} (${req.failure()?.errorText})`
-          );
-        }
+        if (!isAudioUrl(req.url())) return;
+        const errorText = req.failure()?.errorText ?? "";
+        // A load cancelled by a deliberate control change during the audio
+        // load window (#805) is a legitimate outcome, not a broken audio path:
+        // toggling pause mid-load aborts the in-flight fetch. Webkit surfaces
+        // this as a requestfailed with "Load request cancelled" (and a
+        // status-0 response, exempted below); chromium/firefox do not report
+        // it at all. Exempt cancellations only — genuine failures (the
+        // self-test's route.abort() → ERR_FAILED, DNS errors, decode failures)
+        // still record. See #830.
+        if (/cancel/i.test(errorText)) return;
+        record(`audio request failed: ${req.url()} (${errorText})`);
       });
       page.on("response", (res) => {
         if (!isAudioUrl(res.url())) return;
@@ -120,11 +127,16 @@ export const test = base.extend<{ pageErrorCapture: readonly string[] }>({
         // 304 revalidations legitimately carry no content-type (probe-verified
         // against vite preview, which serves audio with ETag + no-cache) and
         // are exempt — the followed-to or originally-cached response is the
-        // one that gets content-type-checked.
+        // one that gets content-type-checked. A status-0 response is a
+        // cancelled load (webkit emits one when a control change aborts the
+        // in-flight fetch, #805/#830) — a legitimate outcome, exempt like the
+        // matching requestfailed above.
         const contentType = res.headers()["content-type"] ?? "";
         if (
           res.status() >= 400 ||
-          (res.status() < 300 && !contentType.startsWith("audio/"))
+          (res.status() > 0 &&
+            res.status() < 300 &&
+            !contentType.startsWith("audio/"))
         ) {
           record(
             `audio response ${res.status()} (${contentType || "no content-type"}): ${res.url()}`
