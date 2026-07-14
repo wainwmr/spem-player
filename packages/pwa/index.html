@@ -18,6 +18,36 @@
             visibility: hidden;
         }
     </style>
+    <style id="fallback-hide">
+        /* #829 — keep the closed things closed when there is no stylesheet.
+
+           style.scss is the ONLY thing hiding these three. So when it fails and the
+           guard above is removed to reveal the app, it also reveals an expanded help
+           panel, an expanded feedback dialog, and every tooltip string inline down the
+           page. Revealing the app should not undress it.
+
+           This is a SEPARATE node from #fouc-guard, and deliberately so: the fallback
+           removes that one, and must not remove this one. These rules are the floor
+           the failure screen stands on.
+
+           It cannot break the healthy page, which is why it is safe to leave in place:
+             - #help and #feedback-modal are opened by an inline `style.display` write
+               (index.ts), and an inline style outranks any stylesheet rule;
+             - .tooltiptext is revealed by `.tooltip:hover .tooltiptext`, which outranks
+               the bare `.tooltiptext` selector below on specificity.
+           Both are pinned by e2e/fouc-fallback.spec.ts. */
+        #help {
+            display: none;
+        }
+
+        #feedback-modal {
+            display: none;
+        }
+
+        .tooltiptext {
+            visibility: hidden;
+        }
+    </style>
     <script>
         /* FOUC-guard fallback (#801).
 

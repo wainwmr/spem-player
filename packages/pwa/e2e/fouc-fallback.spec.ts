@@ -301,6 +301,58 @@ test.describe("FOUC-guard fallback (#801)", () => {
     await page.close();
   });
 
+  // #829 — the fallback must reveal the APP, not everything the stylesheet hides.
+  //
+  // style.scss is the ONLY thing hiding three groups: #help (display: none),
+  // #feedback-modal (display: none) and .tooltiptext (visibility: hidden). When it
+  // fails, revealing .viewportDiv also exposes all three, so the failure screen
+  // showed an expanded help panel, an expanded feedback dialog, and every tooltip
+  // string dumped inline down the page.
+  //
+  // The fix is a SECOND inline <style id="fallback-hide"> that the fallback does not
+  // remove, so those three stay hidden with no stylesheet. It cannot break the healthy
+  // page: #help and #feedback-modal are opened by an inline style.display write
+  // (index.ts), which outranks any stylesheet rule, and .tooltiptext is revealed by
+  // `.tooltip:hover .tooltiptext`, which outranks it on specificity.
+  test("the fallback does not expose the elements only the stylesheet hides (#829)", async ({
+    context,
+  }) => {
+    const injection = await newInjectionPage(context);
+    const { page } = injection;
+
+    let aborted = 0;
+    await page.route("**/assets/*.css", (route) => {
+      aborted++;
+      return route.abort();
+    });
+
+    await page.goto("/");
+
+    expect(
+      aborted,
+      "no stylesheet was aborted: the route glob no longer matches the built CSS " +
+        "path, so this test is not injecting the failure it claims to inject"
+    ).toBeGreaterThan(0);
+
+    // Premise: the fallback fired and the app IS revealed. Without this the
+    // assertions below would pass on a page that never revealed anything.
+    await expect(page.locator(VIEWPORT)).toHaveCSS("visibility", "visible", {
+      timeout: 5000,
+    });
+
+    // The point of the ticket: revealed, but not undressed. Computed style, never
+    // the inline style string (#709).
+    await expect(page.locator("#help")).toHaveCSS("display", "none");
+    await expect(page.locator("#feedback-modal")).toHaveCSS("display", "none");
+    await expect(page.locator(".tooltiptext").first()).toHaveCSS(
+      "visibility",
+      "hidden"
+    );
+
+    await expectOnlyTheFoucDiagnostic(injection, "stylesheet-error", BROKEN_CSS);
+    await page.close();
+  });
+
   test("a successful stylesheet releases the guard via the cascade, not the fallback", async ({
     page,
   }) => {
