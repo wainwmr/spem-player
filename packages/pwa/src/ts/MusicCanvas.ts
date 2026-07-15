@@ -215,10 +215,15 @@ export class MusicCanvas extends MusicElement {
     this.append(canvas);
     this.#attachListeners(canvas);
 
+    // lilyData FIRST: #calculateCanvasSize derives barWidth from #barSlots, so
+    // the forward map must be built from the real barCount, not a fallback. This
+    // ordering is what lets #barSlots drop its `?? 139` literal, and with it the
+    // whole class of defect #790 was: a forward map and an inverse map that can
+    // silently divide by different slot counts.
+    this.lilyData = precomputedLilyData;
+
     this.#calculateCanvasSize();
     this.#showLoadingOnCanvas();
-
-    this.lilyData = precomputedLilyData;
 
     // define array pulses[choir][part] to be min transparency which
     // will be pulsed when the choir is singing a note.
@@ -261,6 +266,29 @@ export class MusicCanvas extends MusicElement {
     });
   }
 
+  // The number of bar slots the overview is drawn in: bar 0 is the intro slot
+  // and bars 1..barCount follow, so the count is `barCount + 1` (140 for the
+  // shipped corpus, whose last bar index `barCount` is 139).
+  //
+  // THE SINGLE SOURCE OF THE SLOT COUNT. Both directions must divide by it: the
+  // forward map (`barWidth`, in #calculateCanvasSize) and the inverse map (the
+  // hit-test in #projectToPosition), plus the end-of-piece guards. Dividing by
+  // `barCount` in one direction only WAS #790, and every click from bar 70 up
+  // resolved one bar low.
+  //
+  // There is deliberately no `?? fallback` here. An earlier shape read
+  // `(this.lilyData?.barCount ?? 139) + 1`, because #calculateCanvasSize ran
+  // before lilyData was assigned. That made the literal the SOLE production path
+  // for barWidth, so editing it to 140 (which reads correct, given this getter's
+  // name and units) would silently rebuild the forward map on 141 slots while the
+  // hit-test kept using 140: #790, restored, and no test could see it. #init now
+  // assigns lilyData first, so the real barCount is always available and the
+  // literal is gone. Keep it that way: a fallback here is a second source of
+  // truth for the one number that must have exactly one.
+  get #barSlots(): number {
+    return this.lilyData!.barCount + 1;
+  }
+
   #calculateCanvasSize() {
     if (this.canvas == null) return;
 
@@ -270,7 +298,8 @@ export class MusicCanvas extends MusicElement {
     this.canvas.style.width = "100%";
     this.canvas.style.height = "100%";
 
-    this.barWidth = (this.canvas.width - 2 * this.canvasPadding) / 140;
+    this.barWidth =
+      (this.canvas.width - 2 * this.canvasPadding) / this.#barSlots;
     this.choirHeight =
       (this.canvas.height - 2 * this.canvasPadding) / config.choirs[0].length;
     this.partHeight = this.choirHeight / config.parts.length;
@@ -440,7 +469,23 @@ export class MusicCanvas extends MusicElement {
   }
 
   #drawBarHighlight(ctx: CanvasRenderingContext2D) {
-    if (this.bar <= 0 || this.bar > this.lilyData!.barCount) return;
+    // `>= #barSlots` (140), not `> barCount` (139), for symmetry with the slot
+    // model: the guard is expressed in slots, like every other bar comparison
+    // here.
+    //
+    // BE HONEST ABOUT WHAT THIS DOES NOT FIX. The two forms differ only on
+    // bar values strictly between 139 and 140, and NO REACHABLE STATE puts bar
+    // there: getBarFromTime clamps to 139 for both recordings, and MusicControls
+    // clamps on load. So this is behaviour-identical on every input the app can
+    // produce. Bar 139 itself was never suppressed even before the fix (139 > 139
+    // is false). #790's second reported symptom ("the whole of bar 139 reads as
+    // past the end") is NOT supported by the code, and the tests that exercise
+    // 139.5 do so by assigning `bar` directly, bypassing both clamps. They are
+    // defensive pins on an unreachable state, not regression tests for a
+    // user-visible bug.
+    //
+    // bar <= 0 still hides the playhead on the intro bar (deliberate, #419).
+    if (this.bar <= 0 || this.bar >= this.#barSlots) return;
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(
@@ -480,7 +525,7 @@ export class MusicCanvas extends MusicElement {
       startY + this.partHeight / 2
     );
     ctx.lineTo(
-      this.canvasPadding + 140 * this.barWidth - this.barWidth,
+      this.canvasPadding + this.#barSlots * this.barWidth - this.barWidth,
       startY + this.partHeight / 2
     );
     ctx.lineWidth = width;
@@ -495,7 +540,7 @@ export class MusicCanvas extends MusicElement {
       ? MusicCanvas.DULL_BASE_LIGHTNESS_LIGHT
       : MusicCanvas.DULL_BASE_LIGHTNESS_DARK;
 
-    const { ranges, barCount } = this.lilyData!;
+    const { ranges } = this.lilyData!;
     ctx.lineWidth = 0.9 * this.partHeight;
     ctx.lineCap = "round";
     for (var c = 0; c < config.choirs[0].length; c++) {
@@ -529,7 +574,7 @@ export class MusicCanvas extends MusicElement {
             saturation = 80;
             lightness = MusicCanvas.SELECTED_BASE_LIGHTNESS - 3 * p;
             transparency = 1;
-          } else if (this.bar === 0 || this.bar > barCount) {
+          } else if (this.bar === 0 || this.bar >= this.#barSlots) {
             saturation = 50;
             lightness = MusicCanvas.SELECTED_BASE_LIGHTNESS - 3 * p;
             transparency = 1;
@@ -696,7 +741,11 @@ export class MusicCanvas extends MusicElement {
   #projectToPosition(
     x: number,
     y: number,
-    partResolver: (rowFraction: number) => PartType
+    // rowOffset is the pointer's offset within the resolved (clamped) choir, in
+    // [0, 1] and exactly 1 at the very bottom edge. A numeric resolver must
+    // clamp its top part (see #getMousePos) so the last part is not overrun;
+    // do not reconstruct it as a full row fraction and `% 1` (that was #791).
+    partResolver: (rowOffset: number) => PartType
   ): Position {
     const rect = this.getBoundingClientRect();
     const cssPaddingX = this.canvasPadding * (rect.width / this.canvas!.width);
@@ -721,21 +770,36 @@ export class MusicCanvas extends MusicElement {
     );
     const rowFraction =
       ((clampedY - cssPaddingY) * config.choirs[0].length) / drawableHeight;
+    const choir = Math.min(
+      config.choirs[0].length - 1,
+      Math.max(0, Math.floor(rowFraction))
+    );
     return {
-      choir: Math.min(
-        config.choirs[0].length - 1,
-        Math.max(0, Math.floor(rowFraction))
-      ),
-      part: partResolver(rowFraction),
-      bar: Math.floor(
-        ((clampedX - cssPaddingX) * this.lilyData!.barCount) / drawableWidth
+      choir,
+      // Resolve the part from the offset within the *clamped* choir. At the
+      // bottom edge rowFraction is exactly nChoirs, so `rowFraction % 1` reset
+      // the part to 0 (Soprano); `rowFraction - choir` keeps it at the last
+      // part (Bass) there. This is the #791 fix, folded into #790.
+      part: partResolver(rowFraction - choir),
+      // Invert the forward map through #barSlots (140), not barCount (139), so
+      // a click at a bar's drawn centre returns that bar; clamp the last slot
+      // down to the final bar index so the right edge cannot overshoot. #790.
+      bar: Math.min(
+        this.lilyData!.barCount,
+        Math.floor(((clampedX - cssPaddingX) * this.#barSlots) / drawableWidth)
       ),
     };
   }
 
   #getMousePos(e: MouseEvent): Position {
-    return this.#projectToPosition(e.offsetX, e.offsetY, (rowFraction) =>
-      Math.floor((rowFraction % 1) * config.parts.length)
+    // partResolver receives the offset within the clamped choir (0..1, exactly
+    // 1 at the very bottom edge). Clamp to the last part so that bottom edge
+    // resolves to Bass rather than overflowing (#791).
+    return this.#projectToPosition(e.offsetX, e.offsetY, (rowOffset) =>
+      Math.min(
+        config.parts.length - 1,
+        Math.floor(rowOffset * config.parts.length)
+      )
     );
   }
 

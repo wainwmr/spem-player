@@ -1101,7 +1101,10 @@ describe("MusicCanvas custom element", () => {
       canvas!.querySelector("canvas")!.dispatchEvent(mouseEvent);
       const event = await promise;
       const pos = event.detail.position;
-      expect(pos.bar).toBe(Math.floor(canvas!.lilyData!.barCount / 2));
+      // barSlots-robust centre: x = width/2 -> floor(barSlots / 2) = 70, the
+      // slot containing the centre pixel (not floor(barCount/2) = 69, which was
+      // the count-vs-index defect #790).
+      expect(pos.bar).toBe(Math.floor((canvas!.lilyData!.barCount + 1) / 2));
     }
   });
 
@@ -1244,7 +1247,10 @@ describe("MusicCanvas custom element", () => {
       innerCanvas.dispatchEvent(touchStart);
       const event = await promise;
       const pos = event.detail.position;
-      expect(pos.bar).toBe(Math.floor(canvas!.lilyData!.barCount / 2));
+      // barSlots-robust centre: x = width/2 -> floor(barSlots / 2) = 70, the
+      // slot containing the centre pixel (not floor(barCount/2) = 69, which was
+      // the count-vs-index defect #790).
+      expect(pos.bar).toBe(Math.floor((canvas!.lilyData!.barCount + 1) / 2));
     }
   });
 
@@ -1781,24 +1787,27 @@ describe("MusicCanvas custom element", () => {
 
   it("projects representative mouse coordinates to the expected choir/part/bar (#650)", async () => {
     // choir/part depend only on constants (padding + grid sizes) so they are
-    // pinned exactly; bar uses barCount-robust coordinates — left edge -> 0,
-    // right edge -> barCount, x = width/2 -> floor(barCount/2) (the centre
+    // pinned exactly; bar uses barSlots-robust coordinates — left edge -> 0,
+    // right edge -> barCount, x = width/2 -> floor(barSlots/2) = 70 (the centre
     // identity is exact regardless of padding). On a 1400x400 rect these
     // three points sit at the clamp extremes and a stable interior row, so
     // they are unaffected by the Y-padding scaling — they characterise the
     // de-dup; the short-viewport tests below characterise the Y fix.
-    const mid = Math.floor(canvas!.lilyData!.barCount / 2);
+    const mid = Math.floor((canvas!.lilyData!.barCount + 1) / 2);
     expect(await clickAt(0, 2)).toEqual({ choir: 0, part: 0, bar: 0 });
     expect(await clickAt(700, 175)).toEqual({ choir: 3, part: 2, bar: mid });
+    // Bottom-right corner: choir clamps to 7, and part is now the last part
+    // (4, Bass), not 0 (Soprano) — the #791 fix folded into #790. bar stays
+    // barCount at the right edge (the inverse map clamps the last slot down).
     expect(await clickAt(1400, 398)).toEqual({
       choir: 7,
-      part: 0,
+      part: 4,
       bar: canvas!.lilyData!.barCount,
     });
   });
 
   it("projects representative touch coordinates, resolving part to 'all' (#650)", async () => {
-    const mid = Math.floor(canvas!.lilyData!.barCount / 2);
+    const mid = Math.floor((canvas!.lilyData!.barCount + 1) / 2);
     expect(await touchAt(0, 2)).toEqual({ choir: 0, part: "all", bar: 0 });
     expect(await touchAt(700, 175)).toEqual({
       choir: 3,
@@ -1819,8 +1828,8 @@ describe("MusicCanvas custom element", () => {
     // The old unscaled-Y mapping used padding 5 and returned part 2 — a real
     // wrong-result toward the top of a short viewport (the two mappings
     // coincide at the exact centre and diverge toward the edges). Scaling Y
-    // restores the drawn mapping. (x = width/2 -> floor(barCount/2), unaffected.)
-    const mid = Math.floor(canvas!.lilyData!.barCount / 2);
+    // restores the drawn mapping. (x = width/2 -> floor(barSlots/2), unaffected.)
+    const mid = Math.floor((canvas!.lilyData!.barCount + 1) / 2);
     expect(await clickAt(700, 50, 1400, 150)).toEqual({
       choir: 2,
       part: 3,
@@ -1832,7 +1841,7 @@ describe("MusicCanvas custom element", () => {
     // Touch hard-codes part "all" (#327), so the Y fix shows up on the CHOIR
     // here, not the part: on a 150px-tall canvas a tap at y=38 falls on the
     // drawn choir 2, but the old unscaled-Y mapping returned choir 1.
-    const mid = Math.floor(canvas!.lilyData!.barCount / 2);
+    const mid = Math.floor((canvas!.lilyData!.barCount + 1) / 2);
     expect(await touchAt(700, 38, 1400, 150)).toEqual({
       choir: 2,
       part: "all",
@@ -2390,7 +2399,7 @@ describe("MusicCanvas custom element", () => {
       // Branch 3, second disjunct: bar PAST the end of the piece takes the same
       // branch as bar 0. Deleting `|| this.bar > barCount` from the source would
       // send these bars to branch 4 (dull 38 instead of bright 45) and nothing
-      // else in the file would catch it. The pair also pins the STRICT `>`:
+      // else in the file would catch it. The pair also pins the `>=` boundary at 140:
       // barCount itself is still inside the piece and must take branch 4.
       canvas!.bar = barCount + 1;
       col = sole(styleSetsDuring(ctx(), "strokeStyle", () => canvas!.draw()));
@@ -2532,7 +2541,7 @@ describe("MusicCanvas custom element", () => {
           )
         ).toBe(true);
 
-        // bar === barCount: still drawn (the guard is bar > barCount).
+        // bar === barCount: still drawn (the guard is bar >= #barSlots, i.e. 140).
         canvas!.bar = canvas!.lilyData!.barCount;
         moveSpy.mockClear();
         canvas!.draw();
@@ -2664,5 +2673,163 @@ describe("MusicCanvas custom element", () => {
         canvas!.getBoundingClientRect = savedRect;
       }
     });
+  });
+
+  // ====================================================================
+  // #790 / #791 — the hit-test must invert the bar drawing, the final bar
+  // must render normally, and the bottom row must select Bass.
+  //
+  // The overview is drawn in barSlots = barCount + 1 (140) equal slices,
+  // but the inverse map divided by barCount (139), so the two directions
+  // diverged by 140/139 and every centre from bar 70 up resolved one bar
+  // low (#790). The end-of-piece tests compared against barCount, so the
+  // whole of bar 139 read as past the end (#790, symptom 2). And the part
+  // index came from the unclamped row fraction, which is exactly nChoirs at
+  // the bottom edge, resetting Bass to Soprano (#791, folded).
+  // ====================================================================
+
+  // CSS-pixel x of the visual centre of drawn bar `b`, mirroring the forward
+  // map: padding scaled into CSS px, then the centre of slot b at
+  // (b + 0.5) / barSlots of the drawable width.
+  const barCentreX = (b: number, width: number) => {
+    const barSlots = canvas!.lilyData!.barCount + 1;
+    const cssPaddingX = canvas!.canvasPadding * (width / canvas!.canvas!.width);
+    const drawableWidth = width - 2 * cssPaddingX;
+    return cssPaddingX + ((b + 0.5) / barSlots) * drawableWidth;
+  };
+
+  it("resolves a click at a bar's visual centre to that bar (#790)", async () => {
+    // The serious symptom: bars 70..139 resolved one low (bar 100 -> 99).
+    // A click at the drawn centre of bar 100 must return 100 at every width.
+    for (const width of [200, 800, 1400]) {
+      expect((await clickAt(barCentreX(100, width), 175, width, 400)).bar).toBe(
+        100
+      );
+    }
+  });
+
+  it("reaches the final bar by clicking inside its drawn body (#790)", async () => {
+    // Bar 139 was reachable only at a single edge pixel. A click at its drawn
+    // centre must return 139, not 138.
+    for (const width of [200, 800, 1400]) {
+      expect((await clickAt(barCentreX(139, width), 175, width, 400)).bar).toBe(
+        139
+      );
+    }
+  });
+
+  it("round-trips every bar centre through the hit-test (#790)", async () => {
+    // The property that makes the count-vs-index class unwritable:
+    // xToBar(centreOf(b)) === b for every drawn bar.
+    const last = canvas!.lilyData!.barCount;
+    for (let b = 0; b <= last; b++) {
+      expect((await clickAt(barCentreX(b, 1400), 175, 1400, 400)).bar).toBe(b);
+    }
+  });
+
+  it("draws the playhead inside the final bar, only within the piece (#790)", () => {
+    // #drawBarHighlight treated the whole of bar 139 (139 < bar < 140) as past
+    // the end and drew no playhead. The playhead's top vertex is the only moveTo
+    // issued at y === canvasPadding (every other draw moveTo sits at a part-row
+    // centre), so its x there is the playhead x. Returns that x, or null when
+    // no playhead is drawn.
+    const playheadX = (bar: number): number | null => {
+      const ctx = canvas!.canvas!.getContext("2d")!;
+      const tops: number[] = [];
+      const spy = vi.spyOn(ctx, "moveTo").mockImplementation((x, y) => {
+        if (Math.abs(y - canvas!.canvasPadding) < 1e-6) tops.push(x);
+      });
+      try {
+        canvas!.bar = bar;
+        canvas!.draw();
+      } finally {
+        spy.mockRestore();
+      }
+      return tops.length ? tops[0] : null;
+    };
+    // PIN THE FORWARD DIVISOR. barWidth is the drawn geometry, the thing the
+    // user actually clicks, and every other assertion in this file reads it back
+    // OFF the element, which makes them tautologies in it. So a barWidth
+    // regression (the forward map built on a different slot count from the
+    // inverse map) passed every test: exactly #790, and invisible. Assert the
+    // value against its definition, from the element's own public fields, not
+    // against itself.
+    expect(canvas!.barWidth).toBeCloseTo(
+      (canvas!.canvas!.width - 2 * canvas!.canvasPadding) /
+        (canvas!.lilyData!.barCount + 1),
+      9
+    );
+
+    // Inside the final bar the playhead is drawn, at the forward-map x for that
+    // bar. NOTE this assertion reads barWidth off the element on both sides, so
+    // it pins the FORMULA (the + 0.5, the padding term), not the VALUE. The
+    // value is pinned above; do not delete that and rely on this.
+    const x = playheadX(139.5);
+    expect(x).not.toBeNull();
+    expect(x!).toBeCloseTo(
+      canvas!.canvasPadding + (139.5 + 0.5) * canvas!.barWidth,
+      6
+    );
+    // Both edges of the `>= #barSlots` guard. The upper edge is asserted at
+    // EXACTLY 140, not 140.5: `>` and `>=` differ only at bar === #barSlots, so
+    // a guard widened to `>` would sail past 140.5 (140.5 > 140 is also true) and
+    // this test would not carry the claim its comment makes.
+    expect(playheadX(0)).toBeNull();
+    expect(playheadX(140)).toBeNull();
+  });
+
+  it("keeps normal row colouring inside the final bar (#790)", () => {
+    // #drawVoiceParts treated bar > barCount as the bar-0 "ready" state, so the
+    // whole of bar 139 brightened every row. An unselected row inside bar 139.5
+    // must take the same dull colour it takes at an ordinary mid-piece bar, and
+    // a different colour from the bar-0 ready state. Seed a single unselected
+    // cell so exactly one voice-part stroke is issued; identify it by its
+    // 0.9*partHeight line width (distinct from the highlight strokes).
+    setRanges(canvas!, (r) => {
+      for (let c = 0; c < config.choirs[0].length; c++)
+        for (let p = 0; p < config.parts.length; p++) r.set(`${c}-${p}`, []);
+      r.set("0-0", [{ from: 10, to: 20 }]);
+    });
+    const voicePartStroke = (bar: number): string => {
+      const ctx = canvas!.canvas!.getContext("2d")!;
+      const recs: { style: string; lineWidth: number }[] = [];
+      const spy = vi.spyOn(ctx, "stroke").mockImplementation(() => {
+        recs.push({ style: String(ctx.strokeStyle), lineWidth: ctx.lineWidth });
+      });
+      try {
+        canvas!.choir = 7; // cell 0-0 is unselected
+        canvas!.voicePart = 4;
+        canvas!.bar = bar;
+        canvas!.draw();
+      } finally {
+        spy.mockRestore();
+      }
+      const vp = recs.filter(
+        (rec) => Math.abs(rec.lineWidth - 0.9 * canvas!.partHeight) < 1e-6
+      );
+      expect(vp.length).toBe(1);
+      return vp[0].style;
+    };
+    const ready = voicePartStroke(0);
+    const dull = voicePartStroke(50);
+    const finalBar = voicePartStroke(139.5);
+    expect(finalBar).toBe(dull);
+    expect(finalBar).not.toBe(ready);
+  });
+
+  it("selects Bass, not Soprano, at the bottom edge of the canvas (#791)", async () => {
+    // Folded from #791: the choir index is clamped but the part came from the
+    // unclamped row fraction, which is exactly nChoirs at the bottom edge, so
+    // part reset to 0 (Soprano) instead of 4 (Bass). At the very bottom the
+    // part must be the last part of the last choir.
+    // Heights 200 and 400 are deliberate: their Y-clamp yields rowFraction
+    // exactly 8.0 (the integer boundary where the old `% 1` collapsed to 0);
+    // 150 gives the non-integer neighbour (~7.99). Do not "tidy" these to round
+    // numbers, or the test retreats off the boundary it exists to pin.
+    for (const height of [150, 200, 400]) {
+      const pos = await clickAt(700, height - 1, 1400, height);
+      expect(pos.choir).toBe(7);
+      expect(pos.part).toBe(4);
+    }
   });
 });
