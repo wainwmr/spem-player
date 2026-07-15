@@ -184,6 +184,12 @@ header {
     display: inline-block;
   }
 
+  // MIRRORED in index.html's `<style id="fallback-hide">` block (#829). This rule is
+  // the ONLY thing hiding the tooltip text, so if this stylesheet fails to load the
+  // FOUC fallback would reveal every tooltip string inline down the page. Keep the two
+  // selectors identical. If you add another element that ONLY this stylesheet hides,
+  // mirror it there too, or it appears expanded on every failure screen with no test
+  // to catch it.
   .tooltip .tooltiptext {
     visibility: hidden;
     width: 120px;
@@ -207,6 +213,9 @@ header {
   }
 }
 
+// MIRRORED in index.html's `<style id="fallback-hide">` block (#829): this rule is the
+// only thing hiding the help panel, so without it the FOUC fallback shows the panel
+// expanded. Keep both in step.
 #help {
   display: none;
   padding: 0 5px;
@@ -576,6 +585,9 @@ kbd {
   }
 }
 
+// MIRRORED in index.html's `<style id="fallback-hide">` block (#829): this rule is the
+// only thing hiding the feedback dialog, so without it the FOUC fallback shows the
+// dialog expanded. Keep both in step.
 #feedback-modal {
   display: none;
   padding: 0 10px 10px;
