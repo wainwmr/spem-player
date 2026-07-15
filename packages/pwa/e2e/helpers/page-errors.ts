@@ -48,14 +48,17 @@ import { test as base, expect } from "@playwright/test";
 // Keep each entry commented with the reason, and narrow enough that only the
 // expected message can match it (a URL, or a prefix only one call site emits).
 const ALLOWLIST: string[] = [
-  // Third-party scripts loaded by index.html are routinely absent or
-  // DNS-blocked in test environments (net::ERR_NAME_NOT_RESOLVED); their
-  // load failure is environmental, not an app defect. Matched on the URL
-  // suffix this fixture appends, so the entries are browser-agnostic.
+  // The third-party script loaded by index.html is routinely absent or DNS-blocked
+  // in test environments (net::ERR_NAME_NOT_RESOLVED); its load failure is
+  // environmental, not an app defect. Matched on the URL suffix this fixture
+  // appends, so the entry is browser-agnostic.
   // Cloudflare Web Analytics is not listed here: it is intercepted and
   // stubbed below (#822) so its beacon never reaches the network at all.
+  // cdnjs.buymeacoffee.com is not listed here either, and must not be re-added: #799
+  // removed the donation vendor's script from the page, so nothing legitimately
+  // produces an error from that host. An entry for it would be a standing suppression
+  // for exactly the regression e2e/third-party-stall.spec.ts exists to catch.
   "at https://www.googletagmanager.com/",
-  "at https://cdnjs.buymeacoffee.com/",
   // The feedback-modal failure specs reject the POST by stubbing window.fetch in
   // the page (never route.abort(), which would make the browser log its own
   // resource error; see doc/TESTING.md). The submit handler then logs the cause

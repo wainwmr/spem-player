@@ -204,17 +204,29 @@
         })();
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Quintessential&display=swap&family=EB+Garamond&display=swap&family=Macondo&display=swap&family=Eagle+Lake&display=swap&family=Macondo+Swash+Caps&display=swap');
+        /* Cookie is the coffee button's face (#799). It rides on the request already
+           being made here rather than the separate fonts.googleapis.com <link> the
+           vendor script used to inject, so inlining the button added no new host. */
+        @import url('https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400..900;1,400..900&family=Quintessential&display=swap&family=EB+Garamond&display=swap&family=Macondo&display=swap&family=Eagle+Lake&display=swap&family=Macondo+Swash+Caps&display=swap&family=Cookie&display=swap');
     </style>
 
     <!-- <script src="//unpkg.com/@ungap/custom-elements"></script> -->
+    <!-- No `defer`: it is a no-op on a module script, which is deferred by definition. -->
     <script src="src/ts/common.ts" type="module"></script>
-    <script defer src="src/ts/MusicCanvas.ts" type="module"></script>
-    <script defer src="src/ts/MusicControls.ts" type="module"></script>
-    <script defer src="src/ts/MusicScore.ts" type="module"></script>
-    <script defer src="index.ts" type="module"></script>
+    <script src="src/ts/MusicCanvas.ts" type="module"></script>
+    <script src="src/ts/MusicControls.ts" type="module"></script>
+    <script src="src/ts/MusicScore.ts" type="module"></script>
+    <script src="index.ts" type="module"></script>
     <!-- Cloudflare Web Analytics -->
-    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "c6a8a31f6d3d490fb11632f634072912"}'></script>
+    <!-- Must stay `async` (#799). Classic `defer` scripts and module scripts share one
+         ordered queue, so a `defer` beacon sitting ahead of the app holds the whole player
+         behind it when Cloudflare is slow: nothing upgraded, nothing wired, wherever init()
+         lives. `async` keeps it out of that queue entirely, whatever the order.
+         The build does currently emit the app bundle BELOW this tag, which is what makes
+         e2e/third-party-stall.spec.ts fail if anyone reverts this to defer. That guard is
+         therefore only as good as the emission order: if this tag ever moves, or Vite ever
+         emits the bundle above it, check dist/index.html rather than trusting the test. -->
+    <script async src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "c6a8a31f6d3d490fb11632f634072912"}'></script>
     <!-- End Cloudflare Web Analytics -->
 
 </head>
@@ -295,10 +307,19 @@
             </table>
             <div class="help-footer">
                 <div class="bmc-wrapper">
-                    <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
-                        data-name="bmc-button" data-slug="wainwmr" data-color="#133354" data-emoji="☕"
-                        data-font="Cookie" data-text="Buy me a coffee" data-outline-color="#ffffff"
-                        data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
+                    <!-- Our own markup, not the vendor's script (#799). The Buy Me A Coffee embed
+                         was a parser-blocking script sitting ahead of every player element, so a
+                         slow donation host stopped the app being built at all. It could not simply
+                         be made async: it renders with document.writeln, which the browser discards
+                         from any script that is not parser-inserted, so async and defer would each
+                         have deleted the button silently. What it rendered was this anchor, the
+                         Cookie webfont (now on the @import above) and the CSS to style it
+                         (style.scss, .bmc-btn); we supply all three, and the donation host leaves
+                         the page. -->
+                    <a class="bmc-btn" href="https://buymeacoffee.com/wainwmr" target="_blank" rel="noopener">
+                        <span aria-hidden="true">☕</span>
+                        <span class="bmc-btn-text">Buy me a coffee</span>
+                    </a>
                 </div>
                 <div class="help-footer-right">
                     <p class="version">Spem Player v%VERSION%</p>
@@ -324,10 +345,11 @@
                 <p class="feedback-context-note">Playback context (recording, choir, bar, etc.) and platform info are included automatically.</p>
                 <div class="feedback-footer">
                     <div class="bmc-wrapper">
-                        <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
-                            data-name="bmc-button" data-slug="wainwmr" data-color="#133354" data-emoji="☕"
-                            data-font="Cookie" data-text="Buy me a coffee" data-outline-color="#ffffff"
-                            data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
+                        <!-- See the help-footer button above (#799). -->
+                        <a class="bmc-btn" href="https://buymeacoffee.com/wainwmr" target="_blank" rel="noopener">
+                            <span aria-hidden="true">☕</span>
+                            <span class="bmc-btn-text">Buy me a coffee</span>
+                        </a>
                     </div>
                     <div class="feedback-actions">
                         <button type="submit" id="feedback-submit">Send</button>

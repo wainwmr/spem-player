@@ -2,8 +2,9 @@ import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 import { setupIntegrationFixture } from "./helpers";
 
 describe("Dark/light mode toggle", () => {
-  // Captured after the load event, before any beforeEach reset can touch the
-  // body class — test 1 asserts this value, not the post-reset DOM (#542).
+  // Captured after the fixture has bootstrapped the app, before any beforeEach
+  // reset can touch the body class — test 1 asserts this value, not the post-reset
+  // DOM (#542).
   let defaultHadLightTheme: boolean;
 
   beforeAll(async () => {

@@ -44,7 +44,6 @@ describe("splitter drag cursor", () => {
     vi.spyOn(HTMLMediaElement.prototype, "pause").mockReturnThis();
 
     await import("../../index.ts");
-    window.dispatchEvent(new Event("load"));
   }, 30000);
 
   afterAll(async () => {
