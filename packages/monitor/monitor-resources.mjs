@@ -106,20 +106,6 @@ export function statusFromCurve(actualRemaining, t) {
 }
 
 /**
- * Classify a projected end-of-period percentage against the critical-pace
- * diagonal (100% at period-end). Distinct from the rate-relative status curve
- * and the watch/critical budget thresholds.
- *
- * @param {number} projectedPct - Projected end-of-period usage percentage.
- * @returns {"green"|"yellow"|"red"}
- */
-export function paceBucket(projectedPct) {
-  if (projectedPct > 100) return "red";
-  if (projectedPct >= 90) return "yellow";
-  return "green";
-}
-
-/**
  * @typedef {object} UsageRecord
  * @property {number} current - Consumed build minutes so far this period.
  * @property {number} limit - Build-minute quota for the period.

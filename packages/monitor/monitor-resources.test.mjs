@@ -16,7 +16,6 @@ import {
   getReportingSince,
   parseRepo,
   todayISO,
-  paceBucket,
   overallStatusName,
   loadSeries,
   saveSeries,
@@ -485,22 +484,6 @@ test("parseRepo throws when GITHUB_REPOSITORY is empty string", () => {
 // todayISO: returns UTC calendar date
 test("todayISO returns YYYY-MM-DD from a UTC timestamp", () => {
   assert.equal(todayISO(new Date("2026-06-12T14:23:00Z")), "2026-06-12");
-});
-
-// paceBucket: classify projected end-of-period percentage against critical pace
-test("paceBucket returns green when well under critical pace", () => {
-  assert.equal(paceBucket(0), "green");
-  assert.equal(paceBucket(89), "green");
-});
-
-test("paceBucket returns yellow at or near critical pace", () => {
-  assert.equal(paceBucket(90), "yellow");
-  assert.equal(paceBucket(100), "yellow");
-});
-
-test("paceBucket returns red when over critical pace", () => {
-  assert.equal(paceBucket(101), "red");
-  assert.equal(paceBucket(150), "red");
 });
 
  // overallStatusName: worse of two service statuses wins
