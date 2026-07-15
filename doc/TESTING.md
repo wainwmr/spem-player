@@ -148,18 +148,60 @@ environments, and the feedback submit handler's `console.error` on a failed send
 `src/test/feedback.test.ts`, not in the spec. Service workers are blocked
 suite-wide (`playwright.config.ts`) so page-level network events stay observable.
 
-**Simulate a network failure by stubbing `fetch`, not by aborting the route.**
-`route.abort()` makes the browser log its own `Failed to load resource:
-net::ERR_FAILED`, which the fixture captures. Allowlisting it means adding an
-entry for a failed load of the site root `/`, and the fixture's convention is to
-keep an entry as narrow as the URL: that URL is the port-dependent `baseURL`
-(`worktree-ports.ts` gives each worktree its own offset), so a conforming entry
-is not portable, and the broad text-only alternative would mask a genuine failure
-to load the document itself. Reject the call in the page instead
-(`page.addInitScript` replacing `window.fetch`, bound to `window`), which issues
-no request and raises the same `TypeError` a genuinely offline fetch raises.
-`failTheSend` in `e2e/feedback-modal.spec.ts` is the implementation; it points
-here for the reason rather than restating it.
+#### Injecting a failure: which technique, and why they differ
+
+Two specs inject failures and appear to reach opposite conclusions about
+`route.abort()`. They are not in conflict. The question is not whether aborting is
+allowed; it is **what is actually failing**.
+
+**Simulating an app-level network call: stub `fetch`, do not abort the route.**
+Here the *call* is what must fail, and the browser's own resource error is an
+artefact of the injection rather than part of the failure. `route.abort()` makes
+the browser log `Failed to load resource: net::ERR_FAILED`, which the fixture
+captures. Allowlisting it means adding an entry for a failed load of the site root
+`/`, and the fixture's convention is to keep an entry as narrow as the URL: that
+URL is the port-dependent `baseURL` (`worktree-ports.ts` gives each worktree its
+own offset), so a conforming entry is not portable, and the broad text-only
+alternative would mask a genuine failure to load the document itself. Reject the
+call in the page instead (`page.addInitScript` replacing `window.fetch`, bound to
+`window`), which issues no request and raises the same `TypeError` a genuinely
+offline fetch raises. `failTheSend` in `e2e/feedback-modal.spec.ts` is the
+implementation; it points here for the reason rather than restating it.
+
+**Injecting a failed resource load: intercept the route.** Here the *resource* is
+what fails, so there is nothing to stub, and the browser's resource error is part
+of the condition rather than an artefact. Intercept it: `route.abort()` for a
+request that never arrives, or `route.fulfill()` with a bad body for one that
+arrives wrong. `e2e/fouc-fallback.spec.ts` (#801) does both, because a stylesheet
+can fail in either shape and they take different paths through the fix.
+
+**Escape to the spec's own page when the expected errors cannot be allowlisted
+narrowly.** This is a separate decision from the one above, and it is easy to get
+the reason wrong. It is not simply "because the browser logs a resource error": the
+#801 backstop case fulfils a valid 200 and produces no resource error at all, and
+it still needs the escape, because on that path *the app itself* deliberately logs
+a `console.error`. Allowlisting either message suite-wide would blind every other
+spec to a real regression on it. So open the page with `context.newPage()` and keep
+the expected noise off the shared capture.
+
+An escaped page inherits none of the fixture's listeners, nor its `auto` teardown
+assertion, so it is not a free pass. Put a comment at the open site saying why the
+page escapes, and re-attach the channels the spec still needs.
+
+**Filter the console channel; do not drop it.** Dropping it wholesale is the easy
+mistake, and it blinds the one page in the suite whose whole purpose is to exercise
+the failing path. Re-attach `pageerror` and `console`, then assert positively: the
+message the failure is *supposed* to produce must be present, the injection's own
+resource error is allowed by URL, and anything else fails the test. A deliberate
+diagnostic then cannot be deleted without a test going red, and an unrelated error
+cannot hide. `e2e/fouc-fallback.spec.ts` shows the pattern
+(`expectOnlyTheFoucDiagnostic`). Its injection pages do **not** re-attach the two
+`/audio/` listeners, because they never touch audio and every other spec covers
+that channel; drop a channel only when you can say that of it.
+
+The fixture's *routes* (the Cloudflare beacon stub) are registered on the context,
+not the page, so another page in the same context does still inherit those; only
+the listeners are lost.
 
 ### E2E Prerequisites
 
