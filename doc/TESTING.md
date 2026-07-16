@@ -141,7 +141,7 @@ case injects one error class and polls the capture array, and a final
 `test.fail()`-annotated case pins that a non-empty capture fails at teardown.
 If a spec legitimately produces a captured message, add a narrow, commented entry
 to the module's `ALLOWLIST` rather than reverting the import. The current entries
-cover third-party script hosts that are absent or DNS-blocked in test
+cover the one third-party script host that is absent or DNS-blocked in test
 environments, and the feedback submit handler's `console.error` on a failed send
 (#798), which is an expected byproduct of the failure path
 `e2e/feedback-modal.spec.ts` drives; that log is asserted in
@@ -202,6 +202,45 @@ that channel; drop a channel only when you can say that of it.
 The fixture's *routes* (the Cloudflare beacon stub) are registered on the context,
 not the page, so another page in the same context does still inherit those; only
 the listeners are lost.
+
+### Simulate a slow host by stalling the route
+
+A third technique, and it tests a different failure from the two above: a host
+that is **slow**, not one that is **absent**. `e2e/third-party-stall.spec.ts`
+(#799) accepts the route and then never answers it:
+
+```ts
+await page.route(
+  (url) => url.hostname === "googletagmanager.com" ||
+    url.hostname.endsWith(".googletagmanager.com"),
+  () => new Promise(() => {})
+);
+```
+
+Match on the parsed **hostname**, never a substring of the whole URL: a regex
+like `/googletagmanager\.com/` also matches a same-origin URL that carries the
+host in a query string, and an over-broad match stalls the app's own origin, so
+every test hangs or passes vacuously. `matchesHost()` in
+`e2e/third-party-stall.spec.ts` is the reference predicate.
+
+The distinction is the whole point. An absent host fails fast, the parser
+resumes, and the app looks healthy, which is why a render-and-interactivity
+dead-lock survived across `index.html` and `index.ts` until a stall reproduced
+it. Two rules follow for any spec that stalls a host:
+
+- **Navigate with `waitUntil: "commit"`.** Playwright's default waits for the
+  window `load` event, and a stalled subresource is precisely what that event
+  waits on, so the navigation would hang rather than test anything.
+  `"domcontentloaded"` is no better: a stalled stylesheet blocks the deferred
+  module scripts, so DOMContentLoaded never fires either, and a regression that
+  reintroduced a parser-blocking script would hang the navigation instead of
+  failing an assertion.
+
+- **Register the stall inside the test, on the page.** Page routes are consulted
+  before context routes, so a `page.route` registered in the test takes
+  precedence over the Cloudflare stub `packages/pwa/e2e/helpers/page-errors.ts`
+  installs on the **context** (within one scope, the last-registered route is
+  the tie-break).
 
 ### E2E Prerequisites
 

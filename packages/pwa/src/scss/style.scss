@@ -245,7 +245,12 @@ header {
     margin: 5px;
   }
 
-  a {
+  // Prose links in the help panel. The coffee button is an anchor but not a prose
+  // link, and this rule outranks its own class rule on specificity (#help a beats
+  // .bmc-btn), which painted its label dark-on-dark and invisible. Excluding it
+  // here says why, where !important on every one of the button's declarations (what
+  // the vendor's script did) would only say "win".
+  a:not(.bmc-btn) {
     color: var(--color-on-light);
     text-decoration: none;
     &:hover {
@@ -289,6 +294,51 @@ header {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+}
+
+// The Buy Me A Coffee button (#799). It used to be drawn at runtime by the vendor's
+// script from cdnjs.buymeacoffee.com, which rendered via document.writeln and so only
+// worked while it was blocking the parser. A parser-blocking script ahead of the
+// player markup is the defect #799 removes, and no attribute could have saved it, so
+// the script is gone and we ship what it produced: an anchor (index.html), a Cookie
+// webfont (added to the @import there), and these rules.
+//
+// The colours and geometry are the vendor's own, so the button is unchanged to look
+// at on any platform that renders the coffee emoji, which is what it drew there too.
+// Two things of its are NOT carried, deliberately: it probed canvas for emoji support
+// and swapped in an inline SVG cup where the glyph was missing (so on a system with no
+// emoji font the label now sits beside a tofu box, which is cosmetic and accepted),
+// and its data-outline-color / data-coffee-color tinted only that SVG, which no longer
+// exists. Its !important on every declaration was there to fight the host page's CSS;
+// in our own stylesheet the cascade is ours to arrange, and #help's link rule is
+// excluded above instead.
+.bmc-btn {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-width: 210px;
+  height: 60px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 12px;
+  background-color: #133354;
+  color: #ffffff;
+  font-family: "Cookie", cursive;
+  font-size: 28px;
+  line-height: 27px;
+  text-decoration: none;
+
+  &:hover,
+  &:active,
+  &:focus {
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .bmc-btn-text {
+    margin-left: 8px;
+    white-space: nowrap;
   }
 }
 

@@ -35,13 +35,15 @@ const BASE_INTEGRATION_FIXTURE = `
 /**
  * Set up the shared jsdom fixture and bootstrap the app for integration tests.
  *
- * The optional `configure` callback runs after the base fixture is injected and
- * the custom-element *modules* are imported, but before `index.ts` is imported
- * (which is what registers the elements, via their static `define()`, and wires
- * the app) and before the load event is dispatched. The `<music-*>` elements are
- * therefore not yet upgraded when `configure` runs, so inject plain DOM here (for
- * example the feedback modal), not interactions with the custom elements. Keeps
- * the shared bootstrap in one place.
+ * Importing `index.ts` IS the bootstrap: it registers the elements via their static
+ * `define()` and calls `init()` at module scope, so nothing further needs to be
+ * dispatched to start the app.
+ *
+ * The optional `configure` callback runs after the base fixture is injected and the
+ * custom-element *modules* are imported, but before `index.ts` is imported. The
+ * `<music-*>` elements are therefore not yet upgraded when `configure` runs, so
+ * inject plain DOM here (the feedback modal, for example), not interactions with the
+ * custom elements. Keeps the shared bootstrap in one place.
  */
 export async function setupIntegrationFixture(
   configure?: () => void | Promise<void>
@@ -70,13 +72,12 @@ export async function setupIntegrationFixture(
     await configure();
   }
 
-  // jsdom has no real media playback; stub play/pause before index.ts runs on
-  // the load event, so app code and tests can drive playback without errors.
+  // jsdom has no real media playback; stub play/pause before index.ts wires the
+  // app, so app code and tests can drive playback without errors.
   vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
   vi.spyOn(HTMLMediaElement.prototype, "pause").mockReturnThis();
 
   await import("../../index.ts");
-  window.dispatchEvent(new Event("load"));
 }
 
 /**

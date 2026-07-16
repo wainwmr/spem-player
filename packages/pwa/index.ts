@@ -668,8 +668,6 @@ function handleAudioPaused() {
 // Setup page
 // -----------------------------------------------------
 
-window.addEventListener("load", init);
-
 function init(): void {
   // On mobiles, 100vh sometimes is the total vertical space
   // of the browser, but we don't want to include the browser's
@@ -858,3 +856,24 @@ export const exportedForTesting = {
   syncFeedbackRating,
   syncFeedbackMessage,
 };
+
+// Wire the app now, at module scope, rather than on `window load` (#799).
+//
+// This is a module script, so the browser already defers it until the document is
+// parsed: every element init() touches exists by the time this line runs, which is
+// the same guarantee the const lookups at the top of this file have always relied
+// on. `load` is a different promise entirely. It waits for every subresource on the
+// page, third-party analytics and fonts included, so hanging init() off it meant a
+// slow third-party SCRIPT left a fully painted player whose clicks, keys and touches
+// went nowhere, and whose shared deep link showed the wrong bar until the browser
+// gave up on that host. (A slow third-party STYLESHEET is worse and is not fixed
+// here: it blocks this module from executing at all. See #839.)
+//
+// Keep this call LAST in the file. Everything init() reads DURING the call must be
+// initialised by then, and TypeScript will not tell you: it flags a textual
+// use-before-declaration, but does not trace the temporal dead zone through a
+// function body. A module-scope `const` added below this line and read synchronously
+// by init() would compile clean and throw at runtime. (One read only from inside a
+// listener would in fact be fine, since module evaluation finishes before any event
+// fires; "last line" is the simple rule that makes the distinction unnecessary.)
+init();
