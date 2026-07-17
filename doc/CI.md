@@ -171,7 +171,7 @@ Steps:
 - `pnpm run test:lilypond` — run the Lilypond-related test suite.
 - `bash packages/scores/build/install-lilypond.sh` — install LilyPond.
 - Set `PATH` to include LilyPond 2.26.0, then `pnpm run build:scores` — regenerate SVGs.
-- Commit updated SVGs in `packages/pwa/src/scores/` if changes exist, with message `chore: regenerate SVGs [skip ci]`, then push.
+- Commit updated SVGs in `packages/pwa/src/scores/` if changes exist, with message `chore: regenerate SVGs`, then push. The commit deliberately carries no `[skip ci]`: it must trigger `pwa-ci` to verify the regenerated assets, and it must reach Netlify (which honours `[skip ci]`) so the new scores actually deploy. The workflow cannot re-trigger itself: its path filter (`packages/scores/**`) excludes the commit's path, and the job is guarded by `if: github.actor != 'github-actions[bot]'`.
 
 If no SVGs changed, the job exits cleanly without committing.
 
