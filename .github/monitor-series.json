@@ -784,8 +784,8 @@
   {
     "date": "2026-07-17",
     "netlifyCurrent": 53,
-    "githubMinutes": 423,
-    "mergedPRs": 1,
+    "githubMinutes": 425,
+    "mergedPRs": 0,
     "summary": {
       "netlifyPct": 18,
       "netlifyProjected": 33,
@@ -794,7 +794,7 @@
       "githubProjected": 39,
       "githubStatus": "good",
       "overallStatus": "good",
-      "mergedPRs": 1
+      "mergedPRs": 0
     },
     "source": "logged"
   }
