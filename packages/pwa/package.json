@@ -18,7 +18,7 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.7.0",
     "jsdom": "^29.1.1",
-    "knip": "^6.26.0",
+    "knip": "^6.27.0",
     "lint-staged": "^17.0.8",
     "prettier": "^3.9.5",
     "sass-embedded": "^1.100.0",
