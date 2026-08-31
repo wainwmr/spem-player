@@ -18,7 +18,7 @@
     "@xmldom/xmldom": "^0.9.10",
     "ohm-js": "^17.2.1",
     "tsx": "^4.20.0",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.10"
   },
   "packageManager": "pnpm@11.5.3",
