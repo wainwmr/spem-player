@@ -38,6 +38,61 @@ On failure, the Playwright HTML report is uploaded as an artifact and retained f
 
 This workflow is intentionally excluded from the PR gate. Playwright tests are slow and can flake on infrastructure issues. Running them nightly catches real regressions within 24 hours without blocking rapid fixes.
 
+### `pwa-e2e-notify.yml`
+
+Triggers on `workflow_run` when `PWA E2E` completes. The single `notify` job sends
+one Telegram alert (the workflow name, its conclusion, and the failing run's URL)
+via `packages/monitor/notify-workflow-failure.mjs`, using the existing
+`TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` secrets. A clean run posts nothing.
+
+`PWA E2E` runs only on a nightly cron and manual dispatch, never on push or pull
+request. It gates nothing and notifies nobody, leaving only a 7-day failure
+artifact, so a real e2e regression could fail unseen night after night. This
+narrows that blind spot (#726).
+
+**The gate is a deny-list, deliberately.** It fires on any conclusion that is not
+`success`, `cancelled` or `skipped`, so it fails safe: a conclusion GitHub adds in
+future alerts rather than silently not-alerting. Gating on `failure` alone would
+have missed the cases most likely to go unseen. `pwa-e2e.yml` sets no
+`timeout-minutes`, so a hung Playwright run rides the 6-hour runner cap and
+concludes `timed_out`, which is a real regression and was silent.
+
+**The alert path is deliberately dependency-free.** `notify-workflow-failure.mjs`
+imports only `packages/monitor/telegram.mjs`, which imports nothing, so the job
+runs it with bare `node` and needs no install step. An alert that cannot be sent
+is the exact failure this workflow exists to prevent, and every dependency is one
+more way for it to die before it runs. (It originally imported
+`monitor-resources.mjs`, which statically pulls in the native `canvas` addon to
+render burndown charts the alert has no use for.)
+
+**Two residuals, accepted rather than hidden.** This narrows the blind spot; it does
+not close it. Both were weighed and knowingly accepted (Andrew, 2026-07-14,
+[#837](https://github.com/wainwmr/spem-player/issues/837), closed as accepted). They
+are recorded here so nobody re-raises them as oversights, and so the consequence is
+stated rather than discovered.
+
+1. **Nobody watches the watcher.** If the `notify` job itself fails (a rotated
+   secret, a Telegram outage), it goes red in the Actions tab and tells nobody,
+   which is the same blind spot one level up. Closing it would need a second channel
+   that does not share a failure mode with the first.
+2. **A failure-triggered watcher cannot report that the thing it watches has
+   stopped.** If `PWA E2E` never runs (a disabled cron, a renamed workflow, a run
+   GitHub rejects before it starts) no `workflow_run` event fires and no `if:`
+   expression can catch it. Only a scheduled watchdog ("did `PWA E2E` produce a run
+   in the last 26 hours?") would.
+
+The consequence being accepted, stated plainly: on a night when the e2e breaks *and*
+the notifier is broken, the channel is silent, and silence looks exactly like a
+passing run. An alert is still a large improvement on notifying nobody at all, which
+is the position this replaces.
+
+As a `workflow_run` workflow it only fires from the copy on the default branch, so
+it cannot be exercised from a PR branch. **To prove the trigger after merge, at no
+cost:** dispatch `PWA E2E` manually and watch for a `PWA E2E notify` run to appear
+with its job skipped. If it appears, the trigger and the workflow-name coupling
+are sound; if it does not, the coupling is broken. No alert is sent either way,
+because a dispatched run that passes is excluded by the gate.
+
 ### `version-check.yml`
 
 Triggers on every pull request to `main`, on `opened`, `synchronize`, `reopened` and
