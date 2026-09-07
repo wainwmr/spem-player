@@ -22,3 +22,7 @@ AGENTS.md
 CLAUDE.md
 /scripts/
 .kimi/
+
+# Local secrets (Netlify token, etc.)
+.env
+.env.*

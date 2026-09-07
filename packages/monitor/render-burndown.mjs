@@ -40,6 +40,65 @@ const STATUS_COLORS = {
   stop: COLORS.red,
 };
 
+/**
+ * Steady-burn guide lines drawn behind the chart. The 100% line keeps the
+ * original slate diagonal; each budget threshold gets its own lighter,
+ * status-coloured diagonal so you can read off the pace needed to land on that
+ * threshold by period-end. Defaults mirror the watch/throttle/critical budget
+ * thresholds in monitor-resources.mjs.
+ */
+const PACE_THRESHOLDS = [
+  { pct: 75, color: COLORS.yellow },
+  { pct: 82, color: COLORS.red },
+  { pct: 90, color: COLORS.red },
+];
+
+/**
+ * Blend a hex colour toward white. Used to draw the threshold pace lines
+ * lighter than the solid status colours of the actual-usage lines.
+ *
+ * @param {string} hex - `#rrggbb` colour.
+ * @param {number} [amount] - 0 keeps the colour, 1 returns white.
+ * @returns {string} An `rgb(...)` colour string.
+ */
+function lighten(hex, amount = 0.55) {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = (c) => Math.round(c + (255 - c) * amount);
+  return `rgb(${mix((n >> 16) & 0xff)}, ${mix((n >> 8) & 0xff)}, ${mix(n & 0xff)})`;
+}
+
+/**
+ * Draw the steady-burn pace guides: a lighter, status-coloured dashed diagonal
+ * to each budget threshold, plus the slate 100% critical-pace diagonal.
+ *
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} ox - Chart origin x.
+ * @param {number} oy - Chart origin y (top, 0% used).
+ * @param {number} width - Chart width.
+ * @param {number} height - Chart height (full 100% used).
+ */
+function drawPaceLines(ctx, ox, oy, width, height) {
+  ctx.lineWidth = 4;
+  ctx.setLineDash([8, 6]);
+
+  for (const { pct, color } of PACE_THRESHOLDS) {
+    ctx.strokeStyle = lighten(color);
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(ox + width, oy + height * (pct / 100));
+    ctx.stroke();
+  }
+
+  // Critical-pace diagonal (0% used → 100% used)
+  ctx.strokeStyle = COLORS.diagonal;
+  ctx.beginPath();
+  ctx.moveTo(ox, oy);
+  ctx.lineTo(ox + width, oy + height);
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+}
+
 const CANVAS_WIDTH = 1200;
 const CANVAS_HEIGHT = 600;
 const PADDING_X = 32;
@@ -312,15 +371,8 @@ function drawPanel(ctx, originX, icon, fireIcon, usage, points, now, status) {
     ctx.stroke();
   }
 
-  // Critical-pace diagonal (0% used → 100% used)
-  ctx.strokeStyle = COLORS.diagonal;
-  ctx.lineWidth = 4;
-  ctx.setLineDash([8, 6]);
-  ctx.beginPath();
-  ctx.moveTo(ox, oy);
-  ctx.lineTo(ox + CHART_WIDTH, oy + CHART_HEIGHT);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  // Steady-burn pace guides (threshold diagonals + 100% critical pace)
+  drawPaceLines(ctx, ox, oy, CHART_WIDTH, CHART_HEIGHT);
 
   // Actual usage line, coloured per segment
   if (points.length >= 2) {
@@ -629,15 +681,8 @@ function drawCombinedPanel(
     ctx.stroke();
   }
 
-  // Critical-pace diagonal (at the back)
-  ctx.strokeStyle = COLORS.diagonal;
-  ctx.lineWidth = 4;
-  ctx.setLineDash([8, 6]);
-  ctx.beginPath();
-  ctx.moveTo(ox, oy);
-  ctx.lineTo(ox + chartWidth, oy + CHART_HEIGHT);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  // Steady-burn pace guides (threshold diagonals + 100% critical pace, at the back)
+  drawPaceLines(ctx, ox, oy, chartWidth, CHART_HEIGHT);
 
   // Projection cone (behind actual lines). Rather than a single falsely
   // precise trend line, we use the 1st and 3rd quartiles of the observed
