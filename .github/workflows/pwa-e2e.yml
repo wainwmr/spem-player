@@ -1,3 +1,8 @@
+# LOAD-BEARING NAME. pwa-e2e-notify.yml watches this workflow by matching this
+# exact `name:` string (workflow_run matches the name, not the filename), and
+# GitHub never validates that: rename it and the failure alert silently stops
+# firing forever, with no error anywhere (#726).
+# packages/monitor/notify-workflow-failure.test.mjs asserts the two agree.
 name: PWA E2E
 
 on:

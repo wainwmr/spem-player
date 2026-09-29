@@ -17,14 +17,26 @@ quota is exhausted.
   critical issue when needed.
 - `packages/monitor/render-burndown.mjs` — renders the two-panel burndown chart
   as a PNG.
+- `packages/monitor/telegram.mjs` — the Telegram text-send leaf: `sendTelegram`
+  and `formatWorkflowFailureMessage`, with no imports at all. Kept separate so the
+  CI failure alert cannot be killed at import time by the native `canvas` addon
+  that `monitor-resources.mjs` pulls in (#726). `monitor-resources.mjs` re-exports
+  both, so it remains the single home of the Telegram-send logic for every other
+  caller.
+- `packages/monitor/notify-workflow-failure.mjs` — entry point for
+  `pwa-e2e-notify.yml`; alerts on a non-clean `PWA E2E` run (#726). Imports
+  `telegram.mjs` only, so the job needs no install step.
 - `packages/monitor/package.json` — defines the `@spem/monitor` package, its
-  `test` script (`node --test monitor-resources.test.mjs render-burndown.test.mjs`)
+  `test` script (`node --test` over the four `*.test.mjs` files in the package)
   and its `lint` script.
 - `.github/workflows/monitor-ci.yml` — CI gate for monitor changes.
 - `.github/workflows/monitor-run.yml` — scheduled daily run.
 - `.github/workflows/monitor-refresh.yml` — merge-time refresh that keeps
   today's series entry current intra-day (at most one series-changing refresh
   per hour).
+- `.github/workflows/pwa-e2e-notify.yml` — reuses the monitor's `sendTelegram`
+  to alert on a failed `PWA E2E` run; documented in
+  [`doc/CI.md`](./CI.md#pwa-e2e-notifyyml).
 - `.github/monitor-series.json` — daily cumulative usage series, committed by
   `monitor-run.yml` and refreshed intra-day by `monitor-refresh.yml`.
 
@@ -127,6 +139,19 @@ Steps:
 The workflow triggers only on `schedule` and `workflow_dispatch`, so the
 self-commit cannot loop the workflow. The `[skip ci]` suffix also prevents it
 from consuming a `pwa-ci.yml` run.
+
+### `pwa-e2e-notify.yml`
+
+Watches the nightly `PWA E2E` workflow and sends one Telegram alert when it ends
+in anything other than `success`, `cancelled` or `skipped` (#726). It runs
+`notify-workflow-failure.mjs` with bare `node` and no install step, because the
+alert path is deliberately dependency-free.
+
+**Required secrets:** `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`. This is the second
+consumer of those secrets, alongside `monitor-run.yml`.
+
+Full description, including the two known residuals it does *not* close, is in
+[`doc/CI.md`](./CI.md#pwa-e2e-notifyyml).
 
 ### `monitor-refresh.yml`
 

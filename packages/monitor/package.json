@@ -5,7 +5,7 @@
   "description": "Daily build-resource monitor for Spem Player",
   "type": "module",
   "scripts": {
-    "test": "node --test merge-monitor-series.test.mjs monitor-resources.test.mjs render-burndown.test.mjs",
+    "test": "node --test merge-monitor-series.test.mjs monitor-resources.test.mjs notify-workflow-failure.test.mjs render-burndown.test.mjs",
     "lint": "eslint . --max-warnings 0"
   },
   "devDependencies": {

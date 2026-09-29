@@ -34,6 +34,7 @@ import {
   getMergedPRCount,
   sendTelegram,
   sendTelegramPhoto,
+  formatWorkflowFailureMessage,
   openIssue,
   main,
   refresh,
@@ -1177,6 +1178,34 @@ describe("Telegram and issue posting", () => {
     } finally {
       m.restore();
     }
+  });
+});
+
+// --- formatWorkflowFailureMessage ------------------------------------------
+
+describe("formatWorkflowFailureMessage", () => {
+  test("names the workflow, conclusion, and run URL", () => {
+    const msg = formatWorkflowFailureMessage({
+      workflow: "PWA E2E",
+      conclusion: "failure",
+      runUrl: "https://github.com/wainwmr/spem-player/actions/runs/123",
+    });
+    assert.equal(
+      msg,
+      "CI failure: PWA E2E (failure)\n" +
+        "https://github.com/wainwmr/spem-player/actions/runs/123"
+    );
+  });
+
+  test("interpolates the values it is given, not a hardcoded workflow", () => {
+    const msg = formatWorkflowFailureMessage({
+      workflow: "Scores CI",
+      conclusion: "timed_out",
+      runUrl: "https://example.test/runs/999",
+    });
+    assert.match(msg, /Scores CI/);
+    assert.match(msg, /timed_out/);
+    assert.match(msg, /https:\/\/example\.test\/runs\/999/);
   });
 });
 

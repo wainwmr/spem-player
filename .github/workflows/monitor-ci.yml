@@ -6,11 +6,19 @@ on:
     paths:
       - "packages/monitor/**"
       - ".github/workflows/monitor-ci.yml"
+      # notify-workflow-failure.test.mjs asserts cross-file contracts against
+      # these two, so an edit to either must re-run the guard (#726).
+      - ".github/workflows/pwa-e2e-notify.yml"
+      - ".github/workflows/pwa-e2e.yml"
   pull_request:
     branches: [main]
     paths:
       - "packages/monitor/**"
       - ".github/workflows/monitor-ci.yml"
+      # notify-workflow-failure.test.mjs asserts cross-file contracts against
+      # these two, so an edit to either must re-run the guard (#726).
+      - ".github/workflows/pwa-e2e-notify.yml"
+      - ".github/workflows/pwa-e2e.yml"
 
 jobs:
   test:
