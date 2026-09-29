@@ -1,8 +1,9 @@
 name: PWA E2E
 
 on:
-  schedule:
-    - cron: "0 2 * * *"
+  # Nightly schedule disabled — see request from wainwmr, 2026-09-29.
+  # schedule:
+  #   - cron: "0 2 * * *"
   workflow_dispatch:
 
 jobs:
