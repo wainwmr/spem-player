@@ -1,0 +1,69 @@
+name: PWA E2E notify
+
+# `PWA E2E` (pwa-e2e.yml) runs only on a nightly cron and manual dispatch, never
+# on push or pull request. It gates nothing and notifies nobody, leaving only a
+# 7-day failure artifact, so a real e2e regression can fail unseen night after
+# night. This companion workflow watches its completed runs and sends one Telegram
+# alert on a non-clean conclusion (#726).
+#
+# It NARROWS that blind spot rather than closing it. Two residuals were weighed and
+# knowingly ACCEPTED (#837, closed as accepted): an alert is a large improvement on
+# notifying nobody, which is what this replaces. Do not re-raise them as oversights.
+# Both are documented in doc/CI.md:
+#   - if this notify job itself fails (a rotated secret, a Telegram outage) it goes
+#     red in the Actions tab and tells nobody, which is the same blind spot one
+#     level up;
+#   - if `PWA E2E` stops running at all (a disabled cron, a renamed workflow, a run
+#     GitHub rejects before it starts) no `workflow_run` event fires, and a
+#     failure-triggered watcher structurally cannot report that the thing it
+#     watches has stopped. Only a scheduled watchdog could.
+on:
+  workflow_run:
+    workflows: ["PWA E2E"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    # A DENY-list, not an allow-list, so it fails safe: a conclusion GitHub adds in
+    # future will alert rather than silently not-alert. Gating on `failure` alone
+    # was too narrow and missed the cases that matter most. `pwa-e2e.yml` sets no
+    # timeout-minutes, so a hung Playwright run rides the 6-hour runner cap and
+    # concludes `timed_out`. Both that and a run that never starts properly are real
+    # regressions, and both were silent. Only `success`, and the two conclusions
+    # meaning a human or GitHub deliberately stood the run down, are excluded. The
+    # alert names the conclusion, so it self-describes.
+    if: >-
+      ${{ github.event.workflow_run.conclusion != 'success'
+       && github.event.workflow_run.conclusion != 'cancelled'
+       && github.event.workflow_run.conclusion != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+
+      # No package manager, no install, no dependencies. notify-workflow-failure.mjs
+      # imports only packages/monitor/telegram.mjs, which imports nothing at all, so
+      # bare `node` runs it. That is deliberate: every install step and every
+      # transitive dependency is one more way for the alert to die before it is sent,
+      # and an unsendable alert is precisely the failure this workflow exists to
+      # prevent. (It previously imported monitor-resources.mjs, which statically
+      # pulls in the native `canvas` addon to render burndown charts the alert has no
+      # use for.) Do not add an install step without a reason that outweighs that.
+      - name: Send Telegram failure alert
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # These three keys are a contract with notify-workflow-failure.mjs, and
+          # packages/monitor/notify-workflow-failure.test.mjs asserts the two sides
+          # agree. Rename one here without the other and the alert degrades in
+          # silence, which is why the test exists.
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: node packages/monitor/notify-workflow-failure.mjs

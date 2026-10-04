@@ -468,15 +468,19 @@ export async function getGitHubUsage(preFetchedRuns) {
   };
 }
 
-export async function sendTelegram(text) {
-  const url = `${TELEGRAM_API}${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text }),
-  });
-  if (!res.ok) throw new Error(`Telegram HTTP ${res.status}`);
-}
+// Re-exported from the dependency-free leaf module so packages/monitor stays the
+// single home of the Telegram-send logic, while the CI failure alert (#726) can
+// import the leaf directly and avoid this module's static `canvas` import (via
+// render-burndown.mjs). A missing canvas prebuild would otherwise throw at module
+// scope and lose the alert before it ran, which is the blind spot #726 closes.
+// Imported AND re-exported, not re-exported alone: `export { x } from "..."` binds
+// nothing in this module's scope, and dispatchAlert below calls sendTelegram
+// directly. (The tests caught that immediately, which is the argument for them.)
+import {
+  formatWorkflowFailureMessage,
+  sendTelegram,
+} from "./telegram.mjs";
+export { formatWorkflowFailureMessage, sendTelegram };
 
 /**
  * Post a PNG image to Telegram with a text caption. Uses multipart/form-data
